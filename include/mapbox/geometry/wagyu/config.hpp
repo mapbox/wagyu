@@ -45,21 +45,14 @@ enum edge_side : std::uint8_t
     edge_right
 };
 
-enum InitOptions : std::uint8_t
-{
-    ioReverseSolution = 1, 
-    ioStrictlySimple = 2, 
-    ioPreserveCollinear = 4
-};
-
-enum JoinType : std::uint8_t
+enum join_type : std::uint8_t
 {
     jtSquare = 0, 
     jtRound, 
     jtMiter
 };
 
-enum EndType 
+enum end_type 
 {
     etClosedPolygon = 0, 
     etClosedLine, 
