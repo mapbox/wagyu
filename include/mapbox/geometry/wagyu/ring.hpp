@@ -6,6 +6,15 @@
 namespace mapbox { namespace geometry { namespace wagyu {
 
 template <typename T>
+using point = mapbox::geometry::ring::point<T>;
+
+template <typename T>
+using point_ptr = mapbox::geometry::ring::point_ptr<T>;
+
+template <typename T>
+using const_point_ptr = mapbox::geometry::ring::const_point_ptr<T>;
+
+template <typename T>
 struct ring;
 
 template <typename T>
@@ -21,8 +30,8 @@ struct ring
     bool          IsHole;
     bool          IsOpen;
     ring_ptr<T>   FirstLeft;  //see comments in clipper.pas
-    mapbox::geometry::ring::point_ptr<T>  Pts;
-    mapbox::geometry::ring::point_ptr<T>  BottomPt;
+    point_ptr<T>  Pts;
+    point_ptr<T>  BottomPt;
 };
 
 template <typename T>

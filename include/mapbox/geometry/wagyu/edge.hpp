@@ -33,7 +33,7 @@ struct edge
     std::int32_t WindCnt2; //winding count of the opposite polytype
     std::int8_t  WindDelta; //1 or -1 depending on winding direction
     polygon_type PolyTyp;
-    edge_type    Side; //side only refers to current side of solution poly
+    edge_side    Side; //side only refers to current side of solution poly
 };
 
 template <typename T>

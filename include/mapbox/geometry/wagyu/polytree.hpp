@@ -1,7 +1,6 @@
 #pragma once
 
 #include <mapbox/geometry/polygon.hpp>
-
 #include <mapbox/geometry/wagyu/config.hpp>
 
 namespace mapbox { namespace geometry { namespace wagyu {
@@ -22,19 +21,22 @@ template <typename T>
 class polygon_node
 {
 private:
-    std::size_t          Index; //node index in Parent.Childs
-    bool                 m_IsOpen;
-    join_type            m_jointype;
-    end_type             m_endtype;
-    linear_ring<T>       Contour;
-    polygon_node_list<T> Childs;
-    polygon_node_ptr<T>  Parent;
+    mapbox::geometry::linear_ring<T> Contour;
+    polygon_node_list<T>             Childs;
+    std::size_t                      Index; //node index in Parent.Childs
+    polygon_node_ptr<T>              Parent;
+    join_type                        m_jointype;
+    end_type                         m_endtype;
+    bool                             m_IsOpen;
 
 public:
     polygon_node() :
-        childs(),
+        Contour(),
+        Childs(),
+        Index(0),
         Parent(nullptr),
-        Index(nullptr),
+        m_jointype(jtSquare),
+        m_endtype(etClosedPolygon),
         m_IsOpen(false) {}
     
     ~polygon_Node() {}

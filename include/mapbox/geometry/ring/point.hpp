@@ -1,6 +1,8 @@
 #pragma once
 
-namespace mapbox { namespace geometry { namespace circular_ring {
+#include <mapbox/geometry/point.hpp>
+
+namespace mapbox { namespace geometry { namespace ring {
 
 // fwd declare
 template <typename T>
@@ -35,7 +37,31 @@ bool operator==(point<T> const& lhs, point<T> const& rhs)
 }
 
 template <typename T>
+bool operator==(mapbox::geometry::point<T> const& lhs, point<T> const& rhs)
+{
+    return lhs.x == rhs.x && lhs.y == rhs.y;
+}
+
+template <typename T>
+bool operator==(point<T> const& lhs, mapbox::geometry::point<T> const& rhs)
+{
+    return lhs.x == rhs.x && lhs.y == rhs.y;
+}
+
+template <typename T>
 bool operator!=(point<T> const& lhs, point<T> const& rhs)
+{
+    return lhs.x != rhs.x || lhs.y != rhs.y;
+}
+
+template <typename T>
+bool operator!=(mapbox::geometry::point<T> const& lhs, point<T> const& rhs)
+{
+    return lhs.x != rhs.x || lhs.y != rhs.y;
+}
+
+template <typename T>
+bool operator!=(point<T> const& lhs, mapbox::geometry::point<T> const& rhs)
 {
     return lhs.x != rhs.x || lhs.y != rhs.y;
 }

@@ -1,14 +1,19 @@
 #pragma once
 
+#include <mapbox/geometry/polygon.hpp>
 #include <mapbox/geometry/ring/ring.hpp>
 
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/edge.hpp>
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
 #include <mapbox/geometry/wagyu/intersect.hpp>
+#include <mapbox/geometry/wagyu/polytree.hpp>
 #include <mapbox/geometry/wagyu/ring.hpp>
 
 namespace mapbox { namespace geometry { namespace wagyu {
+
+template <typename T>
+using linear_ring_list = std::vector<mapbox::geometry::linear_ring<T> >;
 
 template <typename T>
 class clipper
@@ -71,8 +76,16 @@ public:
         clear();
     }
 
-    bool add_path(const Path &pg, PolyType PolyTyp, bool Closed);
-    bool add_paths(const Paths &ppg, PolyType PolyTyp, bool Closed);
+    bool add_path(const mapbox::geometry::linear_ring<value_type> &pg, polygon_type PolyTyp, bool Closed)
+    {
+
+    }
+
+    bool add_paths(const linear_ring_list<value_type> &ppg, polygon_type PolyTyp, bool Closed)
+    {
+
+    }
+
     void clear();
     IntRect get_bounds();
     
@@ -106,18 +119,18 @@ public:
         m_ReverseOutput = value;
     }
   
-    bool Execute(ClipType clipType,
-                 Paths &solution,
-                 PolyFillType subjFillType,
-                 PolyFillType clipFillType)
+    bool Execute(clip_type clipType,
+                 linear_ring_list<value_type> &solution,
+                 fill_type subjFillType,
+                 fill_type clipFillType)
     {
 
     }
     
-    bool Execute(ClipType clipType,
-                 PolyTree &polytree,
-                 PolyFillType subjFillType,
-                 PolyFillType clipFillType)
+    bool Execute(clip_type clipType,
+                 polygon_tree &polytree,
+                 fill_type subjFillType,
+                 fill_type clipFillType)
     {
 
     }
