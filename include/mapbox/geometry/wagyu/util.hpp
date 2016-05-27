@@ -243,7 +243,7 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, point_ptr<T> op)
             }
             else
             {
-                if (op->next->Pt.X > pt.X)
+                if (op->next->Pt.x > pt.x)
                 {
                     double d = static_cast<double>(op->x - pt.x) * static_cast<double>(op->next->y - pt.y) - 
                             static_cast<double>(op->next->x - pt.x) * static_cast<double>(op->y - pt.y);
@@ -251,7 +251,7 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, point_ptr<T> op)
                     {
                         return point_on_polygon;
                     }
-                    if ((d > 0) == (op->next->Pt.Y > op->Pt.Y))
+                    if ((d > 0) == (op->next->Pt.y > op->Pt.y))
                     {
                         // Switch between point outside polygon and point inside polygon
                         result = 1 - result;
@@ -357,493 +357,598 @@ inline void SwapPolyIndexes(edge<T> & Edge1, edge<T> & Edge2)
   Edge2.OutIdx = OutIdx;
 }
 
-inline cInt TopX(TEdge &edge, const cInt currentY)
+template <typename T>
+inline T TopX(edge<T> const& edge, const T currentY)
 {
-  return ( currentY == edge.Top.Y ) ?
-    edge.Top.X : edge.Bot.X + Round(edge.Dx *(currentY - edge.Bot.Y));
+    if (currentY == edge.Top.y)
+    {
+        return edge.Top.x;
+    }
+    else
+    {
+        return edge.Bot.x + static_cast<T>(std::round(edge.Dx * static_cast<double>(currentY - edge.Bot.y)));
+    }
 }
-//------------------------------------------------------------------------------
 
-void IntersectPoint(TEdge &Edge1, TEdge &Edge2, IntPoint &ip)
+template <typename T>
+inline T nearest_along_y_dimension(T const edge_bot_x, 
+                                   T const edge_bot_y,
+                                   T const edge_2_bot_y,
+                                   T const ip_x,
+                                   T const ip_y,
+                                   double const by,
+                                   double const edge_dx)
 {
-#ifdef use_xyz  
-  ip.Z = 0;
-#endif
+    using value_type = T;
+    value_type result = ip_y;
+    if (edge_bot_x > ip_x)
+    {
+        if (edge_bot_y >= ip_y)
+        {
+            result = std::floor(((ip_x + 0.5) / edge_dx + by) + 0.5);
+        }
+        else
+        {
+            result = std::ceil(((ip_x + 0.5) / edge_dx + by) - 0.5);
+        }
+    }
+    else if (edge_bot_x < ip_x)
+    {
+        if (edge_bot_y >= ip_y)
+        {
+            result = std::floor(((ip_x - 0.5) / edge_dx + by) + 0.5);
+        }
+        else
+        {
+            result = std::ceil(((ip_x - 0.5) / edge_dx + by) - 0.5);
+        }
+    }
+    else if (edge_bot_y > ip_y)
+    {
+        if (edge_2_bot_y >= edge_bot_y)
+        {
+            result = edge_bot_y;
+        }
+        else
+        {
+            result = edge_2_bot_y;
+        }
+    }
+    else if (edge_bot_y < ip_y)
+    {
+        if (edge_2_bot_y <= edge_bot_y)
+        {
+            result = edge_bot_y;
+        }
+        else
+        {
+            result = edge_2_bot_y;
+        }
+    }
+    if (ip_y >= edge_bot_y && result < edge_bot_y)
+    {
+        result = edge_bot_y;
+    }
+    else if (ip_y <= edge_bot_y && result > edge_bot_y)
+    {
+        result = edge_bot_y;
+    }
+    return result;
+}
 
-  double b1, b2;
-  if (Edge1.Dx == Edge2.Dx)
-  {
-    ip.Y = Edge1.Curr.Y;
-    ip.X = TopX(Edge1, ip.Y);
-    return;
-  }
-  else if (Edge1.Dx == 0.0)
-  {
-    ip.X = Edge1.Bot.X;
-    if (IsHorizontal(Edge2))
-      ip.Y = Edge2.Bot.Y;
-    else
+template <typename T>
+inline T nearest_along_x_dimension(T const edge_bot_x, 
+                                   T const edge_bot_y,
+                                   T const edge_2_bot_x,
+                                   T const ip_x,
+                                   T const ip_y,
+                                   double const bx,
+                                   double const edge_dx)
+{
+    using value_type = T;
+    value_type result = ip_x;
+    if (edge_bot_y > ip_y)
     {
-      b2 = Edge2.Bot.Y - (Edge2.Bot.X / Edge2.Dx);
-      if (Edge2.Bot.X == Edge1.Bot.X) ip.Y = Round(ip.X / Edge2.Dx + b2);
-      else if (Edge2.Bot.X < Edge1.Bot.X) ip.Y = Round((ip.X - 0.5) / Edge2.Dx + b2);
-      else ip.Y = Round((ip.X + 0.5) / Edge2.Dx + b2);
+        if (edge_bot_x >= ip_x)
+        {
+            result = std::floor(((ip_y + 0.5) * edge_dx + bx) + 0.5);
+        }
+        else
+        {
+            result = std::ceil(((ip_y + 0.5) * edge_dx + bx) - 0.5);
+        }
     }
-  }
-  else if (Edge2.Dx == 0.0)
-  {
-    ip.X = Edge2.Bot.X;
-    if (IsHorizontal(Edge1))
-      ip.Y = Edge1.Bot.Y;
-    else
+    else if (edge_bot_y < ip_y)
     {
-      b1 = Edge1.Bot.Y - (Edge1.Bot.X / Edge1.Dx);
-      if (Edge1.Bot.X == Edge2.Bot.X) ip.Y = Round(ip.X / Edge1.Dx + b1);
-      else if (Edge1.Bot.X < Edge2.Bot.X) ip.Y = Round((ip.X - 0.5) / Edge1.Dx + b1);
-      else ip.Y = Round((ip.X + 0.5) / Edge1.Dx + b1);
+        if (edge_bot_x >= ip_x)
+        {
+            result = std::floor(((ip_y - 0.5) * edge_dx + bx) + 0.5);
+        }
+        else
+        {
+            result = std::ceil(((ip_y - 0.5) * edge_dx + bx) - 0.5);
+        }
     }
-  } 
-  else 
-  {
-    b1 = Edge1.Bot.X - Edge1.Bot.Y * Edge1.Dx;
-    b2 = Edge2.Bot.X - Edge2.Bot.Y * Edge2.Dx;
-    double q = (b2-b1) / (Edge1.Dx - Edge2.Dx);
-    ip.Y = Round(q);
-    if (std::fabs(Edge1.Dx) < std::fabs(Edge2.Dx))
-      ip.X = Round(Edge1.Dx * q + b1);
+    else if (edge_bot_x > ip_x)
+    {
+        if (edge_2_bot_x >= edge_bot_x)
+        {
+            result = edge_bot_x;
+        }
+        else
+        {
+            result = edge_2_bot_x;
+        }
+    }
+    else if (edge_bot_x < ip_x)
+    {
+        if (edge_2_bot_x <= edge_bot_x)
+        {
+            result = edge_bot_x;
+        }
+        else
+        {
+            result = edge_2_bot_x;
+        }
+    }
+    if (ip_x >= edge_bot_x && result < edge_bot_x)
+    {
+        result = edge_bot_x;
+    }
+    else if (ip_x <= edge_bot_x && result > edge_bot_x)
+    {
+        result = edge_bot_x;
+    }
+    return result;
+}
+
+template <typename T>
+void IntersectPoint(edge<T> & Edge1, edge<T> & Edge2, mapbox::geometry::point<T> & ip)
+{
+    // This method finds the FIRST intersecting point in integer space between two edges
+    // that is closest to the Bot point of the edges.
+    using value_type = T;
+    if (Edge1.Dx == Edge2.Dx)
+    {
+        ip.y = Edge1.Curr.y;
+        ip.x = TopX(Edge1, ip.y);
+        return;
+    }
+    else if (Edge1.Dx == 0.0)
+    {
+        ip.x = Edge1.Bot.x;
+        if (IsHorizontal(Edge2))
+        {
+            ip.y = Edge2.Bot.y;
+        }
+        else
+        {
+            double b2 = Edge2.Bot.y - (Edge2.Bot.x / Edge2.Dx);
+            if (Edge2.Bot.x == Edge1.Bot.x)
+            {
+                ip.y = std::round(ip.x / Edge2.Dx + b2);
+            }
+            else if (Edge2.Bot.x < Edge1.Bot.x)
+            {
+                ip.y = std::round((ip.x - 0.5) / Edge2.Dx + b2);
+            }
+            else
+            {
+                ip.y = std::round((ip.x + 0.5) / Edge2.Dx + b2);
+            }
+        }
+    }
+    else if (Edge2.Dx == 0.0)
+    {
+        ip.x = Edge2.Bot.x;
+        if (IsHorizontal(Edge1))
+        {
+            ip.y = Edge1.Bot.y;
+        }
+        else
+        {
+            double b1 = Edge1.Bot.y - (Edge1.Bot.x / Edge1.Dx);
+            if (Edge1.Bot.x == Edge2.Bot.x)
+            {
+                ip.y = Round(ip.x / Edge1.Dx + b1);
+            }
+            else if (Edge1.Bot.x < Edge2.Bot.x)
+            {
+                ip.y = Round((ip.x - 0.5) / Edge1.Dx + b1);
+            }
+            else
+            {
+                ip.y = Round((ip.x + 0.5) / Edge1.Dx + b1);
+            }
+        }
+    } 
     else 
-      ip.X = Round(Edge2.Dx * q + b2);
-    // the idea is simply to looking closer
-    // towards the origins of the lines (Edge1.Bot and Edge2.Bot)
-    // until we do not find pixels that both lines travel through
-    bool keep_searching = false;
-    double by1 = Edge1.Bot.Y - (Edge1.Bot.X / Edge1.Dx);
-    double by2 = Edge2.Bot.Y - (Edge2.Bot.X / Edge2.Dx);
-    double bx1 = Edge1.Bot.X - (Edge1.Bot.Y * Edge1.Dx);
-    double bx2 = Edge2.Bot.X - (Edge2.Bot.Y * Edge2.Dx);
+    {
+        double b1 = Edge1.Bot.x - Edge1.Bot.y * Edge1.Dx;
+        double b2 = Edge2.Bot.x - Edge2.Bot.y * Edge2.Dx;
+        double q = (b2 - b1) / (Edge1.Dx - Edge2.Dx);
+        ip.y = std::round(q);
+        if (std::fabs(Edge1.Dx) < std::fabs(Edge2.Dx))
+        {
+            ip.x = std::round(Edge1.Dx * q + b1);
+        }
+        else 
+        {
+            ip.x = std::round(Edge2.Dx * q + b2);
+        }
+        // the idea is simply to looking closer
+        // towards the origins of the lines (Edge1.Bot and Edge2.Bot)
+        // until we do not find pixels that both lines travel through
+        bool keep_searching = false;
+        double by1 = Edge1.Bot.y - (Edge1.Bot.x / Edge1.Dx);
+        double by2 = Edge2.Bot.y - (Edge2.Bot.x / Edge2.Dx);
+        double bx1 = Edge1.Bot.x - (Edge1.Bot.y * Edge1.Dx);
+        double bx2 = Edge2.Bot.x - (Edge2.Bot.y * Edge2.Dx);
+        do
+        {
+            keep_searching = false;
+            value_type y1 = nearest_along_y_dimension(Edge1.Bot.x,
+                                                      Edge1.Bot.y,
+                                                      Edge2.Bot.y,
+                                                      ip.x,
+                                                      ip.y,
+                                                      by1,
+                                                      Edge1.Dx);
+            value_type y2 = nearest_along_y_dimension(Edge2.Bot.x,
+                                                      Edge2.Bot.y,
+                                                      Edge1.Bot.y,
+                                                      ip.x,
+                                                      ip.y,
+                                                      by2,
+                                                      Edge2.Dx);
+            value_type x1 = nearest_along_x_dimension(Edge1.Bot.x,
+                                                      Edge1.Bot.y,
+                                                      Edge2.Bot.x,
+                                                      ip.x,
+                                                      ip.y,
+                                                      bx1,
+                                                      Edge1.Dx);
+            value_type x2 = nearest_along_x_dimension(Edge2.Bot.x,
+                                                      Edge2.Bot.y,
+                                                      Edge1.Bot.x,
+                                                      ip.x,
+                                                      ip.y,
+                                                      bx2,
+                                                      Edge2.Dx);
+            if (y1 > ip.y && y2 > ip.y)
+            {
+                ip.y = std::min(y1,y2);
+                keep_searching = true;
+            }
+            else if (y1 < ip.y && y2 < ip.y)
+            {
+                ip.y = std::max(y1,y2);
+                keep_searching = true;
+            } 
+            if (x1 > ip.x && x2 > ip.x)
+            {
+                ip.x = std::min(x1,x2);
+                keep_searching = true;
+            }
+            else if (x1 < ip.x && x2 < ip.x)
+            {
+                ip.x = std::max(x1,x2);
+                keep_searching = true;
+            }
+        }
+        while (keep_searching);
+    }
+
+    if (ip.y < Edge1.Top.y || ip.y < Edge2.Top.y) 
+    {
+        if (Edge1.Top.y > Edge2.Top.y)
+        {
+            ip.y = Edge1.Top.y;
+        }
+        else
+        {
+            ip.y = Edge2.Top.y;
+        }
+        if (std::fabs(Edge1.Dx) < std::fabs(Edge2.Dx))
+        {
+            ip.x = TopX(Edge1, ip.y);
+        }
+        else
+        {
+            ip.x = TopX(Edge2, ip.y);
+        }
+    } 
+    //finally, don't allow 'ip' to be BELOW curr.y (ie bottom of scanbeam) ...
+    if (ip.y > Edge1.Curr.y)
+    {
+        ip.y = Edge1.Curr.y;
+        //use the more vertical edge to derive X ...
+        if (std::fabs(Edge1.Dx) > std::fabs(Edge2.Dx))
+        {
+            ip.x = TopX(Edge2, ip.y);
+        }
+        else
+        {
+            ip.x = TopX(Edge1, ip.y);
+        }
+    }
+}
+
+template <typename T>
+void ReversePolyPtLinks(point_ptr<T> pp)
+{
+    if (!pp)
+    {
+        return;
+    }
+    point_ptr<T> pp1;
+    point_ptr<T> pp2;
+    pp1 = pp;
     do
     {
-        keep_searching = false;
-        cInt y1 = ip.Y;
-        cInt y2 = ip.Y;
-        if (Edge1.Bot.X > ip.X)
-        {
-            if (Edge1.Bot.Y >= ip.Y)
-            {
-                y1 = std::floor(((ip.X + 0.5) / Edge1.Dx + by1) + 0.5);
-            }
-            else
-            {
-                y1 = std::ceil(((ip.X + 0.5) / Edge1.Dx + by1) - 0.5);
-            }
-        }
-        else if (Edge1.Bot.X < ip.X)
-        {
-            if (Edge1.Bot.Y >= ip.Y)
-            {
-                y1 = std::floor(((ip.X - 0.5) / Edge1.Dx + by1) + 0.5);
-            }
-            else
-            {
-                y1 = std::ceil(((ip.X - 0.5) / Edge1.Dx + by1) - 0.5);
-            }
-        }
-        else if (Edge1.Bot.Y > ip.Y)
-        {
-            if (Edge2.Bot.Y >= Edge1.Bot.Y)
-            {
-                y1 = Edge1.Bot.Y;
-            }
-            else
-            {
-                y1 = Edge2.Bot.Y;
-            }
-        }
-        else if (Edge1.Bot.Y < ip.Y)
-        {
-            if (Edge2.Bot.Y <= Edge1.Bot.Y)
-            {
-                y1 = Edge1.Bot.Y;
-            }
-            else
-            {
-                y1 = Edge2.Bot.Y;
-            }
-        }
-        if (ip.Y >= Edge1.Bot.Y && y1 < Edge1.Bot.Y) y1 = Edge1.Bot.Y;
-        else if (ip.Y <= Edge1.Bot.Y && y1 > Edge1.Bot.Y) y1 = Edge1.Bot.Y;
-        if (Edge2.Bot.X > ip.X)
-        {
-            if (Edge2.Bot.Y >= ip.Y)
-            {
-                y2 = std::floor(((ip.X + 0.5) / Edge2.Dx + by2) + 0.5);
-            }
-            else
-            {
-                y2 = std::ceil(((ip.X + 0.5) / Edge2.Dx + by2) - 0.5);
-            }
-        }
-        else if (Edge2.Bot.X < ip.X)
-        {
-            if (Edge2.Bot.Y >= ip.Y)
-            {
-                y2 = std::floor(((ip.X - 0.5) / Edge2.Dx + by2) + 0.5);
-            }
-            else
-            {
-                y2 = std::ceil(((ip.X - 0.5) / Edge2.Dx + by2) - 0.5);
-            }
-        }
-        else if (Edge2.Bot.Y > ip.Y)
-        {
-            if (Edge1.Bot.Y >= Edge2.Bot.Y)
-            {
-                y2 = Edge2.Bot.Y;
-            }
-            else
-            {
-                y2 = Edge1.Bot.Y;
-            }
-        }
-        else if (Edge2.Bot.Y < ip.Y)
-        {
-            if (Edge1.Bot.Y <= Edge2.Bot.Y)
-            {
-                y2 = Edge2.Bot.Y;
-            }
-            else
-            {
-                y2 = Edge1.Bot.Y;
-            }
-        }
-        if (ip.Y >= Edge2.Bot.Y && y2 < Edge2.Bot.Y) y2 = Edge2.Bot.Y;
-        else if (ip.Y <= Edge2.Bot.Y && y2 > Edge2.Bot.Y) y2 = Edge2.Bot.Y;
-        cInt x1 = ip.X;
-        cInt x2 = ip.X;
-        if (Edge1.Bot.Y > ip.Y)
-        {
-            if (Edge1.Bot.X >= ip.X)
-            {
-                x1 = std::floor(((ip.Y + 0.5) * Edge1.Dx + bx1) + 0.5);
-            }
-            else
-            {
-                x1 = std::ceil(((ip.Y + 0.5) * Edge1.Dx + bx1) - 0.5);
-            }
-        }
-        else if (Edge1.Bot.Y < ip.Y)
-        {
-            if (Edge1.Bot.X >= ip.X)
-            {
-                x1 = std::floor(((ip.Y - 0.5) * Edge1.Dx + bx1) + 0.5);
-            }
-            else
-            {
-                x1 = std::ceil(((ip.Y - 0.5) * Edge1.Dx + bx1) - 0.5);
-            }
-        }
-        else if (Edge1.Bot.X > ip.X)
-        {
-            if (Edge2.Bot.X >= Edge1.Bot.X)
-            {
-                x1 = Edge1.Bot.X;
-            }
-            else
-            {
-                x1 = Edge2.Bot.X;
-            }
-        }
-        else if (Edge1.Bot.X < ip.X)
-        {
-            if (Edge2.Bot.X <= Edge1.Bot.X)
-            {
-                x1 = Edge1.Bot.X;
-            }
-            else
-            {
-                x1 = Edge2.Bot.X;
-            }
-        }
-        if (ip.X >= Edge1.Bot.X && x1 < Edge1.Bot.X) x1 = Edge1.Bot.X;
-        else if (ip.X <= Edge1.Bot.X && x1 > Edge1.Bot.X) x1 = Edge1.Bot.X;
-        if (Edge2.Bot.Y > ip.Y)
-        {
-            if (Edge2.Bot.X >= ip.X)
-            {
-                x2 = std::floor(((ip.Y + 0.5) * Edge2.Dx + bx2) + 0.5);
-            }
-            else
-            {
-                x2 = std::ceil(((ip.Y + 0.5) * Edge2.Dx + bx2) - 0.5);
-            }
-        }
-        else if (Edge2.Bot.Y < ip.Y)
-        {
-            if (Edge2.Bot.X >= ip.X)
-            {
-                x2 = std::floor(((ip.Y - 0.5) * Edge2.Dx + bx2) + 0.5);
-            }
-            else
-            {
-                x2 = std::ceil(((ip.Y - 0.5) * Edge2.Dx + bx2) - 0.5);
-            }
-        }
-        else if (Edge2.Bot.X > ip.X)
-        {
-            if (Edge1.Bot.X >= Edge2.Bot.X)
-            {
-                x2 = Edge2.Bot.X;
-            }
-            else
-            {
-                x2 = Edge1.Bot.X;
-            }
-        }
-        else if (Edge2.Bot.X < ip.X)
-        {
-            if (Edge1.Bot.X <= Edge2.Bot.X)
-            {
-                x2 = Edge2.Bot.X;
-            }
-            else
-            {
-                x2 = Edge1.Bot.X;
-            }
-        }
-        if (ip.X >= Edge2.Bot.X && x2 < Edge2.Bot.X) x2 = Edge2.Bot.X;
-        else if (ip.X <= Edge2.Bot.X && x2 > Edge2.Bot.X) x2 = Edge2.Bot.X;
-        if (y1 > ip.Y && y2 > ip.Y)
-        {
-            ip.Y = std::min(y1,y2);
-            keep_searching = true;
-        }
-        else if (y1 < ip.Y && y2 < ip.Y)
-        {
-            ip.Y = std::max(y1,y2);
-            keep_searching = true;
-        } 
-        if (x1 > ip.X && x2 > ip.X)
-        {
-            ip.X = std::min(x1,x2);
-            keep_searching = true;
-        }
-        else if (x1 < ip.X && x2 < ip.X)
-        {
-            ip.X = std::max(x1,x2);
-            keep_searching = true;
-        }
+        pp2 = pp1->Next;
+        pp1->Next = pp1->Prev;
+        pp1->Prev = pp2;
+        pp1 = pp2;
+    } 
+    while( pp1 != pp );
+}
+
+template <typename T>
+void DisposeOutPts(point_ptr<T> & pp)
+{
+    if (pp == nullptr)
+    {
+      return;
     }
-    while (keep_searching);
-  }
+    pp->Prev->Next = nullptr;
+    while (pp)
+    {
+      point_ptr<T> tmpPp = pp;
+      pp = pp->Next;
+      delete tmpPp;
+    }
+}
 
-  if (ip.Y < Edge1.Top.Y || ip.Y < Edge2.Top.Y) 
-  {
-    if (Edge1.Top.Y > Edge2.Top.Y)
-      ip.Y = Edge1.Top.Y;
+template <typename T>
+inline void InitEdge(edge_ptr<T> e, edge_ptr<T> eNext, edge_ptr<T> ePrev, mapbox::geometry::point<T> const& Pt)
+{
+    std::memset(e, 0, sizeof(TEdge));
+    e->Next = eNext;
+    e->Prev = ePrev;
+    e->Curr = Pt;
+    e->OutIdx = Unassigned;
+}
+
+template <typename T>
+void InitEdge2(edge<T> & e, polygon_type Pt)
+{
+    if (e.Curr.y >= e.Next->Curr.y)
+    {
+        e.Bot = e.Curr;
+        e.Top = e.Next->Curr;
+    }
     else
-      ip.Y = Edge2.Top.Y;
-    if (std::fabs(Edge1.Dx) < std::fabs(Edge2.Dx))
-      ip.X = TopX(Edge1, ip.Y);
-    else
-      ip.X = TopX(Edge2, ip.Y);
-  } 
-  //finally, don't allow 'ip' to be BELOW curr.Y (ie bottom of scanbeam) ...
-  if (ip.Y > Edge1.Curr.Y)
-  {
-    ip.Y = Edge1.Curr.Y;
-    //use the more vertical edge to derive X ...
-    if (std::fabs(Edge1.Dx) > std::fabs(Edge2.Dx))
-      ip.X = TopX(Edge2, ip.Y); else
-      ip.X = TopX(Edge1, ip.Y);
-  }
+    {
+        e.Top = e.Curr;
+        e.Bot = e.Next->Curr;
+    }
+    SetDx(e);
+    e.PolyTyp = Pt;
 }
-//------------------------------------------------------------------------------
 
-void ReversePolyPtLinks(OutPt *pp)
+template <typename T>
+edge_ptr<T> RemoveEdge(edge_ptr<T> e)
 {
-  if (!pp) return;
-  OutPt *pp1, *pp2;
-  pp1 = pp;
-  do {
-  pp2 = pp1->Next;
-  pp1->Next = pp1->Prev;
-  pp1->Prev = pp2;
-  pp1 = pp2;
-  } while( pp1 != pp );
+    //removes e from double_linked_list (but without removing from memory)
+    e->Prev->Next = e->Next;
+    e->Next->Prev = e->Prev;
+    edge_ptr<T> result = e->Next;
+    e->Prev = 0; //flag as removed (see ClipperBase.Clear)
+    return result;
 }
-//------------------------------------------------------------------------------
 
-void DisposeOutPts(OutPt*& pp)
-{
-  if (pp == 0) return;
-    pp->Prev->Next = 0;
-  while( pp )
-  {
-    OutPt *tmpPp = pp;
-    pp = pp->Next;
-    delete tmpPp;
-  }
-}
-//------------------------------------------------------------------------------
-
-inline void InitEdge(TEdge* e, TEdge* eNext, TEdge* ePrev, const IntPoint& Pt)
-{
-  std::memset(e, 0, sizeof(TEdge));
-  e->Next = eNext;
-  e->Prev = ePrev;
-  e->Curr = Pt;
-  e->OutIdx = Unassigned;
-}
-//------------------------------------------------------------------------------
-
-void InitEdge2(TEdge& e, PolyType Pt)
-{
-  if (e.Curr.Y >= e.Next->Curr.Y)
-  {
-    e.Bot = e.Curr;
-    e.Top = e.Next->Curr;
-  } else
-  {
-    e.Top = e.Curr;
-    e.Bot = e.Next->Curr;
-  }
-  SetDx(e);
-  e.PolyTyp = Pt;
-}
-//------------------------------------------------------------------------------
-
-TEdge* RemoveEdge(TEdge* e)
-{
-  //removes e from double_linked_list (but without removing from memory)
-  e->Prev->Next = e->Next;
-  e->Next->Prev = e->Prev;
-  TEdge* result = e->Next;
-  e->Prev = 0; //flag as removed (see ClipperBase.Clear)
-  return result;
-}
-//------------------------------------------------------------------------------
-
-inline void ReverseHorizontal(TEdge &e)
+template <typename T>
+inline void ReverseHorizontal(edge<T> &e)
 {
   //swap horizontal edges' Top and Bottom x's so they follow the natural
   //progression of the bounds - ie so their xbots will align with the
   //adjoining lower edge. [Helpful in the ProcessHorizontal() method.]
-  std::swap(e.Top.X, e.Bot.X);
-#ifdef use_xyz  
-  std::swap(e.Top.Z, e.Bot.Z);
-#endif
+  std::swap(e.Top.x, e.Bot.x);
 }
-//------------------------------------------------------------------------------
 
-void SwapPoints(IntPoint &pt1, IntPoint &pt2)
+template <typename T>
+void SwapPoints(mapbox::geometry::point<T> &pt1, mapbox::geometry::point<T> &pt2)
 {
-  IntPoint tmp = pt1;
-  pt1 = pt2;
-  pt2 = tmp;
+    mapbox::geometry::point<T> tmp = pt1;
+    pt1 = pt2;
+    pt2 = tmp;
 }
-//------------------------------------------------------------------------------
 
-bool GetOverlapSegment(IntPoint pt1a, IntPoint pt1b, IntPoint pt2a,
-  IntPoint pt2b, IntPoint &pt1, IntPoint &pt2)
+template <typename T>
+bool GetOverlapSegment(mapbox::geometry::point<T> pt1a, 
+                       mapbox::geometry::point<T> pt1b,
+                       mapbox::geometry::point<T> pt2a,
+                       mapbox::geometry::point<T> pt2b, 
+                       mapbox::geometry::point<T> &pt1, 
+                       mapbox::geometry::point<T> &pt2)
 {
-  //precondition: segments are Collinear.
-  if (Abs(pt1a.X - pt1b.X) > Abs(pt1a.Y - pt1b.Y))
-  {
-    if (pt1a.X > pt1b.X) SwapPoints(pt1a, pt1b);
-    if (pt2a.X > pt2b.X) SwapPoints(pt2a, pt2b);
-    if (pt1a.X > pt2a.X) pt1 = pt1a; else pt1 = pt2a;
-    if (pt1b.X < pt2b.X) pt2 = pt1b; else pt2 = pt2b;
-    return pt1.X < pt2.X;
-  } else
-  {
-    if (pt1a.Y < pt1b.Y) SwapPoints(pt1a, pt1b);
-    if (pt2a.Y < pt2b.Y) SwapPoints(pt2a, pt2b);
-    if (pt1a.Y < pt2a.Y) pt1 = pt1a; else pt1 = pt2a;
-    if (pt1b.Y > pt2b.Y) pt2 = pt1b; else pt2 = pt2b;
-    return pt1.Y > pt2.Y;
-  }
-}
-//------------------------------------------------------------------------------
-
-bool FirstIsBottomPt(const OutPt* btmPt1, const OutPt* btmPt2)
-{
-  OutPt *p = btmPt1->Prev;
-  while ((p->Pt == btmPt1->Pt) && (p != btmPt1)) p = p->Prev;
-  double dx1p = std::fabs(GetDx(btmPt1->Pt, p->Pt));
-  p = btmPt1->Next;
-  while ((p->Pt == btmPt1->Pt) && (p != btmPt1)) p = p->Next;
-  double dx1n = std::fabs(GetDx(btmPt1->Pt, p->Pt));
-
-  p = btmPt2->Prev;
-  while ((p->Pt == btmPt2->Pt) && (p != btmPt2)) p = p->Prev;
-  double dx2p = std::fabs(GetDx(btmPt2->Pt, p->Pt));
-  p = btmPt2->Next;
-  while ((p->Pt == btmPt2->Pt) && (p != btmPt2)) p = p->Next;
-  double dx2n = std::fabs(GetDx(btmPt2->Pt, p->Pt));
-
-  if (std::max(dx1p, dx1n) == std::max(dx2p, dx2n) &&
-    std::min(dx1p, dx1n) == std::min(dx2p, dx2n))
-      return Area(btmPt1) > 0; //if otherwise identical use orientation
-  else
-    return (dx1p >= dx2p && dx1p >= dx2n) || (dx1n >= dx2p && dx1n >= dx2n);
-}
-//------------------------------------------------------------------------------
-
-OutPt* GetBottomPt(OutPt *pp)
-{
-  OutPt* dups = 0;
-  OutPt* p = pp->Next;
-  while (p != pp)
-  {
-    if (p->Pt.Y > pp->Pt.Y)
+    //precondition: segments are Collinear.
+    if (Abs(pt1a.x - pt1b.x) > Abs(pt1a.y - pt1b.y))
     {
-      pp = p;
-      dups = 0;
+        if (pt1a.x > pt1b.x)
+        {
+            SwapPoints(pt1a, pt1b);
+        }
+        if (pt2a.x > pt2b.x)
+        {
+            SwapPoints(pt2a, pt2b);
+        }
+        if (pt1a.x > pt2a.x)
+        {
+            pt1 = pt1a;
+        }
+        else 
+        {
+            pt1 = pt2a;
+        }
+        if (pt1b.x < pt2b.x)
+        {
+            pt2 = pt1b;
+        }
+        else 
+        {
+            pt2 = pt2b;
+        }
+        return pt1.x < pt2.x;
     }
-    else if (p->Pt.Y == pp->Pt.Y && p->Pt.X <= pp->Pt.X)
+    else
     {
-      if (p->Pt.X < pp->Pt.X)
-      {
-        dups = 0;
-        pp = p;
-      } else
-      {
-        if (p->Next != pp && p->Prev != pp) dups = p;
-      }
+        if (pt1a.y < pt1b.y)
+        {
+            SwapPoints(pt1a, pt1b);
+        }
+        if (pt2a.y < pt2b.y)
+        {
+            SwapPoints(pt2a, pt2b);
+        }
+        if (pt1a.y < pt2a.y)
+        {
+            pt1 = pt1a;
+        }
+        else
+        {
+            pt1 = pt2a;
+        }
+        if (pt1b.y > pt2b.y)
+        {
+            pt2 = pt1b;
+        }
+        else
+        {
+            pt2 = pt2b;
+        }
+        return pt1.y > pt2.y;
     }
-    p = p->Next;
-  }
-  if (dups)
-  {
-    //there appears to be at least 2 vertices at BottomPt so ...
-    while (dups != p)
-    {
-      if (!FirstIsBottomPt(p, dups)) pp = dups;
-      dups = dups->Next;
-      while (dups->Pt != pp->Pt) dups = dups->Next;
-    }
-  }
-  return pp;
 }
-//------------------------------------------------------------------------------
 
-bool Pt2IsBetweenPt1AndPt3(const IntPoint pt1,
-  const IntPoint pt2, const IntPoint pt3)
+template <typename T>
+bool FirstIsBottomPt(const_point_ptr<T> btmPt1, const_point_ptr<T> btmPt2)
 {
-  if ((pt1 == pt3) || (pt1 == pt2) || (pt3 == pt2))
-    return false;
-  else if (pt1.X != pt3.X)
-    return (pt2.X > pt1.X) == (pt2.X < pt3.X);
-  else
-    return (pt2.Y > pt1.Y) == (pt2.Y < pt3.Y);
+    point_ptr<T> p = btmPt1->Prev;
+    while ((p->Pt == btmPt1->Pt) && (p != btmPt1))
+    {
+        p = p->Prev;
+    }
+    double dx1p = std::fabs(GetDx(btmPt1->Pt, p->Pt));
+    p = btmPt1->Next;
+    while ((p->Pt == btmPt1->Pt) && (p != btmPt1))
+    {
+        p = p->Next;
+    }
+    double dx1n = std::fabs(GetDx(btmPt1->Pt, p->Pt));
+    p = btmPt2->Prev;
+    while ((p->Pt == btmPt2->Pt) && (p != btmPt2))
+    {
+        p = p->Prev;
+    }
+    double dx2p = std::fabs(GetDx(btmPt2->Pt, p->Pt));
+    p = btmPt2->Next;
+    while ((p->Pt == btmPt2->Pt) && (p != btmPt2))
+    {
+        p = p->Next;
+    }
+    double dx2n = std::fabs(GetDx(btmPt2->Pt, p->Pt));
+
+    if (std::max(dx1p, dx1n) == std::max(dx2p, dx2n) &&
+        std::min(dx1p, dx1n) == std::min(dx2p, dx2n))
+    {
+        return Area(btmPt1) > 0; //if otherwise identical use orientation
+    }
+    else
+    {
+        return (dx1p >= dx2p && dx1p >= dx2n) || (dx1n >= dx2p && dx1n >= dx2n);
+    }
 }
-//------------------------------------------------------------------------------
+
+template <typename T>
+point_ptr<T> GetBottomPt(point_ptr<T> pp)
+{
+    point_ptr<T> dups = 0;
+    point_ptr<T> p = pp->Next;
+    while (p != pp)
+    {
+        if (p->Pt.y > pp->Pt.y)
+        {
+            pp = p;
+            dups = 0;
+        }
+        else if (p->Pt.y == pp->Pt.y && p->Pt.x <= pp->Pt.x)
+        {
+            if (p->Pt.x < pp->Pt.x)
+            {
+                dups = 0;
+                pp = p;
+            }
+            else
+            {
+                if (p->Next != pp && p->Prev != pp)
+                {
+                    dups = p;
+                }
+            }
+        }
+        p = p->Next;
+    }
+    if (dups)
+    {
+        //there appears to be at least 2 vertices at BottomPt so ...
+        while (dups != p)
+        {
+            if (!FirstIsBottomPt(p, dups))
+            {
+                pp = dups;
+            }
+            dups = dups->Next;
+            while (dups->Pt != pp->Pt)
+            {
+                dups = dups->Next;
+            }
+        }
+    }
+    return pp;
+}
+
+template <typename T>
+bool Pt2IsBetweenPt1AndPt3(mapbox::geometry::point<T> pt1,
+                           mapbox::geometry::point<T> pt2,
+                           mapbox::geometry::point<T> pt3)
+{
+    if ((pt1 == pt3) || (pt1 == pt2) || (pt3 == pt2))
+    {
+        return false;
+    }
+    else if (pt1.x != pt3.x)
+    {
+        return (pt2.x > pt1.x) == (pt2.x < pt3.x);
+    }
+    else
+    {
+        return (pt2.y > pt1.y) == (pt2.y < pt3.y);
+    }
+}
 
 bool HorzSegmentsOverlap(cInt seg1a, cInt seg1b, cInt seg2a, cInt seg2b)
 {
-  if (seg1a > seg1b) std::swap(seg1a, seg1b);
-  if (seg2a > seg2b) std::swap(seg2a, seg2b);
-  return (seg1a < seg2b) && (seg2a < seg1b);
+    if (seg1a > seg1b)
+    {
+        std::swap(seg1a, seg1b);
+    }
+    if (seg2a > seg2b)
+    {
+        std::swap(seg2a, seg2b);
+    }
+    return (seg1a < seg2b) && (seg2a < seg1b);
 }
 
 }}}
