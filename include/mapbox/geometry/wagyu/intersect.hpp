@@ -21,8 +21,8 @@ struct intersect_node
     bool          IsHole;
     bool          IsOpen;
     intersect_node_ptr<T>   FirstLeft;  //see comments in clipper.pas
-    mapbox::geometry::intersect::point_ptr<T>  Pts;
-    mapbox::geometry::intersect::point_ptr<T>  BottomPt;
+    mapbox::geometry::ring::point_ptr<T>  Pts;
+    mapbox::geometry::ring::point_ptr<T>  BottomPt;
 };
 
 template <typename T>
