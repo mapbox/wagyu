@@ -30,8 +30,8 @@ enum fill_type : std::uint8_t
 
 static double const def_arc_tolerance = 0.25;
 
-static int const edge_unassigned = -1;  //edge not currently 'owning' a solution
-static int const edge_skip = -2;        //edge that would otherwise close a path
+static int const EDGE_UNASSIGNED = -1;  //edge not currently 'owning' a solution
+static int const EDGE_SKIP = -2;        //edge that would otherwise close a path
 
 enum horizontal_direction : std::uint8_t
 {

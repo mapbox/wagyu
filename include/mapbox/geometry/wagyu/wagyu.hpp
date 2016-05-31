@@ -76,14 +76,26 @@ public:
         clear();
     }
 
-    bool add_path(const mapbox::geometry::linear_ring<value_type> &pg, polygon_type PolyTyp, bool Closed)
+    bool add_path(mapbox::geometry::linear_ring<value_type> const& pg, polygon_type PolyTyp, bool Closed)
     {
-
+        bool success = add_edge(pg, PolyTyp, Closed, m_PreserveCollinear, m_UseFullRange);
+        if (!Closed && success)
+        {
+            m_HasOpenPaths = true;
+        }
     }
 
-    bool add_paths(const linear_ring_list<value_type> &ppg, polygon_type PolyTyp, bool Closed)
+    bool add_paths(linear_ring_list<value_type> const& ppg, polygon_type PolyTyp, bool Closed)
     {
-
+        bool result = false;
+        for (std::size_t i = 0; i < ppg.size(); ++i)
+        {
+            if (add_path(ppg[i], PolyTyp, Closed))
+            {
+                result = true;
+            }
+        }
+        return result;
     }
 
     void clear();
