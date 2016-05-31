@@ -39,7 +39,7 @@ public:
         m_endtype(etClosedPolygon),
         m_IsOpen(false) {}
     
-    ~polygon_Node() {}
+    ~polygon_node() {}
     
     std::size_t index() const
     {
@@ -128,7 +128,7 @@ private:
     polygon_node_list<T> AllNodes;
 
 public:
-    ~PolyTree()
+    ~polygon_tree()
     {
         Clear();
     }

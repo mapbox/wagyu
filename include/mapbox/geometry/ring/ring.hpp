@@ -11,13 +11,13 @@ void set_next(const_point_ptr<T> & node, const const_point_ptr<T> & next_node)
 }
 
 template <typename T>
-point_ptr get_next(const_point_ptr<T> & node)
+point_ptr<T> get_next(const_point_ptr<T> & node)
 {
     return node->next;
 }
 
 template <typename T>
-point_ptr get_prev(const_point_ptr<T> & node)
+point_ptr<T> get_prev(const_point_ptr<T> & node)
 {
     return node->prev;
 }
@@ -25,7 +25,7 @@ point_ptr get_prev(const_point_ptr<T> & node)
 template <typename T>
 void set_prev(const_point_ptr<T> & node, const const_point_ptr<T> & prev_node)
 {
-    node->prev = next_node;
+    node->prev = prev_node;
 }
 
 template <typename T>
@@ -36,7 +36,7 @@ void init(const_point_ptr<T> & node)
 }
 
 template <typename T>
-void std::size_t count(const const_point_ptr<T> & orig_node)
+std::size_t count(const const_point_ptr<T> & orig_node)
 {
     std::size_t size = 0;
     const_point_ptr<T> n = orig_node;
@@ -45,7 +45,7 @@ void std::size_t count(const const_point_ptr<T> & orig_node)
         n = get_next(n);
         ++size;
     } 
-    while (node != orig_node);
+    while (n != orig_node);
     return size;
 }
 

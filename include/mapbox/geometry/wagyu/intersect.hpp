@@ -20,7 +20,7 @@ struct intersect_node
     std::size_t   Idx;
     bool          IsHole;
     bool          IsOpen;
-    intersect_ptr<T>   FirstLeft;  //see comments in clipper.pas
+    intersect_node_ptr<T>   FirstLeft;  //see comments in clipper.pas
     mapbox::geometry::intersect::point_ptr<T>  Pts;
     mapbox::geometry::intersect::point_ptr<T>  BottomPt;
 };
