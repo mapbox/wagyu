@@ -78,7 +78,7 @@ public:
 
     bool add_path(mapbox::geometry::linear_ring<value_type> const& pg, polygon_type PolyTyp, bool Closed)
     {
-        bool success = add_edge(pg, PolyTyp, Closed, m_PreserveCollinear, m_UseFullRange);
+        bool success = add_edge(pg, m_edges, m_MinimaList, PolyTyp, Closed, m_PreserveCollinear, m_UseFullRange);
         if (!Closed && success)
         {
             m_HasOpenPaths = true;
