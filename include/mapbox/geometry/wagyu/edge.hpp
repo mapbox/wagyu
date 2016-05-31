@@ -22,13 +22,13 @@ struct edge
     mapbox::geometry::point<T> Top;
     double       Dx;
     std::size_t  OutIdx;
-    edge_ptr     Next;
-    edge_ptr     Prev;
-    edge_ptr     NextInLML;
-    edge_ptr     NextInAEL;
-    edge_ptr     PrevInAEL;
-    edge_ptr     NextInSEL;
-    edge_ptr     PrevInSEL;
+    edge_ptr<T>  Next;
+    edge_ptr<T>  Prev;
+    edge_ptr<T>  NextInLML;
+    edge_ptr<T>  NextInAEL;
+    edge_ptr<T>  PrevInAEL;
+    edge_ptr<T>  NextInSEL;
+    edge_ptr<T>  PrevInSEL;
     std::int32_t WindCnt;
     std::int32_t WindCnt2; //winding count of the opposite polytype
     std::int8_t  WindDelta; //1 or -1 depending on winding direction

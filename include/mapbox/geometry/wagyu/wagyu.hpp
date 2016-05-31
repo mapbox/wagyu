@@ -1,5 +1,8 @@
 #pragma once
 
+#include <list>
+#include <queue>
+
 #include <mapbox/geometry/polygon.hpp>
 #include <mapbox/geometry/ring/ring.hpp>
 
