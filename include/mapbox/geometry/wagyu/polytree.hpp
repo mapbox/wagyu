@@ -127,6 +127,7 @@ class polygon_tree : public polygon_node<T>
 {
     using value_type = T;
     using polygon_node<value_type>::Childs;
+
 private:
     polygon_node_list<value_type> AllNodes;
 
