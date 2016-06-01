@@ -4,6 +4,7 @@
 #include <mapbox/geometry/wagyu/edge.hpp>
 #include <mapbox/geometry/wagyu/exceptions.hpp>
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
+#include <mapbox/geometry/wagyu/util.hpp>
 
 namespace mapbox { namespace geometry { namespace wagyu {
 
@@ -28,26 +29,6 @@ edge_ptr<T> RemoveEdge(edge_ptr<T> e)
 }
 
 template <typename T>
-void RangeTest(mapnik::geometry::point<T> & Pt, bool & useFullRange)
-{
-    if (useFullRange)
-    {
-        if (Pt.X > hiRange || Pt.Y > hiRange || -Pt.X > hiRange || -Pt.Y > hiRange)
-        {
-            std::stringstream s;
-            s << "Coordinate outside allowed range: ";
-            s << std::fixed << Pt.X << " " << Pt.Y << " " << -Pt.X << " " << -Pt.Y;
-            throw clipperException(s.str().c_str());
-        }
-    }
-    else if (Pt.X > loRange|| Pt.Y > loRange || -Pt.X > loRange || -Pt.Y > loRange) 
-    {
-        useFullRange = true;
-        RangeTest(Pt, useFullRange);
-    }
-}
-
-template <typename T>
 inline void SetDx(edge<T> & e)
 {
     double dy = static_cast<double>(e.Top.y - e.Bot.y);
@@ -68,7 +49,7 @@ inline void InitEdge(edge_ptr<T> e, edge_ptr<T> eNext, edge_ptr<T> ePrev, mapbox
     e->Next = eNext;
     e->Prev = ePrev;
     e->Curr = Pt;
-    e->OutIdx = Unassigned;
+    e->OutIdx = EDGE_UNASSIGNED;
 }
 
 template <typename T>
@@ -102,7 +83,7 @@ edge_ptr<T> ProcessBound(edge_ptr<T> E,
         //create another LocMin and call ProcessBound once more
         if (NextIsForward)
         {
-            while (E->Top.Y == E->Next->Bot.Y)
+            while (E->Top.y == E->Next->Bot.y)
             {
                 E = E->Next;
             }
@@ -115,7 +96,7 @@ edge_ptr<T> ProcessBound(edge_ptr<T> E,
         }
         else
         {
-            while (E->Top.Y == E->Prev->Bot.Y)
+            while (E->Top.y == E->Prev->Bot.y)
             {
                 E = E->Prev;
             }
@@ -148,7 +129,7 @@ edge_ptr<T> ProcessBound(edge_ptr<T> E,
                 E = Result->Prev;
             }
             local_minimum<T> locMin;
-            locMin.Y = E->Bot.Y;
+            locMin.y = E->Bot.y;
             locMin.LeftBound = nullptr;
             locMin.RightBound = E;
             E->WindDelta = 0;
@@ -175,12 +156,12 @@ edge_ptr<T> ProcessBound(edge_ptr<T> E,
         }
         if (IsHorizontal(*EStart)) //ie an adjoining horizontal skip edge
         {
-            if (EStart->Bot.X != E->Bot.X && EStart->Top.X != E->Bot.X)
+            if (EStart->Bot.x != E->Bot.x && EStart->Top.x != E->Bot.x)
             {
                 ReverseHorizontal(*E);
             }
         }
-        else if (EStart->Bot.X != E->Bot.X)
+        else if (EStart->Bot.x != E->Bot.x)
         {
             ReverseHorizontal(*E);
         }
@@ -189,7 +170,7 @@ edge_ptr<T> ProcessBound(edge_ptr<T> E,
     EStart = E;
     if (NextIsForward)
     {
-        while (Result->Top.Y == Result->Next->Bot.Y && 
+        while (Result->Top.y == Result->Next->Bot.y && 
                Result->Next->OutIdx != EDGE_SKIP)
         {
             Result = Result->Next;
@@ -204,7 +185,7 @@ edge_ptr<T> ProcessBound(edge_ptr<T> E,
             {
                 Horz = Horz->Prev;
             }
-            if (Horz->Prev->Top.X > Result->Next->Top.X)
+            if (Horz->Prev->Top.x > Result->Next->Top.x)
             {
                 Result = Horz->Prev;
             }
@@ -214,14 +195,14 @@ edge_ptr<T> ProcessBound(edge_ptr<T> E,
             E->NextInLML = E->Next;
             if (IsHorizontal(*E) && 
                 E != EStart &&
-                E->Bot.X != E->Prev->Top.X)
+                E->Bot.x != E->Prev->Top.x)
             {
                 ReverseHorizontal(*E);
             }
             E = E->Next;
         }
         if (IsHorizontal(*E) && E != EStart && 
-            E->Bot.X != E->Prev->Top.X)
+            E->Bot.x != E->Prev->Top.x)
         {
             ReverseHorizontal(*E);
         }
@@ -229,7 +210,7 @@ edge_ptr<T> ProcessBound(edge_ptr<T> E,
     }
     else
     {
-        while (Result->Top.Y == Result->Prev->Bot.Y && 
+        while (Result->Top.y == Result->Prev->Bot.y && 
                Result->Prev->OutIdx != EDGE_SKIP) 
         {
             Result = Result->Prev;
@@ -242,8 +223,8 @@ edge_ptr<T> ProcessBound(edge_ptr<T> E,
             {
                 Horz = Horz->Next;
             }
-            if (Horz->Next->Top.X == Result->Prev->Top.X ||
-                Horz->Next->Top.X > Result->Prev->Top.X)
+            if (Horz->Next->Top.x == Result->Prev->Top.x ||
+                Horz->Next->Top.x > Result->Prev->Top.x)
             {
                 Result = Horz->Next;
             }
@@ -254,7 +235,7 @@ edge_ptr<T> ProcessBound(edge_ptr<T> E,
             E->NextInLML = E->Prev;
             if (IsHorizontal(*E) && 
                 E != EStart && 
-                E->Bot.X != E->Next->Top.X) 
+                E->Bot.x != E->Next->Top.x) 
             {
                 ReverseHorizontal(*E);
             }
@@ -262,7 +243,7 @@ edge_ptr<T> ProcessBound(edge_ptr<T> E,
         }
         if (IsHorizontal(*E) && 
             E != EStart && 
-            E->Bot.X != E->Next->Top.X) 
+            E->Bot.x != E->Next->Top.x) 
         {
             ReverseHorizontal(*E);
         }
@@ -293,11 +274,11 @@ edge_ptr<T> FindNextLocMin(edge_ptr<T> E)
         {
             E = E->Next;
         }
-        if (E->Top.Y == E->Prev->Bot.Y)
+        if (E->Top.y == E->Prev->Bot.y)
         {
             continue; //ie just an intermediate horz.
         }
-        if (E2->Prev->Bot.X < E->Bot.X)
+        if (E2->Prev->Bot.x < E->Bot.x)
         {
             E = E2;
         }
@@ -307,13 +288,12 @@ edge_ptr<T> FindNextLocMin(edge_ptr<T> E)
 }
 
 template <typename T>
-bool add_edge(std::vector<mapbox::geometry::point<T> > Path const& pg,
+bool add_edge(mapbox::geometry::linear_ring<T> const& pg,
               edge_list<T> & m_edges,
               local_minimum_list<T> & m_MinimaList,
               polygon_type PolyTyp, 
               bool Closed,
-              bool m_PreserveCollinear = false,
-              bool m_UseFullRange = false)
+              bool m_PreserveCollinear = false)
 {
 #ifdef use_lines
     if (!Closed && PolyTyp == ptClip)
@@ -346,20 +326,17 @@ bool add_edge(std::vector<mapbox::geometry::point<T> > Path const& pg,
     }
 
     //create a new edge array ...
-    edge_ptr<T> edges = new TEdge [highI + 1];
+    edge_ptr<T> edges = new edge<T> [highI + 1];
 
     bool IsFlat = true;
     //1. Basic (first) edge initialization ...
     try
     {
         edges[1].Curr = pg[1];
-        RangeTest(pg[0], m_UseFullRange);
-        RangeTest(pg[highI], m_UseFullRange);
         InitEdge(&edges[0], &edges[1], &edges[highI], pg[0]);
         InitEdge(&edges[highI], &edges[0], &edges[highI - 1], pg[highI]);
         for (int i = highI - 1; i >= 1; --i)
         {
-            RangeTest(pg[i], m_UseFullRange);
             InitEdge(&edges[i], &edges[i+1], &edges[i-1], pg[i]);
         }
     }
@@ -397,7 +374,7 @@ bool add_edge(std::vector<mapbox::geometry::point<T> > Path const& pg,
             break; //only two vertices
         }
         else if (Closed &&
-                 SlopesEqual(E->Prev->Curr, E->Curr, E->Next->Curr, m_UseFullRange) && 
+                 SlopesEqual(E->Prev->Curr, E->Curr, E->Next->Curr) && 
                  (!m_PreserveCollinear ||
                  !Pt2IsBetweenPt1AndPt3(E->Prev->Curr, E->Curr, E->Next->Curr)))
         {
@@ -438,7 +415,7 @@ bool add_edge(std::vector<mapbox::geometry::point<T> > Path const& pg,
     {
         InitEdge2(*E, PolyTyp);
         E = E->Next;
-        if (IsFlat && E->Curr.Y != eStart->Curr.Y)
+        if (IsFlat && E->Curr.y != eStart->Curr.y)
         {
             IsFlat = false;
         }
@@ -458,14 +435,14 @@ bool add_edge(std::vector<mapbox::geometry::point<T> > Path const& pg,
         }
         E->Prev->OutIdx = EDGE_SKIP;
         local_minimum<T> locMin;
-        locMin.Y = E->Bot.Y;
+        locMin.y = E->Bot.y;
         locMin.LeftBound = nullptr;
         locMin.RightBound = E;
         locMin.RightBound->Side = edge_right;
         locMin.RightBound->WindDelta = 0;
         for (;;)
         {
-            if (E->Bot.X != E->Prev->Top.X)
+            if (E->Bot.x != E->Prev->Top.x)
             {
                 ReverseHorizontal(*E);
             }
@@ -507,7 +484,7 @@ bool add_edge(std::vector<mapbox::geometry::point<T> > Path const& pg,
         //E and E.Prev now share a local minima (left aligned if horizontal).
         //Compare their slopes to find which starts which bound ...
         local_minimum<T> locMin;
-        locMin.Y = E->Bot.Y;
+        locMin.y = E->Bot.y;
         if (E->Dx < E->Prev->Dx) 
         {
             locMin.LeftBound = E->Prev;
@@ -535,16 +512,16 @@ bool add_edge(std::vector<mapbox::geometry::point<T> > Path const& pg,
         }
         locMin.RightBound->WindDelta = -locMin.LeftBound->WindDelta;
 
-        E = ProcessBound(locMin.LeftBound, leftBoundIsForward);
+        E = ProcessBound(locMin.LeftBound, leftBoundIsForward, m_MinimaList);
         if (E->OutIdx == EDGE_SKIP)
         {
-            E = ProcessBound(E, leftBoundIsForward);
+            E = ProcessBound(E, leftBoundIsForward, m_MinimaList);
         }
 
-        edge_ptr<T> E2 = ProcessBound(locMin.RightBound, !leftBoundIsForward);
+        edge_ptr<T> E2 = ProcessBound(locMin.RightBound, !leftBoundIsForward, m_MinimaList);
         if (E2->OutIdx == EDGE_SKIP)
         {
-            E2 = ProcessBound(E2, !leftBoundIsForward);
+            E2 = ProcessBound(E2, !leftBoundIsForward, m_MinimaList);
         }
 
         if (locMin.LeftBound->OutIdx == EDGE_SKIP)

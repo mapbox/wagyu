@@ -21,7 +21,7 @@ struct edge
     mapbox::geometry::point<T> Curr; //current (updated for every new scanbeam)
     mapbox::geometry::point<T> Top;
     double       Dx;
-    std::size_t  OutIdx;
+    int          OutIdx;
     edge_ptr<T>  Next;
     edge_ptr<T>  Prev;
     edge_ptr<T>  NextInLML;

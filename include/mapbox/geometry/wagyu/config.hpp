@@ -32,6 +32,8 @@ static double const def_arc_tolerance = 0.25;
 
 static int const EDGE_UNASSIGNED = -1;  //edge not currently 'owning' a solution
 static int const EDGE_SKIP = -2;        //edge that would otherwise close a path
+static std::int64_t const LOW_RANGE = 0x3FFFFFFF;
+static std::int64_t const HIGH_RANGE = 0x3FFFFFFFFFFFFFFFLL;
 
 enum horizontal_direction : std::uint8_t
 {

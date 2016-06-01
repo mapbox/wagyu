@@ -9,6 +9,7 @@
 #include <mapbox/geometry/wagyu/box.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/edge.hpp>
+#include <mapbox/geometry/wagyu/edge_util.hpp>
 #include <mapbox/geometry/wagyu/join.hpp>
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
 #include <mapbox/geometry/wagyu/intersect.hpp>
@@ -16,9 +17,6 @@
 #include <mapbox/geometry/wagyu/ring.hpp>
 
 namespace mapbox { namespace geometry { namespace wagyu {
-
-template <typename T>
-using linear_ring_list = std::vector<mapbox::geometry::linear_ring<T> >;
 
 template <typename T>
 class clipper
@@ -42,7 +40,6 @@ private:
     edge_ptr<value_type>               m_SortedEdges;
     fill_type                          m_ClipFillType;
     fill_type                          m_SubjFillType;
-    bool                               m_UseFullRange;
     bool                               m_PreserveCollinear;
     bool                               m_HasOpenPaths;
     bool                               m_ExecuteLocked;
@@ -66,7 +63,6 @@ public:
         m_SortedEdges(nullptr),
         m_ClipFillType(fill_type_even_odd),
         m_SubjFillType(fill_type_even_odd),
-        m_UseFullRange(false),
         m_PreserveCollinear(false),
         m_HasOpenPaths(false),
         m_ExecuteLocked(false),
@@ -81,21 +77,26 @@ public:
         clear();
     }
 
-    bool add_path(mapbox::geometry::linear_ring<value_type> const& pg, polygon_type PolyTyp, bool Closed)
+    bool add_ring(mapbox::geometry::linear_ring<value_type> const& pg, 
+                  polygon_type PolyTyp = polygon_type_subject, 
+                  bool Closed = true)
     {
-        bool success = add_edge(pg, m_edges, m_MinimaList, PolyTyp, Closed, m_PreserveCollinear, m_UseFullRange);
+        bool success = add_edge(pg, m_edges, m_MinimaList, PolyTyp, Closed, m_PreserveCollinear);
         if (!Closed && success)
         {
             m_HasOpenPaths = true;
         }
+        return success;
     }
 
-    bool add_paths(linear_ring_list<value_type> const& ppg, polygon_type PolyTyp, bool Closed)
+    bool add_polygon(mapbox::geometry::polygon<value_type> const& ppg, 
+                     polygon_type PolyTyp = polygon_type_subject, 
+                     bool Closed = true)
     {
         bool result = false;
         for (std::size_t i = 0; i < ppg.size(); ++i)
         {
-            if (add_path(ppg[i], PolyTyp, Closed))
+            if (add_ring(ppg[i], PolyTyp, Closed))
             {
                 result = true;
             }
@@ -113,7 +114,6 @@ public:
             delete [] edges;
         }
         m_edges.clear();
-        m_UseFullRange = false;
         m_HasOpenPaths = false;
     }
 

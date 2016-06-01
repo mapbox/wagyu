@@ -23,7 +23,7 @@ double Area(mapbox::geometry::linear_ring<T> const& poly)
     a += static_cast<double>(itr_prev->x + itr->x) * static_cast<double>(itr_prev->y - itr->y);
     ++itr;
     itr_prev = poly.begin();
-    for (;itr != poly.end(); ++itr, ++itr_next)
+    for (;itr != poly.end(); ++itr, ++itr_prev)
     {
         a += static_cast<double>(itr_prev->x + itr->x) * static_cast<double>(itr_prev->y - itr->y);
     }
@@ -81,7 +81,7 @@ enum point_in_polygon_result : std::int8_t
     point_on_polygon = -1,
     point_inside_polygon = 0,
     point_outside_polygon = 1
-}
+};
 
 template <typename T>
 point_in_polygon_result PointInPolygon(point<T> const& pt, mapbox::geometry::linear_ring<T> const& path)
@@ -110,7 +110,14 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, mapbox::geometry::lin
             if (itr->x > pt.x)
             {
                 // Switch between point outside polygon and point inside polygon
-                result = 1 - result;
+                if (result == point_outside_polygon)
+                {
+                    result = point_inside_polygon;
+                }
+                else
+                {
+                    result = point_outside_polygon;
+                }
             }
             else
             {
@@ -123,7 +130,14 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, mapbox::geometry::lin
                 if ((d > 0) == (itr->y > itr_prev->y))
                 {
                     // Switch between point outside polygon and point inside polygon
-                    result = 1 - result;
+                    if (result == point_outside_polygon)
+                    {
+                        result = point_inside_polygon;
+                    }
+                    else
+                    {
+                        result = point_outside_polygon;
+                    }
                 }
             }
         } 
@@ -140,13 +154,20 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, mapbox::geometry::lin
                 if ((d > 0) == (itr->y > itr_prev->y))
                 {
                     // Switch between point outside polygon and point inside polygon
-                    result = 1 - result;
+                    if (result == point_outside_polygon)
+                    {
+                        result = point_inside_polygon;
+                    }
+                    else
+                    {
+                        result = point_outside_polygon;
+                    }
                 }
             }
         }
     }
     ++itr;
-    itr_prev = poly.begin();
+    itr_prev = path.begin();
     for (; itr != path.end(); ++itr, ++itr_prev)
     {
         if (itr->y == pt.y)
@@ -163,7 +184,14 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, mapbox::geometry::lin
                 if (itr->x > pt.x)
                 {
                     // Switch between point outside polygon and point inside polygon
-                    result = 1 - result;
+                    if (result == point_outside_polygon)
+                    {
+                        result = point_inside_polygon;
+                    }
+                    else
+                    {
+                        result = point_outside_polygon;
+                    }
                 }
                 else
                 {
@@ -176,7 +204,14 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, mapbox::geometry::lin
                     if ((d > 0) == (itr->y > itr_prev->y))
                     {
                         // Switch between point outside polygon and point inside polygon
-                        result = 1 - result;
+                        if (result == point_outside_polygon)
+                        {
+                            result = point_inside_polygon;
+                        }
+                        else
+                        {
+                            result = point_outside_polygon;
+                        }
                     }
                 }
             } 
@@ -193,7 +228,14 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, mapbox::geometry::lin
                     if ((d > 0) == (itr->y > itr_prev->y))
                     {
                         // Switch between point outside polygon and point inside polygon
-                        result = 1 - result;
+                        if (result == point_outside_polygon)
+                        {
+                            result = point_inside_polygon;
+                        }
+                        else
+                        {
+                            result = point_outside_polygon;
+                        }
                     }
                 }
             }
@@ -224,7 +266,14 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, point_ptr<T> op)
                 if (op->next->x > pt.x)
                 {
                     // Switch between point outside polygon and point inside polygon
-                    result = 1 - result;
+                    if (result == point_outside_polygon)
+                    {
+                        result = point_inside_polygon;
+                    }
+                    else
+                    {
+                        result = point_outside_polygon;
+                    }
                 }
                 else
                 {
@@ -237,7 +286,14 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, point_ptr<T> op)
                     if ((d > 0) == (op->next->y > op->y))
                     {
                         // Switch between point outside polygon and point inside polygon
-                        result = 1 - result;
+                        if (result == point_outside_polygon)
+                        {
+                            result = point_inside_polygon;
+                        }
+                        else
+                        {
+                            result = point_outside_polygon;
+                        }
                     }
                 }
             }
@@ -254,7 +310,14 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, point_ptr<T> op)
                     if ((d > 0) == (op->next->Pt.y > op->Pt.y))
                     {
                         // Switch between point outside polygon and point inside polygon
-                        result = 1 - result;
+                        if (result == point_outside_polygon)
+                        {
+                            result = point_inside_polygon;
+                        }
+                        else
+                        {
+                            result = point_outside_polygon;
+                        }
                     }
                 }
             }
@@ -291,19 +354,25 @@ bool Poly2ContainsPoly1(point_ptr<T> OutPt1, point_ptr<T> OutPt2)
 }
 
 template <typename T>
-bool SlopesEqual(edge<T> const& e1, edge<T> const& e2)
+bool SlopesEqual(edge<T> const& e1,
+                 edge<T> const& e2)
 {
     return (e1.Top.y - e1.Bot.y) * (e2.Top.x - e2.Bot.x) == (e1.Top.x - e1.Bot.x) * (e2.Top.y - e2.Bot.y);
 }
 
 template <typename T>
-bool SlopesEqual(point<T> const& pt1, point<T> const& pt2, point<T> const& pt3)
+bool SlopesEqual(mapbox::geometry::point<T> const& pt1, 
+                 mapbox::geometry::point<T> const& pt2, 
+                 mapbox::geometry::point<T> const& pt3)
 {
     return (pt1.y - pt2.y) * (pt2.x - pt3.x) == (pt1.x - pt2.x) * (pt2.y - pt3.y);
 }
 
 template <typename T>
-bool SlopesEqual(point<T> const& pt1, point<T> const& pt2, point<T> const& pt3, point<T> const& pt4)
+bool SlopesEqual(mapbox::geometry::point<T> const& pt1,
+                 mapbox::geometry::point<T> const& pt2, 
+                 mapbox::geometry::point<T> const& pt3, 
+                 mapbox::geometry::point<T> const& pt4)
 {
     return (pt1.y - pt2.y) * (pt3.x - pt4.x) == (pt1.x - pt2.x) * (pt3.y - pt4.y);
 }
@@ -573,7 +642,11 @@ bool Pt2IsBetweenPt1AndPt3(mapbox::geometry::point<T> pt1,
     }
 }
 
-bool HorzSegmentsOverlap(cInt seg1a, cInt seg1b, cInt seg2a, cInt seg2b)
+template <typename T>
+bool HorzSegmentsOverlap(T seg1a,
+                         T seg1b,
+                         T seg2a,
+                         T seg2b)
 {
     if (seg1a > seg1b)
     {
