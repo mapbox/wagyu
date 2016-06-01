@@ -91,7 +91,7 @@ void InitEdge2(edge<T> & e, polygon_type Pt)
 template <typename T>
 edge_ptr<T> ProcessBound(edge_ptr<T> E,
                          bool NextIsForward, 
-                         minimum_list<T> & m_MinimaList)
+                         local_minimum_list<T> & m_MinimaList)
 {
     edge_ptr<T> Result = E;
     edge_ptr<T> Horz = nullptr;
@@ -309,7 +309,7 @@ edge_ptr<T> FindNextLocMin(edge_ptr<T> E)
 template <typename T>
 bool add_edge(std::vector<mapbox::geometry::point<T> > Path const& pg,
               edge_list<T> & m_edges,
-              minimum_list<T> & m_MinimaList,
+              local_minimum_list<T> & m_MinimaList,
               polygon_type PolyTyp, 
               bool Closed,
               bool m_PreserveCollinear = false,

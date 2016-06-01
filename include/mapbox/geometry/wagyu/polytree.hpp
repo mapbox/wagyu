@@ -20,14 +20,15 @@ using polygon_node_list = std::vector<polygon_node_ptr<T> >;
 template <typename T>
 class polygon_node
 {
-private:
-    mapbox::geometry::linear_ring<T> Contour;
-    polygon_node_list<T>             Childs;
-    std::size_t                      Index; //node index in Parent.Childs
-    polygon_node_ptr<T>              Parent;
-    join_type                        m_jointype;
-    end_type                         m_endtype;
-    bool                             m_IsOpen;
+    using value_type = T;
+protected:
+    mapbox::geometry::linear_ring<value_type> Contour;
+    polygon_node_list<value_type>             Childs;
+    std::size_t                               Index; //node index in Parent.Childs
+    polygon_node_ptr<value_type>              Parent;
+    join_type                                 m_jointype;
+    end_type                                  m_endtype;
+    bool                                      m_IsOpen;
 
 public:
     polygon_node() :
@@ -39,7 +40,7 @@ public:
         m_endtype(etClosedPolygon),
         m_IsOpen(false) {}
     
-    ~polygon_Node() {}
+    ~polygon_node() {}
     
     std::size_t index() const
     {
@@ -51,7 +52,7 @@ public:
         Index = value;
     }
 
-    polygon_node_ptr<T> GetNext() const
+    polygon_node_ptr<value_type> GetNext() const
     { 
         if (!Childs.empty())
         {
@@ -66,7 +67,7 @@ public:
     bool IsHole() const
     { 
         bool result = true;
-        polygon_node_ptr<T> node = Parent;
+        polygon_node_ptr<value_type> node = Parent;
         while (node)
         {
             result = !result;
@@ -85,8 +86,8 @@ public:
         return Childs.size();
     }
 
-private:
-    polygon_node_ptr<T> GetNextSiblingUp() const
+protected:
+    polygon_node_ptr<value_type> GetNextSiblingUp() const
     {
         if (!Parent) //protects against PolyTree.GetNextSiblingUp()
         {
@@ -103,7 +104,7 @@ private:
 
     }
     
-    void AddChild(polygon_node<T> & child)
+    void AddChild(polygon_node<value_type> & child)
     {
         std::size_t cnt = Childs.size();
         Childs.push_back(&child);
@@ -122,18 +123,20 @@ template <typename T>
 using const_polygon_tree_ptr = polygon_tree<T> * const;
 
 template <typename T>
-class polygon_tree: public polygon_node<T>
-{ 
+class polygon_tree : public polygon_node<T>
+{
+    using value_type = T;
+    using polygon_node<value_type>::Childs;
 private:
-    polygon_node_list<T> AllNodes;
+    polygon_node_list<value_type> AllNodes;
 
 public:
-    ~PolyTree()
+    ~polygon_tree()
     {
-        Clear();
+        clear();
     }
 
-    polygon_node_ptr<T> GetFirst() const
+    polygon_node_ptr<value_type> GetFirst() const
     {
         if (!Childs.empty())
         {
@@ -142,7 +145,7 @@ public:
         return nullptr;
     }
     
-    void Clear()
+    void clear()
     {
         for (std::size_t i = 0; i < AllNodes.size(); ++i)
         {
@@ -152,7 +155,7 @@ public:
         Childs.resize(0);
     }
     
-    std::size_t Total() const
+    std::size_t size() const
     {
         std::size_t result = AllNodes.size();
         //with negative offsets, ignore the hidden outer polygon ...
@@ -163,5 +166,7 @@ public:
         return result;
     }
 };
+
+
 
 }}}
