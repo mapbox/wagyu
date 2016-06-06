@@ -1,5 +1,9 @@
 #pragma once
 
+#include <mapbox/geometry/point.hpp>
+#include <mapbox/geometry/line_string.hpp>
+#include <mapbox/geometry/polygon.hpp>
+
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/edge.hpp>
 #include <mapbox/geometry/wagyu/exceptions.hpp>
@@ -70,474 +74,710 @@ void InitEdge2(edge<T> & e, polygon_type Pt)
 }
 
 template <typename T>
-edge_ptr<T> ProcessBound(edge_ptr<T> E,
-                         bool NextIsForward, 
-                         local_minimum_list<T> & m_MinimaList)
+edge_ptr<T> process_bound_type_line(edge_ptr<T> current_edge,
+                                    bool next_is_forward, 
+                                    local_minimum_list<T> & minima_list)
 {
-    edge_ptr<T> Result = E;
-    edge_ptr<T> Horz = nullptr;
+    edge_ptr<T> result = current_edge;
+    edge_ptr<T> horizontal_edge = nullptr;
 
-    if (E->OutIdx == EDGE_SKIP)
+    if (current_edge->OutIdx == EDGE_SKIP)
     {
         //if edges still remain in the current bound beyond the skip edge then
         //create another LocMin and call ProcessBound once more
-        if (NextIsForward)
+        if (next_is_forward)
         {
-            while (E->Top.y == E->Next->Bot.y)
+            while (current_edge->Top.y == current_edge->Next->Bot.y)
             {
-                E = E->Next;
+                current_edge = current_edge->Next;
             }
             //don't include top horizontals when parsing a bound a second time,
             //they will be contained in the opposite bound ...
-            while (E != Result && IsHorizontal(*E))
+            while (current_edge != result && 
+                   IsHorizontal(*current_edge))
             {
-                E = E->Prev;
+                current_edge = current_edge->Prev;
             }
         }
         else
         {
-            while (E->Top.y == E->Prev->Bot.y)
+            while (current_edge->Top.y == current_edge->Prev->Bot.y)
             {
-                E = E->Prev;
+                current_edge = current_edge->Prev;
             }
-            while (E != Result && IsHorizontal(*E))
+            while (current_edge != result && 
+                   IsHorizontal(*current_edge))
             {
-                E = E->Next;
+                current_edge = current_edge->Next;
             }
         }
 
-        if (E == Result)
+        if (current_edge == result)
         {
-            if (NextIsForward)
+            if (next_is_forward)
             {
-                Result = E->Next;
+                result = current_edge->Next;
             }
             else 
             {
-                Result = E->Prev;
+                result = current_edge->Prev;
             }
         }
         else
         {
-            //there are more edges in the bound beyond result starting with E
-            if (NextIsForward)
+            //there are more edges in the bound beyond result starting with current_edge
+            if (next_is_forward)
             {
-                E = Result->Next;
+                current_edge = result->Next;
             }
             else
             {
-                E = Result->Prev;
+                current_edge = result->Prev;
             }
             local_minimum<T> locMin;
-            locMin.y = E->Bot.y;
+            locMin.y = current_edge->Bot.y;
             locMin.LeftBound = nullptr;
-            locMin.RightBound = E;
-            E->WindDelta = 0;
-            Result = ProcessBound(E, NextIsForward, m_MinimaList);
-            m_MinimaList.push_back(locMin);
+            locMin.RightBound = current_edge;
+            current_edge->WindDelta = 0;
+            result = process_bound_type_line(current_edge, next_is_forward, minima_list);
+            minima_list.push_back(locMin);
         }
-        return Result;
+        return result;
     }
 
-    edge_ptr<T> EStart = nullptr;
+    edge_ptr<T> starting_edge = nullptr;
 
-    if (IsHorizontal(*E))
+    if (IsHorizontal(*current_edge))
     {
         //We need to be careful with open paths because this may not be a
-        //true local minima (ie E may be following a skip edge).
+        //true local minima (ie current_edge may be following a skip edge).
         //Also, consecutive horz. edges may start heading left before going right.
-        if (NextIsForward)
+        if (next_is_forward)
         {
-            EStart = E->Prev;
+            starting_edge = current_edge->Prev;
         }
         else
         {
-            EStart = E->Next;
+            starting_edge = current_edge->Next;
         }
-        if (IsHorizontal(*EStart)) //ie an adjoining horizontal skip edge
+        if (IsHorizontal(*starting_edge)) //ie an adjoining horizontal skip edge
         {
-            if (EStart->Bot.x != E->Bot.x && EStart->Top.x != E->Bot.x)
+            if (starting_edge->Bot.x != current_edge->Bot.x && starting_edge->Top.x != current_edge->Bot.x)
             {
-                ReverseHorizontal(*E);
+                ReverseHorizontal(*current_edge);
             }
         }
-        else if (EStart->Bot.x != E->Bot.x)
+        else if (starting_edge->Bot.x != current_edge->Bot.x)
         {
-            ReverseHorizontal(*E);
+            ReverseHorizontal(*current_edge);
         }
     }
 
-    EStart = E;
-    if (NextIsForward)
+    starting_edge = current_edge;
+    if (next_is_forward)
     {
-        while (Result->Top.y == Result->Next->Bot.y && 
-               Result->Next->OutIdx != EDGE_SKIP)
+        while (result->Top.y == result->Next->Bot.y && 
+               result->Next->OutIdx != EDGE_SKIP)
         {
-            Result = Result->Next;
+            result = result->Next;
         }
-        if (IsHorizontal(*Result) && Result->Next->OutIdx != EDGE_SKIP)
+        if (IsHorizontal(*result) && 
+            result->Next->OutIdx != EDGE_SKIP)
         {
             //nb: at the top of a bound, horizontals are added to the bound
             //only when the preceding edge attaches to the horizontal's left vertex
             //unless a Skip edge is encountered when that becomes the top divide
-            Horz = Result;
-            while (IsHorizontal(*Horz->Prev))
+            horizontal_edge = result;
+            while (IsHorizontal(*horizontal_edge->Prev))
             {
-                Horz = Horz->Prev;
+                horizontal_edge = horizontal_edge->Prev;
             }
-            if (Horz->Prev->Top.x > Result->Next->Top.x)
+            if (horizontal_edge->Prev->Top.x > result->Next->Top.x)
             {
-                Result = Horz->Prev;
+                result = horizontal_edge->Prev;
             }
         }
-        while (E != Result) 
+        while (current_edge != result) 
         {
-            E->NextInLML = E->Next;
-            if (IsHorizontal(*E) && 
-                E != EStart &&
-                E->Bot.x != E->Prev->Top.x)
+            current_edge->NextInLML = current_edge->Next;
+            if (IsHorizontal(*current_edge) && 
+                current_edge != starting_edge &&
+                current_edge->Bot.x != current_edge->Prev->Top.x)
             {
-                ReverseHorizontal(*E);
+                ReverseHorizontal(*current_edge);
             }
-            E = E->Next;
+            current_edge = current_edge->Next;
         }
-        if (IsHorizontal(*E) && E != EStart && 
-            E->Bot.x != E->Prev->Top.x)
+        if (IsHorizontal(*current_edge) &&
+            current_edge != starting_edge && 
+            current_edge->Bot.x != current_edge->Prev->Top.x)
         {
-            ReverseHorizontal(*E);
+            ReverseHorizontal(*current_edge);
         }
-        Result = Result->Next; //move to the edge just beyond current bound
+        result = result->Next; //move to the edge just beyond current bound
     }
     else
     {
-        while (Result->Top.y == Result->Prev->Bot.y && 
-               Result->Prev->OutIdx != EDGE_SKIP) 
+        while (result->Top.y == result->Prev->Bot.y && 
+               result->Prev->OutIdx != EDGE_SKIP) 
         {
-            Result = Result->Prev;
+            result = result->Prev;
         }
-        if (IsHorizontal(*Result) && 
-            Result->Prev->OutIdx != EDGE_SKIP)
+        if (IsHorizontal(*result) && 
+            result->Prev->OutIdx != EDGE_SKIP)
         {
-            Horz = Result;
-            while (IsHorizontal(*Horz->Next))
+            horizontal_edge = result;
+            while (IsHorizontal(*horizontal_edge->Next))
             {
-                Horz = Horz->Next;
+                horizontal_edge = horizontal_edge->Next;
             }
-            if (Horz->Next->Top.x == Result->Prev->Top.x ||
-                Horz->Next->Top.x > Result->Prev->Top.x)
+            if (horizontal_edge->Next->Top.x >= result->Prev->Top.x)
             {
-                Result = Horz->Next;
+                result = horizontal_edge->Next;
             }
         }
 
-        while (E != Result)
+        while (current_edge != result)
         {
-            E->NextInLML = E->Prev;
-            if (IsHorizontal(*E) && 
-                E != EStart && 
-                E->Bot.x != E->Next->Top.x) 
+            current_edge->NextInLML = current_edge->Prev;
+            if (IsHorizontal(*current_edge) && 
+                current_edge != starting_edge && 
+                current_edge->Bot.x != current_edge->Next->Top.x) 
             {
-                ReverseHorizontal(*E);
+                ReverseHorizontal(*current_edge);
             }
-            E = E->Prev;
+            current_edge = current_edge->Prev;
         }
-        if (IsHorizontal(*E) && 
-            E != EStart && 
-            E->Bot.x != E->Next->Top.x) 
+        if (IsHorizontal(*current_edge) && 
+            current_edge != starting_edge && 
+            current_edge->Bot.x != current_edge->Next->Top.x) 
         {
-            ReverseHorizontal(*E);
+            ReverseHorizontal(*current_edge);
         }
-        Result = Result->Prev; //move to the edge just beyond current bound
+        result = result->Prev; //move to the edge just beyond current bound
     }
-    return Result;
+    return result;
 }
 
 template <typename T>
-edge_ptr<T> FindNextLocMin(edge_ptr<T> E)
+edge_ptr<T> process_bound_type_ring(edge_ptr<T> current_edge,
+                                    bool next_is_forward)
 {
-    for (;;)
+    edge_ptr<T> result = current_edge;
+    edge_ptr<T> horizontal_edge = nullptr;
+    edge_ptr<T> starting_edge = nullptr;
+
+    if (IsHorizontal(*current_edge))
     {
-        while (E->Bot != E->Prev->Bot || E->Curr == E->Top)
+        // We need to be careful with open paths because this may not be a
+        // true local minima (ie E may be following a skip edge).
+        // Also, consecutive horz. edges may start heading left before going right.
+        if (next_is_forward)
         {
-            E = E->Next;
+            starting_edge = current_edge->Prev;
         }
-        if (!IsHorizontal(*E) && !IsHorizontal(*E->Prev))
+        else
+        {
+            starting_edge = current_edge->Next;
+        }
+        if (IsHorizontal(*starting_edge)) //ie an adjoining horizontal skip edge
+        {
+            if (starting_edge->Bot.x != current_edge->Bot.x && starting_edge->Top.x != current_edge->Bot.x)
+            {
+                ReverseHorizontal(*current_edge);
+            }
+        }
+        else if (starting_edge->Bot.x != current_edge->Bot.x)
+        {
+            ReverseHorizontal(*current_edge);
+        }
+    }
+
+    starting_edge = current_edge;
+    if (next_is_forward)
+    {
+        while (result->Top.y == result->Next->Bot.y)
+        {
+            result = result->Next;
+        }
+        if (IsHorizontal(*result))
+        {
+            //nb: at the top of a bound, horizontals are added to the bound
+            //only when the preceding edge attaches to the horizontal's left vertex
+            //unless a Skip edge is encountered when that becomes the top divide
+            horizontal_edge = result;
+            while (IsHorizontal(*horizontal_edge->Prev))
+            {
+                horizontal_edge = horizontal_edge->Prev;
+            }
+            if (horizontal_edge->Prev->Top.x > result->Next->Top.x)
+            {
+                result = horizontal_edge->Prev;
+            }
+        }
+        while (current_edge != result) 
+        {
+            current_edge->NextInLML = current_edge->Next;
+            if (IsHorizontal(*current_edge) && 
+                current_edge != starting_edge &&
+                current_edge->Bot.x != current_edge->Prev->Top.x)
+            {
+                ReverseHorizontal(*current_edge);
+            }
+            current_edge = current_edge->Next;
+        }
+        if (IsHorizontal(*current_edge) && 
+            current_edge != starting_edge && 
+            current_edge->Bot.x != current_edge->Prev->Top.x)
+        {
+            ReverseHorizontal(*current_edge);
+        }
+        result = result->Next; //move to the edge just beyond current bound
+    }
+    else
+    {
+        while (result->Top.y == result->Prev->Bot.y)
+        {
+            result = result->Prev;
+        }
+        if (IsHorizontal(*result))
+        {
+            horizontal_edge = result;
+            while (IsHorizontal(*horizontal_edge->Next))
+            {
+                horizontal_edge = horizontal_edge->Next;
+            }
+            if (horizontal_edge->Next->Top.x >= result->Prev->Top.x)
+            {
+                result = horizontal_edge->Next;
+            }
+        }
+
+        while (current_edge != result)
+        {
+            current_edge->NextInLML = current_edge->Prev;
+            if (IsHorizontal(*current_edge) && 
+                current_edge != starting_edge && 
+                current_edge->Bot.x != current_edge->Next->Top.x) 
+            {
+                ReverseHorizontal(*current_edge);
+            }
+            current_edge = current_edge->Prev;
+        }
+        if (IsHorizontal(*current_edge) && 
+            current_edge != starting_edge && 
+            current_edge->Bot.x != current_edge->Next->Top.x) 
+        {
+            ReverseHorizontal(*current_edge);
+        }
+        result = result->Prev; //move to the edge just beyond current bound
+    }
+    return result;
+}
+
+template <typename T>
+edge_ptr<T> find_next_local_minimum(edge_ptr<T> edge)
+{
+    while (true)
+    {
+        while (edge->Bot != edge->Prev->Bot || edge->Curr == edge->Top)
+        {
+            edge = edge->Next;
+        }
+        if (!IsHorizontal(*edge) && !IsHorizontal(*edge->Prev))
         {
             break;
         }
-        while (IsHorizontal(*E->Prev))
+        while (IsHorizontal(*edge->Prev))
         {
-            E = E->Prev;
+            edge = edge->Prev;
         }
-        edge_ptr<T> E2 = E;
-        while (IsHorizontal(*E))
+        edge_ptr<T> edge2 = edge;
+        while (IsHorizontal(*edge))
         {
-            E = E->Next;
+            edge = edge->Next;
         }
-        if (E->Top.y == E->Prev->Bot.y)
+        if (edge->Top.y == edge->Prev->Bot.y)
         {
             continue; //ie just an intermediate horz.
         }
-        if (E2->Prev->Bot.x < E->Bot.x)
+        if (edge2->Prev->Bot.x < edge->Bot.x)
         {
-            E = E2;
+            edge = edge2;
         }
         break;
     }
-    return E;
+    return edge;
 }
 
-template <typename T>
-bool add_edge(mapbox::geometry::linear_ring<T> const& pg,
-              edge_list<T> & m_edges,
-              local_minimum_list<T> & m_MinimaList,
-              polygon_type PolyTyp, 
-              bool Closed,
-              bool m_PreserveCollinear = false)
+template  <typename T>
+void add_flat_line_to_local_minima_list(edge_list<T> & new_edges,
+                                        local_minimum_list<T> & minima_list)
 {
-#ifdef use_lines
-    if (!Closed && PolyTyp == ptClip)
-    {
-        throw clipper_exception("AddPath: Open paths must be subject.");
-    }
-#else
-    if (!Closed)
-    {
-        throw clipper_exception("AddPath: Open paths have been disabled.");
-    }
-#endif
-
-    int highI = static_cast<int>(pg.size()) - 1;
-    if (Closed)
-    {
-        while (highI > 0 && (pg[highI] == pg[0]))
-        {
-            --highI;
-        }
-    }
-    while (highI > 0 && (pg[highI] == pg[highI - 1]))
-    {
-        --highI;
-    }
-    
-    if ((Closed && highI < 2) || (!Closed && highI < 1))
-    {
-        return false;
-    }
-
-    //create a new edge array ...
-    edge_ptr<T> edges = new edge<T> [highI + 1];
-
-    bool IsFlat = true;
-    //1. Basic (first) edge initialization ...
-    try
-    {
-        edges[1].Curr = pg[1];
-        InitEdge(&edges[0], &edges[1], &edges[highI], pg[0]);
-        InitEdge(&edges[highI], &edges[0], &edges[highI - 1], pg[highI]);
-        for (int i = highI - 1; i >= 1; --i)
-        {
-            InitEdge(&edges[i], &edges[i+1], &edges[i-1], pg[i]);
-        }
-    }
-    catch (std::exception const&)
-    {
-        delete [] edges;
-        throw; //range test fails
-    }
-
-    edge_ptr<T> eStart = &edges[0];
-
-    //2. Remove duplicate vertices, and (when closed) collinear edges ...
-    edge_ptr<T> E = eStart;
-    edge_ptr<T> eLoopStop = eStart;
+    using value_type = T;
+    // Totally flat paths must be handled differently when adding them
+    // to LocalMinima list to avoid endless loops etc ...
+    edge_ptr<value_type> current_edge = &new_edges.back();
+    current_edge->Prev->OutIdx = EDGE_SKIP;
+    local_minimum<value_type> local_min;
+    local_min.y = current_edge->Bot.y;
+    local_min.LeftBound = nullptr;
+    local_min.RightBound = current_edge;
+    local_min.RightBound->Side = edge_right;
+    local_min.RightBound->WindDelta = 0;
     for (;;)
     {
-        //nb: allows matching start and end points when not Closed ...
-        if (E->Curr == E->Next->Curr && 
-            (Closed || E->Next != eStart))
+        if (current_edge->Bot.x != current_edge->Prev->Top.x)
         {
-            if (E == E->Next)
-            {
-                break;
-            }
-            if (E == eStart)
-            {
-                eStart = E->Next;
-            }
-            E = RemoveEdge(E);
-            eLoopStop = E;
-            continue;
+            ReverseHorizontal(*current_edge);
         }
-        if (E->Prev == E->Next)
-        {
-            break; //only two vertices
-        }
-        else if (Closed &&
-                 SlopesEqual(E->Prev->Curr, E->Curr, E->Next->Curr) && 
-                 (!m_PreserveCollinear ||
-                 !Pt2IsBetweenPt1AndPt3(E->Prev->Curr, E->Curr, E->Next->Curr)))
-        {
-            //Collinear edges are allowed for open paths but in closed paths
-            //the default is to merge adjacent collinear edges into a single edge.
-            //However, if the PreserveCollinear property is enabled, only overlapping
-            //collinear edges (ie spikes) will be removed from closed paths.
-            if (E == eStart)
-            {
-                eStart = E->Next;
-            }
-            E = RemoveEdge(E);
-            E = E->Prev;
-            eLoopStop = E;
-            continue;
-        }
-        E = E->Next;
-        if ((E == eLoopStop) || (!Closed && E->Next == eStart))
+        if (current_edge->Next->OutIdx == EDGE_SKIP)
         {
             break;
         }
+        current_edge->NextInLML = current_edge->Next;
+        current_edge = current_edge->Next;
     }
+    minima_list.push_back(local_min);
+}
 
-    if ((!Closed && (E == E->Next)) || (Closed && (E->Prev == E->Next)))
-    {
-        delete [] edges;
-        return false;
-    }
-
-    if (!Closed)
-    { 
-        eStart->Prev->OutIdx = EDGE_SKIP;
-    }
-
-    //3. Do second stage of edge initialization ...
-    E = eStart;
-    do
-    {
-        InitEdge2(*E, PolyTyp);
-        E = E->Next;
-        if (IsFlat && E->Curr.y != eStart->Curr.y)
-        {
-            IsFlat = false;
-        }
-    }
-    while (E != eStart);
-
-    //4. Finally, add edge bounds to LocalMinima list ...
-
-    //Totally flat paths must be handled differently when adding them
-    //to LocalMinima list to avoid endless loops etc ...
-    if (IsFlat) 
-    {
-        if (Closed) 
-        {
-            delete [] edges;
-            return false;
-        }
-        E->Prev->OutIdx = EDGE_SKIP;
-        local_minimum<T> locMin;
-        locMin.y = E->Bot.y;
-        locMin.LeftBound = nullptr;
-        locMin.RightBound = E;
-        locMin.RightBound->Side = edge_right;
-        locMin.RightBound->WindDelta = 0;
-        for (;;)
-        {
-            if (E->Bot.x != E->Prev->Top.x)
-            {
-                ReverseHorizontal(*E);
-            }
-            if (E->Next->OutIdx == EDGE_SKIP)
-            {
-                break;
-            }
-            E->NextInLML = E->Next;
-            E = E->Next;
-        }
-        m_MinimaList.push_back(locMin);
-        m_edges.push_back(edges);
-        return true;
-    }
-
-    m_edges.push_back(edges);
-    bool leftBoundIsForward;
-    edge_ptr<T> EMin = 0;
-
-    //workaround to avoid an endless loop in the while loop below when
-    //open paths have matching start and end points ...
-    if (E->Prev->Bot == E->Prev->Top)
-    {
-        E = E->Next;
-    }
+template  <typename T>
+void add_line_to_local_minima_list(edge_list<T> & new_edges,
+                                   local_minimum_list<T> & minima_list)
+{
+    using value_type = T;
+    bool left_bound_is_forward = false;
+    edge_ptr<value_type> starting_edge = &new_edges.back();
+    edge_ptr<value_type> current_edge = starting_edge;
+    edge_ptr<value_type> minimum_edge = nullptr;
 
     for (;;)
     {
-        E = FindNextLocMin(E);
-        if (E == EMin)
+        current_edge = find_next_local_minimum(current_edge);
+        if (current_edge == minimum_edge)
         {
             break;
         }
-        else if (!EMin)
+        else if (minimum_edge == nullptr)
         {
-            EMin = E;
+            minimum_edge = current_edge;
         }
 
         //E and E.Prev now share a local minima (left aligned if horizontal).
         //Compare their slopes to find which starts which bound ...
-        local_minimum<T> locMin;
-        locMin.y = E->Bot.y;
-        if (E->Dx < E->Prev->Dx) 
+        local_minimum<value_type> local_min;
+        local_min.y = current_edge->Bot.y;
+        if (current_edge->Dx < current_edge->Prev->Dx) 
         {
-            locMin.LeftBound = E->Prev;
-            locMin.RightBound = E;
-            leftBoundIsForward = false; //Q.nextInLML = Q.prev
+            local_min.LeftBound = current_edge->Prev;
+            local_min.RightBound = current_edge;
+            left_bound_is_forward = false; //Q.nextInLML = Q.prev
         }
         else
         {
-            locMin.LeftBound = E;
-            locMin.RightBound = E->Prev;
-            leftBoundIsForward = true; //Q.nextInLML = Q.next
+            local_min.LeftBound = current_edge;
+            local_min.RightBound = current_edge->Prev;
+            left_bound_is_forward = true; //Q.nextInLML = Q.next
         }
 
-        if (!Closed)
-        {
-            locMin.LeftBound->WindDelta = 0;
-        }
-        else if (locMin.LeftBound->Next == locMin.RightBound)
-        {
-            locMin.LeftBound->WindDelta = -1;
-        }
-        else
-        {
-            locMin.LeftBound->WindDelta = 1;
-        }
-        locMin.RightBound->WindDelta = -locMin.LeftBound->WindDelta;
+        local_min.LeftBound->WindDelta = 0;
+        local_min.RightBound->WindDelta = 0;
 
-        E = ProcessBound(locMin.LeftBound, leftBoundIsForward, m_MinimaList);
-        if (E->OutIdx == EDGE_SKIP)
+        current_edge = process_bound_type_line(local_min.LeftBound, left_bound_is_forward, minima_list);
+        if (current_edge->OutIdx == EDGE_SKIP) 
         {
-            E = ProcessBound(E, leftBoundIsForward, m_MinimaList);
+            current_edge = process_bound_type_line(current_edge, left_bound_is_forward, minima_list);
         }
 
-        edge_ptr<T> E2 = ProcessBound(locMin.RightBound, !leftBoundIsForward, m_MinimaList);
-        if (E2->OutIdx == EDGE_SKIP)
+        edge_ptr<value_type> current_edge_2 = process_bound_type_line(local_min.RightBound, !left_bound_is_forward, minima_list);
+        if (current_edge_2->OutIdx == EDGE_SKIP) 
         {
-            E2 = ProcessBound(E2, !leftBoundIsForward, m_MinimaList);
+            current_edge_2 = process_bound_type_line(current_edge_2, !left_bound_is_forward, minima_list);
         }
 
-        if (locMin.LeftBound->OutIdx == EDGE_SKIP)
+        minima_list.push_back(local_min);
+        
+        if (!left_bound_is_forward)
         {
-            locMin.LeftBound = nullptr;
-        }
-        else if (locMin.RightBound->OutIdx == EDGE_SKIP)
-        {
-            locMin.RightBound = 0;
-        }
-        m_MinimaList.push_back(locMin);
-        if (!leftBoundIsForward)
-        {
-            E = E2;
+            current_edge = current_edge_2;
         }
     }
+}
+
+template  <typename T>
+void add_ring_to_local_minima_list(edge_list<T> & new_edges,
+                                   local_minimum_list<T> & minima_list)
+{
+    using value_type = T;
+    bool left_bound_is_forward = false;
+    edge_ptr<value_type> starting_edge = &new_edges.back();
+    edge_ptr<value_type> current_edge = starting_edge;
+    edge_ptr<value_type> minimum_edge = nullptr;
+
+    for (;;)
+    {
+        current_edge = find_next_local_minimum(current_edge);
+        if (current_edge == minimum_edge)
+        {
+            break;
+        }
+        else if (minimum_edge == nullptr)
+        {
+            minimum_edge = current_edge;
+        }
+
+        //E and E.Prev now share a local minima (left aligned if horizontal).
+        //Compare their slopes to find which starts which bound ...
+        local_minimum<value_type> local_min;
+        local_min.y = current_edge->Bot.y;
+        if (current_edge->Dx < current_edge->Prev->Dx) 
+        {
+            local_min.LeftBound = current_edge->Prev;
+            local_min.RightBound = current_edge;
+            left_bound_is_forward = false; //Q.nextInLML = Q.prev
+        }
+        else
+        {
+            local_min.LeftBound = current_edge;
+            local_min.RightBound = current_edge->Prev;
+            left_bound_is_forward = true; //Q.nextInLML = Q.next
+        }
+
+        if (local_min.LeftBound->Next == local_min.RightBound)
+        {
+            local_min.LeftBound->WindDelta = -1;
+            local_min.RightBound->WindDelta = 1;
+        }
+        else
+        {
+            local_min.LeftBound->WindDelta = 1;
+            local_min.RightBound->WindDelta = -1;
+        }
+
+        current_edge = process_bound_type_ring(local_min.LeftBound, left_bound_is_forward);
+
+        edge_ptr<value_type> current_edge_2 = process_bound_type_ring(local_min.RightBound, !left_bound_is_forward);
+
+        minima_list.push_back(local_min);
+        
+        if (!left_bound_is_forward)
+        {
+            current_edge = current_edge_2;
+        }
+    }
+}
+
+template <typename T>
+void make_list_circular(edge_list<T> & edges)
+{
+    // Link all edges for circular list now
+    edges.front().Prev = &edges.back();
+    edges.back().Next = &edges.front();
+    auto itr_next = edges.begin();
+    auto itr = itr_next++;
+    for (; itr_next != edges.end(); ++itr, ++itr_next)
+    {
+        itr->Next = &(*itr_next);
+        itr_next->Prev = &(*itr);
+    }
+}
+
+template <typename T>
+bool build_edge_list(mapbox::geometry::line_string<T> const& path_geometry,
+                     edge_list<T> & edges,
+                     bool & is_flat)
+{
+    if (path_geometry.size() < 2)
+    {
+        return false;
+    }
+    
+    auto itr_next = path_geometry.begin();
+    ++itr_next;
+    auto itr = path_geometry.begin();
+    while (itr_next != path_geometry.end())
+    {
+        if (*itr_next == *itr)
+        {
+            // Duplicate point advance itr_next, but do not
+            // advance itr
+            ++itr_next;
+            continue;
+        }
+
+        if (is_flat && itr_next->y != itr->y)
+        {
+            is_flat = false;
+        }
+        edges.emplace_back(*itr, *itr_next, polygon_type_subject);
+        
+        itr = itr_next;
+        ++itr_next;
+    }
+    
+    if (edges.size() < 2)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+template <typename T>
+bool add_line_string(mapbox::geometry::line_string<T> const& path_geometry,
+              edge_list<T> & edges,
+              local_minimum_list<T> & minima_list)
+{
+    bool is_flat = true;
+    edges.push_back();
+    auto & new_edges = edges.back();
+    if (!build_edge_list(path_geometry, new_edges, is_flat) || new_edges.empty())
+    {
+        edges.pop_back();
+        return false;
+    }
+    
+    make_list_circular(new_edges);
+   
+    if (is_flat) 
+    {
+        add_flat_line_to_local_minima_list(new_edges, minima_list);
+    }
+    else
+    {
+        add_line_to_local_minima_list(new_edges, minima_list);
+    }
+    return true;
+}
+
+template <typename T>
+bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry,
+                     edge_list<T> & edges,
+                     polygon_type p_type)
+{
+    using value_type = T;
+
+    if (path_geometry.size() < 3)
+    {
+        return false;
+    }
+    
+    // As this is a loop, we need to first go backwards from end to try and find
+    // the proper starting point for the iterators before the beginning
+    
+    auto itr_rev = path_geometry.end();
+    auto itr = path_geometry.begin();
+    --itr_rev;
+    mapbox::geometry::point<value_type> pt1 = *itr_rev;
+    mapbox::geometry::point<value_type> pt2 = *itr_rev;
+    mapbox::geometry::point<value_type> pt3 = *itr;
+    for (;;)
+    {
+        // Find next non repeated point going backwards from end of ring
+        while (pt2 == pt3)
+        {
+            pt2 = *(--itr_rev);
+            if (itr_rev == path_geometry.begin())
+            {
+                return false;
+            }
+        }
+
+        // Once more, find next non repeated point going backwards but
+        // this time from itr_next_1
+        do
+        {
+            pt1 = *(--itr_rev);
+            if (itr_rev == path_geometry.begin())
+            {
+                return false;
+            }
+        }
+        while (pt1 == pt2);
+        
+        if (SlopesEqual(pt1, pt2, pt3))
+        {
+            pt2 = pt1;
+        }
+        else
+        {
+            break;
+        }
+    }
+    
+    mapbox::geometry::point<value_type> pt_first = pt1;
+    
+    while (true)
+    {
+        if (pt3 == pt2)
+        {
+            // Duplicate point advance itr, but do not
+            // advance other points
+            ++itr;
+            if (itr == path_geometry.end())
+            {
+                break;
+            }
+            pt3 = *itr;
+            continue;
+        }
+
+        // Now check if slopes are equal between two segments - either
+        // a spike or a collinear point - if so drop point number 2.
+        if (SlopesEqual(pt1, pt2, pt3))
+        {
+            // We need to reconsider previously added points
+            // because the point it was using was found to be collinear
+            // or a spike
+            pt2 = pt1;
+            if (!edges.empty())
+            {
+                edges.pop_back(); // remove previous edge (pt1)
+            }
+            if (!edges.empty())
+            {
+                pt1 = edges.back().Curr;
+            }
+            else
+            {
+                pt1 = pt_first;
+            }
+            continue;
+        }
+
+        edges.emplace_back(pt2, pt3, p_type);
+        ++itr;
+        if (itr == path_geometry.end())
+        {
+            break;
+        }
+        pt1 = pt2;
+        pt2 = pt3;
+        pt3 = *itr;
+    }
+
+    if (edges.size() < 3)
+    {
+        return false;
+    }
+    return true;
+}
+
+template <typename T>
+bool add_linear_ring(mapbox::geometry::linear_ring<T> const& path_geometry,
+                     std::vector<edge_list<T> > & edges,
+                     local_minimum_list<T> & minima_list,
+                     polygon_type p_type)
+{
+    edges.emplace_back();
+    auto & new_edges = edges.back();
+    if (!build_edge_list(path_geometry, new_edges, p_type) || new_edges.empty())
+    {
+        edges.pop_back();
+        return false;
+    }
+    make_list_circular(new_edges);
+    add_ring_to_local_minima_list(new_edges, minima_list);
     return true;
 }
 

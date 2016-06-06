@@ -28,7 +28,7 @@ private:
     
     local_minimum_list<value_type>           m_MinimaList;
     typename local_minimum_list<value_type>::iterator m_CurrentLM;
-    edge_list<value_type>              m_edges;
+    std::vector<edge_list<value_type> > m_edges;
     ring_list<value_type>              m_PolyOuts;
     scanbeam_list                      m_Scanbeam;
     join_list<value_type>              m_Joins;
@@ -76,27 +76,30 @@ public:
     {
         clear();
     }
-
-    bool add_ring(mapbox::geometry::linear_ring<value_type> const& pg, 
-                  polygon_type PolyTyp = polygon_type_subject, 
-                  bool Closed = true)
+    
+    bool add_line(mapbox::geometry::line_string<value_type> const& pg)
     {
-        bool success = add_edge(pg, m_edges, m_MinimaList, PolyTyp, Closed, m_PreserveCollinear);
-        if (!Closed && success)
+        bool success = add_line_string(pg, m_edges, m_MinimaList);
+        if (success)
         {
             m_HasOpenPaths = true;
         }
         return success;
     }
 
+    bool add_ring(mapbox::geometry::linear_ring<value_type> const& pg, 
+                  polygon_type p_type = polygon_type_subject)
+    {
+        return add_linear_ring(pg, m_edges, m_MinimaList, p_type);
+    }
+
     bool add_polygon(mapbox::geometry::polygon<value_type> const& ppg, 
-                     polygon_type PolyTyp = polygon_type_subject, 
-                     bool Closed = true)
+                     polygon_type p_type = polygon_type_subject)
     {
         bool result = false;
         for (std::size_t i = 0; i < ppg.size(); ++i)
         {
-            if (add_ring(ppg[i], PolyTyp, Closed))
+            if (add_ring(ppg[i], p_type))
             {
                 result = true;
             }
@@ -108,11 +111,6 @@ public:
     {
         m_MinimaList.clear();
         m_CurrentLM = m_MinimaList.begin();
-        for (std::size_t i = 0; i < m_edges.size(); ++i)
-        {
-            edge_ptr<value_type> edges = m_edges[i];
-            delete [] edges;
-        }
         m_edges.clear();
         m_HasOpenPaths = false;
     }

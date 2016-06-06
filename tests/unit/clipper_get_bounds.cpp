@@ -23,7 +23,7 @@ TEST_CASE("test returns simple box - int64")
     ring.push_back({0,0});
     polygon.push_back(ring);
     mapbox::geometry::wagyu::clipper<std::int64_t> clipper;
-    clipper.add_polygon(polygon);
+    CHECK(clipper.add_polygon(polygon));
     auto bounds = clipper.get_bounds();
     CHECK(bounds.left == 0);
     CHECK(bounds.top == 0);
@@ -42,7 +42,7 @@ TEST_CASE("test returns simple box negative - int64")
     ring.push_back({0,0});
     polygon.push_back(ring);
     mapbox::geometry::wagyu::clipper<std::int64_t> clipper;
-    clipper.add_polygon(polygon);
+    CHECK(clipper.add_polygon(polygon));
     auto bounds = clipper.get_bounds();
     CHECK(bounds.left == -5);
     CHECK(bounds.top == -5);
@@ -62,7 +62,7 @@ TEST_CASE("two polygons - int64")
     ring.push_back({5,0});
     ring.push_back({0,0});
     polygon.push_back(ring);
-    clipper.add_polygon(polygon);
+    CHECK(clipper.add_polygon(polygon));
     polygon.clear();
     ring.clear();
     // Polygon 2
@@ -72,7 +72,7 @@ TEST_CASE("two polygons - int64")
     ring.push_back({10,5});
     ring.push_back({5,5});
     polygon.push_back(ring);
-    clipper.add_polygon(polygon);
+    CHECK(clipper.add_polygon(polygon));
     
     auto bounds = clipper.get_bounds();
     CHECK(bounds.left == 0);
