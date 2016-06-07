@@ -22,58 +22,6 @@ inline void ReverseHorizontal(edge<T> & e)
 }
 
 template <typename T>
-edge_ptr<T> RemoveEdge(edge_ptr<T> e)
-{
-    //removes e from double_linked_list (but without removing from memory)
-    e->Prev->Next = e->Next;
-    e->Next->Prev = e->Prev;
-    edge_ptr<T> result = e->Next;
-    e->Prev = nullptr; //flag as removed (see ClipperBase.Clear)
-    return result;
-}
-
-template <typename T>
-inline void SetDx(edge<T> & e)
-{
-    double dy = static_cast<double>(e.Top.y - e.Bot.y);
-    if (dy == 0.0)
-    {
-        e.Dx = HORIZONTAL;
-    }
-    else
-    {
-        e.Dx = static_cast<double>(e.Top.x - e.Bot.x) / dy;
-    }
-}
-
-template <typename T>
-inline void InitEdge(edge_ptr<T> e, edge_ptr<T> eNext, edge_ptr<T> ePrev, mapbox::geometry::point<T> const& Pt)
-{
-    std::memset(e, 0, sizeof(edge<T>));
-    e->Next = eNext;
-    e->Prev = ePrev;
-    e->Curr = Pt;
-    e->OutIdx = EDGE_UNASSIGNED;
-}
-
-template <typename T>
-void InitEdge2(edge<T> & e, polygon_type Pt)
-{
-    if (e.Curr.y >= e.Next->Curr.y)
-    {
-        e.Bot = e.Curr;
-        e.Top = e.Next->Curr;
-    }
-    else
-    {
-        e.Top = e.Curr;
-        e.Bot = e.Next->Curr;
-    }
-    SetDx(e);
-    e.PolyTyp = Pt;
-}
-
-template <typename T>
 edge_ptr<T> process_bound_type_line(edge_ptr<T> current_edge,
                                     bool next_is_forward, 
                                     local_minimum_list<T> & minima_list)
