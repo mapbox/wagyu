@@ -135,6 +135,97 @@ TEST_CASE("edge adding ring - square not closed")
     CHECK(itr == edges.end());
 }
 
+TEST_CASE("edge adding ring - triangle closed")
+{
+    using namespace mapbox::geometry::wagyu;
+    
+    mapbox::geometry::linear_ring<std::int64_t> ring;
+    ring.push_back({0,0});
+    ring.push_back({10,5});
+    ring.push_back({5,10});
+    ring.push_back({0,0});
+
+    std::vector<edge_list<std::int64_t> > all_edges;
+    local_minimum_list<std::int64_t> minima_list;
+    polygon_type p_type = polygon_type_subject;
+
+    CHECK(add_linear_ring(ring, all_edges, minima_list, p_type));
+
+    auto & edges = all_edges.back();
+    REQUIRE(edges.size() == 3);
+    auto itr = edges.begin();
+    CHECK(itr->Top.x == 0);
+    CHECK(itr->Top.y == 0);
+    CHECK(itr->Bot.x == 10);
+    CHECK(itr->Bot.y == 5);
+    CHECK(itr->Curr.x == 0);
+    CHECK(itr->Curr.y == 0);
+    CHECK(itr->Dx == 2.0);
+    ++itr;
+    CHECK(itr->Top.x == 10);
+    CHECK(itr->Top.y == 5);
+    CHECK(itr->Bot.x == 5);
+    CHECK(itr->Bot.y == 10);
+    CHECK(itr->Curr.x == 10);
+    CHECK(itr->Curr.y == 5);
+    CHECK(itr->Dx == -1.0);
+    ++itr;
+    CHECK(itr->Top.x == 0);
+    CHECK(itr->Top.y == 0);
+    CHECK(itr->Bot.x == 5);
+    CHECK(itr->Bot.y == 10);
+    CHECK(itr->Curr.x == 5);
+    CHECK(itr->Curr.y == 10);
+    CHECK(itr->Dx == 0.5);
+    ++itr;
+    CHECK(itr == edges.end());
+}
+
+TEST_CASE("edge adding ring - triangle not closed")
+{
+    using namespace mapbox::geometry::wagyu;
+    
+    mapbox::geometry::linear_ring<std::int64_t> ring;
+    ring.push_back({0,0});
+    ring.push_back({10,5});
+    ring.push_back({5,10});
+
+    std::vector<edge_list<std::int64_t> > all_edges;
+    local_minimum_list<std::int64_t> minima_list;
+    polygon_type p_type = polygon_type_subject;
+
+    CHECK(add_linear_ring(ring, all_edges, minima_list, p_type));
+
+    auto & edges = all_edges.back();
+    REQUIRE(edges.size() == 3);
+    auto itr = edges.begin();
+    CHECK(itr->Top.x == 0);
+    CHECK(itr->Top.y == 0);
+    CHECK(itr->Bot.x == 10);
+    CHECK(itr->Bot.y == 5);
+    CHECK(itr->Curr.x == 0);
+    CHECK(itr->Curr.y == 0);
+    CHECK(itr->Dx == 2.0);
+    ++itr;
+    CHECK(itr->Top.x == 10);
+    CHECK(itr->Top.y == 5);
+    CHECK(itr->Bot.x == 5);
+    CHECK(itr->Bot.y == 10);
+    CHECK(itr->Curr.x == 10);
+    CHECK(itr->Curr.y == 5);
+    CHECK(itr->Dx == -1.0);
+    ++itr;
+    CHECK(itr->Top.x == 0);
+    CHECK(itr->Top.y == 0);
+    CHECK(itr->Bot.x == 5);
+    CHECK(itr->Bot.y == 10);
+    CHECK(itr->Curr.x == 5);
+    CHECK(itr->Curr.y == 10);
+    CHECK(itr->Dx == 0.5);
+    ++itr;
+    CHECK(itr == edges.end());
+}
+
 TEST_CASE("edge adding ring - square closed - collinear points")
 {
     using namespace mapbox::geometry::wagyu;
