@@ -6,9 +6,7 @@
 #include <mapbox/geometry/wagyu/config.hpp>
 
 #ifdef DEBUG
-
 #include <iostream>
-
 #endif
 
 namespace mapbox { namespace geometry { namespace wagyu {

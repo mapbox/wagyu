@@ -558,7 +558,6 @@ bool build_edge_list(mapbox::geometry::line_string<T> const& path_geometry,
             is_flat = false;
         }
         edges.emplace_back(*itr, *itr_next, polygon_type_subject);
-        
         itr = itr_next;
         ++itr_next;
     }
@@ -617,39 +616,17 @@ bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry,
     auto itr = path_geometry.begin();
     --itr_rev;
     mapbox::geometry::point<value_type> pt1 = *itr_rev;
-    mapbox::geometry::point<value_type> pt2 = *itr_rev;
+    mapbox::geometry::point<value_type> pt2 = *itr;
     mapbox::geometry::point<value_type> pt3 = *itr;
-    for (;;)
-    {
-        // Find next non repeated point going backwards from end of ring
-        while (pt2 == pt3)
-        {
-            pt2 = *(--itr_rev);
-            if (itr_rev == path_geometry.begin())
-            {
-                return false;
-            }
-        }
 
-        // Once more, find next non repeated point going backwards but
-        // this time from itr_next_1
-        do
+    // Find next non repeated point going backwards from
+    // end for pt1
+    while (pt1 == pt2)
+    {
+        pt1 = *(--itr_rev);
+        if (itr_rev == path_geometry.begin())
         {
-            pt1 = *(--itr_rev);
-            if (itr_rev == path_geometry.begin())
-            {
-                return false;
-            }
-        }
-        while (pt1 == pt2);
-        
-        if (SlopesEqual(pt1, pt2, pt3))
-        {
-            pt2 = pt1;
-        }
-        else
-        {
-            break;
+            return false;
         }
     }
     
@@ -695,13 +672,48 @@ bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry,
 
         edges.emplace_back(pt2, pt3, p_type);
         ++itr;
+        pt1 = pt2;
+        pt2 = pt3;
+        pt3 = *itr;
         if (itr == path_geometry.end())
         {
             break;
         }
-        pt1 = pt2;
-        pt2 = pt3;
-        pt3 = *itr;
+    }
+
+    // If the geometry does not explicity close the geometry
+    // we still need to add one more segment.
+    if (path_geometry.front() != path_geometry.back())
+    {
+        pt3 = path_geometry.front();
+        // Now check if slopes are equal between two segments - either
+        // a spike or a collinear point - if so drop point number 2.
+        while (SlopesEqual(pt1, pt2, pt3))
+        {
+            // We need to reconsider previously added points
+            // because the point it was using was found to be collinear
+            // or a spike
+            pt2 = pt1;
+            if (!edges.empty())
+            {
+                edges.pop_back(); // remove previous edge (pt1)
+            }
+            else
+            {
+                pt1 = pt_first;
+                break;
+            }
+            if (!edges.empty())
+            {
+                pt1 = edges.back().Curr;
+            }
+            else
+            {
+                pt1 = pt_first;
+                break;
+            }
+        }
+        edges.emplace_back(pt2, pt3, p_type);
     }
 
     if (edges.size() < 3)
