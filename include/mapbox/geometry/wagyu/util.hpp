@@ -450,14 +450,14 @@ void DisposeOutPts(point_ptr<T> & pp)
 {
     if (pp == nullptr)
     {
-      return;
+        return;
     }
     pp->Prev->Next = nullptr;
     while (pp)
     {
-      point_ptr<T> tmpPp = pp;
-      pp = pp->Next;
-      delete tmpPp;
+        point_ptr<T> tmpPp = pp;
+        pp = pp->Next;
+        delete tmpPp;
     }
 }
 
@@ -657,6 +657,27 @@ bool HorzSegmentsOverlap(T seg1a,
         std::swap(seg2a, seg2b);
     }
     return (seg1a < seg2b) && (seg2a < seg1b);
+}
+
+template <typename T>
+inline bool E2InsertsBeforeE1(edge<T> const& e1,
+                              edge<T> const& e2)
+{
+    if (e2.Curr.x == e1.Curr.x) 
+    {
+        if (e2.Top.y > e1.Top.y)
+        {
+            return e2.Top.x < TopX(e1, e2.Top.y);
+        }
+        else
+        {
+            return e1.Top.x > TopX(e2, e1.Top.y);
+        }
+    } 
+    else
+    {
+        return e2.Curr.x < e1.Curr.x;
+    }
 }
 
 }}}

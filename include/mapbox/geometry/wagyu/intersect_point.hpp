@@ -138,7 +138,9 @@ inline T nearest_along_x_dimension(T const edge_bot_x,
 }
 
 template <typename T>
-void IntersectPoint(edge<T> & Edge1, edge<T> & Edge2, mapbox::geometry::point<T> & ip)
+void intersection_point(edge<T> const& Edge1, 
+                        edge<T> const& Edge2, 
+                        mapbox::geometry::point<T> & ip)
 {
     // This method finds the FIRST intersecting point in integer space between two edges
     // that is closest to the Bot point of the edges.
@@ -185,15 +187,15 @@ void IntersectPoint(edge<T> & Edge1, edge<T> & Edge2, mapbox::geometry::point<T>
             double b1 = Edge1.Bot.y - (Edge1.Bot.x / Edge1.Dx);
             if (Edge1.Bot.x == Edge2.Bot.x)
             {
-                ip.y = Round(ip.x / Edge1.Dx + b1);
+                ip.y = std::round(ip.x / Edge1.Dx + b1);
             }
             else if (Edge1.Bot.x < Edge2.Bot.x)
             {
-                ip.y = Round((ip.x - 0.5) / Edge1.Dx + b1);
+                ip.y = std::round((ip.x - 0.5) / Edge1.Dx + b1);
             }
             else
             {
-                ip.y = Round((ip.x + 0.5) / Edge1.Dx + b1);
+                ip.y = std::round((ip.x + 0.5) / Edge1.Dx + b1);
             }
         }
     } 
