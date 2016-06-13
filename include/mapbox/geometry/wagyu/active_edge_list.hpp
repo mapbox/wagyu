@@ -213,7 +213,7 @@ void update_edge_into_AEL(edge_ptr<T> &e,
     e->next_in_AEL = Aelnext;
     if (!IsHorizontal(*e))
     {
-        scanbeam.push(e->top.Y);
+        scanbeam.push(e->top.y);
     }
 }
 
@@ -498,6 +498,7 @@ void insert_local_minima_into_AEL(T const botY,
                                   local_minimum_itr<T> & current_local_min,
                                   local_minimum_list<T> & minima_list,
                                   edge_ptr<T> & active_edges,
+                                  ring_list<T> & rings,
                                   clip_type cliptype,
                                   fill_type subject_fill_type,
                                   fill_type clip_fill_type)
@@ -509,60 +510,64 @@ void insert_local_minima_into_AEL(T const botY,
         edge_ptr<value_type> lb = lm->left_bound;
         edge_ptr<value_type> rb = lm->right_bound;
         
-        point_ptr<T> Op1 = nullptr;
+        point_ptr<T> p1 = nullptr;
         if (!lb)
         {
             //nb: don't insert LB into either AEL or SEL
-            insert_edge_into_AEL(rb, 
-                                 nullptr,
-                                 active_edges);
-            set_winding_count(*rb,
-                              cliptype,
-                              subject_fill_type,
-                              clip_fill_type,
-                              active_edges);
+            insert_edge_into_AEL(rb, nullptr, active_edges);
+            set_winding_count(*rb, cliptype, subject_fill_type, clip_fill_type, active_edges);
             if (is_contributing(*rb, cliptype, subject_fill_type, clip_fill_type))
             {
-                Op1 = AddOutPt(rb, rb->bot); 
+                p1 = add_point(rb, rb->bot, rings); 
                 edge_ptr<value_type> eprev = rb->prev_in_AEL;
-                if ((rb->index >= 0) && (rb->winding_delta != 0) && eprev && (eprev->index >= 0) &&
-                  (eprev->curr.X == rb->curr.X) && (eprev->winding_delta != 0))
+                if (rb->index >= 0 && 
+                    rb->winding_delta != 0 && 
+                    eprev &&
+                    eprev->index >= 0 &&
+                    eprev->curr.x == rb->curr.x &&
+                    eprev->winding_delta != 0)
                 {
-                  IntPoint pt = rb->curr;
-                  AddOutPt(eprev, pt);
+                    add_point(eprev, rb->curr, rings);
                 }
                 edge_ptr<value_type> enext = rb->next_in_AEL;
-                if ((rb->index >= 0) && (rb->winding_delta != 0) && enext && (enext->index >= 0) &&
-                  (enext->curr.X == rb->curr.X) && (enext->winding_delta != 0))
+                if (rb->index >= 0 &&
+                    rb->winding_delta != 0 &&
+                    enext &&
+                    enext->index >= 0 &&
+                    enext->curr.x == rb->curr.x && 
+                    enext->winding_delta != 0)
                 {
-                  IntPoint pt = rb->curr;
-                  AddOutPt(enext, pt);
+                    add_point(enext, rb->curr, rings);
                 }
             }
         } 
         else if (!rb)
         {
-          insert_edge_into_AEL(lb, 0);
-          SetWindingCount(*lb);
-          if (IsContributing(*lb))
-          {
-              Op1 = AddOutPt(lb, lb->bot);
-              edge_ptr<value_type> eprev = lb->prev_in_AEL;
-              if ((lb->index >= 0) && (lb->winding_delta != 0) && eprev && (eprev->index >= 0) &&
-                (eprev->curr.X == lb->curr.X) && (eprev->winding_delta != 0))
-              {
-                IntPoint pt = lb->curr;
-                AddOutPt(eprev, pt);
-              }
-              edge_ptr<value_type> enext = lb->next_in_AEL;
-              if ((lb->index >= 0) && (lb->winding_delta != 0) && enext && (enext->index >= 0) &&
-                (enext->curr.X == lb->curr.X) && (enext->winding_delta != 0))
-              {
-                IntPoint pt = lb->curr;
-                AddOutPt(enext, pt);
-              }
-          }
-          InsertScanbeam(lb->top.Y);
+            insert_edge_into_AEL(lb, nullptr, active_edges);
+            set_winding_count(*lb, cliptype, subject_fill_type, clip_fill_type, active_edges);
+            if (is_contributing(*lb, cliptype, subject_fill_type, clip_fill_type))
+            {
+                p1 = AddOutPt(lb, lb->bot);
+                edge_ptr<value_type> eprev = lb->prev_in_AEL;
+                if (lb->index >= 0 && 
+                    lb->winding_delta != 0 && 
+                    eprev && 
+                    eprev->index >= 0 &&
+                    eprev->curr.x == lb->curr.x && 
+                    eprev->winding_delta != 0)
+                {
+                  IntPoint pt = lb->curr;
+                  AddOutPt(eprev, pt);
+                }
+                edge_ptr<value_type> enext = lb->next_in_AEL;
+                if ((lb->index >= 0) && (lb->winding_delta != 0) && enext && (enext->index >= 0) &&
+                  (enext->curr.x == lb->curr.x) && (enext->winding_delta != 0))
+                {
+                  IntPoint pt = lb->curr;
+                  AddOutPt(enext, pt);
+                }
+            }
+            InsertScanbeam(lb->top.y);
         }
         else
         {
@@ -573,23 +578,23 @@ void insert_local_minima_into_AEL(T const botY,
           rb->winding_count2 = lb->winding_count2;
           if (IsContributing(*lb))
           {
-              Op1 = AddLocalMinPoly(lb, rb, lb->bot);      
+              p1 = AddLocalMinPoly(lb, rb, lb->bot);      
               edge_ptr<value_type> eprev = lb->prev_in_AEL;
               if ((lb->index >= 0) && (lb->winding_delta != 0) && eprev && (eprev->index >= 0) &&
-                (eprev->curr.X == lb->curr.X) && (eprev->winding_delta != 0))
+                (eprev->curr.x == lb->curr.x) && (eprev->winding_delta != 0))
               {
                 IntPoint pt = lb->curr;
                 AddOutPt(eprev, pt);
               }
               edge_ptr<value_type> enext = rb->next_in_AEL;
               if ((rb->index >= 0) && (rb->winding_delta != 0) && enext && (enext->index >= 0) &&
-                (enext->curr.X == rb->curr.X) && (enext->winding_delta != 0))
+                (enext->curr.x == rb->curr.x) && (enext->winding_delta != 0))
               {
                 IntPoint pt = rb->curr;
                 AddOutPt(enext, pt);
               }
           }
-          InsertScanbeam(lb->top.Y);
+          InsertScanbeam(lb->top.y);
         }
 
          if (rb)
@@ -598,15 +603,15 @@ void insert_local_minima_into_AEL(T const botY,
            {
                AddEdgeToSEL(rb);
                if (rb->next_in_LML) 
-                   InsertScanbeam(rb->next_in_LML->top.Y);
+                   InsertScanbeam(rb->next_in_LML->top.y);
            }
-           else InsertScanbeam( rb->top.Y );
+           else InsertScanbeam( rb->top.y );
          }
 
         if (!lb || !rb) continue;
 
         //if any output polygons share an edge, they'll need joining later ...
-        if (Op1 && IsHorizontal(*rb) && 
+        if (p1 && IsHorizontal(*rb) && 
           !m_GhostJoins.empty() && (rb->winding_delta != 0))
         {
           for (JoinList::size_type i = 0; i < m_GhostJoins.size(); ++i)
@@ -614,19 +619,19 @@ void insert_local_minima_into_AEL(T const botY,
             Join* jr = m_GhostJoins[i];
             //if the horizontal Rb and a 'ghost' horizontal overlap, then convert
             //the 'ghost' join to a real join ready for later ...
-            if (HorzSegmentsOverlap(jr->OutPt1->Pt.X, jr->OffPt.X, rb->bot.X, rb->top.X))
-              AddJoin(jr->OutPt1, Op1, jr->OffPt);
+            if (HorzSegmentsOverlap(jr->OutPt1->Pt.x, jr->OffPt.x, rb->bot.x, rb->top.x))
+              AddJoin(jr->OutPt1, p1, jr->OffPt);
           }
         }
 
         if (lb->index >= 0 && lb->prev_in_AEL && 
-          lb->prev_in_AEL->curr.X == lb->bot.X &&
+          lb->prev_in_AEL->curr.x == lb->bot.x &&
           lb->prev_in_AEL->index >= 0 &&
           SlopesEqual(lb->prev_in_AEL->bot, lb->prev_in_AEL->top, lb->curr, lb->top, m_UseFullRange) &&
           (lb->winding_delta != 0) && (lb->prev_in_AEL->winding_delta != 0))
         {
-            OutPt *Op2 = AddOutPt(lb->prev_in_AEL, lb->bot);
-            AddJoin(Op1, Op2, lb->top);
+            OutPt *p2 = AddOutPt(lb->prev_in_AEL, lb->bot);
+            AddJoin(p1, p2, lb->top);
         }
 
         if(lb->next_in_AEL != rb)
@@ -636,8 +641,8 @@ void insert_local_minima_into_AEL(T const botY,
             SlopesEqual(rb->prev_in_AEL->curr, rb->prev_in_AEL->top, rb->curr, rb->top, m_UseFullRange) &&
             (rb->winding_delta != 0) && (rb->prev_in_AEL->winding_delta != 0))
           {
-              OutPt *Op2 = AddOutPt(rb->prev_in_AEL, rb->bot);
-              AddJoin(Op1, Op2, rb->top);
+              OutPt *p2 = AddOutPt(rb->prev_in_AEL, rb->bot);
+              AddJoin(p1, p2, rb->top);
           }
 
           edge_ptr<value_type> e = lb->next_in_AEL;

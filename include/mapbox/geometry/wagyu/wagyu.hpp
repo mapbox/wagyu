@@ -3,7 +3,6 @@
 #include <list>
 
 #include <mapbox/geometry/polygon.hpp>
-#include <mapbox/geometry/ring/ring.hpp>
 
 #include <mapbox/geometry/wagyu/box.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>

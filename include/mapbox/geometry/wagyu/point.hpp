@@ -51,10 +51,10 @@ struct point
         index(index_),
         x(pt.x),
         y(pt.y),
-        next(before_this_point_),
-        prev(before_this_point_->prev)
+        next(before_this_point),
+        prev(before_this_point->prev)
     {
-        before_this_point_->prev = this;
+        before_this_point->prev = this;
         prev->next = this;
     }
 };

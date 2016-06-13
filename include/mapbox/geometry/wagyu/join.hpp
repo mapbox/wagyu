@@ -2,8 +2,7 @@
 
 #include <mapbox/geometry/point.hpp>
 
-#include <mapbox/geometry/ring/point.hpp>
-#include <mapbox/geometry/ring/ring.hpp>
+#include <mapbox/geometry/wagyu/point.hpp>
 
 namespace mapbox { namespace geometry { namespace wagyu {
 
@@ -19,9 +18,9 @@ using const_join_ptr = join<T> * const;
 template <typename T>
 struct join
 {
-    mapbox::geometry::ring::point_ptr<T>  OutPt1;
-    mapbox::geometry::ring::point_ptr<T>  OutPt2;
-    mapbox::geometry::point<T>            OffPt;
+    point_ptr<T>               point1;
+    point_ptr<T>               point2;
+    mapbox::geometry::point<T> off_point;
 };
 
 template <typename T>
