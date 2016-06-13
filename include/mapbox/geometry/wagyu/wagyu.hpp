@@ -1,7 +1,6 @@
 #pragma once
 
 #include <list>
-#include <queue>
 
 #include <mapbox/geometry/polygon.hpp>
 #include <mapbox/geometry/ring/ring.hpp>
@@ -15,6 +14,7 @@
 #include <mapbox/geometry/wagyu/intersect.hpp>
 #include <mapbox/geometry/wagyu/polytree.hpp>
 #include <mapbox/geometry/wagyu/ring.hpp>
+#include <mapbox/geometry/wagyu/scanbeam.hpp>
 
 namespace mapbox { namespace geometry { namespace wagyu {
 
@@ -23,29 +23,28 @@ class clipper
 {
 private:
     using value_type = T;
-    using scanbeam_list = std::priority_queue<value_type>;
     using maxima_list = std::list<value_type>;
     
-    local_minimum_list<value_type>           m_MinimaList;
-    typename local_minimum_list<value_type>::iterator m_CurrentLM;
+    local_minimum_list<value_type>      m_MinimaList;
+    local_minimum_itr<value_type>       m_CurrentLM;
     std::vector<edge_list<value_type> > m_edges;
-    ring_list<value_type>              m_PolyOuts;
-    scanbeam_list                      m_Scanbeam;
-    join_list<value_type>              m_Joins;
-    join_list<value_type>              m_GhostJoins;
-    intersect_list<value_type>         m_IntersectList;
-    maxima_list                        m_Maxima;
-    clip_type                          m_ClipType;
-    edge_ptr<value_type>               m_ActiveEdges;
-    edge_ptr<value_type>               m_SortedEdges;
-    fill_type                          m_ClipFillType;
-    fill_type                          m_SubjFillType;
-    bool                               m_PreserveCollinear;
-    bool                               m_HasOpenPaths;
-    bool                               m_ExecuteLocked;
-    bool                               m_ReverseOutput;
-    bool                               m_UsingPolyTree; 
-    bool                               m_StrictSimple;
+    ring_list<value_type>               m_PolyOuts;
+    scanbeam_list<value_type>           m_Scanbeam;
+    join_list<value_type>               m_Joins;
+    join_list<value_type>               m_GhostJoins;
+    intersect_list<value_type>          m_IntersectList;
+    maxima_list                         m_Maxima;
+    clip_type                           m_ClipType;
+    edge_ptr<value_type>                m_ActiveEdges;
+    edge_ptr<value_type>                m_SortedEdges;
+    fill_type                           m_ClipFillType;
+    fill_type                           m_SubjFillType;
+    bool                                m_PreserveCollinear;
+    bool                                m_HasOpenPaths;
+    bool                                m_ExecuteLocked;
+    bool                                m_ReverseOutput;
+    bool                                m_UsingPolyTree; 
+    bool                                m_StrictSimple;
 
 public:
     
@@ -124,23 +123,23 @@ public:
         }
         std::stable_sort(m_MinimaList.begin(), m_MinimaList.end(), local_minimum_sorter<value_type>());
 
-        m_Scanbeam = scanbeam_list(); //clears/resets priority_queue
+        m_Scanbeam = scanbeam_list<value_type>(); //clears/resets priority_queue
         //reset all edges ...
         for (auto const& lm = m_MinimaList.begin(); lm != m_MinimaList.end(); ++lm)
         {
             m_Scanbeam.push(lm->Y);
-            edge_ptr<value_type> e = lm->LeftBound;
+            edge_ptr<value_type> e = lm->left_bound;
             if (e)
             {
-                e->Curr = e->Bot;
+                e->Curr = e->bot;
                 e->Side = edge_left;
                 e->OutIdx = EDGE_UNASSIGNED;
             }
 
-            e = lm->RightBound;
+            e = lm->right_bound;
             if (e)
             {
-                e->Curr = e->Bot;
+                e->Curr = e->bot;
                 e->Side = edge_right;
                 e->OutIdx = EDGE_UNASSIGNED;
             }
@@ -157,38 +156,38 @@ public:
         {
             return result;
         }
-        result.left = lm->LeftBound->Bot.x;
-        result.top = lm->LeftBound->Bot.y;
-        result.right = lm->LeftBound->Bot.x;
-        result.bottom = lm->LeftBound->Bot.y;
+        result.left = lm->left_bound->bot.x;
+        result.top = lm->left_bound->bot.y;
+        result.right = lm->left_bound->bot.x;
+        result.bottom = lm->left_bound->bot.y;
         while (lm != m_MinimaList.end())
         {
             //todo - needs fixing for open paths
-            result.bottom = std::max(result.bottom, lm->LeftBound->Bot.y);
-            edge_ptr<value_type> e = lm->LeftBound;
+            result.bottom = std::max(result.bottom, lm->left_bound->bot.y);
+            edge_ptr<value_type> e = lm->left_bound;
             for (;;)
             {
                 edge_ptr<value_type> bottomE = e;
-                while (e->NextInLML)
+                while (e->next_in_LML)
                 {
-                    if (e->Bot.x < result.left)
+                    if (e->bot.x < result.left)
                     {
-                        result.left = e->Bot.x;
+                        result.left = e->bot.x;
                     }
-                    if (e->Bot.x > result.right)
+                    if (e->bot.x > result.right)
                     {
-                        result.right = e->Bot.x;
+                        result.right = e->bot.x;
                     }
-                    e = e->NextInLML;
+                    e = e->next_in_LML;
                 }
-                result.left = std::min(result.left, e->Bot.x);
-                result.right = std::max(result.right, e->Bot.x);
-                result.left = std::min(result.left, e->Top.x);
-                result.right = std::max(result.right, e->Top.x);
-                result.top = std::min(result.top, e->Top.y);
-                if (bottomE == lm->LeftBound)
+                result.left = std::min(result.left, e->bot.x);
+                result.right = std::max(result.right, e->bot.x);
+                result.left = std::min(result.left, e->top.x);
+                result.right = std::max(result.right, e->top.x);
+                result.top = std::min(result.top, e->top.y);
+                if (bottomE == lm->left_bound)
                 {
-                    e = lm->RightBound;
+                    e = lm->right_bound;
                 }
                 else
                 {
@@ -247,24 +246,6 @@ public:
 
     }
     */
-private:
-    
-    /*
-    TEdge* AddBoundsToLML(TEdge *e, bool IsClosed);
-    virtual void Reset();
-    TEdge* ProcessBound(TEdge* E, bool IsClockwise);
-    void InsertScanbeam(const cInt Y);
-    bool PopScanbeam(cInt &Y);
-    bool LocalMinimaPending();
-    bool PopLocalMinima(cInt Y, const LocalMinimum *&locMin);
-    OutRec* CreateOutRec();
-    void DisposeAllOutRecs();
-    void DisposeOutRec(PolyOutList::size_type index);
-    void SwapPositionsInAEL(TEdge *edge1, TEdge *edge2);
-    void DeleteFromAEL(TEdge *e);
-    void UpdateEdgeIntoAEL(TEdge *&e);
-    */
-
 };
 
 }}}

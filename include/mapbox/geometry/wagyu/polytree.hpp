@@ -36,8 +36,8 @@ public:
         Childs(),
         Index(0),
         Parent(nullptr),
-        m_jointype(jtSquare),
-        m_endtype(etClosedPolygon),
+        m_jointype(join_type_square),
+        m_endtype(end_type_closed_polygon),
         m_IsOpen(false) {}
     
     ~polygon_node() {}

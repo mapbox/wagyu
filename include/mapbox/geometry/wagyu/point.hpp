@@ -2,9 +2,8 @@
 
 #include <mapbox/geometry/point.hpp>
 
-namespace mapbox { namespace geometry { namespace ring {
+namespace mapbox { namespace geometry { namespace wagyu {
 
-// fwd declare
 template <typename T>
 struct point;
 
@@ -18,36 +17,46 @@ template <typename T>
 struct point
 {
     using coordinate_type = T;
+    std::size_t index;
     T x;
     T y;
-    point_ptr<T> prev;
     point_ptr<T> next;
+    point_ptr<T> prev;
     
     point() :
+        index(0),
         x(0), 
         y(0),
         prev(this),
         next(this) {}
     
     point(T x_, T y_) :
+        index(0),
         x(x_),
         y(y_),
-        prev(this),
-        next(this) {}
+        next(this),
+        prev(this) {}
 
-    point(mapbox::geometry::point<T> const& pt) :
+    point(std::size_t index_,
+          mapbox::geometry::point<T> const& pt) :
+        index(index_),
         x(pt.x),
         y(pt.y),
-        prev(this),
-        next(this) {}
+        next(this),
+        prev(this) {}
     
-    point(mapbox::geometry::point<T> const& pt,
-          point_ptr<T> next_,
-          point_ptr<T> prev_) :
+    point(std::size_t index_,
+          mapbox::geometry::point<T> const& pt,
+          point_ptr<T> before_this_point) :
+        index(index_),
         x(pt.x),
         y(pt.y),
-        prev(prev_),
-        next(next_) {}
+        next(before_this_point_),
+        prev(before_this_point_->prev)
+    {
+        before_this_point_->prev = this;
+        prev->next = this;
+    }
 };
 
 template <typename T>

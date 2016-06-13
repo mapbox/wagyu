@@ -13,7 +13,7 @@ double Area(mapbox::geometry::linear_ring<T> const& poly)
     std::size_t size = poly.size();
     if (size < 3)
     {
-      return 0.0;
+        return 0.0;
     }
 
     double a = 0.0;
@@ -347,7 +347,7 @@ bool Poly2ContainsPoly1(point_ptr<T> OutPt1, point_ptr<T> OutPt2)
                 return false;
             }
         }
-        op = op->Next; 
+        op = op->next; 
     }
     while (op != OutPt1);
     return true; 
@@ -378,9 +378,9 @@ bool SlopesEqual(mapbox::geometry::point<T> const& pt1,
 }
 
 template <typename T>
-inline bool IsHorizontal(edge<T> const& e)
+inline bool is_horizontal(edge<T> const& e)
 {
-    return e.Dx == HORIZONTAL;
+    return e.dx == HORIZONTAL;
 }
 
 template <typename T>
@@ -397,31 +397,31 @@ inline double GetDx(point<T> const& pt1, point<T> const& pt2)
 }
 
 template <typename T>
-inline void SwapSides(edge<T> & Edge1, edge<T> & Edge2)
+inline void Swapsides(edge<T> & Edge1, edge<T> & Edge2)
 {
-    edge_side Side =  Edge1.Side;
-    Edge1.Side = Edge2.Side;
-    Edge2.Side = Side;
+    edge_side side =  Edge1.side;
+    Edge1.side = Edge2.side;
+    Edge2.side = side;
 }
 
 template <typename T>
 inline void SwapPolyIndexes(edge<T> & Edge1, edge<T> & Edge2)
 {
-  std::size_t OutIdx =  Edge1.OutIdx;
-  Edge1.OutIdx = Edge2.OutIdx;
-  Edge2.OutIdx = OutIdx;
+  std::size_t index =  Edge1.index;
+  Edge1.index = Edge2.index;
+  Edge2.index = index;
 }
 
 template <typename T>
-inline T TopX(edge<T> const& edge, const T currentY)
+inline T get_current_x(edge<T> const& edge, const T current_y)
 {
-    if (currentY == edge.Top.y)
+    if (current_y == edge.top.y)
     {
-        return edge.Top.x;
+        return edge.top.x;
     }
     else
     {
-        return edge.Bot.x + static_cast<T>(std::round(edge.Dx * static_cast<double>(currentY - edge.Bot.y)));
+        return edge.bot.x + static_cast<T>(std::round(edge.dx * static_cast<double>(current_y - edge.bot.y)));
     }
 }
 
@@ -437,32 +437,16 @@ void ReversePolyPtLinks(point_ptr<T> pp)
     pp1 = pp;
     do
     {
-        pp2 = pp1->Next;
-        pp1->Next = pp1->Prev;
-        pp1->Prev = pp2;
+        pp2 = pp1->next;
+        pp1->next = pp1->prev;
+        pp1->prev = pp2;
         pp1 = pp2;
     } 
     while( pp1 != pp );
 }
 
 template <typename T>
-void DisposeOutPts(point_ptr<T> & pp)
-{
-    if (pp == nullptr)
-    {
-        return;
-    }
-    pp->Prev->Next = nullptr;
-    while (pp)
-    {
-        point_ptr<T> tmpPp = pp;
-        pp = pp->Next;
-        delete tmpPp;
-    }
-}
-
-template <typename T>
-void SwapPoints(mapbox::geometry::point<T> &pt1, mapbox::geometry::point<T> &pt2)
+void swap_points(mapbox::geometry::point<T> &pt1, mapbox::geometry::point<T> &pt2)
 {
     mapbox::geometry::point<T> tmp = pt1;
     pt1 = pt2;
@@ -470,7 +454,7 @@ void SwapPoints(mapbox::geometry::point<T> &pt1, mapbox::geometry::point<T> &pt2
 }
 
 template <typename T>
-bool GetOverlapSegment(mapbox::geometry::point<T> pt1a, 
+bool get_overlap_segment(mapbox::geometry::point<T> pt1a, 
                        mapbox::geometry::point<T> pt1b,
                        mapbox::geometry::point<T> pt2a,
                        mapbox::geometry::point<T> pt2b, 
@@ -478,15 +462,15 @@ bool GetOverlapSegment(mapbox::geometry::point<T> pt1a,
                        mapbox::geometry::point<T> &pt2)
 {
     //precondition: segments are Collinear.
-    if (Abs(pt1a.x - pt1b.x) > Abs(pt1a.y - pt1b.y))
+    if (std::abs(pt1a.x - pt1b.x) > std::abs(pt1a.y - pt1b.y))
     {
         if (pt1a.x > pt1b.x)
         {
-            SwapPoints(pt1a, pt1b);
+            swap_points(pt1a, pt1b);
         }
         if (pt2a.x > pt2b.x)
         {
-            SwapPoints(pt2a, pt2b);
+            swap_points(pt2a, pt2b);
         }
         if (pt1a.x > pt2a.x)
         {
@@ -510,11 +494,11 @@ bool GetOverlapSegment(mapbox::geometry::point<T> pt1a,
     {
         if (pt1a.y < pt1b.y)
         {
-            SwapPoints(pt1a, pt1b);
+            swap_points(pt1a, pt1b);
         }
         if (pt2a.y < pt2b.y)
         {
-            SwapPoints(pt2a, pt2b);
+            swap_points(pt2a, pt2b);
         }
         if (pt1a.y < pt2a.y)
         {
@@ -539,28 +523,28 @@ bool GetOverlapSegment(mapbox::geometry::point<T> pt1a,
 template <typename T>
 bool FirstIsBottomPt(const_point_ptr<T> btmPt1, const_point_ptr<T> btmPt2)
 {
-    point_ptr<T> p = btmPt1->Prev;
+    point_ptr<T> p = btmPt1->prev;
     while ((p->Pt == btmPt1->Pt) && (p != btmPt1))
     {
-        p = p->Prev;
+        p = p->prev;
     }
     double dx1p = std::fabs(GetDx(btmPt1->Pt, p->Pt));
-    p = btmPt1->Next;
+    p = btmPt1->next;
     while ((p->Pt == btmPt1->Pt) && (p != btmPt1))
     {
-        p = p->Next;
+        p = p->next;
     }
     double dx1n = std::fabs(GetDx(btmPt1->Pt, p->Pt));
-    p = btmPt2->Prev;
+    p = btmPt2->prev;
     while ((p->Pt == btmPt2->Pt) && (p != btmPt2))
     {
-        p = p->Prev;
+        p = p->prev;
     }
     double dx2p = std::fabs(GetDx(btmPt2->Pt, p->Pt));
-    p = btmPt2->Next;
+    p = btmPt2->next;
     while ((p->Pt == btmPt2->Pt) && (p != btmPt2))
     {
-        p = p->Next;
+        p = p->next;
     }
     double dx2n = std::fabs(GetDx(btmPt2->Pt, p->Pt));
 
@@ -579,7 +563,7 @@ template <typename T>
 point_ptr<T> GetBottomPt(point_ptr<T> pp)
 {
     point_ptr<T> dups = 0;
-    point_ptr<T> p = pp->Next;
+    point_ptr<T> p = pp->next;
     while (p != pp)
     {
         if (p->Pt.y > pp->Pt.y)
@@ -596,13 +580,13 @@ point_ptr<T> GetBottomPt(point_ptr<T> pp)
             }
             else
             {
-                if (p->Next != pp && p->Prev != pp)
+                if (p->next != pp && p->prev != pp)
                 {
                     dups = p;
                 }
             }
         }
-        p = p->Next;
+        p = p->next;
     }
     if (dups)
     {
@@ -613,10 +597,10 @@ point_ptr<T> GetBottomPt(point_ptr<T> pp)
             {
                 pp = dups;
             }
-            dups = dups->Next;
+            dups = dups->next;
             while (dups->Pt != pp->Pt)
             {
-                dups = dups->Next;
+                dups = dups->next;
             }
         }
     }
@@ -657,27 +641,6 @@ bool HorzSegmentsOverlap(T seg1a,
         std::swap(seg2a, seg2b);
     }
     return (seg1a < seg2b) && (seg2a < seg1b);
-}
-
-template <typename T>
-inline bool E2InsertsBeforeE1(edge<T> const& e1,
-                              edge<T> const& e2)
-{
-    if (e2.Curr.x == e1.Curr.x) 
-    {
-        if (e2.Top.y > e1.Top.y)
-        {
-            return e2.Top.x < TopX(e1, e2.Top.y);
-        }
-        else
-        {
-            return e1.Top.x > TopX(e2, e1.Top.y);
-        }
-    } 
-    else
-    {
-        return e2.Curr.x < e1.Curr.x;
-    }
 }
 
 }}}

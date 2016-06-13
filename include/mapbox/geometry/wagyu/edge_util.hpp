@@ -15,10 +15,10 @@ namespace mapbox { namespace geometry { namespace wagyu {
 template <typename T>
 inline void ReverseHorizontal(edge<T> & e)
 {
-    //swap horizontal edges' Top and Bottom x's so they follow the natural
+    //swap horizontal edges' top and bottom x's so they follow the natural
     //progression of the bounds - ie so their xbots will align with the
     //adjoining lower edge. [Helpful in the ProcessHorizontal() method.]
-    std::swap(e.Top.x, e.Bot.x);
+    std::swap(e.top.x, e.bot.x);
 }
 
 template <typename T>
@@ -35,28 +35,28 @@ edge_ptr<T> process_bound_type_line(edge_ptr<T> current_edge,
         //create another LocMin and call ProcessBound once more
         if (next_is_forward)
         {
-            while (current_edge->Top.y == current_edge->Next->Bot.y)
+            while (current_edge->top.y == current_edge->next->bot.y)
             {
-                current_edge = current_edge->Next;
+                current_edge = current_edge->next;
             }
             //don't include top horizontals when parsing a bound a second time,
             //they will be contained in the opposite bound ...
             while (current_edge != result && 
-                   IsHorizontal(*current_edge))
+                   is_horizontal(*current_edge))
             {
-                current_edge = current_edge->Prev;
+                current_edge = current_edge->prev;
             }
         }
         else
         {
-            while (current_edge->Top.y == current_edge->Prev->Bot.y)
+            while (current_edge->top.y == current_edge->prev->bot.y)
             {
-                current_edge = current_edge->Prev;
+                current_edge = current_edge->prev;
             }
             while (current_edge != result && 
-                   IsHorizontal(*current_edge))
+                   is_horizontal(*current_edge))
             {
-                current_edge = current_edge->Next;
+                current_edge = current_edge->next;
             }
         }
 
@@ -64,11 +64,11 @@ edge_ptr<T> process_bound_type_line(edge_ptr<T> current_edge,
         {
             if (next_is_forward)
             {
-                result = current_edge->Next;
+                result = current_edge->next;
             }
             else 
             {
-                result = current_edge->Prev;
+                result = current_edge->prev;
             }
         }
         else
@@ -76,17 +76,17 @@ edge_ptr<T> process_bound_type_line(edge_ptr<T> current_edge,
             //there are more edges in the bound beyond result starting with current_edge
             if (next_is_forward)
             {
-                current_edge = result->Next;
+                current_edge = result->next;
             }
             else
             {
-                current_edge = result->Prev;
+                current_edge = result->prev;
             }
             local_minimum<T> locMin;
-            locMin.y = current_edge->Bot.y;
-            locMin.LeftBound = nullptr;
-            locMin.RightBound = current_edge;
-            current_edge->WindDelta = 0;
+            locMin.y = current_edge->bot.y;
+            locMin.left_bound = nullptr;
+            locMin.right_bound = current_edge;
+            current_edge->winding_delta = 0;
             result = process_bound_type_line(current_edge, next_is_forward, minima_list);
             minima_list.push_back(locMin);
         }
@@ -95,27 +95,27 @@ edge_ptr<T> process_bound_type_line(edge_ptr<T> current_edge,
 
     edge_ptr<T> starting_edge = nullptr;
 
-    if (IsHorizontal(*current_edge))
+    if (is_horizontal(*current_edge))
     {
         //We need to be careful with open paths because this may not be a
         //true local minima (ie current_edge may be following a skip edge).
         //Also, consecutive horz. edges may start heading left before going right.
         if (next_is_forward)
         {
-            starting_edge = current_edge->Prev;
+            starting_edge = current_edge->prev;
         }
         else
         {
-            starting_edge = current_edge->Next;
+            starting_edge = current_edge->next;
         }
-        if (IsHorizontal(*starting_edge)) //ie an adjoining horizontal skip edge
+        if (is_horizontal(*starting_edge)) //ie an adjoining horizontal skip edge
         {
-            if (starting_edge->Bot.x != current_edge->Bot.x && starting_edge->Top.x != current_edge->Bot.x)
+            if (starting_edge->bot.x != current_edge->bot.x && starting_edge->top.x != current_edge->bot.x)
             {
                 ReverseHorizontal(*current_edge);
             }
         }
-        else if (starting_edge->Bot.x != current_edge->Bot.x)
+        else if (starting_edge->bot.x != current_edge->bot.x)
         {
             ReverseHorizontal(*current_edge);
         }
@@ -124,85 +124,85 @@ edge_ptr<T> process_bound_type_line(edge_ptr<T> current_edge,
     starting_edge = current_edge;
     if (next_is_forward)
     {
-        while (result->Top.y == result->Next->Bot.y && 
-               result->Next->OutIdx != EDGE_SKIP)
+        while (result->top.y == result->next->bot.y && 
+               result->next->OutIdx != EDGE_SKIP)
         {
-            result = result->Next;
+            result = result->next;
         }
-        if (IsHorizontal(*result) && 
-            result->Next->OutIdx != EDGE_SKIP)
+        if (is_horizontal(*result) && 
+            result->next->OutIdx != EDGE_SKIP)
         {
             //nb: at the top of a bound, horizontals are added to the bound
             //only when the preceding edge attaches to the horizontal's left vertex
             //unless a Skip edge is encountered when that becomes the top divide
             horizontal_edge = result;
-            while (IsHorizontal(*horizontal_edge->Prev))
+            while (is_horizontal(*horizontal_edge->prev))
             {
-                horizontal_edge = horizontal_edge->Prev;
+                horizontal_edge = horizontal_edge->prev;
             }
-            if (horizontal_edge->Prev->Top.x > result->Next->Top.x)
+            if (horizontal_edge->prev->top.x > result->next->top.x)
             {
-                result = horizontal_edge->Prev;
+                result = horizontal_edge->prev;
             }
         }
         while (current_edge != result) 
         {
-            current_edge->NextInLML = current_edge->Next;
-            if (IsHorizontal(*current_edge) && 
+            current_edge->next_in_LML = current_edge->next;
+            if (is_horizontal(*current_edge) && 
                 current_edge != starting_edge &&
-                current_edge->Bot.x != current_edge->Prev->Top.x)
+                current_edge->bot.x != current_edge->prev->top.x)
             {
                 ReverseHorizontal(*current_edge);
             }
-            current_edge = current_edge->Next;
+            current_edge = current_edge->next;
         }
-        if (IsHorizontal(*current_edge) &&
+        if (is_horizontal(*current_edge) &&
             current_edge != starting_edge && 
-            current_edge->Bot.x != current_edge->Prev->Top.x)
+            current_edge->bot.x != current_edge->prev->top.x)
         {
             ReverseHorizontal(*current_edge);
         }
-        result = result->Next; //move to the edge just beyond current bound
+        result = result->next; //move to the edge just beyond current bound
     }
     else
     {
-        while (result->Top.y == result->Prev->Bot.y && 
-               result->Prev->OutIdx != EDGE_SKIP) 
+        while (result->top.y == result->prev->bot.y && 
+               result->prev->OutIdx != EDGE_SKIP) 
         {
-            result = result->Prev;
+            result = result->prev;
         }
-        if (IsHorizontal(*result) && 
-            result->Prev->OutIdx != EDGE_SKIP)
+        if (is_horizontal(*result) && 
+            result->prev->OutIdx != EDGE_SKIP)
         {
             horizontal_edge = result;
-            while (IsHorizontal(*horizontal_edge->Next))
+            while (is_horizontal(*horizontal_edge->next))
             {
-                horizontal_edge = horizontal_edge->Next;
+                horizontal_edge = horizontal_edge->next;
             }
-            if (horizontal_edge->Next->Top.x >= result->Prev->Top.x)
+            if (horizontal_edge->next->top.x >= result->prev->top.x)
             {
-                result = horizontal_edge->Next;
+                result = horizontal_edge->next;
             }
         }
 
         while (current_edge != result)
         {
-            current_edge->NextInLML = current_edge->Prev;
-            if (IsHorizontal(*current_edge) && 
+            current_edge->next_in_LML = current_edge->prev;
+            if (is_horizontal(*current_edge) && 
                 current_edge != starting_edge && 
-                current_edge->Bot.x != current_edge->Next->Top.x) 
+                current_edge->bot.x != current_edge->next->top.x) 
             {
                 ReverseHorizontal(*current_edge);
             }
-            current_edge = current_edge->Prev;
+            current_edge = current_edge->prev;
         }
-        if (IsHorizontal(*current_edge) && 
+        if (is_horizontal(*current_edge) && 
             current_edge != starting_edge && 
-            current_edge->Bot.x != current_edge->Next->Top.x) 
+            current_edge->bot.x != current_edge->next->top.x) 
         {
             ReverseHorizontal(*current_edge);
         }
-        result = result->Prev; //move to the edge just beyond current bound
+        result = result->prev; //move to the edge just beyond current bound
     }
     return result;
 }
@@ -215,27 +215,27 @@ edge_ptr<T> process_bound_type_ring(edge_ptr<T> current_edge,
     edge_ptr<T> horizontal_edge = nullptr;
     edge_ptr<T> starting_edge = nullptr;
 
-    if (IsHorizontal(*current_edge))
+    if (is_horizontal(*current_edge))
     {
         // We need to be careful with open paths because this may not be a
         // true local minima (ie E may be following a skip edge).
         // Also, consecutive horz. edges may start heading left before going right.
         if (next_is_forward)
         {
-            starting_edge = current_edge->Prev;
+            starting_edge = current_edge->prev;
         }
         else
         {
-            starting_edge = current_edge->Next;
+            starting_edge = current_edge->next;
         }
-        if (IsHorizontal(*starting_edge)) //ie an adjoining horizontal skip edge
+        if (is_horizontal(*starting_edge)) //ie an adjoining horizontal skip edge
         {
-            if (starting_edge->Bot.x != current_edge->Bot.x && starting_edge->Top.x != current_edge->Bot.x)
+            if (starting_edge->bot.x != current_edge->bot.x && starting_edge->top.x != current_edge->bot.x)
             {
                 ReverseHorizontal(*current_edge);
             }
         }
-        else if (starting_edge->Bot.x != current_edge->Bot.x)
+        else if (starting_edge->bot.x != current_edge->bot.x)
         {
             ReverseHorizontal(*current_edge);
         }
@@ -244,81 +244,81 @@ edge_ptr<T> process_bound_type_ring(edge_ptr<T> current_edge,
     starting_edge = current_edge;
     if (next_is_forward)
     {
-        while (result->Top.y == result->Next->Bot.y)
+        while (result->top.y == result->next->bot.y)
         {
-            result = result->Next;
+            result = result->next;
         }
-        if (IsHorizontal(*result))
+        if (is_horizontal(*result))
         {
             //nb: at the top of a bound, horizontals are added to the bound
             //only when the preceding edge attaches to the horizontal's left vertex
             //unless a Skip edge is encountered when that becomes the top divide
             horizontal_edge = result;
-            while (IsHorizontal(*horizontal_edge->Prev))
+            while (is_horizontal(*horizontal_edge->prev))
             {
-                horizontal_edge = horizontal_edge->Prev;
+                horizontal_edge = horizontal_edge->prev;
             }
-            if (horizontal_edge->Prev->Top.x > result->Next->Top.x)
+            if (horizontal_edge->prev->top.x > result->next->top.x)
             {
-                result = horizontal_edge->Prev;
+                result = horizontal_edge->prev;
             }
         }
         while (current_edge != result) 
         {
-            current_edge->NextInLML = current_edge->Next;
-            if (IsHorizontal(*current_edge) && 
+            current_edge->next_in_LML = current_edge->next;
+            if (is_horizontal(*current_edge) && 
                 current_edge != starting_edge &&
-                current_edge->Bot.x != current_edge->Prev->Top.x)
+                current_edge->bot.x != current_edge->prev->top.x)
             {
                 ReverseHorizontal(*current_edge);
             }
-            current_edge = current_edge->Next;
+            current_edge = current_edge->next;
         }
-        if (IsHorizontal(*current_edge) && 
+        if (is_horizontal(*current_edge) && 
             current_edge != starting_edge && 
-            current_edge->Bot.x != current_edge->Prev->Top.x)
+            current_edge->bot.x != current_edge->prev->top.x)
         {
             ReverseHorizontal(*current_edge);
         }
-        result = result->Next; //move to the edge just beyond current bound
+        result = result->next; //move to the edge just beyond current bound
     }
     else
     {
-        while (result->Top.y == result->Prev->Bot.y)
+        while (result->top.y == result->prev->bot.y)
         {
-            result = result->Prev;
+            result = result->prev;
         }
-        if (IsHorizontal(*result))
+        if (is_horizontal(*result))
         {
             horizontal_edge = result;
-            while (IsHorizontal(*horizontal_edge->Next))
+            while (is_horizontal(*horizontal_edge->next))
             {
-                horizontal_edge = horizontal_edge->Next;
+                horizontal_edge = horizontal_edge->next;
             }
-            if (horizontal_edge->Next->Top.x >= result->Prev->Top.x)
+            if (horizontal_edge->next->top.x >= result->prev->top.x)
             {
-                result = horizontal_edge->Next;
+                result = horizontal_edge->next;
             }
         }
 
         while (current_edge != result)
         {
-            current_edge->NextInLML = current_edge->Prev;
-            if (IsHorizontal(*current_edge) && 
+            current_edge->next_in_LML = current_edge->prev;
+            if (is_horizontal(*current_edge) && 
                 current_edge != starting_edge && 
-                current_edge->Bot.x != current_edge->Next->Top.x) 
+                current_edge->bot.x != current_edge->next->top.x) 
             {
                 ReverseHorizontal(*current_edge);
             }
-            current_edge = current_edge->Prev;
+            current_edge = current_edge->prev;
         }
-        if (IsHorizontal(*current_edge) && 
+        if (is_horizontal(*current_edge) && 
             current_edge != starting_edge && 
-            current_edge->Bot.x != current_edge->Next->Top.x) 
+            current_edge->bot.x != current_edge->next->top.x) 
         {
             ReverseHorizontal(*current_edge);
         }
-        result = result->Prev; //move to the edge just beyond current bound
+        result = result->prev; //move to the edge just beyond current bound
     }
     return result;
 }
@@ -328,28 +328,28 @@ edge_ptr<T> find_next_local_minimum(edge_ptr<T> edge)
 {
     while (true)
     {
-        while (edge->Bot != edge->Prev->Bot || edge->Curr == edge->Top)
+        while (edge->bot != edge->prev->bot || edge->curr == edge->top)
         {
-            edge = edge->Next;
+            edge = edge->next;
         }
-        if (!IsHorizontal(*edge) && !IsHorizontal(*edge->Prev))
+        if (!is_horizontal(*edge) && !is_horizontal(*edge->prev))
         {
             break;
         }
-        while (IsHorizontal(*edge->Prev))
+        while (is_horizontal(*edge->prev))
         {
-            edge = edge->Prev;
+            edge = edge->prev;
         }
         edge_ptr<T> edge2 = edge;
-        while (IsHorizontal(*edge))
+        while (is_horizontal(*edge))
         {
-            edge = edge->Next;
+            edge = edge->next;
         }
-        if (edge->Top.y == edge->Prev->Bot.y)
+        if (edge->top.y == edge->prev->bot.y)
         {
             continue; //ie just an intermediate horz.
         }
-        if (edge2->Prev->Bot.x < edge->Bot.x)
+        if (edge2->prev->bot.x < edge->bot.x)
         {
             edge = edge2;
         }
@@ -366,25 +366,25 @@ void add_flat_line_to_local_minima_list(edge_list<T> & new_edges,
     // Totally flat paths must be handled differently when adding them
     // to LocalMinima list to avoid endless loops etc ...
     edge_ptr<value_type> current_edge = &new_edges.back();
-    current_edge->Prev->OutIdx = EDGE_SKIP;
+    current_edge->prev->OutIdx = EDGE_SKIP;
     local_minimum<value_type> local_min;
-    local_min.y = current_edge->Bot.y;
-    local_min.LeftBound = nullptr;
-    local_min.RightBound = current_edge;
-    local_min.RightBound->Side = edge_right;
-    local_min.RightBound->WindDelta = 0;
+    local_min.y = current_edge->bot.y;
+    local_min.left_bound = nullptr;
+    local_min.right_bound = current_edge;
+    local_min.right_bound->side = edge_right;
+    local_min.right_bound->winding_delta = 0;
     for (;;)
     {
-        if (current_edge->Bot.x != current_edge->Prev->Top.x)
+        if (current_edge->bot.x != current_edge->prev->top.x)
         {
             ReverseHorizontal(*current_edge);
         }
-        if (current_edge->Next->OutIdx == EDGE_SKIP)
+        if (current_edge->next->OutIdx == EDGE_SKIP)
         {
             break;
         }
-        current_edge->NextInLML = current_edge->Next;
-        current_edge = current_edge->Next;
+        current_edge->next_in_LML = current_edge->next;
+        current_edge = current_edge->next;
     }
     minima_list.push_back(local_min);
 }
@@ -411,33 +411,33 @@ void add_line_to_local_minima_list(edge_list<T> & new_edges,
             minimum_edge = current_edge;
         }
 
-        //E and E.Prev now share a local minima (left aligned if horizontal).
+        //E and E.prev now share a local minima (left aligned if horizontal).
         //Compare their slopes to find which starts which bound ...
         local_minimum<value_type> local_min;
-        local_min.y = current_edge->Bot.y;
-        if (current_edge->Dx < current_edge->Prev->Dx) 
+        local_min.y = current_edge->bot.y;
+        if (current_edge->dx < current_edge->prev->dx) 
         {
-            local_min.LeftBound = current_edge->Prev;
-            local_min.RightBound = current_edge;
-            left_bound_is_forward = false; //Q.nextInLML = Q.prev
+            local_min.left_bound = current_edge->prev;
+            local_min.right_bound = current_edge;
+            left_bound_is_forward = false; //Q.next_in_LML = Q.prev
         }
         else
         {
-            local_min.LeftBound = current_edge;
-            local_min.RightBound = current_edge->Prev;
-            left_bound_is_forward = true; //Q.nextInLML = Q.next
+            local_min.left_bound = current_edge;
+            local_min.right_bound = current_edge->prev;
+            left_bound_is_forward = true; //Q.next_in_LML = Q.next
         }
 
-        local_min.LeftBound->WindDelta = 0;
-        local_min.RightBound->WindDelta = 0;
+        local_min.left_bound->winding_delta = 0;
+        local_min.right_bound->winding_delta = 0;
 
-        current_edge = process_bound_type_line(local_min.LeftBound, left_bound_is_forward, minima_list);
+        current_edge = process_bound_type_line(local_min.left_bound, left_bound_is_forward, minima_list);
         if (current_edge->OutIdx == EDGE_SKIP) 
         {
             current_edge = process_bound_type_line(current_edge, left_bound_is_forward, minima_list);
         }
 
-        edge_ptr<value_type> current_edge_2 = process_bound_type_line(local_min.RightBound, !left_bound_is_forward, minima_list);
+        edge_ptr<value_type> current_edge_2 = process_bound_type_line(local_min.right_bound, !left_bound_is_forward, minima_list);
         if (current_edge_2->OutIdx == EDGE_SKIP) 
         {
             current_edge_2 = process_bound_type_line(current_edge_2, !left_bound_is_forward, minima_list);
@@ -474,37 +474,37 @@ void add_ring_to_local_minima_list(edge_list<T> & new_edges,
             minimum_edge = current_edge;
         }
 
-        //E and E.Prev now share a local minima (left aligned if horizontal).
+        //E and E.prev now share a local minima (left aligned if horizontal).
         //Compare their slopes to find which starts which bound ...
         local_minimum<value_type> local_min;
-        local_min.y = current_edge->Bot.y;
-        if (current_edge->Dx < current_edge->Prev->Dx) 
+        local_min.y = current_edge->bot.y;
+        if (current_edge->dx < current_edge->prev->dx) 
         {
-            local_min.LeftBound = current_edge->Prev;
-            local_min.RightBound = current_edge;
-            left_bound_is_forward = false; //Q.nextInLML = Q.prev
+            local_min.left_bound = current_edge->prev;
+            local_min.right_bound = current_edge;
+            left_bound_is_forward = false; //Q.next_in_LML = Q.prev
         }
         else
         {
-            local_min.LeftBound = current_edge;
-            local_min.RightBound = current_edge->Prev;
-            left_bound_is_forward = true; //Q.nextInLML = Q.next
+            local_min.left_bound = current_edge;
+            local_min.right_bound = current_edge->prev;
+            left_bound_is_forward = true; //Q.next_in_LML = Q.next
         }
 
-        if (local_min.LeftBound->Next == local_min.RightBound)
+        if (local_min.left_bound->next == local_min.right_bound)
         {
-            local_min.LeftBound->WindDelta = -1;
-            local_min.RightBound->WindDelta = 1;
+            local_min.left_bound->winding_delta = -1;
+            local_min.right_bound->winding_delta = 1;
         }
         else
         {
-            local_min.LeftBound->WindDelta = 1;
-            local_min.RightBound->WindDelta = -1;
+            local_min.left_bound->winding_delta = 1;
+            local_min.right_bound->winding_delta = -1;
         }
 
-        current_edge = process_bound_type_ring(local_min.LeftBound, left_bound_is_forward);
+        current_edge = process_bound_type_ring(local_min.left_bound, left_bound_is_forward);
 
-        edge_ptr<value_type> current_edge_2 = process_bound_type_ring(local_min.RightBound, !left_bound_is_forward);
+        edge_ptr<value_type> current_edge_2 = process_bound_type_ring(local_min.right_bound, !left_bound_is_forward);
 
         minima_list.push_back(local_min);
         
@@ -519,14 +519,14 @@ template <typename T>
 void make_list_circular(edge_list<T> & edges)
 {
     // Link all edges for circular list now
-    edges.front().Prev = &edges.back();
-    edges.back().Next = &edges.front();
+    edges.front().prev = &edges.back();
+    edges.back().next = &edges.front();
     auto itr_next = edges.begin();
     auto itr = itr_next++;
     for (; itr_next != edges.end(); ++itr, ++itr_next)
     {
-        itr->Next = &(*itr_next);
-        itr_next->Prev = &(*itr);
+        itr->next = &(*itr_next);
+        itr_next->prev = &(*itr);
     }
 }
 
@@ -661,7 +661,7 @@ bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry,
             }
             if (!edges.empty())
             {
-                pt1 = edges.back().Curr;
+                pt1 = edges.back().curr;
             }
             else
             {
@@ -705,7 +705,7 @@ bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry,
             }
             if (!edges.empty())
             {
-                pt1 = edges.back().Curr;
+                pt1 = edges.back().curr;
             }
             else
             {

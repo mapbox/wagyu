@@ -2,7 +2,6 @@
 
 #include <mapbox/geometry/wagyu/edge.hpp>
 #include <mapbox/geometry/wagyu/intersect_point.hpp>
-#include <mapbox/geometry/wagyu/util.hpp>
 
 TEST_CASE("test intersection of points")
 {
@@ -19,72 +18,72 @@ TEST_CASE("test intersection of points")
     edge<std::int64_t> e2(p2, p3, polygon_type_subject);
     edge<std::int64_t> e3(p3, p4, polygon_type_subject);
 
-    CHECK(e1.Bot.x == 9);
-    CHECK(e1.Bot.y == 5);
-    CHECK(e1.Curr.x == -1);
-    CHECK(e1.Curr.y == -2);
-    CHECK(e1.Top.x == -1);
-    CHECK(e1.Top.y == -2);
-    CHECK(e1.Dx == Approx(1.4285714286));
+    CHECK(e1.bot.x == 9);
+    CHECK(e1.bot.y == 5);
+    CHECK(e1.curr.x == -1);
+    CHECK(e1.curr.y == -2);
+    CHECK(e1.top.x == -1);
+    CHECK(e1.top.y == -2);
+    CHECK(e1.dx == Approx(1.4285714286));
     
-    CHECK(e2.Bot.x == 9);
-    CHECK(e2.Bot.y == 5);
-    CHECK(e2.Curr.x == 9);
-    CHECK(e2.Curr.y == 5);
-    CHECK(e2.Top.x == 0);
-    CHECK(e2.Top.y == 0);
-    CHECK(e2.Dx == Approx(1.8));
+    CHECK(e2.bot.x == 9);
+    CHECK(e2.bot.y == 5);
+    CHECK(e2.curr.x == 9);
+    CHECK(e2.curr.y == 5);
+    CHECK(e2.top.x == 0);
+    CHECK(e2.top.y == 0);
+    CHECK(e2.dx == Approx(1.8));
     
-    CHECK(e3.Bot.x == 13);
-    CHECK(e3.Bot.y == 6);
-    CHECK(e3.Curr.x == 0);
-    CHECK(e3.Curr.y == 0);
-    CHECK(e3.Top.x == 0);
-    CHECK(e3.Top.y == 0);
-    CHECK(e3.Dx == Approx(2.1666666667));
+    CHECK(e3.bot.x == 13);
+    CHECK(e3.bot.y == 6);
+    CHECK(e3.curr.x == 0);
+    CHECK(e3.curr.y == 0);
+    CHECK(e3.top.x == 0);
+    CHECK(e3.top.y == 0);
+    CHECK(e3.dx == Approx(2.1666666667));
 
     std::int64_t top_y = -2;
     // Scanbeam would start at -2 and add e1
-    e1.Curr.y = top_y;
-    e1.Curr.x = TopX(e1, top_y);
-    CHECK(e1.Curr.x == -1);
-    CHECK(e1.Curr.y == -2);
+    e1.curr.y = top_y;
+    e1.curr.x = get_current_x(e1, top_y);
+    CHECK(e1.curr.x == -1);
+    CHECK(e1.curr.y == -2);
     // Next scanbeam would reach 0 and add e2 and e3
     top_y = 0;
-    e1.Curr.y = top_y;
-    e1.Curr.x = TopX(e1, top_y);
-    e2.Curr.y = top_y;
-    e2.Curr.x = TopX(e2, top_y);
-    e3.Curr.y = top_y;
-    e3.Curr.x = TopX(e3, top_y);
-    CHECK(e1.Curr.x == 2);
-    CHECK(e1.Curr.y == 0);
-    CHECK(e2.Curr.x == 0);
-    CHECK(e2.Curr.y == 0);
-    CHECK(e3.Curr.x == 0);
-    CHECK(e3.Curr.y == 0);
+    e1.curr.y = top_y;
+    e1.curr.x = get_current_x(e1, top_y);
+    e2.curr.y = top_y;
+    e2.curr.x = get_current_x(e2, top_y);
+    e3.curr.y = top_y;
+    e3.curr.x = get_current_x(e3, top_y);
+    CHECK(e1.curr.x == 2);
+    CHECK(e1.curr.y == 0);
+    CHECK(e2.curr.x == 0);
+    CHECK(e2.curr.y == 0);
+    CHECK(e3.curr.x == 0);
+    CHECK(e3.curr.y == 0);
     // The active edge list would be sorted by increasing x
     // so would be e3, e2, e1
     // Show that intersection will not be run due to no endpoint intersections
-    CHECK_FALSE(e3.Curr.x > e2.Curr.x); // No intersection of points!
-    CHECK_FALSE(e2.Curr.x > e1.Curr.x); // No intersection of points!
+    CHECK_FALSE(e3.curr.x > e2.curr.x); // No intersection of points!
+    CHECK_FALSE(e2.curr.x > e1.curr.x); // No intersection of points!
     // Next scanbeam would reach 5
     top_y = 5;
-    e1.Curr.y = top_y;
-    e1.Curr.x = TopX(e1, top_y);
-    e2.Curr.y = top_y;
-    e2.Curr.x = TopX(e2, top_y);
-    e3.Curr.y = top_y;
-    e3.Curr.x = TopX(e3, top_y);
-    CHECK(e1.Curr.x == 9);
-    CHECK(e1.Curr.y == 5);
-    CHECK(e2.Curr.x == 9);
-    CHECK(e2.Curr.y == 5);
-    CHECK(e3.Curr.x == 11);
-    CHECK(e3.Curr.y == 5);
+    e1.curr.y = top_y;
+    e1.curr.x = get_current_x(e1, top_y);
+    e2.curr.y = top_y;
+    e2.curr.x = get_current_x(e2, top_y);
+    e3.curr.y = top_y;
+    e3.curr.x = get_current_x(e3, top_y);
+    CHECK(e1.curr.x == 9);
+    CHECK(e1.curr.y == 5);
+    CHECK(e2.curr.x == 9);
+    CHECK(e2.curr.y == 5);
+    CHECK(e3.curr.x == 11);
+    CHECK(e3.curr.y == 5);
     // The active edge list would be e2, e1, e3
-    CHECK_FALSE(e1.Curr.x > e2.Curr.x); // No intersection of points
-    CHECK(e3.Curr.x > e1.Curr.x); // Intersection!
+    CHECK_FALSE(e1.curr.x > e2.curr.x); // No intersection of points
+    CHECK(e3.curr.x > e1.curr.x); // Intersection!
     intersection_point(e1, e3, r1);
 
     CHECK(r1.x == 7);
@@ -106,72 +105,72 @@ TEST_CASE("test intersection of points - switch axis values")
     edge<std::int64_t> e2(p2, p3, polygon_type_subject);
     edge<std::int64_t> e3(p3, p4, polygon_type_subject);
 
-    CHECK(e1.Bot.x == 5);
-    CHECK(e1.Bot.y == 9);
-    CHECK(e1.Curr.x == -2);
-    CHECK(e1.Curr.y == -1);
-    CHECK(e1.Top.x == -2);
-    CHECK(e1.Top.y == -1);
-    CHECK(e1.Dx == Approx(0.7));
+    CHECK(e1.bot.x == 5);
+    CHECK(e1.bot.y == 9);
+    CHECK(e1.curr.x == -2);
+    CHECK(e1.curr.y == -1);
+    CHECK(e1.top.x == -2);
+    CHECK(e1.top.y == -1);
+    CHECK(e1.dx == Approx(0.7));
     
-    CHECK(e2.Bot.x == 5);
-    CHECK(e2.Bot.y == 9);
-    CHECK(e2.Curr.x == 5);
-    CHECK(e2.Curr.y == 9);
-    CHECK(e2.Top.x == 0);
-    CHECK(e2.Top.y == 0);
-    CHECK(e2.Dx == Approx(0.5555555556));
+    CHECK(e2.bot.x == 5);
+    CHECK(e2.bot.y == 9);
+    CHECK(e2.curr.x == 5);
+    CHECK(e2.curr.y == 9);
+    CHECK(e2.top.x == 0);
+    CHECK(e2.top.y == 0);
+    CHECK(e2.dx == Approx(0.5555555556));
     
-    CHECK(e3.Bot.x == 6);
-    CHECK(e3.Bot.y == 13);
-    CHECK(e3.Curr.x == 0);
-    CHECK(e3.Curr.y == 0);
-    CHECK(e3.Top.x == 0);
-    CHECK(e3.Top.y == 0);
-    CHECK(e3.Dx == Approx(0.4615384615));
+    CHECK(e3.bot.x == 6);
+    CHECK(e3.bot.y == 13);
+    CHECK(e3.curr.x == 0);
+    CHECK(e3.curr.y == 0);
+    CHECK(e3.top.x == 0);
+    CHECK(e3.top.y == 0);
+    CHECK(e3.dx == Approx(0.4615384615));
 
     std::int64_t top_y = -1;
     // Scanbeam would start at -1 and add e1
-    e1.Curr.y = top_y;
-    e1.Curr.x = TopX(e1, top_y);
-    CHECK(e1.Curr.x == -2);
-    CHECK(e1.Curr.y == -1);
+    e1.curr.y = top_y;
+    e1.curr.x = get_current_x(e1, top_y);
+    CHECK(e1.curr.x == -2);
+    CHECK(e1.curr.y == -1);
     // Next scanbeam would reach 0 and add e2 and e3
     top_y = 0;
-    e1.Curr.y = top_y;
-    e1.Curr.x = TopX(e1, top_y);
-    e2.Curr.y = top_y;
-    e2.Curr.x = TopX(e2, top_y);
-    e3.Curr.y = top_y;
-    e3.Curr.x = TopX(e3, top_y);
-    CHECK(e1.Curr.x == -1);
-    CHECK(e1.Curr.y == 0);
-    CHECK(e2.Curr.x == 0);
-    CHECK(e2.Curr.y == 0);
-    CHECK(e3.Curr.x == 0);
-    CHECK(e3.Curr.y == 0);
+    e1.curr.y = top_y;
+    e1.curr.x = get_current_x(e1, top_y);
+    e2.curr.y = top_y;
+    e2.curr.x = get_current_x(e2, top_y);
+    e3.curr.y = top_y;
+    e3.curr.x = get_current_x(e3, top_y);
+    CHECK(e1.curr.x == -1);
+    CHECK(e1.curr.y == 0);
+    CHECK(e2.curr.x == 0);
+    CHECK(e2.curr.y == 0);
+    CHECK(e3.curr.x == 0);
+    CHECK(e3.curr.y == 0);
     // The active edge list would be sorted by increasing x
     // so would be e1, e2, e3
     // Show that intersection will not be run due to no intersections at origin
-    CHECK_FALSE(e1.Curr.x > e2.Curr.x); // No intersection of points!
-    CHECK_FALSE(e1.Curr.x > e3.Curr.x); // No intersection of points!
+    CHECK_FALSE(e1.curr.x > e2.curr.x); // No intersection of points!
+    CHECK_FALSE(e1.curr.x > e3.curr.x); // No intersection of points!
     // Next scanbeam would reach 9
     top_y = 9;
-    e1.Curr.y = top_y;
-    e1.Curr.x = TopX(e1, top_y);
-    e2.Curr.y = top_y;
-    e2.Curr.x = TopX(e2, top_y);
-    e3.Curr.y = top_y;
-    e3.Curr.x = TopX(e3, top_y);
-    CHECK(e1.Curr.x == 5);
-    CHECK(e1.Curr.y == 9);
-    CHECK(e2.Curr.x == 5);
-    CHECK(e2.Curr.y == 9);
-    CHECK(e3.Curr.x == 4);
-    CHECK(e3.Curr.y == 9);
+    e1.curr.y = top_y;
+    e1.curr.x = get_current_x(e1, top_y);
+    e2.curr.y = top_y;
+    e2.curr.x = get_current_x(e2, top_y);
+    e3.curr.y = top_y;
+    e3.curr.x = get_current_x(e3, top_y);
+    CHECK(e1.curr.x == 5);
+    CHECK(e1.curr.y == 9);
+    CHECK(e2.curr.x == 5);
+    CHECK(e2.curr.y == 9);
+    CHECK(e3.curr.x == 4);
+    CHECK(e3.curr.y == 9);
     // The active edge list would be e1, e2, e3
-    CHECK_FALSE(e1.Curr.x > e2.Curr.x); // No intersection of points
-    CHECK(e1.Curr.x > e3.Curr.x); // Intersection!
+    CHECK_FALSE(e1.curr.x > e2.curr.x); // No intersection of points
+    CHECK(e1.curr.x > e3.curr.x); // Intersection!
     intersection_point(e1, e3, r1);
 
     CHECK(r1.x == 3);

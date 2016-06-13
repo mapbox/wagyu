@@ -24,61 +24,61 @@ template <typename T>
 struct edge
 {
     using value_type = T;
-    mapbox::geometry::point<value_type> Bot;
-    mapbox::geometry::point<value_type> Curr; //current (updated for every new scanbeam)
-    mapbox::geometry::point<value_type> Top;
-    double       Dx;
-    int          OutIdx;
-    edge_ptr<T>  Next;
-    edge_ptr<T>  Prev;
-    edge_ptr<T>  NextInLML;
-    edge_ptr<T>  NextInAEL;
-    edge_ptr<T>  PrevInAEL;
-    edge_ptr<T>  NextInSEL;
-    edge_ptr<T>  PrevInSEL;
-    std::int32_t WindCnt;
-    std::int32_t WindCnt2; //winding count of the opposite polytype
-    std::int8_t  WindDelta; //1 or -1 depending on winding direction
-    polygon_type PolyTyp;
-    edge_side    Side; //side only refers to current side of solution poly
+    mapbox::geometry::point<value_type> bot;
+    mapbox::geometry::point<value_type> curr; //current (updated for every new scanbeam)
+    mapbox::geometry::point<value_type> top;
+    double       dx;
+    int          index;
+    edge_ptr<T>  next;
+    edge_ptr<T>  prev;
+    edge_ptr<T>  next_in_LML;
+    edge_ptr<T>  next_in_AEL;
+    edge_ptr<T>  prev_in_AEL;
+    edge_ptr<T>  next_in_SEL;
+    edge_ptr<T>  prev_in_SEL;
+    std::int32_t winding_count;
+    std::int32_t winding_count2; //winding count of the opposite polytype
+    std::int8_t  winding_delta; //1 or -1 depending on winding direction
+    polygon_type poly_type;
+    edge_side    side; //side only refers to current side of solution poly
 
     edge(mapbox::geometry::point<value_type> current, 
          mapbox::geometry::point<value_type> next,
          polygon_type type) :
-        Bot(current),
-        Curr(current),
-        Top(current),
-        Dx(0.0),
-        OutIdx(EDGE_UNASSIGNED),
-        Next(nullptr),
-        Prev(nullptr),
-        NextInLML(nullptr),
-        NextInAEL(nullptr),
-        PrevInAEL(nullptr),
-        NextInSEL(nullptr),
-        PrevInSEL(nullptr),
-        WindCnt(0),
-        WindCnt2(0),
-        WindDelta(0),
-        PolyTyp(type),
-        Side(edge_left)
+        bot(current),
+        curr(current),
+        top(current),
+        dx(0.0),
+        index(EDGE_UNASSIGNED),
+        next(nullptr),
+        prev(nullptr),
+        next_in_LML(nullptr),
+        next_in_AEL(nullptr),
+        prev_in_AEL(nullptr),
+        next_in_SEL(nullptr),
+        prev_in_SEL(nullptr),
+        winding_count(0),
+        winding_count2(0),
+        winding_delta(0),
+        poly_type(type),
+        side(edge_left)
     {
         if (current.y >= next.y)
         {
-            Top = next;
+            top = next;
         }
         else
         {
-            Bot = next;
+            bot = next;
         }
-        double dy = static_cast<double>(Top.y - Bot.y);
+        double dy = static_cast<double>(top.y - bot.y);
         if (dy == 0.0)
         {
-            Dx = HORIZONTAL;
+            dx = HORIZONTAL;
         }
         else
         {
-            Dx = static_cast<double>(Top.x - Bot.x) / dy;
+            dx = static_cast<double>(top.x - bot.x) / dy;
         }
     }
 
@@ -96,9 +96,9 @@ operator << (std::basic_ostream<charT,traits>& out,
              const edge<T>& e)
 {
     out << "Edge: " << std::endl;
-    out << " Bot x: " << e.Bot.x << " y: " << e.Bot.y << std::endl;
-    out << " Top x: " << e.Top.x << " y: " << e.Top.y << std::endl;
-    out << " Curr x: " << e.Curr.x << " y: " << e.Curr.y << std::endl;
+    out << " bot x: " << e.bot.x << " y: " << e.bot.y << std::endl;
+    out << " top x: " << e.top.x << " y: " << e.top.y << std::endl;
+    out << " curr x: " << e.curr.x << " y: " << e.curr.y << std::endl;
     return out;
 }
 

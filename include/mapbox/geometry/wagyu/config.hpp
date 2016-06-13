@@ -49,18 +49,18 @@ enum edge_side : std::uint8_t
 
 enum join_type : std::uint8_t
 {
-    jtSquare = 0, 
-    jtRound, 
-    jtMiter
+    join_type_square = 0, 
+    join_type_round, 
+    join_type_miter
 };
 
 enum end_type 
 {
-    etClosedPolygon = 0, 
-    etClosedLine, 
-    etOpenButt, 
-    etOpenSquare, 
-    etOpenRound
+    end_type_closed_polygon = 0, 
+    end_type_closed_line, 
+    end_type_open_butt, 
+    end_type_open_square, 
+    end_type_open_round
 };
 
 }}}

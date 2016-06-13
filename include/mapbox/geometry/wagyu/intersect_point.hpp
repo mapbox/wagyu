@@ -143,115 +143,115 @@ void intersection_point(edge<T> const& Edge1,
                         mapbox::geometry::point<T> & ip)
 {
     // This method finds the FIRST intersecting point in integer space between two edges
-    // that is closest to the Bot point of the edges.
+    // that is closest to the bot point of the edges.
     using value_type = T;
-    if (Edge1.Dx == Edge2.Dx)
+    if (Edge1.dx == Edge2.dx)
     {
-        ip.y = Edge1.Curr.y;
-        ip.x = TopX(Edge1, ip.y);
+        ip.y = Edge1.curr.y;
+        ip.x = get_current_x(Edge1, ip.y);
         return;
     }
-    else if (Edge1.Dx == 0.0)
+    else if (Edge1.dx == 0.0)
     {
-        ip.x = Edge1.Bot.x;
-        if (IsHorizontal(Edge2))
+        ip.x = Edge1.bot.x;
+        if (is_horizontal(Edge2))
         {
-            ip.y = Edge2.Bot.y;
+            ip.y = Edge2.bot.y;
         }
         else
         {
-            double b2 = Edge2.Bot.y - (Edge2.Bot.x / Edge2.Dx);
-            if (Edge2.Bot.x == Edge1.Bot.x)
+            double b2 = Edge2.bot.y - (Edge2.bot.x / Edge2.dx);
+            if (Edge2.bot.x == Edge1.bot.x)
             {
-                ip.y = std::round(ip.x / Edge2.Dx + b2);
+                ip.y = std::round(ip.x / Edge2.dx + b2);
             }
-            else if (Edge2.Bot.x < Edge1.Bot.x)
+            else if (Edge2.bot.x < Edge1.bot.x)
             {
-                ip.y = std::round((ip.x - 0.5) / Edge2.Dx + b2);
+                ip.y = std::round((ip.x - 0.5) / Edge2.dx + b2);
             }
             else
             {
-                ip.y = std::round((ip.x + 0.5) / Edge2.Dx + b2);
+                ip.y = std::round((ip.x + 0.5) / Edge2.dx + b2);
             }
         }
     }
-    else if (Edge2.Dx == 0.0)
+    else if (Edge2.dx == 0.0)
     {
-        ip.x = Edge2.Bot.x;
-        if (IsHorizontal(Edge1))
+        ip.x = Edge2.bot.x;
+        if (is_horizontal(Edge1))
         {
-            ip.y = Edge1.Bot.y;
+            ip.y = Edge1.bot.y;
         }
         else
         {
-            double b1 = Edge1.Bot.y - (Edge1.Bot.x / Edge1.Dx);
-            if (Edge1.Bot.x == Edge2.Bot.x)
+            double b1 = Edge1.bot.y - (Edge1.bot.x / Edge1.dx);
+            if (Edge1.bot.x == Edge2.bot.x)
             {
-                ip.y = std::round(ip.x / Edge1.Dx + b1);
+                ip.y = std::round(ip.x / Edge1.dx + b1);
             }
-            else if (Edge1.Bot.x < Edge2.Bot.x)
+            else if (Edge1.bot.x < Edge2.bot.x)
             {
-                ip.y = std::round((ip.x - 0.5) / Edge1.Dx + b1);
+                ip.y = std::round((ip.x - 0.5) / Edge1.dx + b1);
             }
             else
             {
-                ip.y = std::round((ip.x + 0.5) / Edge1.Dx + b1);
+                ip.y = std::round((ip.x + 0.5) / Edge1.dx + b1);
             }
         }
     } 
     else 
     {
-        double b1 = Edge1.Bot.x - Edge1.Bot.y * Edge1.Dx;
-        double b2 = Edge2.Bot.x - Edge2.Bot.y * Edge2.Dx;
-        double q = (b2 - b1) / (Edge1.Dx - Edge2.Dx);
+        double b1 = Edge1.bot.x - Edge1.bot.y * Edge1.dx;
+        double b2 = Edge2.bot.x - Edge2.bot.y * Edge2.dx;
+        double q = (b2 - b1) / (Edge1.dx - Edge2.dx);
         ip.y = std::round(q);
-        if (std::fabs(Edge1.Dx) < std::fabs(Edge2.Dx))
+        if (std::fabs(Edge1.dx) < std::fabs(Edge2.dx))
         {
-            ip.x = std::round(Edge1.Dx * q + b1);
+            ip.x = std::round(Edge1.dx * q + b1);
         }
         else 
         {
-            ip.x = std::round(Edge2.Dx * q + b2);
+            ip.x = std::round(Edge2.dx * q + b2);
         }
         // the idea is simply to looking closer
-        // towards the origins of the lines (Edge1.Bot and Edge2.Bot)
+        // towards the origins of the lines (Edge1.bot and Edge2.bot)
         // until we do not find pixels that both lines travel through
         bool keep_searching = false;
-        double by1 = Edge1.Bot.y - (Edge1.Bot.x / Edge1.Dx);
-        double by2 = Edge2.Bot.y - (Edge2.Bot.x / Edge2.Dx);
-        double bx1 = Edge1.Bot.x - (Edge1.Bot.y * Edge1.Dx);
-        double bx2 = Edge2.Bot.x - (Edge2.Bot.y * Edge2.Dx);
+        double by1 = Edge1.bot.y - (Edge1.bot.x / Edge1.dx);
+        double by2 = Edge2.bot.y - (Edge2.bot.x / Edge2.dx);
+        double bx1 = Edge1.bot.x - (Edge1.bot.y * Edge1.dx);
+        double bx2 = Edge2.bot.x - (Edge2.bot.y * Edge2.dx);
         do
         {
             keep_searching = false;
-            value_type y1 = nearest_along_y_dimension(Edge1.Bot.x,
-                                                      Edge1.Bot.y,
-                                                      Edge2.Bot.y,
+            value_type y1 = nearest_along_y_dimension(Edge1.bot.x,
+                                                      Edge1.bot.y,
+                                                      Edge2.bot.y,
                                                       ip.x,
                                                       ip.y,
                                                       by1,
-                                                      Edge1.Dx);
-            value_type y2 = nearest_along_y_dimension(Edge2.Bot.x,
-                                                      Edge2.Bot.y,
-                                                      Edge1.Bot.y,
+                                                      Edge1.dx);
+            value_type y2 = nearest_along_y_dimension(Edge2.bot.x,
+                                                      Edge2.bot.y,
+                                                      Edge1.bot.y,
                                                       ip.x,
                                                       ip.y,
                                                       by2,
-                                                      Edge2.Dx);
-            value_type x1 = nearest_along_x_dimension(Edge1.Bot.x,
-                                                      Edge1.Bot.y,
-                                                      Edge2.Bot.x,
+                                                      Edge2.dx);
+            value_type x1 = nearest_along_x_dimension(Edge1.bot.x,
+                                                      Edge1.bot.y,
+                                                      Edge2.bot.x,
                                                       ip.x,
                                                       ip.y,
                                                       bx1,
-                                                      Edge1.Dx);
-            value_type x2 = nearest_along_x_dimension(Edge2.Bot.x,
-                                                      Edge2.Bot.y,
-                                                      Edge1.Bot.x,
+                                                      Edge1.dx);
+            value_type x2 = nearest_along_x_dimension(Edge2.bot.x,
+                                                      Edge2.bot.y,
+                                                      Edge1.bot.x,
                                                       ip.x,
                                                       ip.y,
                                                       bx2,
-                                                      Edge2.Dx);
+                                                      Edge2.dx);
             if (y1 > ip.y && y2 > ip.y)
             {
                 ip.y = std::min(y1,y2);
@@ -276,37 +276,37 @@ void intersection_point(edge<T> const& Edge1,
         while (keep_searching);
     }
 
-    if (ip.y < Edge1.Top.y || ip.y < Edge2.Top.y) 
+    if (ip.y < Edge1.top.y || ip.y < Edge2.top.y) 
     {
-        if (Edge1.Top.y > Edge2.Top.y)
+        if (Edge1.top.y > Edge2.top.y)
         {
-            ip.y = Edge1.Top.y;
+            ip.y = Edge1.top.y;
         }
         else
         {
-            ip.y = Edge2.Top.y;
+            ip.y = Edge2.top.y;
         }
-        if (std::fabs(Edge1.Dx) < std::fabs(Edge2.Dx))
+        if (std::fabs(Edge1.dx) < std::fabs(Edge2.dx))
         {
-            ip.x = TopX(Edge1, ip.y);
+            ip.x = get_current_x(Edge1, ip.y);
         }
         else
         {
-            ip.x = TopX(Edge2, ip.y);
+            ip.x = get_current_x(Edge2, ip.y);
         }
     } 
     //finally, don't allow 'ip' to be BELOW curr.y (ie bottom of scanbeam) ...
-    if (ip.y > Edge1.Curr.y)
+    if (ip.y > Edge1.curr.y)
     {
-        ip.y = Edge1.Curr.y;
+        ip.y = Edge1.curr.y;
         //use the more vertical edge to derive X ...
-        if (std::fabs(Edge1.Dx) > std::fabs(Edge2.Dx))
+        if (std::fabs(Edge1.dx) > std::fabs(Edge2.dx))
         {
-            ip.x = TopX(Edge2, ip.y);
+            ip.x = get_current_x(Edge2, ip.y);
         }
         else
         {
-            ip.x = TopX(Edge1, ip.y);
+            ip.x = get_current_x(Edge1, ip.y);
         }
     }
 }
