@@ -43,7 +43,7 @@ struct edge
     edge_side    side; //side only refers to current side of solution poly
 
     edge(mapbox::geometry::point<value_type> current, 
-         mapbox::geometry::point<value_type> next,
+         mapbox::geometry::point<value_type> next_pt,
          polygon_type type) :
         bot(current),
         curr(current),
@@ -63,13 +63,13 @@ struct edge
         poly_type(type),
         side(edge_left)
     {
-        if (current.y >= next.y)
+        if (current.y >= next_pt.y)
         {
-            top = next;
+            top = next_pt;
         }
         else
         {
-            bot = next;
+            bot = next_pt;
         }
         double dy = static_cast<double>(top.y - bot.y);
         if (dy == 0.0)
