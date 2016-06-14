@@ -10,7 +10,7 @@ matrix:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'g++-5' ]
     - os: linux
-      env: CXX=clang++-3.7 MASON_CLANG=true
+      env: CXX=clang++ MASON_CLANG=true
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]

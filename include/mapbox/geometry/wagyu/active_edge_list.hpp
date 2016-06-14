@@ -571,30 +571,30 @@ void insert_local_minima_into_AEL(T const botY,
         }
         else
         {
-          insert_edge_into_AEL(lb, 0);
-          insert_edge_into_AEL(rb, lb);
-          SetWindingCount( *lb );
-          rb->winding_count = lb->winding_count;
-          rb->winding_count2 = lb->winding_count2;
-          if (IsContributing(*lb))
-          {
-              p1 = AddLocalMinPoly(lb, rb, lb->bot);      
-              edge_ptr<value_type> eprev = lb->prev_in_AEL;
-              if ((lb->index >= 0) && (lb->winding_delta != 0) && eprev && (eprev->index >= 0) &&
-                (eprev->curr.x == lb->curr.x) && (eprev->winding_delta != 0))
-              {
-                IntPoint pt = lb->curr;
-                AddOutPt(eprev, pt);
-              }
-              edge_ptr<value_type> enext = rb->next_in_AEL;
-              if ((rb->index >= 0) && (rb->winding_delta != 0) && enext && (enext->index >= 0) &&
-                (enext->curr.x == rb->curr.x) && (enext->winding_delta != 0))
-              {
-                IntPoint pt = rb->curr;
-                AddOutPt(enext, pt);
-              }
-          }
-          InsertScanbeam(lb->top.y);
+            insert_edge_into_AEL(lb, nullptr, active_edges);
+            insert_edge_into_AEL(rb, lb, active_edges);
+            set_winding_count(*lb, cliptype, subject_fill_type, clip_fill_type, active_edges);
+            rb->winding_count = lb->winding_count;
+            rb->winding_count2 = lb->winding_count2;
+            if (is_contributing(*lb, cliptype, subject_fill_type, clip_fill_type))
+            {
+                p1 = AddLocalMinPoly(lb, rb, lb->bot);      
+                edge_ptr<value_type> eprev = lb->prev_in_AEL;
+                if ((lb->index >= 0) && (lb->winding_delta != 0) && eprev && (eprev->index >= 0) &&
+                  (eprev->curr.x == lb->curr.x) && (eprev->winding_delta != 0))
+                {
+                  IntPoint pt = lb->curr;
+                  AddOutPt(eprev, pt);
+                }
+                edge_ptr<value_type> enext = rb->next_in_AEL;
+                if ((rb->index >= 0) && (rb->winding_delta != 0) && enext && (enext->index >= 0) &&
+                  (enext->curr.x == rb->curr.x) && (enext->winding_delta != 0))
+                {
+                  IntPoint pt = rb->curr;
+                  AddOutPt(enext, pt);
+                }
+            }
+            scanbeam.push(lb->top.y);
         }
 
          if (rb)
