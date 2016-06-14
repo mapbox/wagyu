@@ -10,8 +10,8 @@ private:
     std::string m_descr;
 public:
     clipper_exception(const char* description): m_descr(description) {}
-    virtual ~clipper_exception() throw() {}
-    virtual const char* what() const throw()
+    virtual ~clipper_exception() noexcept {}
+    virtual const char* what() const noexcept
     {
         return m_descr.c_str();
     }
