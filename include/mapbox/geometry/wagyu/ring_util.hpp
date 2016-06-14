@@ -13,7 +13,7 @@ void set_hole_state(edge_ptr<T> e,
                     ring_ptr<T> ring,
                     ring_list<T> & rings)
 {
-    edge_ptr<T> e2 = e->prevInAEL;
+    edge_ptr<T> e2 = e->prev_in_AEL;
     edge_ptr<T> eTmp = nullptr;
     while (e2)
     {
@@ -28,7 +28,7 @@ void set_hole_state(edge_ptr<T> e,
                 eTmp = nullptr;
             }
         }
-        e2 = e2->prevInAEL;
+        e2 = e2->prev_in_AEL;
     }
 
     if (!eTmp)
@@ -89,46 +89,61 @@ template <typename T>
 point_ptr<T> add_local_minimum_point(edge_ptr<T> e1, 
                                      edge_ptr<T> e2, 
                                      mapbox::geometry::point<T> const& pt,
-                                     ring_list<T> & rings)
+                                     ring_list<T> & rings,
+                                     join_list<T> & joins)
 {
-    point_ptr <T> result;
-    edge_ptr<T> e;
-    edge_ptr<T> prevE;
+    using value_type = T;
+    point_ptr <value_type> result;
+    edge_ptr<value_type> e;
+    edge_ptr<value_type> prev_edge;
     if (is_horizontal(*e2) || ( e1->dx > e2->dx ))
     {
-        result = add_point(e1, pt);
+        result = add_point(e1, pt, rings);
         e2->index = e1->index;
-        e1->side = esLeft;
-        e2->side = esRight;
+        e1->side = edge_left;
+        e2->side = edge_right;
         e = e1;
-        if (e->prevInAEL == e2)
-          prevE = e2->prevInAEL; 
+        if (e->prev_in_AEL == e2)
+        {
+            prev_edge = e2->prev_in_AEL;
+        }
         else
-          prevE = e->prevInAEL;
+        {
+            prev_edge = e->prev_in_AEL;
+        }
     }
     else
     {
-      result = AddOutpt(e2, pt);
-      e1->index = e2->index;
-      e1->side = esRight;
-      e2->side = esLeft;
-      e = e2;
-      if (e->prevInAEL == e1)
-          prevE = e1->prevInAEL;
-      else
-          prevE = e->prevInAEL;
+        result = add_point(e2, pt, rings);
+        e1->index = e2->index;
+        e1->side = edge_right;
+        e2->side = edge_left;
+        e = e2;
+        if (e->prev_in_AEL == e1)
+        {
+            prev_edge = e1->prev_in_AEL;
+        }
+        else
+        {
+            prev_edge = e->prev_in_AEL;
+        }
     }
 
-    if (prevE && prevE->index >= 0)
+    if (prev_edge && prev_edge->index >= 0)
     {
-      cInt xprev = get_current_x(*prevE, pt.Y);
-      cInt xE = get_current_x(*e, pt.Y);
-      if (xprev == xE && (e->winding_delta != 0) && (prevE->winding_delta != 0) &&
-        SlopesEqual(IntPoint(xprev, pt.Y), prevE->Top, IntPoint(xE, pt.Y), e->Top, m_UseFullRange))
-      {
-        Outpt* outpt = AddOutpt(prevE, pt);
-        AddJoin(result, outpt, e->Top);
-      }
+        value_type x_prev = get_current_x(*prev_edge, pt.y);
+        value_type x_edge = get_current_x(*e, pt.y);
+        if (xprev == x_edge &&
+            e->winding_delta != 0 &&
+            prev_edge->winding_delta != 0 &&
+            slopes_equal(mapbox::geometry::point<value_type>(xprev, pt.y),
+                         prev_edge->top,
+                         mapbox::geometry::point<value_type>(x_edge, pt.y), 
+                         e->top))
+        {
+            point_ptr<T> outpt = add_point(prev_edge, pt, rings);
+            joins.emplace_back(result, outpt, e->top);
+        }
     }
     return result;
 }

@@ -627,11 +627,13 @@ bool Pt2IsBetweenPt1AndPt3(mapbox::geometry::point<T> pt1,
 }
 
 template <typename T>
-bool HorzSegmentsOverlap(T seg1a,
-                         T seg1b,
-                         T seg2a,
-                         T seg2b)
+bool horizontal_segments_overlap(T seg1a,
+                                 T seg1b,
+                                 T seg2a,
+                                 T seg2b)
 {
+    // Note: the use of swap here is rather confusing, perhaps
+    // we should change the logic?
     if (seg1a > seg1b)
     {
         std::swap(seg1a, seg1b);

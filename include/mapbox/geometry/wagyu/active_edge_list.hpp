@@ -211,9 +211,9 @@ void update_edge_into_AEL(edge_ptr<T> &e,
     e->curr = e->bot;
     e->prev_in_AEL = Aelprev;
     e->next_in_AEL = Aelnext;
-    if (!IsHorizontal(*e))
+    if (!is_horizontal(*e))
     {
-        scanbeam.push(e->top.y);
+        scanbeam.push_back(e->top.y);
     }
 }
 
@@ -499,6 +499,8 @@ void insert_local_minima_into_AEL(T const botY,
                                   local_minimum_list<T> & minima_list,
                                   edge_ptr<T> & active_edges,
                                   ring_list<T> & rings,
+                                  join_list<T> & joins,
+                                  join_list<T> & ghost_joins,
                                   scanbeam_list<T> & scanbeam,
                                   clip_type cliptype,
                                   fill_type subject_fill_type,
@@ -510,8 +512,7 @@ void insert_local_minima_into_AEL(T const botY,
     {
         edge_ptr<value_type> lb = lm->left_bound;
         edge_ptr<value_type> rb = lm->right_bound;
-        
-        point_ptr<T> p1 = nullptr;
+        point_ptr<value_type> p1 = nullptr;
         if (!lb)
         {
             //nb: don't insert LB into either AEL or SEL
@@ -570,7 +571,7 @@ void insert_local_minima_into_AEL(T const botY,
                     add_point(enext, lb->curr, rings);
                 }
             }
-            scanbeam.push(lb->top.y);
+            scanbeam.push_back(lb->top.y);
         }
         else
         {
@@ -603,22 +604,22 @@ void insert_local_minima_into_AEL(T const botY,
                     add_point(enext, lb->curr, rings);
                 }
             }
-            scanbeam.push(lb->top.y);
+            scanbeam.push_back(lb->top.y);
         }
 
         if (rb)
         {
-            if (IsHorizontal(*rb))
+            if (is_horizontal(*rb))
             {
                 AddEdgeToSEL(rb);
                 if (rb->next_in_LML)
                 {
-                    InsertScanbeam(rb->next_in_LML->top.y);
+                    scanbeam.push_back(rb->next_in_LML->top.y);
                 }
             }
             else
             {
-                InsertScanbeam(rb->top.y);
+                scanbeam.push_back(rb->top.y);
             }
         }
 
@@ -628,51 +629,66 @@ void insert_local_minima_into_AEL(T const botY,
         }
 
         //if any output polygons share an edge, they'll need joining later ...
-        if (p1 && IsHorizontal(*rb) && 
-          !m_GhostJoins.empty() && (rb->winding_delta != 0))
+        if (p1 &&
+            is_horizontal(*rb) && 
+            !ghost_joins.empty() &&
+            rb->winding_delta != 0)
         {
-          for (JoinList::size_type i = 0; i < m_GhostJoins.size(); ++i)
-          {
-            Join* jr = m_GhostJoins[i];
-            //if the horizontal Rb and a 'ghost' horizontal overlap, then convert
-            //the 'ghost' join to a real join ready for later ...
-            if (HorzSegmentsOverlap(jr->OutPt1->Pt.x, jr->OffPt.x, rb->bot.x, rb->top.x))
-              AddJoin(jr->OutPt1, p1, jr->OffPt);
-          }
+            for (auto jr = ghost_joins.begin(); jr != ghost_joins.end(); ++jr)
+            {
+                //if the horizontal Rb and a 'ghost' horizontal overlap, then convert
+                //the 'ghost' join to a real join ready for later ...
+                if (horizontal_segments_overlap(jr->point1->x,
+                                                jr->off_point.x,
+                                                rb->bot.x,
+                                                rb->top.x))
+                {
+                    joins.emplace_back(jr->point1, p1, jr->off_point);
+                }
+            }
         }
 
-        if (lb->index >= 0 && lb->prev_in_AEL && 
-          lb->prev_in_AEL->curr.x == lb->bot.x &&
-          lb->prev_in_AEL->index >= 0 &&
-          slopes_equal(lb->prev_in_AEL->bot, lb->prev_in_AEL->top, lb->curr, lb->top, m_UseFullRange) &&
-          (lb->winding_delta != 0) && (lb->prev_in_AEL->winding_delta != 0))
+        if (lb->index >= 0 &&
+            lb->prev_in_AEL &&
+            lb->prev_in_AEL->curr.x == lb->bot.x &&
+            lb->prev_in_AEL->index >= 0 &&
+            slopes_equal(lb->prev_in_AEL->bot,
+                         lb->prev_in_AEL->top,
+                         lb->curr,
+                         lb->top) &&
+            lb->winding_delta != 0 &&
+            lb->prev_in_AEL->winding_delta != 0)
         {
-            OutPt *p2 = AddOutPt(lb->prev_in_AEL, lb->bot);
-            AddJoin(p1, p2, lb->top);
+            point_ptr<value_type> p2 = add_point(lb->prev_in_AEL, lb->bot, rings);
+            joins.emplace_back(p1, p2, lb->top);
         }
 
         if(lb->next_in_AEL != rb)
         {
-
-          if (rb->index >= 0 && rb->prev_in_AEL->index >= 0 &&
-            slopes_equal(rb->prev_in_AEL->curr, rb->prev_in_AEL->top, rb->curr, rb->top, m_UseFullRange) &&
-            (rb->winding_delta != 0) && (rb->prev_in_AEL->winding_delta != 0))
-          {
-              OutPt *p2 = AddOutPt(rb->prev_in_AEL, rb->bot);
-              AddJoin(p1, p2, rb->top);
-          }
-
-          edge_ptr<value_type> e = lb->next_in_AEL;
-          if (e)
-          {
-            while( e != rb )
+            if (rb->index >= 0 &&
+                rb->prev_in_AEL->index >= 0 &&
+                slopes_equal(rb->prev_in_AEL->curr, 
+                             rb->prev_in_AEL->top,
+                             rb->curr,
+                             rb->top) &&
+                rb->winding_delta != 0 &&
+                rb->prev_in_AEL->winding_delta != 0)
             {
-              //nb: For calculating winding counts etc, IntersectEdges() assumes
-              //that param1 will be to the Right of param2 ABOVE the intersection ...
-              IntersectEdges(rb , e , lb->curr); //order important here
-              e = e->next_in_AEL;
+                point_ptr<value_type> p2 = add_point(rb->prev_in_AEL, rb->bot, rings);
+                joins.emplace_back(p1, p2, rb->top);
             }
-          }
+
+            edge_ptr<value_type> e = lb->next_in_AEL;
+            if (e)
+            {
+                while( e != rb )
+                {
+                    //nb: For calculating winding counts etc, IntersectEdges() assumes
+                    //that param1 will be to the Right of param2 ABOVE the intersection ...
+                    IntersectEdges(rb , e , lb->curr); //order important here
+                    e = e->next_in_AEL;
+                }
+            }
         }
     }
 }
