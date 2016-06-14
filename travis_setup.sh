@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-MASON_VERSION="694d08c"
+MASON_VERSION="b709931"
 
 function setup_mason() {
     if [[ ! -d ./.mason ]]; then
@@ -10,7 +10,6 @@ function setup_mason() {
         echo "Updating to latest mason"
         (cd ./.mason && git fetch && git checkout ${MASON_VERSION})
     fi
-    export MASON_DIR=$(pwd)/.mason
     export PATH=$(pwd)/.mason:$PATH
 }
 

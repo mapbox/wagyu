@@ -20,7 +20,7 @@ matrix:
 cache: apt
 
 before_install:
- - ./travis_setup.sh
+ - source ./travis_setup.sh
 
 script:
  - make test
