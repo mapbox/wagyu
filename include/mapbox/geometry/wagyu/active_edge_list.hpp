@@ -499,6 +499,7 @@ void insert_local_minima_into_AEL(T const botY,
                                   local_minimum_list<T> & minima_list,
                                   edge_ptr<T> & active_edges,
                                   ring_list<T> & rings,
+                                  scanbeam_list<T> & scanbeam,
                                   clip_type cliptype,
                                   fill_type subject_fill_type,
                                   fill_type clip_fill_type)
@@ -547,7 +548,7 @@ void insert_local_minima_into_AEL(T const botY,
             set_winding_count(*lb, cliptype, subject_fill_type, clip_fill_type, active_edges);
             if (is_contributing(*lb, cliptype, subject_fill_type, clip_fill_type))
             {
-                p1 = AddOutPt(lb, lb->bot);
+                p1 = add_point(lb, lb->bot, rings);
                 edge_ptr<value_type> eprev = lb->prev_in_AEL;
                 if (lb->index >= 0 && 
                     lb->winding_delta != 0 && 
@@ -556,8 +557,7 @@ void insert_local_minima_into_AEL(T const botY,
                     eprev->curr.x == lb->curr.x && 
                     eprev->winding_delta != 0)
                 {
-                  IntPoint pt = lb->curr;
-                  AddOutPt(eprev, pt);
+                    add_point(eprev, lb->curr, rings);
                 }
                 edge_ptr<value_type> enext = lb->next_in_AEL;
                 if ((lb->index >= 0) && (lb->winding_delta != 0) && enext && (enext->index >= 0) &&
@@ -567,7 +567,7 @@ void insert_local_minima_into_AEL(T const botY,
                   AddOutPt(enext, pt);
                 }
             }
-            InsertScanbeam(lb->top.y);
+            scanbeam.push(lb->top.y);
         }
         else
         {

@@ -10,7 +10,7 @@ matrix:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'g++-5' ]
     - os: linux
-      env: CXX=clang++-3.7
+      env: CXX=clang++-3.7 MASON_CLANG=true
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.7' ]
@@ -19,6 +19,9 @@ matrix:
       osx_image: xcode7.3
 
 cache: apt
+
+before_install:
+ - ./travis_setup.sh
 
 script:
  - make test
