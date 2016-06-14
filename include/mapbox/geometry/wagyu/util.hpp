@@ -123,7 +123,7 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, mapbox::geometry::lin
             {
                 double d = static_cast<double>(itr_prev->x - pt.x) * static_cast<double>(itr->y - pt.y) - 
                         static_cast<double>(itr->x - pt.x) * static_cast<double>(itr_prev->y - pt.y);
-                if (!d)
+                if (d <= 0)
                 {
                     return point_on_polygon;
                 }
@@ -147,7 +147,7 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, mapbox::geometry::lin
             {
                 double d = static_cast<double>(itr_prev->x - pt.x) * static_cast<double>(itr->y - pt.y) - 
                         static_cast<double>(itr->x - pt.x) * static_cast<double>(itr_prev->y - pt.y);
-                if (!d)
+                if (d <= 0)
                 {
                     return point_on_polygon;
                 }
@@ -197,7 +197,7 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, mapbox::geometry::lin
                 {
                     double d = static_cast<double>(itr_prev->x - pt.x) * static_cast<double>(itr->y - pt.y) - 
                             static_cast<double>(itr->x - pt.x) * static_cast<double>(itr_prev->y - pt.y);
-                    if (!d)
+                    if (d <= 0)
                     {
                         return point_on_polygon;
                     }
@@ -221,7 +221,7 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, mapbox::geometry::lin
                 {
                     double d = static_cast<double>(itr_prev->x - pt.x) * static_cast<double>(itr->y - pt.y) - 
                             static_cast<double>(itr->x - pt.x) * static_cast<double>(itr_prev->y - pt.y);
-                    if (!d)
+                    if (d <= 0)
                     {
                         return point_on_polygon;
                     }
@@ -279,7 +279,7 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, point_ptr<T> op)
                 {
                     double d = static_cast<double>(op->x - pt.x) * static_cast<double>(op->next->y - pt.y) - 
                             static_cast<double>(op->next->x - pt.x) * static_cast<double>(op->y - pt.y);
-                    if (!d)
+                    if (d <= 0)
                     {
                         return point_on_polygon;
                     }
@@ -303,7 +303,7 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, point_ptr<T> op)
                 {
                     double d = static_cast<double>(op->x - pt.x) * static_cast<double>(op->next->y - pt.y) - 
                             static_cast<double>(op->next->x - pt.x) * static_cast<double>(op->y - pt.y);
-                    if (!d)
+                    if (d <= 0)
                     {
                         return point_on_polygon;
                     }
