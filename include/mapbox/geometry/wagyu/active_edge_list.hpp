@@ -560,11 +560,14 @@ void insert_local_minima_into_AEL(T const botY,
                     add_point(eprev, lb->curr, rings);
                 }
                 edge_ptr<value_type> enext = lb->next_in_AEL;
-                if ((lb->index >= 0) && (lb->winding_delta != 0) && enext && (enext->index >= 0) &&
-                  (enext->curr.x == lb->curr.x) && (enext->winding_delta != 0))
+                if (lb->index >= 0 &&
+                    lb->winding_delta != 0 && 
+                    enext &&
+                    enext->index >= 0 &&
+                    enext->curr.x == lb->curr.x &&
+                    enext->winding_delta != 0)
                 {
-                  IntPoint pt = lb->curr;
-                  AddOutPt(enext, pt);
+                    add_point(enext, lb->curr, rings);
                 }
             }
             scanbeam.push(lb->top.y);
@@ -580,35 +583,47 @@ void insert_local_minima_into_AEL(T const botY,
             {
                 p1 = AddLocalMinPoly(lb, rb, lb->bot);      
                 edge_ptr<value_type> eprev = lb->prev_in_AEL;
-                if ((lb->index >= 0) && (lb->winding_delta != 0) && eprev && (eprev->index >= 0) &&
-                  (eprev->curr.x == lb->curr.x) && (eprev->winding_delta != 0))
+                if (lb->index >= 0 &&
+                    lb->winding_delta != 0 &&
+                    eprev &&
+                    eprev->index >= 0 &&
+                    eprev->curr.x == lb->curr.x &&
+                    eprev->winding_delta != 0)
                 {
-                  IntPoint pt = lb->curr;
-                  AddOutPt(eprev, pt);
+                    add_point(eprev, lb->curr, rings);
                 }
                 edge_ptr<value_type> enext = rb->next_in_AEL;
-                if ((rb->index >= 0) && (rb->winding_delta != 0) && enext && (enext->index >= 0) &&
+                if (rb->index >= 0 &&
+                    rb->winding_delta != 0 &&
+                    enext && (enext->index >= 0) &&
                   (enext->curr.x == rb->curr.x) && (enext->winding_delta != 0))
                 {
-                  IntPoint pt = rb->curr;
-                  AddOutPt(enext, pt);
+                    add_point(enext, lb->curr, rings);
                 }
             }
             scanbeam.push(lb->top.y);
         }
 
-         if (rb)
-         {
-           if (IsHorizontal(*rb))
-           {
-               AddEdgeToSEL(rb);
-               if (rb->next_in_LML) 
-                   InsertScanbeam(rb->next_in_LML->top.y);
-           }
-           else InsertScanbeam( rb->top.y );
-         }
+        if (rb)
+        {
+            if (IsHorizontal(*rb))
+            {
+                AddEdgeToSEL(rb);
+                if (rb->next_in_LML)
+                {
+                    InsertScanbeam(rb->next_in_LML->top.y);
+                }
+            }
+            else
+            {
+                InsertScanbeam(rb->top.y);
+            }
+        }
 
-        if (!lb || !rb) continue;
+        if (!lb || !rb)
+        {
+            continue;
+        }
 
         //if any output polygons share an edge, they'll need joining later ...
         if (p1 && IsHorizontal(*rb) && 
