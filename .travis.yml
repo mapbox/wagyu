@@ -4,13 +4,19 @@ sudo: false
 matrix:
   include:
     - os: linux
-      env: CXX=g++-5
+      env: CXX=g++-5 BUILDTYPE=Release
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'g++-5' ]
     - os: linux
-      env: CXX=clang++ MASON_CLANG=true
+      env: CXX=clang++ BUILDTYPE=Release MASON_CLANG=true
+      addons:
+        apt:
+          sources: [ 'ubuntu-toolchain-r-test' ]
+          packages: [ 'libstdc++6','libstdc++-5-dev' ]
+    - os: linux
+      env: CXX=clang++ BUILDTYPE=Debug MASON_CLANG=true
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
@@ -24,4 +30,9 @@ before_install:
  - source ./travis_setup.sh
 
 script:
- - make test
+ - |
+   if [[ ${BUILDTYPE} == 'Debug' ]]; then
+     make debug
+   else
+     make test
+   fi
