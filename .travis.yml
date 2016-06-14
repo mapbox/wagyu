@@ -13,8 +13,7 @@ matrix:
       env: CXX=clang++-3.7 MASON_CLANG=true
       addons:
         apt:
-          sources: [ 'ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.7' ]
-          packages: [ 'clang-3.7' ]
+          sources: [ 'ubuntu-toolchain-r-test' ]
     - os: osx
       osx_image: xcode7.3
 
