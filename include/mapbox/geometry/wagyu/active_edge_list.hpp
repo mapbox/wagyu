@@ -595,8 +595,10 @@ void insert_local_minima_into_AEL(T const botY,
                 edge_ptr<value_type> enext = rb->next_in_AEL;
                 if (rb->index >= 0 &&
                     rb->winding_delta != 0 &&
-                    enext && (enext->index >= 0) &&
-                  (enext->curr.x == rb->curr.x) && (enext->winding_delta != 0))
+                    enext &&
+                    enext->index >= 0 &&
+                    enext->curr.x == rb->curr.x &&
+                    enext->winding_delta != 0)
                 {
                     add_point(enext, lb->curr, rings);
                 }
