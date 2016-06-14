@@ -354,25 +354,25 @@ bool Poly2ContainsPoly1(point_ptr<T> OutPt1, point_ptr<T> OutPt2)
 }
 
 template <typename T>
-bool SlopesEqual(edge<T> const& e1,
-                 edge<T> const& e2)
+bool slopes_equal(edge<T> const& e1,
+                  edge<T> const& e2)
 {
     return (e1.Top.y - e1.Bot.y) * (e2.Top.x - e2.Bot.x) == (e1.Top.x - e1.Bot.x) * (e2.Top.y - e2.Bot.y);
 }
 
 template <typename T>
-bool SlopesEqual(mapbox::geometry::point<T> const& pt1, 
-                 mapbox::geometry::point<T> const& pt2, 
-                 mapbox::geometry::point<T> const& pt3)
+bool slopes_equal(mapbox::geometry::point<T> const& pt1, 
+                  mapbox::geometry::point<T> const& pt2, 
+                  mapbox::geometry::point<T> const& pt3)
 {
     return (pt1.y - pt2.y) * (pt2.x - pt3.x) == (pt1.x - pt2.x) * (pt2.y - pt3.y);
 }
 
 template <typename T>
-bool SlopesEqual(mapbox::geometry::point<T> const& pt1,
-                 mapbox::geometry::point<T> const& pt2, 
-                 mapbox::geometry::point<T> const& pt3, 
-                 mapbox::geometry::point<T> const& pt4)
+bool slopes_equal(mapbox::geometry::point<T> const& pt1,
+                  mapbox::geometry::point<T> const& pt2, 
+                  mapbox::geometry::point<T> const& pt3, 
+                  mapbox::geometry::point<T> const& pt4)
 {
     return (pt1.y - pt2.y) * (pt3.x - pt4.x) == (pt1.x - pt2.x) * (pt3.y - pt4.y);
 }

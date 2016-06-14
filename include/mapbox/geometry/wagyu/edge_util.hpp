@@ -649,7 +649,7 @@ bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry,
 
         // Now check if slopes are equal between two segments - either
         // a spike or a collinear point - if so drop point number 2.
-        if (SlopesEqual(pt1, pt2, pt3))
+        if (slopes_equal(pt1, pt2, pt3))
         {
             // We need to reconsider previously added points
             // because the point it was using was found to be collinear
@@ -688,7 +688,7 @@ bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry,
         pt3 = path_geometry.front();
         // Now check if slopes are equal between two segments - either
         // a spike or a collinear point - if so drop point number 2.
-        while (SlopesEqual(pt1, pt2, pt3))
+        while (slopes_equal(pt1, pt2, pt3))
         {
             // We need to reconsider previously added points
             // because the point it was using was found to be collinear

@@ -644,7 +644,7 @@ void insert_local_minima_into_AEL(T const botY,
         if (lb->index >= 0 && lb->prev_in_AEL && 
           lb->prev_in_AEL->curr.x == lb->bot.x &&
           lb->prev_in_AEL->index >= 0 &&
-          SlopesEqual(lb->prev_in_AEL->bot, lb->prev_in_AEL->top, lb->curr, lb->top, m_UseFullRange) &&
+          slopes_equal(lb->prev_in_AEL->bot, lb->prev_in_AEL->top, lb->curr, lb->top, m_UseFullRange) &&
           (lb->winding_delta != 0) && (lb->prev_in_AEL->winding_delta != 0))
         {
             OutPt *p2 = AddOutPt(lb->prev_in_AEL, lb->bot);
@@ -655,7 +655,7 @@ void insert_local_minima_into_AEL(T const botY,
         {
 
           if (rb->index >= 0 && rb->prev_in_AEL->index >= 0 &&
-            SlopesEqual(rb->prev_in_AEL->curr, rb->prev_in_AEL->top, rb->curr, rb->top, m_UseFullRange) &&
+            slopes_equal(rb->prev_in_AEL->curr, rb->prev_in_AEL->top, rb->curr, rb->top, m_UseFullRange) &&
             (rb->winding_delta != 0) && (rb->prev_in_AEL->winding_delta != 0))
           {
               OutPt *p2 = AddOutPt(rb->prev_in_AEL, rb->bot);
