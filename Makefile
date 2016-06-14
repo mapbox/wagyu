@@ -1,5 +1,4 @@
 CXXFLAGS += -I include --std=c++14 -Wall -Wextra -Werror
-MASON ?= .mason/mason
 
 default: test
 
