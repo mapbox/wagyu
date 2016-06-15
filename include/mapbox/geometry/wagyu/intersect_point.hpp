@@ -165,7 +165,7 @@ void intersection_point(edge<T> const & Edge1,
         ip.x = get_current_x(Edge1, ip.y);
         return;
     }
-    else if (Edge1.dx == 0.0)
+    else if (std::abs(Edge1.dx) < std::numeric_limits<double>::epsilon())
     {
         ip.x = Edge1.bot.x;
         if (is_horizontal(Edge2))
@@ -192,7 +192,7 @@ void intersection_point(edge<T> const & Edge1,
             }
         }
     }
-    else if (Edge2.dx == 0.0)
+    else if (std::abs(Edge2.dx) < std::numeric_limits<double>::epsilon())
     {
         ip.x = Edge2.bot.x;
         if (is_horizontal(Edge1))

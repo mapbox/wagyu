@@ -1,6 +1,7 @@
 #pragma once
 
 #include <list>
+#include <limits>
 
 #include <mapbox/geometry/point.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
@@ -77,7 +78,7 @@ struct edge
             bot = next_pt;
         }
         double dy = static_cast<double>(top.y - bot.y);
-        if (dy == 0.0)
+        if (std::abs(dy) < std::numeric_limits<double>::epsilon())
         {
             dx = HORIZONTAL;
         }
