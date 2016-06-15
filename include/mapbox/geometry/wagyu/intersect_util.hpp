@@ -1,6 +1,7 @@
 #pragma once
 
 #include <mapbox/geometry/wagyu/config.hpp>
+#include <mapbox/geometry/wagyu/sorted_edge_list.hpp>
 #include <mapbox/geometry/wagyu/intersect.hpp>
 #include <mapbox/geometry/wagyu/util.hpp>
 
@@ -10,121 +11,44 @@ namespace geometry
 {
 namespace wagyu
 {
-static bool intersect_list_sort(intersect_list<value_type> * node1,
-                                intersect_list<value_type> * node2)
+
+struct intersect_list_sorter
 {
-    if (node2->pt.y != node1->pt.y)
+    template <typename T>
+    inline bool intersect_list_sort(intersect_ptr<T> node1,
+                                    intersect_ptr<T> node2)
     {
-        return node2->pt.Y < node1->pt.Y;
+        if (node2->pt.y != node1->pt.y)
+        {
+            return node2->pt.y < node1->pt.y;
+        }
+        else
+        {
+            return (node2->edge1->winding_count2 + node2->edge2->winding_count2) >
+                   (node1->edge1->winding_count2 + node1->edge2->winding_count2);
+        }
     }
-    else
-    {
-        return (node2->edge1->winding_count2 + node2->edge2->winding_count2) >
-               (node1->edge1->winding_count2 + node1->edge2->winding_count2);
-    }
+};
+
+template <typename T>
+bool edges_adjacent(intersect<T> const& inode)
+{
+    return (inode.edge1->next_in_SEL == inode.edge2) ||
+           (inode.edge1->prev_in_SEL == inode.edge2);
 }
 
-void copy_AEL_to_SEL()
-{
-    edge<value_type> * e = m_ActiveEdges;
-    m_SortedEdges = e;
-    while (e) {
-        e->prev_in_SEL = e->prev_in_AEL;
-        e->next_in_SEL = e->next_in_SEL;
-        e = e->next_in_AEL;
-    }
-}
-
-void swap_positions_in_SEL(edge<value_type> * edge1, edge<value_type> * edge2)
-{
-    if (!(edge1->NextInSEL) && !(edge1->PrevInSEL))
-    {
-        return;
-    }
-    if (!(edge2->NextInSEL) && !(edge2->PrevInSEL))
-    {
-        return;
-    }
-
-    if (edge1->NextInSEL == edge2)
-    {
-        edge<value_type> * next = edge2->NextInSEL;
-        if (next)
-        {
-            next->PrevInSEL = edge1;
-        }
-        edge<value_type> * prev = edge1->PrevInSEL;
-        if (prev)
-        {
-            prev->NextInSEL = edge2;
-        }
-        edge2->PrevInSEL = prev;
-        edge2->NextInSEL = edge1;
-        edge1->PrevInSEL = edge2;
-        edge1->NextInSEL = next;
-    }
-    else if (edge2->NextInSEL == edge1)
-    {
-        edge<value_type> * next = edge1->NextInSEL;
-        if (next)
-        {
-            next->PrevInSEL = edge2;
-        }
-        edge<value_type> * prev = edge2->PrevInSEL;
-        if (prev)
-        {
-            prev->NextInSEL = edge1;
-        }
-        edge1->PrevInSEL = prev;
-        edge1->NextInSEL = edge2;
-        edge2->PrevInSEL = edge1;
-        edge2->NextInSEL = next;
-    }
-    else
-    {
-        edge<value_type> * next = edge1->NextInSEL;
-        edge<value_type> * prev = edge1->PrevInSEL;
-        edge1->NextInSEL = edge2->NextInSEL;
-        if (edge1->NextInSEL)
-        {
-            edge1->NextInSEL->PrevInSEL = edge1;
-        }
-        edge1->PrevInSEL = edge2->PrevInSEL;
-        if (edge1->PrevInSEL)
-        {
-            edge1->PrevInSEL->NextInSEL = edge1;
-        }
-        edge2->NextInSEL = next;
-        if (edge2->NextInSEL)
-        {
-            edge2->NextInSEL->PrevInSEL = edge2;
-        }
-        edge2->PrevInSEL = prev;
-        if (edge2->PrevInSEL)
-        {
-            edge2->PrevInSEL->NextInSEL = edge2;
-        }
-    }
-
-    if (!edge1->PrevInSEL)
-    {
-        m_SortedEdges = edge1;
-    }
-    else if (!edge2->PrevInSEL)
-    {
-        m_SortedEdges = edge2;
-    }
-}
-
-bool fixup_intersection_order()
+template <typename T>
+bool fixup_intersection_order(edge_ptr<T> active_edge_list,
+                              edge_ptr<T> & sorted_edge_list,
+                              intersect_list<T> & intersects)
 {
     // Precondition: Intersections are sorted bottom-most first.
     // It's crucial that intersections are only made between adjacent edges,
     // so reorder the intersections to ensure this if necessary.
 
-    copy_AEL_to_SEL();
-    std::stable_sort(m_IntersectList.begin(), m_IntersectList.end(),
-                     intersect_list_sort);
+    copy_AEL_to_SEL(active_edge_list, sorted_edge_list);
+    std::stable_sort(intersects.begin(), intersects.end(),
+                     intersect_list_sorter());
 
     size_t n = m_IntersectList.size();
     for (size_t i = 0; i < n; ++i) {
