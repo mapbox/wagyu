@@ -15,22 +15,18 @@
 #include <mapbox/geometry/wagyu/ring.hpp>
 #include <mapbox/geometry/wagyu/scanbeam.hpp>
 
-namespace mapbox
-{
-namespace geometry
-{
-namespace wagyu
-{
+namespace mapbox {
+namespace geometry {
+namespace wagyu {
 template <typename T>
-class clipper
-{
-   private:
+class clipper {
+private:
     using value_type = T;
     using maxima_list = std::list<value_type>;
 
     local_minimum_list<value_type> m_MinimaList;
     local_minimum_itr<value_type> m_CurrentLM;
-    std::vector<edge_list<value_type> > m_edges;
+    std::vector<edge_list<value_type>> m_edges;
     ring_list<value_type> m_PolyOuts;
     scanbeam_list<value_type> m_Scanbeam;
     join_list<value_type> m_Joins;
@@ -49,7 +45,7 @@ class clipper
     bool m_UsingPolyTree;
     bool m_StrictSimple;
 
-   public:
+public:
     clipper()
         : m_MinimaList(),
           m_CurrentLM(m_MinimaList.begin()),
@@ -69,53 +65,46 @@ class clipper
           m_ExecuteLocked(false),
           m_ReverseOutput(false),
           m_UsingPolyTree(false),
-          m_StrictSimple(false)
-    {
+          m_StrictSimple(false) {
     }
 
-    ~clipper() { clear(); }
-    bool add_line(mapbox::geometry::line_string<value_type> const & pg)
-    {
+    ~clipper() {
+        clear();
+    }
+    bool add_line(mapbox::geometry::line_string<value_type> const& pg) {
         bool success = add_line_string(pg, m_edges, m_MinimaList);
-        if (success)
-        {
+        if (success) {
             m_HasOpenPaths = true;
         }
         return success;
     }
 
-    bool add_ring(mapbox::geometry::linear_ring<value_type> const & pg,
-                  polygon_type p_type = polygon_type_subject)
-    {
+    bool add_ring(mapbox::geometry::linear_ring<value_type> const& pg,
+                  polygon_type p_type = polygon_type_subject) {
         return add_linear_ring(pg, m_edges, m_MinimaList, p_type);
     }
 
-    bool add_polygon(mapbox::geometry::polygon<value_type> const & ppg,
-                     polygon_type p_type = polygon_type_subject)
-    {
+    bool add_polygon(mapbox::geometry::polygon<value_type> const& ppg,
+                     polygon_type p_type = polygon_type_subject) {
         bool result = false;
         for (std::size_t i = 0; i < ppg.size(); ++i) {
-            if (add_ring(ppg[i], p_type))
-            {
+            if (add_ring(ppg[i], p_type)) {
                 result = true;
             }
         }
         return result;
     }
 
-    void clear()
-    {
+    void clear() {
         m_MinimaList.clear();
         m_CurrentLM = m_MinimaList.begin();
         m_edges.clear();
         m_HasOpenPaths = false;
     }
 
-    void reset()
-    {
+    void reset() {
         m_CurrentLM = m_MinimaList.begin();
-        if (m_CurrentLM == m_MinimaList.end())
-        {
+        if (m_CurrentLM == m_MinimaList.end()) {
             return; // ie nothing to process
         }
         std::stable_sort(m_MinimaList.begin(), m_MinimaList.end(),
@@ -124,21 +113,17 @@ class clipper
         m_Scanbeam = scanbeam_list<value_type>(); // clears/resets
                                                   // priority_queue
         // reset all edges ...
-        for (auto const & lm = m_MinimaList.begin(); lm != m_MinimaList.end();
-             ++lm)
-        {
+        for (auto const& lm = m_MinimaList.begin(); lm != m_MinimaList.end(); ++lm) {
             m_Scanbeam.push(lm->Y);
             edge_ptr<value_type> e = lm->left_bound;
-            if (e)
-            {
+            if (e) {
                 e->Curr = e->bot;
                 e->Side = edge_left;
                 e->OutIdx = EDGE_UNASSIGNED;
             }
 
             e = lm->right_bound;
-            if (e)
-            {
+            if (e) {
                 e->Curr = e->bot;
                 e->Side = edge_right;
                 e->OutIdx = EDGE_UNASSIGNED;
@@ -148,12 +133,10 @@ class clipper
         m_CurrentLM = m_MinimaList.begin();
     }
 
-    box<value_type> get_bounds()
-    {
-        box<value_type> result = {0, 0, 0, 0};
+    box<value_type> get_bounds() {
+        box<value_type> result = { 0, 0, 0, 0 };
         auto lm = m_MinimaList.begin();
-        if (lm == m_MinimaList.end())
-        {
+        if (lm == m_MinimaList.end()) {
             return result;
         }
         result.left = lm->left_bound->bot.x;
@@ -167,12 +150,10 @@ class clipper
             for (;;) {
                 edge_ptr<value_type> bottomE = e;
                 while (e->next_in_LML) {
-                    if (e->bot.x < result.left)
-                    {
+                    if (e->bot.x < result.left) {
                         result.left = e->bot.x;
                     }
-                    if (e->bot.x > result.right)
-                    {
+                    if (e->bot.x > result.right) {
                         result.right = e->bot.x;
                     }
                     e = e->next_in_LML;
@@ -182,12 +163,9 @@ class clipper
                 result.left = std::min(result.left, e->top.x);
                 result.right = std::max(result.right, e->top.x);
                 result.top = std::min(result.top, e->top.y);
-                if (bottomE == lm->left_bound)
-                {
+                if (bottomE == lm->left_bound) {
                     e = lm->right_bound;
-                }
-                else
-                {
+                } else {
                     break;
                 }
             }
@@ -196,12 +174,24 @@ class clipper
         return result;
     }
 
-    bool preserve_collinear() { return m_PreserveCollinear; }
-    void preserve_collinear(bool value) { m_PreserveCollinear = value; }
-    bool strictly_simple() { return m_StrictSimple; }
-    void strictly_simple(bool value) { m_StrictSimple = value; }
-    bool reverse_output() { return m_ReverseOutput; }
-    void reverse_output(bool value) { m_ReverseOutput = value; }
+    bool preserve_collinear() {
+        return m_PreserveCollinear;
+    }
+    void preserve_collinear(bool value) {
+        m_PreserveCollinear = value;
+    }
+    bool strictly_simple() {
+        return m_StrictSimple;
+    }
+    void strictly_simple(bool value) {
+        m_StrictSimple = value;
+    }
+    bool reverse_output() {
+        return m_ReverseOutput;
+    }
+    void reverse_output(bool value) {
+        m_ReverseOutput = value;
+    }
     /*
     bool Execute(clip_type clipType,
                  linear_ring_list<value_type> &solution,

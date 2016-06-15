@@ -3,16 +3,15 @@
 #include <mapbox/geometry/wagyu/edge.hpp>
 #include <mapbox/geometry/wagyu/intersect_point.hpp>
 
-TEST_CASE("test intersection of points")
-{
+TEST_CASE("test intersection of points") {
     using namespace mapbox::geometry::wagyu;
-    mapbox::geometry::point<std::int64_t> p1 = {-1, -2};
-    mapbox::geometry::point<std::int64_t> p2 = {9, 5};
-    mapbox::geometry::point<std::int64_t> p3 = {0, 0};
-    mapbox::geometry::point<std::int64_t> p4 = {13, 6};
+    mapbox::geometry::point<std::int64_t> p1 = { -1, -2 };
+    mapbox::geometry::point<std::int64_t> p2 = { 9, 5 };
+    mapbox::geometry::point<std::int64_t> p3 = { 0, 0 };
+    mapbox::geometry::point<std::int64_t> p4 = { 13, 6 };
 
     // Initialize result points
-    mapbox::geometry::point<std::int64_t> r1 = {0, 0};
+    mapbox::geometry::point<std::int64_t> r1 = { 0, 0 };
 
     edge<std::int64_t> e1(p1, p2, polygon_type_subject);
     edge<std::int64_t> e2(p2, p3, polygon_type_subject);
@@ -90,16 +89,15 @@ TEST_CASE("test intersection of points")
     CHECK(r1.y == 3);
 }
 
-TEST_CASE("test intersection of points - switch axis values")
-{
+TEST_CASE("test intersection of points - switch axis values") {
     using namespace mapbox::geometry::wagyu;
-    mapbox::geometry::point<std::int64_t> p1 = {-2, -1};
-    mapbox::geometry::point<std::int64_t> p2 = {5, 9};
-    mapbox::geometry::point<std::int64_t> p3 = {0, 0};
-    mapbox::geometry::point<std::int64_t> p4 = {6, 13};
+    mapbox::geometry::point<std::int64_t> p1 = { -2, -1 };
+    mapbox::geometry::point<std::int64_t> p2 = { 5, 9 };
+    mapbox::geometry::point<std::int64_t> p3 = { 0, 0 };
+    mapbox::geometry::point<std::int64_t> p4 = { 6, 13 };
 
     // Initialize result points
-    mapbox::geometry::point<std::int64_t> r1 = {0, 0};
+    mapbox::geometry::point<std::int64_t> r1 = { 0, 0 };
 
     edge<std::int64_t> e1(p1, p2, polygon_type_subject);
     edge<std::int64_t> e2(p2, p3, polygon_type_subject);

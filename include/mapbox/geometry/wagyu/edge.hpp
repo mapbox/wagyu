@@ -11,24 +11,20 @@
 #include <iostream>
 #endif
 
-namespace mapbox
-{
-namespace geometry
-{
-namespace wagyu
-{
+namespace mapbox {
+namespace geometry {
+namespace wagyu {
 template <typename T>
 struct edge;
 
 template <typename T>
-using edge_ptr = edge<T> *;
+using edge_ptr = edge<T>*;
 
 template <typename T>
-using const_edge_ptr = edge<T> * const;
+using const_edge_ptr = edge<T>* const;
 
 template <typename T>
-struct edge
-{
+struct edge {
     using value_type = T;
     mapbox::geometry::point<value_type> bot;
     mapbox::geometry::point<value_type> curr; // updated every new scanbeam
@@ -67,37 +63,29 @@ struct edge
           winding_count2(0),
           winding_delta(0),
           poly_type(type),
-          side(edge_left)
-    {
-        if (current.y >= next_pt.y)
-        {
+          side(edge_left) {
+        if (current.y >= next_pt.y) {
             top = next_pt;
-        }
-        else
-        {
+        } else {
             bot = next_pt;
         }
         double dy = static_cast<double>(top.y - bot.y);
-        if (std::fabs(dy) < std::numeric_limits<double>::epsilon())
-        {
+        if (std::fabs(dy) < std::numeric_limits<double>::epsilon()) {
             dx = HORIZONTAL;
-        }
-        else
-        {
+        } else {
             dx = static_cast<double>(top.x - bot.x) / dy;
         }
     }
 };
 
 template <typename T>
-using edge_list = std::list<edge<T> >;
+using edge_list = std::list<edge<T>>;
 
 #ifdef DEBUG
 
 template <class charT, class traits, typename T>
-inline std::basic_ostream<charT, traits> & operator<<(
-    std::basic_ostream<charT, traits> & out, const edge<T> & e)
-{
+inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
+                                                     const edge<T>& e) {
     out << "Edge: " << std::endl;
     out << " bot x: " << e.bot.x << " y: " << e.bot.y << std::endl;
     out << " top x: " << e.top.x << " y: " << e.top.y << std::endl;

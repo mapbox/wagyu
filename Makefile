@@ -2,7 +2,7 @@ CC := $(CC)
 CXX := $(CXX)
 CXXFLAGS := $(CXXFLAGS) -Iinclude -std=c++11
 RELEASE_FLAGS := -O3 -DNDEBUG
-WARNING_FLAGS := -Wall -Wextra -Werror -Wsign-compare -Wfloat-equal -Wfloat-conversion -Wshadow -Wno-unsequenced
+WARNING_FLAGS := -Wall -Wextra -Werror -Wsign-compare -Wfloat-equal -Wshadow -Wno-unsequenced
 DEBUG_FLAGS := -g -O0 -DDEBUG -fno-inline-functions -fno-omit-frame-pointer
 
 default: test
@@ -23,4 +23,4 @@ clean:
 	rm test
 
 indent:
-	clang-format -i -style="{BasedOnStyle: Google, IndentWidth: 4, UseTab: Never, AllowShortIfStatementsOnASingleLine: false, ColumnLimit: 0, ContinuationIndentWidth: 4, SpaceAfterCStyleCast: true, IndentCaseLabels: true, AllowShortBlocksOnASingleLine: true, AllowShortFunctionsOnASingleLine: true, BreakBeforeBraces: Allman, BinPackParameters: false, ColumnLimit: 80, DerivePointerAlignment: false, PointerAlignment: Middle, SpacesBeforeTrailingComments: 1, BreakBeforeBinaryOperators: None}" $(filter-out ./tests/catch.hpp, $(shell find . '(' -name '*.hpp' -o -name '*.cpp' ')' -type f -print))
+	clang-format -i $(filter-out ./tests/catch.hpp, $(shell find . '(' -name '*.hpp' -o -name '*.cpp' ')' -type f -print))

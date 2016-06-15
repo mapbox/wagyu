@@ -3,24 +3,20 @@
 #include <mapbox/geometry/wagyu/point.hpp>
 #include <mapbox/geometry/wagyu/polytree.hpp>
 
-namespace mapbox
-{
-namespace geometry
-{
-namespace wagyu
-{
+namespace mapbox {
+namespace geometry {
+namespace wagyu {
 template <typename T>
 struct ring;
 
 template <typename T>
-using ring_ptr = ring<T> *;
+using ring_ptr = ring<T>*;
 
 template <typename T>
-using const_ring_ptr = ring<T> * const;
+using const_ring_ptr = ring<T>* const;
 
 template <typename T>
-struct ring
-{
+struct ring {
     std::size_t index;
     bool is_hole;
     bool is_open;
@@ -36,49 +32,41 @@ struct ring
           first_left(nullptr),
           points(nullptr),
           bottom_point(nullptr),
-          poly_node(nullptr)
-    {
+          poly_node(nullptr) {
     }
 };
 
 template <typename T>
-void set_next(const_point_ptr<T> & node, const const_point_ptr<T> & next_node)
-{
+void set_next(const_point_ptr<T>& node, const const_point_ptr<T>& next_node) {
     node->next = next_node;
 }
 
 template <typename T>
-point_ptr<T> get_next(const_point_ptr<T> & node)
-{
+point_ptr<T> get_next(const_point_ptr<T>& node) {
     return node->next;
 }
 
 template <typename T>
-point_ptr<T> get_prev(const_point_ptr<T> & node)
-{
+point_ptr<T> get_prev(const_point_ptr<T>& node) {
     return node->prev;
 }
 
 template <typename T>
-void set_prev(const_point_ptr<T> & node, const const_point_ptr<T> & prev_node)
-{
+void set_prev(const_point_ptr<T>& node, const const_point_ptr<T>& prev_node) {
     node->prev = prev_node;
 }
 
 template <typename T>
-void init(const_point_ptr<T> & node)
-{
+void init(const_point_ptr<T>& node) {
     set_next(node, node);
     set_prev(node, node);
 }
 
 template <typename T>
-std::size_t count(const const_point_ptr<T> & orig_node)
-{
+std::size_t count(const const_point_ptr<T>& orig_node) {
     std::size_t size = 0;
     const_point_ptr<T> n = orig_node;
-    do
-    {
+    do {
         n = get_next(n);
         ++size;
     } while (n != orig_node);
@@ -86,8 +74,7 @@ std::size_t count(const const_point_ptr<T> & orig_node)
 }
 
 template <typename T>
-void link_before(point_ptr<T> & node, point_ptr<T> & new_node)
-{
+void link_before(point_ptr<T>& node, point_ptr<T>& new_node) {
     point_ptr<T> prev_node = get_prev(node);
     set_previous(new_node, prev_node);
     set_next(new_node, node);
@@ -96,8 +83,7 @@ void link_before(point_ptr<T> & node, point_ptr<T> & new_node)
 }
 
 template <typename T>
-void link_after(point_ptr<T> & node, point_ptr<T> & new_node)
-{
+void link_after(point_ptr<T>& node, point_ptr<T>& new_node) {
     point_ptr<T> next_node = get_next(node);
     set_previous(new_node, node);
     set_next(new_node, next_node);
@@ -106,10 +92,8 @@ void link_after(point_ptr<T> & node, point_ptr<T> & new_node)
 }
 
 template <typename T>
-void transfer(point_ptr<T> & p, point_ptr<T> & b, point_ptr<T> & e)
-{
-    if (b != e)
-    {
+void transfer(point_ptr<T>& p, point_ptr<T>& b, point_ptr<T>& e) {
+    if (b != e) {
         point_ptr<T> prev_p = get_prev(p);
         point_ptr<T> prev_b = get_prev(b);
         point_ptr<T> prev_e = get_prev(e);
@@ -119,16 +103,13 @@ void transfer(point_ptr<T> & p, point_ptr<T> & b, point_ptr<T> & e)
         set_prev(e, prev_b);
         set_next(prev_p, b);
         set_prev(b, prev_p);
-    }
-    else
-    {
+    } else {
         link_before(p, b);
     }
 }
 
 template <typename T>
-void reverse(point_ptr<T> & p)
-{
+void reverse(point_ptr<T>& p) {
     point_ptr<T> f = get_next(p);
     point_ptr<T> i = get_next(f);
     point_ptr<T> e = p;
@@ -142,11 +123,10 @@ void reverse(point_ptr<T> & p)
 }
 
 template <typename T>
-using ring_list = std::vector<ring_ptr<T> >;
+using ring_list = std::vector<ring_ptr<T>>;
 
 template <typename T>
-ring_ptr<T> create_new_ring(ring_list<T> & rings)
-{
+ring_ptr<T> create_new_ring(ring_list<T>& rings) {
     ring_ptr<T> result = new ring<T>();
     rings.push_back(result);
     result->index = rings.size() - 1;
