@@ -1,7 +1,7 @@
 #pragma once
 
 #include <mapbox/geometry/wagyu/config.hpp>
-#include <mapbox/geometry/wagyu/exception.hpp>
+#include <mapbox/geometry/wagyu/exceptions.hpp>
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
 #include <mapbox/geometry/wagyu/ring.hpp>
 #include <mapbox/geometry/wagyu/scanbeam.hpp>
@@ -139,8 +139,8 @@ void update_edge_into_AEL(edge_ptr<T>& e, edge_ptr<T>& active_edges, scanbeam_li
     }
 
     e->next_in_LML->index = e->index;
-    TEdge* Aelprev = e->prev_in_AEL;
-    TEdge* Aelnext = e->next_in_AEL;
+    edge<T>* Aelprev = e->prev_in_AEL;
+    edge<T>* Aelnext = e->next_in_AEL;
     if (Aelprev) {
         Aelprev->next_in_AEL = e->next_in_LML;
     } else {
@@ -348,7 +348,7 @@ bool is_contributing(edge<T> const& edge,
             }
         }
         break;
-    case ctXor:
+    case clip_type_x_or:
         if (edge.winding_delta == 0) {
             // XOr always contributing unless open
             switch (pft2) {

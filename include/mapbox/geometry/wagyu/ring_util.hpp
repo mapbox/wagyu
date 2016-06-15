@@ -37,7 +37,7 @@ void set_hole_state(edge_ptr<T> e, ring_ptr<T> ring, ring_list<T>& rings) {
 template <typename T>
 point_ptr<T> add_point(edge_ptr<T> e, mapbox::geometry::point<T> const& pt, ring_list<T>& rings) {
     if (e->index < 0) {
-        rings_ptr<T> ring = create_new_ring(rings);
+        ring_ptr<T> ring = create_new_ring(rings);
         ring->is_open = (e->winding_delta == 0);
         point_ptr<T> new_point = new point<T>(ring->index, pt);
         ring->points = new_point;
