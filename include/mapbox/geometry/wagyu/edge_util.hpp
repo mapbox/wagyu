@@ -17,7 +17,7 @@ namespace geometry
 namespace wagyu
 {
 template <typename T>
-inline void ReverseHorizontal(edge<T> & e)
+inline void reverse_horizontal(edge<T> & e)
 {
     // swap horizontal edges' top and bottom x's so they follow the natural
     // progression of the bounds - ie so their xbots will align with the
@@ -33,7 +33,7 @@ edge_ptr<T> process_bound_type_line(edge_ptr<T> current_edge,
     edge_ptr<T> result = current_edge;
     edge_ptr<T> horizontal_edge = nullptr;
 
-    if (current_edge->OutIdx == EDGE_SKIP)
+    if (current_edge->index == EDGE_SKIP)
     {
         // if edges still remain in the current bound beyond the skip edge then
         // create another LocMin and call ProcessBound once more
@@ -115,12 +115,12 @@ edge_ptr<T> process_bound_type_line(edge_ptr<T> current_edge,
             if (starting_edge->bot.x != current_edge->bot.x &&
                 starting_edge->top.x != current_edge->bot.x)
             {
-                ReverseHorizontal(*current_edge);
+                reverse_horizontal(*current_edge);
             }
         }
         else if (starting_edge->bot.x != current_edge->bot.x)
         {
-            ReverseHorizontal(*current_edge);
+            reverse_horizontal(*current_edge);
         }
     }
 
@@ -128,11 +128,11 @@ edge_ptr<T> process_bound_type_line(edge_ptr<T> current_edge,
     if (next_is_forward)
     {
         while (result->top.y == result->next->bot.y &&
-               result->next->OutIdx != EDGE_SKIP)
+               result->next->index != EDGE_SKIP)
         {
             result = result->next;
         }
-        if (is_horizontal(*result) && result->next->OutIdx != EDGE_SKIP)
+        if (is_horizontal(*result) && result->next->index != EDGE_SKIP)
         {
             // nb: at the top of a bound, horizontals are added to the bound
             // only when the preceding edge attaches to the horizontal's left
@@ -153,25 +153,25 @@ edge_ptr<T> process_bound_type_line(edge_ptr<T> current_edge,
             if (is_horizontal(*current_edge) && current_edge != starting_edge &&
                 current_edge->bot.x != current_edge->prev->top.x)
             {
-                ReverseHorizontal(*current_edge);
+                reverse_horizontal(*current_edge);
             }
             current_edge = current_edge->next;
         }
         if (is_horizontal(*current_edge) && current_edge != starting_edge &&
             current_edge->bot.x != current_edge->prev->top.x)
         {
-            ReverseHorizontal(*current_edge);
+            reverse_horizontal(*current_edge);
         }
         result = result->next; // move to the edge just beyond current bound
     }
     else
     {
         while (result->top.y == result->prev->bot.y &&
-               result->prev->OutIdx != EDGE_SKIP)
+               result->prev->index != EDGE_SKIP)
         {
             result = result->prev;
         }
-        if (is_horizontal(*result) && result->prev->OutIdx != EDGE_SKIP)
+        if (is_horizontal(*result) && result->prev->index != EDGE_SKIP)
         {
             horizontal_edge = result;
             while (is_horizontal(*horizontal_edge->next)) {
@@ -188,14 +188,14 @@ edge_ptr<T> process_bound_type_line(edge_ptr<T> current_edge,
             if (is_horizontal(*current_edge) && current_edge != starting_edge &&
                 current_edge->bot.x != current_edge->next->top.x)
             {
-                ReverseHorizontal(*current_edge);
+                reverse_horizontal(*current_edge);
             }
             current_edge = current_edge->prev;
         }
         if (is_horizontal(*current_edge) && current_edge != starting_edge &&
             current_edge->bot.x != current_edge->next->top.x)
         {
-            ReverseHorizontal(*current_edge);
+            reverse_horizontal(*current_edge);
         }
         result = result->prev; // move to the edge just beyond current bound
     }
@@ -230,12 +230,12 @@ edge_ptr<T> process_bound_type_ring(edge_ptr<T> current_edge,
             if (starting_edge->bot.x != current_edge->bot.x &&
                 starting_edge->top.x != current_edge->bot.x)
             {
-                ReverseHorizontal(*current_edge);
+                reverse_horizontal(*current_edge);
             }
         }
         else if (starting_edge->bot.x != current_edge->bot.x)
         {
-            ReverseHorizontal(*current_edge);
+            reverse_horizontal(*current_edge);
         }
     }
 
@@ -266,14 +266,14 @@ edge_ptr<T> process_bound_type_ring(edge_ptr<T> current_edge,
             if (is_horizontal(*current_edge) && current_edge != starting_edge &&
                 current_edge->bot.x != current_edge->prev->top.x)
             {
-                ReverseHorizontal(*current_edge);
+                reverse_horizontal(*current_edge);
             }
             current_edge = current_edge->next;
         }
         if (is_horizontal(*current_edge) && current_edge != starting_edge &&
             current_edge->bot.x != current_edge->prev->top.x)
         {
-            ReverseHorizontal(*current_edge);
+            reverse_horizontal(*current_edge);
         }
         result = result->next; // move to the edge just beyond current bound
     }
@@ -299,14 +299,14 @@ edge_ptr<T> process_bound_type_ring(edge_ptr<T> current_edge,
             if (is_horizontal(*current_edge) && current_edge != starting_edge &&
                 current_edge->bot.x != current_edge->next->top.x)
             {
-                ReverseHorizontal(*current_edge);
+                reverse_horizontal(*current_edge);
             }
             current_edge = current_edge->prev;
         }
         if (is_horizontal(*current_edge) && current_edge != starting_edge &&
             current_edge->bot.x != current_edge->next->top.x)
         {
-            ReverseHorizontal(*current_edge);
+            reverse_horizontal(*current_edge);
         }
         result = result->prev; // move to the edge just beyond current bound
     }
@@ -352,7 +352,7 @@ void add_flat_line_to_local_minima_list(edge_list<T> & new_edges,
     // Totally flat paths must be handled differently when adding them
     // to LocalMinima list to avoid endless loops etc ...
     edge_ptr<value_type> current_edge = &new_edges.back();
-    current_edge->prev->OutIdx = EDGE_SKIP;
+    current_edge->prev->index = EDGE_SKIP;
     local_minimum<value_type> local_min;
     local_min.y = current_edge->bot.y;
     local_min.left_bound = nullptr;
@@ -362,9 +362,9 @@ void add_flat_line_to_local_minima_list(edge_list<T> & new_edges,
     for (;;) {
         if (current_edge->bot.x != current_edge->prev->top.x)
         {
-            ReverseHorizontal(*current_edge);
+            reverse_horizontal(*current_edge);
         }
-        if (current_edge->next->OutIdx == EDGE_SKIP)
+        if (current_edge->next->index == EDGE_SKIP)
         {
             break;
         }
@@ -417,7 +417,7 @@ void add_line_to_local_minima_list(edge_list<T> & new_edges,
 
         current_edge = process_bound_type_line(
             local_min.left_bound, left_bound_is_forward, minima_list);
-        if (current_edge->OutIdx == EDGE_SKIP)
+        if (current_edge->index == EDGE_SKIP)
         {
             current_edge = process_bound_type_line(
                 current_edge, left_bound_is_forward, minima_list);
@@ -425,7 +425,7 @@ void add_line_to_local_minima_list(edge_list<T> & new_edges,
 
         edge_ptr<value_type> current_edge_2 = process_bound_type_line(
             local_min.right_bound, !left_bound_is_forward, minima_list);
-        if (current_edge_2->OutIdx == EDGE_SKIP)
+        if (current_edge_2->index == EDGE_SKIP)
         {
             current_edge_2 = process_bound_type_line(
                 current_edge_2, !left_bound_is_forward, minima_list);
@@ -559,11 +559,11 @@ bool build_edge_list(mapbox::geometry::line_string<T> const & path_geometry,
 
 template <typename T>
 bool add_line_string(mapbox::geometry::line_string<T> const & path_geometry,
-                     edge_list<T> & edges,
+                     std::vector<edge_list<T> > & edges,
                      local_minimum_list<T> & minima_list)
 {
     bool is_flat = true;
-    edges.push_back();
+    edges.emplace_back();
     auto & new_edges = edges.back();
     if (!build_edge_list(path_geometry, new_edges, is_flat) ||
         new_edges.empty())

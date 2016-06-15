@@ -16,7 +16,7 @@ TEST_CASE("test reverse horizontal")
     CHECK(e1.top.x == 5);
     CHECK(e1.top.y == 5);
 
-    ReverseHorizontal(e1);
+    reverse_horizontal(e1);
 
     CHECK(e1.bot.x == 5);
     CHECK(e1.bot.y == 5);
@@ -583,6 +583,52 @@ TEST_CASE("edge adding ring - square closed - zigzag")
     CHECK(itr->curr.x == 5);
     CHECK(itr->curr.y == 0);
     CHECK(itr->dx == Approx(HORIZONTAL));
+    ++itr;
+    CHECK(itr == edges.end());
+}
+
+TEST_CASE("edge adding linestring")
+{
+    using namespace mapbox::geometry::wagyu;
+
+    mapbox::geometry::line_string<std::int64_t> ring;
+    ring.push_back({0, 0});
+    ring.push_back({0, 5});
+    ring.push_back({5, 5});
+    ring.push_back({5, 0});
+
+    std::vector<edge_list<std::int64_t> > all_edges;
+    local_minimum_list<std::int64_t> minima_list;
+    polygon_type p_type = polygon_type_subject;
+
+    CHECK(add_line_string(ring, all_edges, minima_list));
+
+    auto & edges = all_edges.back();
+    REQUIRE(edges.size() == 3);
+    auto itr = edges.begin();
+    CHECK(itr->top.x == 0);
+    CHECK(itr->top.y == 0);
+    CHECK(itr->bot.x == 0);
+    CHECK(itr->bot.y == 5);
+    CHECK(itr->curr.x == 0);
+    CHECK(itr->curr.y == 0);
+    CHECK(itr->dx == Approx(0.0));
+    ++itr;
+    CHECK(itr->top.x == 5);
+    CHECK(itr->top.y == 5);
+    CHECK(itr->bot.x == 0);
+    CHECK(itr->bot.y == 5);
+    CHECK(itr->curr.x == 0);
+    CHECK(itr->curr.y == 5);
+    CHECK(itr->dx == Approx(HORIZONTAL));
+    ++itr;
+    CHECK(itr->top.x == 5);
+    CHECK(itr->top.y == 0);
+    CHECK(itr->bot.x == 5);
+    CHECK(itr->bot.y == 5);
+    CHECK(itr->curr.x == 5);
+    CHECK(itr->curr.y == 5);
+    CHECK(itr->dx == Approx(0.0));
     ++itr;
     CHECK(itr == edges.end());
 }
