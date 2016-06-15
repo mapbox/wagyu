@@ -79,6 +79,30 @@ TEST_CASE("edge adding ring - square closed") {
     CHECK(itr == edges.end());
 }
 
+TEST_CASE("test is minima") {
+    using namespace mapbox::geometry::wagyu;
+    mapbox::geometry::point<std::int64_t> p1 = { 0, 5 };
+    mapbox::geometry::point<std::int64_t> p2 = { 5, 5 };
+    edge<std::int64_t> e1(p1, p2, polygon_type_subject);
+    edge<std::int64_t> e2(p1, p2, polygon_type_subject);
+    edge<std::int64_t> e3(p1, p2, polygon_type_subject);
+
+    e1.prev = &e3;
+    e1.next = &e2;
+    e2.prev = &e1;
+    e2.next = &e3;
+    e3.prev = &e2;
+    e3.next = &e1;
+    e1.next_in_LML = &e3;
+    e2.next_in_LML = &e3;
+    e3.next_in_LML = &e3;
+
+    // neither prev/next next_in_LML points back at e2
+    CHECK(is_minima(&e2) == true); 
+    // both prev/next next_in_LML points back to e3
+    CHECK(is_minima(&e3) == false);
+}
+
 TEST_CASE("edge adding ring - square not closed") {
     using namespace mapbox::geometry::wagyu;
 

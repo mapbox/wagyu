@@ -32,8 +32,13 @@ template <typename T>
 inline void reverse_horizontal(edge<T>& e) {
     // swap horizontal edges' top and bottom x's so they follow the natural
     // progression of the bounds - ie so their xbots will align with the
-    // adjoining lower edge. [Helpful in the ProcessHorizontal() method.]
+    // adjoining lower edge. [Helpful in the process_horizontal() method.]
     std::swap(e.top.x, e.bot.x);
+}
+
+template <typename T>
+inline bool is_minima(edge_ptr<T> e) {
+    return e && (e->prev->next_in_LML != e) && (e->next->next_in_LML != e);
 }
 
 template <typename T>
@@ -612,6 +617,12 @@ bool add_linear_ring(mapbox::geometry::linear_ring<T> const& path_geometry,
     make_list_circular(new_edges);
     add_ring_to_local_minima_list(new_edges, minima_list);
     return true;
+}
+
+
+template <typename T>
+void process_horizontals() {
+
 }
 }
 }
