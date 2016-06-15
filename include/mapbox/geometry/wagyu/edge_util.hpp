@@ -617,7 +617,10 @@ bool add_linear_ring(mapbox::geometry::linear_ring<T> const& path_geometry,
 template <typename T>
 void process_edges_at_top_of_scanbeam(T top_y,
                                       edge_ptr<T> active_edges,
-                                      std::list<T>& maxima) {
+                                      std::list<T>& maxima,
+                                      local_minimum_list<T>& minima_list,
+                                      local_minimum_itr<T>& current_lm,
+                                      bool use_full_range) {
     std::list<T> next_maxima;
     edge_ptr<T>* e = active_edges;
     while (e) {
@@ -662,7 +665,70 @@ void process_edges_at_top_of_scanbeam(T top_y,
             }
         }
 
-        // XXX ENF
+        // When E is being touched by another edge, make sure both edges have a vertex here.
+
+        if (e->out_index >= 0 && e->wind_delta != 0) {
+            edge<T> e_prev = e->prev_in_AEL;
+            while (e_prev && e->prev->curr.x == e->curr.x) {
+                if (e_prev->out_index >= 0 && e_prev->wind_delta != 0 &&
+                    !(e->bot == e_prev->bot && e->top == e_prev->top)) {
+                    mapbox::geometry::point<T> pt = e->curr;
+                    point<T> op = add_out_point(e_prev, pt);
+                    point<T> op2 = add_out_point(e, pt);
+                    add_join(op, op2, pt); // strictly simple type 3 join
+                }
+                e_prev = e_prev->prev_in_AEL;
+            }
+        }
+
+        e = e->next_in_AEL;
+    }
+
+    local_minimum_itr<T> lm = current_lm;
+    while (lm != minima_list.end() && lm->y == top_y) {
+        if (lm->left_bound && lm->right_bound) {
+            maxima.push_back(lm->left_bound->bot.x);
+        }
+        ++lm;
+    }
+
+    process_horizontals(maxima);
+
+    if (!next_maxima.empty()) {
+        maxima.insert(maxima.end(), next_maxima.begin(), next_maxima.end());
+    }
+
+    // 4. Promote intermediate vertices
+
+    e = active_edges;
+    while (e) {
+        if (is_intermediate(e, top_y)) {
+            point_ptr<T> op = 0;
+            if (e->out_index >= 0) {
+                op = add_out_point(e, e->top);
+            }
+            update_edge_into_AEL(e);
+
+            // If output polygons share an edge, they'll need to be joined later.
+
+            edge_ptr<T> e_prev = e->prev_in_AEL;
+            edge_ptr<T> e_next = e->next_in_AEL;
+
+            if (e_prev && e_prev->curr.x == e->bot.x && e_prev->out_index >= 0 &&
+                e_prev->curr.y > e_prev->top.y &&
+                slopes_equal(e->curr, e->top, e_prev->curr, e_prev->top, use_full_range) &&
+                (e->wind_delta != 0) && (e_prev->wind_delta != 0)) {
+                point_ptr<T> op2 = add_out_point(e_prev, e->bot);
+                add_join(op, op2, e->top);
+            } else if (e_next && e_next->curr.x == e->bot.x && e_next->curr.y == e->bot.y &&
+                       e->next->out_index >= 0 && e_next->curr.y > e_next->top.y &&
+                       slopes_equal(e->curr, e->top, e_next->curr, e_next->top, use_full_range) &&
+                       (e->wind_delta != 0) && (e_next->wind_delta != 0)) {
+                point_ptr<T> op2 = add_out_point(e_next, e->bot);
+                add_join(op, op2, e->top);
+            }
+        }
+        e = e->next_in_AEL;
     }
 }
 }
