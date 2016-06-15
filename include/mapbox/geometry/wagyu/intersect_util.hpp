@@ -82,7 +82,8 @@ void intersect_edges(edge_ptr<T> e1,
                      fill_type subject_fill_type,
                      fill_type clip_fill_type,
                      ring_list<T>& rings,
-                     join_list<T>& joins) {
+                     join_list<T>& joins,
+                     edge_ptr<T> active_edge_list) {
     bool e1Contributing = (e1->index >= 0);
     bool e2Contributing = (e2->index >= 0);
 
@@ -210,7 +211,7 @@ void intersect_edges(edge_ptr<T> e1,
     if (e1Contributing && e2Contributing) {
         if ((e1Wc != 0 && e1Wc != 1) || (e2Wc != 0 && e2Wc != 1) ||
             (e1->poly_type != e2->poly_type && cliptype != clip_type_xor)) {
-            AddLocalMaxPoly(e1, e2, pt);
+            add_local_max_point(e1, e2, pt, rings, active_edge_list);
         } else {
             add_point(e1, pt, rings);
             add_point(e2, pt, rings);
