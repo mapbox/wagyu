@@ -11,12 +11,11 @@ namespace geometry
 {
 namespace wagyu
 {
-
 struct intersect_list_sorter
 {
     template <typename T>
-    inline bool intersect_list_sort(intersect_ptr<T> node1,
-                                    intersect_ptr<T> node2)
+    inline bool intersect_list_sort(intersect_node_ptr<T> node1,
+                                    intersect_node_ptr<T> node2)
     {
         if (node2->pt.y != node1->pt.y)
         {
@@ -24,14 +23,16 @@ struct intersect_list_sorter
         }
         else
         {
-            return (node2->edge1->winding_count2 + node2->edge2->winding_count2) >
-                   (node1->edge1->winding_count2 + node1->edge2->winding_count2);
+            return (node2->edge1->winding_count2 +
+                    node2->edge2->winding_count2) >
+                   (node1->edge1->winding_count2 +
+                    node1->edge2->winding_count2);
         }
     }
 };
 
 template <typename T>
-bool edges_adjacent(intersect<T> const& inode)
+bool edges_adjacent(intersect_node<T> const & inode)
 {
     return (inode.edge1->next_in_SEL == inode.edge2) ||
            (inode.edge1->prev_in_SEL == inode.edge2);
@@ -50,12 +51,12 @@ bool fixup_intersection_order(edge_ptr<T> active_edge_list,
     std::stable_sort(intersects.begin(), intersects.end(),
                      intersect_list_sorter());
 
-    size_t n = m_IntersectList.size();
+    size_t n = intersects.size();
     for (size_t i = 0; i < n; ++i) {
-        if (!edges_adjacent(*m_IntersectList[i]))
+        if (!edges_adjacent(*intersects[i]))
         {
             size_t j = i + 1;
-            while (j < n && !edges_adjacent(*m_IntersectList[j])) {
+            while (j < n && !edges_adjacent(*intersects[j])) {
                 j++;
             }
             if (j == n)
@@ -63,29 +64,31 @@ bool fixup_intersection_order(edge_ptr<T> active_edge_list,
                 // Intersection could not be made adjacent
                 return false;
             }
-            std::swap(m_IntersectList[i], m_IntersectList[j]);
+            std::swap(intersects[i], intersects[j]);
         }
-        swap_positions_in_SEL(m_IntersectList[i]->edge1,
-                              m_IntersectList[i]->edge2);
+        swap_positions_in_SEL(intersects[i]->edge1, intersects[i]->edge2);
     }
     return true;
 }
 
-bool process_intersections(value_type top_y)
+template <typename T>
+bool process_intersections(T top_y,
+                           edge_ptr<T> active_edges,
+                           intersect_list<T> & intersects)
 {
-    if (!m_ActiveEdges)
+    if (!active_edges)
     {
         return true;
     }
 
     build_intersect_list(top_y);
 
-    size_t s = m_IntersectList.size();
+    size_t s = intersects.size();
     if (s == 0)
     {
         return true;
     }
-    else if (s == 1 || fixup_intersection_order())
+    else if (s == 1 || fixup_intersection_order(intersects))
     {
         return true;
     }

@@ -6,7 +6,6 @@ namespace geometry
 {
 namespace wagyu
 {
-
 template <typename T>
 void add_edge_to_SEL(edge_ptr<T> edge, edge_ptr<T> & sorted_edges_list)
 {
@@ -29,7 +28,9 @@ void add_edge_to_SEL(edge_ptr<T> edge, edge_ptr<T> & sorted_edges_list)
 }
 
 template <typename T>
-void swap_positions_in_SEL(edge_ptr<T> edge1, edge_ptr<T> edge2, edge_ptr<T> & sorted_edge_list)
+void swap_positions_in_SEL(edge_ptr<T> edge1,
+                           edge_ptr<T> edge2,
+                           edge_ptr<T> & sorted_edge_list)
 {
     using value_type = T;
 
@@ -113,7 +114,8 @@ void swap_positions_in_SEL(edge_ptr<T> edge1, edge_ptr<T> edge2, edge_ptr<T> & s
 }
 
 template <typename T>
-void copy_AEL_to_SEL(const_edge_ptr<T> active_edge_list, edge_ptr<T> & sorted_edge_list)
+void copy_AEL_to_SEL(const_edge_ptr<T> active_edge_list,
+                     edge_ptr<T> & sorted_edge_list)
 {
     edge_ptr<T> e = active_edge_list;
     sorted_edge_list = e;
@@ -123,7 +125,6 @@ void copy_AEL_to_SEL(const_edge_ptr<T> active_edge_list, edge_ptr<T> & sorted_ed
         e = e->next_in_AEL;
     }
 }
-
 }
 }
 }
