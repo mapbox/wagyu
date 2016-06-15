@@ -11,8 +11,7 @@ namespace mapbox {
 namespace geometry {
 namespace wagyu {
 template <typename T>
-double area(mapbox::geometry::linear_ring<T> const & poly)
-{
+double area(mapbox::geometry::linear_ring<T> const& poly) {
     std::size_t size = poly.size();
     if (size < 3) {
         return 0.0;
@@ -32,8 +31,7 @@ double area(mapbox::geometry::linear_ring<T> const & poly)
 }
 
 template <typename T>
-double area(point_ptr<T> op)
-{
+double area(point_ptr<T> op) {
     point_ptr<T> startOp = op;
     if (!op) {
         return 0.0;
@@ -47,14 +45,12 @@ double area(point_ptr<T> op)
 }
 
 template <typename T>
-double area(ring<T> const & polygon_ring)
-{
+double area(ring<T> const& polygon_ring) {
     return area(polygon_ring.points);
 }
 
 template <typename T>
-bool orientation(mapbox::geometry::linear_ring<T> const & poly)
-{
+bool orientation(mapbox::geometry::linear_ring<T> const& poly) {
     return area(poly) >= 0;
 }
 
@@ -314,7 +310,7 @@ inline bool is_horizontal(edge<T> const& e) {
 }
 
 template <typename T>
-bool is_even_odd_fill_type(edge<T> const & edge,
+bool is_even_odd_fill_type(edge<T> const& edge,
                            fill_type subject_fill_type,
                            fill_type clip_fill_type) {
     if (edge.poly_type == polygon_type_subject) {
@@ -346,9 +342,7 @@ inline T get_current_x(edge<T> const& edge, const T current_y) {
 }
 
 template <typename T>
-void swap_points(mapbox::geometry::point<T> & pt1,
-                 mapbox::geometry::point<T> & pt2)
-{
+void swap_points(mapbox::geometry::point<T>& pt1, mapbox::geometry::point<T>& pt2) {
     mapbox::geometry::point<T> tmp = pt1;
     pt1 = pt2;
     pt2 = tmp;

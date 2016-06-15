@@ -2,9 +2,9 @@
 
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/edge_util.hpp>
-#include <mapbox/geometry/wagyu/sorted_edge_list.hpp>
 #include <mapbox/geometry/wagyu/intersect.hpp>
 #include <mapbox/geometry/wagyu/ring_util.hpp>
+#include <mapbox/geometry/wagyu/sorted_edge_list.hpp>
 #include <mapbox/geometry/wagyu/util.hpp>
 
 namespace mapbox {

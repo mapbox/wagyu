@@ -615,9 +615,7 @@ bool add_linear_ring(mapbox::geometry::linear_ring<T> const& path_geometry,
 }
 
 template <typename T>
-void process_edges_at_top_of_scanbeam(T top_y,
-                                      edge_ptr<T> active_edges,
-                                      std::list<T>& maxima) {
+void process_edges_at_top_of_scanbeam(T top_y, edge_ptr<T> active_edges, std::list<T>& maxima) {
     std::list<T> next_maxima;
     edge_ptr<T>* e = active_edges;
     while (e) {

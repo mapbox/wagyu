@@ -92,10 +92,8 @@ void link_after(point_ptr<T>& node, point_ptr<T>& new_node) {
 }
 
 template <typename T>
-void transfer_point(point_ptr<T> & p, point_ptr<T> & b, point_ptr<T> & e)
-{
-    if (b != e)
-    {
+void transfer_point(point_ptr<T>& p, point_ptr<T>& b, point_ptr<T>& e) {
+    if (b != e) {
         point_ptr<T> prev_p = get_prev(p);
         point_ptr<T> prev_b = get_prev(b);
         point_ptr<T> prev_e = get_prev(e);
@@ -111,8 +109,7 @@ void transfer_point(point_ptr<T> & p, point_ptr<T> & b, point_ptr<T> & e)
 }
 
 template <typename T>
-void reverse_ring(point_ptr<T> & p)
-{
+void reverse_ring(point_ptr<T>& p) {
     point_ptr<T> f = get_next(p);
     point_ptr<T> i = get_next(f);
     point_ptr<T> e = p;
