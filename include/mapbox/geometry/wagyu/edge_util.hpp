@@ -622,7 +622,7 @@ void process_edges_at_top_of_scanbeam(T top_y,
                                       local_minimum_itr<T>& current_lm,
                                       bool use_full_range) {
     std::list<T> next_maxima;
-    edge_ptr<T>* e = active_edges;
+    edge_ptr<T> e = active_edges;
     while (e) {
         // 1. Process maxima, treating them as if they are "bent" horizontal edges,
         // but exclude maxima with horizontal edges. E can't be a horizontal.
@@ -667,10 +667,10 @@ void process_edges_at_top_of_scanbeam(T top_y,
 
         // When E is being touched by another edge, make sure both edges have a vertex here.
 
-        if (e->out_index >= 0 && e->wind_delta != 0) {
-            edge<T> e_prev = e->prev_in_AEL;
+        if (e->index >= 0 && e->winding_delta != 0) {
+            edge_ptr<T> e_prev = e->prev_in_AEL;
             while (e_prev && e->prev->curr.x == e->curr.x) {
-                if (e_prev->out_index >= 0 && e_prev->wind_delta != 0 &&
+                if (e_prev->index >= 0 && e_prev->winding_delta != 0 &&
                     !(e->bot == e_prev->bot && e->top == e_prev->top)) {
                     mapbox::geometry::point<T> pt = e->curr;
                     point<T> op = add_out_point(e_prev, pt);
@@ -717,13 +717,13 @@ void process_edges_at_top_of_scanbeam(T top_y,
             if (e_prev && e_prev->curr.x == e->bot.x && e_prev->out_index >= 0 &&
                 e_prev->curr.y > e_prev->top.y &&
                 slopes_equal(e->curr, e->top, e_prev->curr, e_prev->top, use_full_range) &&
-                (e->wind_delta != 0) && (e_prev->wind_delta != 0)) {
+                (e->winding_delta != 0) && (e_prev->winding_delta != 0)) {
                 point_ptr<T> op2 = add_out_point(e_prev, e->bot);
                 add_join(op, op2, e->top);
             } else if (e_next && e_next->curr.x == e->bot.x && e_next->curr.y == e->bot.y &&
                        e->next->out_index >= 0 && e_next->curr.y > e_next->top.y &&
                        slopes_equal(e->curr, e->top, e_next->curr, e_next->top, use_full_range) &&
-                       (e->wind_delta != 0) && (e_next->wind_delta != 0)) {
+                       (e->winding_delta != 0) && (e_next->winding_delta != 0)) {
                 point_ptr<T> op2 = add_out_point(e_next, e->bot);
                 add_join(op, op2, e->top);
             }
