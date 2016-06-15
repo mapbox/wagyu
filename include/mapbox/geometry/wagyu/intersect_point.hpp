@@ -159,13 +159,13 @@ void intersection_point(edge<T> const & Edge1,
     // This method finds the FIRST intersecting point in integer space between
     // two edges that is closest to the bot point of the edges.
     using value_type = T;
-    if (std::abs(Edge1.dx - Edge2.dx) <= std::numeric_limits<double>::epsilon())
+    if (std::fabs(Edge1.dx - Edge2.dx) < std::numeric_limits<double>::epsilon())
     {
         ip.y = Edge1.curr.y;
         ip.x = get_current_x(Edge1, ip.y);
         return;
     }
-    else if (std::abs(Edge1.dx) < std::numeric_limits<double>::epsilon())
+    else if (std::fabs(Edge1.dx) < std::numeric_limits<double>::epsilon())
     {
         ip.x = Edge1.bot.x;
         if (is_horizontal(Edge2))
@@ -192,7 +192,7 @@ void intersection_point(edge<T> const & Edge1,
             }
         }
     }
-    else if (std::abs(Edge2.dx) < std::numeric_limits<double>::epsilon())
+    else if (std::fabs(Edge2.dx) < std::numeric_limits<double>::epsilon())
     {
         ip.x = Edge2.bot.x;
         if (is_horizontal(Edge1))

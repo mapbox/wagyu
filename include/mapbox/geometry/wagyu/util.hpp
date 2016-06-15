@@ -575,9 +575,9 @@ bool first_is_bottom_point(const_point_ptr<T> btmPt1, const_point_ptr<T> btmPt2)
     }
     double dx2n = std::fabs(GetDx(btmPt2->Pt, p->Pt));
 
-    if (std::abs(std::max(dx1p, dx1n) - std::max(dx2p, dx2n)) <
+    if (std::fabs(std::max(dx1p, dx1n) - std::max(dx2p, dx2n)) <
             std::numeric_limits<double>::epsilon() &&
-        std::abs(std::min(dx1p, dx1n) - std::min(dx2p, dx2n)) <
+        std::fabs(std::min(dx1p, dx1n) - std::min(dx2p, dx2n)) <
             std::numeric_limits<double>::epsilon())
     {
         return Area(btmPt1) > 0; // if otherwise identical use orientation

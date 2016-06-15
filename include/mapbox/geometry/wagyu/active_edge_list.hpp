@@ -5,6 +5,7 @@
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
 #include <mapbox/geometry/wagyu/ring.hpp>
 #include <mapbox/geometry/wagyu/scanbeam.hpp>
+#include <mapbox/geometry/wagyu/sorted_edge_list.hpp>
 #include <mapbox/geometry/wagyu/util.hpp>
 
 namespace mapbox
@@ -501,6 +502,7 @@ void insert_local_minima_into_AEL(T const botY,
                                   local_minimum_itr<T> & current_local_min,
                                   local_minimum_list<T> & minima_list,
                                   edge_ptr<T> & active_edges,
+                                  edge_ptr<T> & sorted_edges_list,
                                   ring_list<T> & rings,
                                   join_list<T> & joins,
                                   join_list<T> & ghost_joins,
@@ -578,7 +580,7 @@ void insert_local_minima_into_AEL(T const botY,
             if (is_contributing(*lb, cliptype, subject_fill_type,
                                 clip_fill_type))
             {
-                p1 = AddLocalMinPoly(lb, rb, lb->bot);
+                p1 = add_local_minimum_point(lb, rb, lb->bot);
                 edge_ptr<value_type> eprev = lb->prev_in_AEL;
                 if (lb->index >= 0 && lb->winding_delta != 0 && eprev &&
                     eprev->index >= 0 && eprev->curr.x == lb->curr.x &&
@@ -601,7 +603,7 @@ void insert_local_minima_into_AEL(T const botY,
         {
             if (is_horizontal(*rb))
             {
-                AddEdgeToSEL(rb);
+                add_edge_to_SEL(rb, sorted_edges_list);
                 if (rb->next_in_LML)
                 {
                     scanbeam.push_back(rb->next_in_LML->top.y);

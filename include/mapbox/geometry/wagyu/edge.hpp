@@ -78,7 +78,7 @@ struct edge
             bot = next_pt;
         }
         double dy = static_cast<double>(top.y - bot.y);
-        if (std::abs(dy) < std::numeric_limits<double>::epsilon())
+        if (std::fabs(dy) < std::numeric_limits<double>::epsilon())
         {
             dx = HORIZONTAL;
         }
