@@ -16,6 +16,24 @@ namespace geometry
 {
 namespace wagyu
 {
+
+template <typename T>
+inline void swap_ring_indexes(edge<T> & Edge1, edge<T> & Edge2)
+{
+    std::size_t index = Edge1.index;
+    Edge1.index = Edge2.index;
+    Edge2.index = index;
+}
+
+
+template <typename T>
+inline void swap_sides(edge<T> & Edge1, edge<T> & Edge2)
+{
+    edge_side side = Edge1.side;
+    Edge1.side = Edge2.side;
+    Edge2.side = side;
+}
+
 template <typename T>
 inline void reverse_horizontal(edge<T> & e)
 {

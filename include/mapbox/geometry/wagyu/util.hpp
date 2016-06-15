@@ -428,19 +428,33 @@ inline double GetDx(point<T> const & pt1, point<T> const & pt2)
 }
 
 template <typename T>
-inline void Swapsides(edge<T> & Edge1, edge<T> & Edge2)
+bool is_even_odd_fill_type(edge<T> const & edge,
+                           fill_type subject_fill_type,
+                           fill_type clip_fill_type)
 {
-    edge_side side = Edge1.side;
-    Edge1.side = Edge2.side;
-    Edge2.side = side;
+    if (edge.poly_type == polygon_type_subject)
+    {
+        return subject_fill_type == fill_type_even_odd;
+    }
+    else
+    {
+        return clip_fill_type == fill_type_even_odd;
+    }
 }
 
 template <typename T>
-inline void SwapPolyIndexes(edge<T> & Edge1, edge<T> & Edge2)
+bool is_even_odd_alt_fill_type(edge<T> const & edge,
+                               fill_type subject_fill_type,
+                               fill_type clip_fill_type)
 {
-    std::size_t index = Edge1.index;
-    Edge1.index = Edge2.index;
-    Edge2.index = index;
+    if (edge.PolyTyp == polygon_type_subject)
+    {
+        return clip_fill_type == fill_type_even_odd;
+    }
+    else
+    {
+        return subject_fill_type == fill_type_even_odd;
+    }
 }
 
 template <typename T>

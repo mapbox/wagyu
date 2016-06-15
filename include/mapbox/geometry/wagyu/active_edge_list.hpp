@@ -220,21 +220,6 @@ void update_edge_into_AEL(edge_ptr<T> & e,
 }
 
 template <typename T>
-bool is_even_odd_alt_fill_type(edge<T> const & edge,
-                               fill_type subject_fill_type,
-                               fill_type clip_fill_type)
-{
-    if (edge.PolyTyp == polygon_type_subject)
-    {
-        return m_ClipFillType == fill_type_even_odd;
-    }
-    else
-    {
-        return m_SubjFillType == fill_type_even_odd;
-    }
-}
-
-template <typename T>
 void set_winding_count(edge<T> & edge,
                        clip_type cliptype,
                        fill_type subject_fill_type,
@@ -270,7 +255,7 @@ void set_winding_count(edge<T> & edge,
         edge.winding_count2 = e->winding_count2;
         e = e->next_in_AEL; // ie get ready to calc winding_count2
     }
-    else if (IsEvenOddFillType(edge))
+    else if (is_even_odd_fill_type(edge, subject_fill_type, clip_fill_type))
     {
         // EvenOdd filling ...
         if (edge.winding_delta == 0)
@@ -348,7 +333,7 @@ void set_winding_count(edge<T> & edge,
     }
 
     // update winding_count2 ...
-    if (is_even_odd_alt_fill_type(edge))
+    if (is_even_odd_alt_fill_type(edge, subject_fill_type, clip_fill_type))
     {
         // EvenOdd filling ...
         while (e != &edge) {

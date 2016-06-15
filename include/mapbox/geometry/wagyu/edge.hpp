@@ -31,8 +31,7 @@ struct edge
 {
     using value_type = T;
     mapbox::geometry::point<value_type> bot;
-    mapbox::geometry::point<value_type>
-        curr; // current (updated for every new scanbeam)
+    mapbox::geometry::point<value_type> curr; // updated every new scanbeam
     mapbox::geometry::point<value_type> top;
     double dx;
     int index;
