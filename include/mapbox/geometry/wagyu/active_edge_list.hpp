@@ -373,8 +373,8 @@ template <typename T>
 void insert_local_minima_into_AEL(T const botY,
                                   local_minimum_itr<T>& current_local_min,
                                   local_minimum_list<T>& minima_list,
-                                  edge_ptr<T>& active_edges,
-                                  edge_ptr<T>& sorted_edges_list,
+                                  edge_ptr<T>& active_edge_list,
+                                  edge_ptr<T>& sorted_edge_list,
                                   ring_list<T>& rings,
                                   join_list<T>& joins,
                                   join_list<T>& ghost_joins,
@@ -390,8 +390,8 @@ void insert_local_minima_into_AEL(T const botY,
         point_ptr<value_type> p1 = nullptr;
         if (!lb) {
             // nb: don't insert LB into either AEL or SEL
-            insert_edge_into_AEL(rb, nullptr, active_edges);
-            set_winding_count(*rb, cliptype, subject_fill_type, clip_fill_type, active_edges);
+            insert_edge_into_AEL(rb, nullptr, active_edge_list);
+            set_winding_count(*rb, cliptype, subject_fill_type, clip_fill_type, active_edge_list);
             if (is_contributing(*rb, cliptype, subject_fill_type, clip_fill_type)) {
                 p1 = add_point(rb, rb->bot, rings);
                 edge_ptr<value_type> eprev = rb->prev_in_AEL;
@@ -406,8 +406,8 @@ void insert_local_minima_into_AEL(T const botY,
                 }
             }
         } else if (!rb) {
-            insert_edge_into_AEL(lb, nullptr, active_edges);
-            set_winding_count(*lb, cliptype, subject_fill_type, clip_fill_type, active_edges);
+            insert_edge_into_AEL(lb, nullptr, active_edge_list);
+            set_winding_count(*lb, cliptype, subject_fill_type, clip_fill_type, active_edge_list);
             if (is_contributing(*lb, cliptype, subject_fill_type, clip_fill_type)) {
                 p1 = add_point(lb, lb->bot, rings);
                 edge_ptr<value_type> eprev = lb->prev_in_AEL;
@@ -423,9 +423,9 @@ void insert_local_minima_into_AEL(T const botY,
             }
             scanbeam.push_back(lb->top.y);
         } else {
-            insert_edge_into_AEL(lb, nullptr, active_edges);
-            insert_edge_into_AEL(rb, lb, active_edges);
-            set_winding_count(*lb, cliptype, subject_fill_type, clip_fill_type, active_edges);
+            insert_edge_into_AEL(lb, nullptr, active_edge_list);
+            insert_edge_into_AEL(rb, lb, active_edge_list);
+            set_winding_count(*lb, cliptype, subject_fill_type, clip_fill_type, active_edge_list);
             rb->winding_count = lb->winding_count;
             rb->winding_count2 = lb->winding_count2;
             if (is_contributing(*lb, cliptype, subject_fill_type, clip_fill_type)) {
@@ -446,7 +446,7 @@ void insert_local_minima_into_AEL(T const botY,
 
         if (rb) {
             if (is_horizontal(*rb)) {
-                add_edge_to_SEL(rb, sorted_edges_list);
+                add_edge_to_SEL(rb, sorted_edge_list);
                 if (rb->next_in_LML) {
                     scanbeam.push_back(rb->next_in_LML->top.y);
                 }
@@ -495,7 +495,9 @@ void insert_local_minima_into_AEL(T const botY,
                     // assumes
                     // that param1 will be to the Right of param2 ABOVE the
                     // intersection ...
-                    IntersectEdges(rb, e, lb->curr); // order important here
+                    // Note: order important here
+                    intersect_edges(rb, e, lb->curr, cliptype, subject_fill_type, clip_fill_type,
+                                    rings, joins, active_edge_list);
                     e = e->next_in_AEL;
                 }
             }

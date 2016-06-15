@@ -30,7 +30,7 @@ struct intersect_node {
 };
 
 template <typename T>
-using intersect_list = std::list<intersect_node_ptr<T>>;
+using intersect_list = std::vector<intersect_node_ptr<T>>;
 }
 }
 }
