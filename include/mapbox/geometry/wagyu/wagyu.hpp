@@ -15,67 +15,66 @@
 #include <mapbox/geometry/wagyu/ring.hpp>
 #include <mapbox/geometry/wagyu/scanbeam.hpp>
 
-namespace mapbox { namespace geometry { namespace wagyu {
-
+namespace mapbox
+{
+namespace geometry
+{
+namespace wagyu
+{
 template <typename T>
 class clipper
 {
-private:
+   private:
     using value_type = T;
     using maxima_list = std::list<value_type>;
-    
-    local_minimum_list<value_type>      m_MinimaList;
-    local_minimum_itr<value_type>       m_CurrentLM;
-    std::vector<edge_list<value_type> > m_edges;
-    ring_list<value_type>               m_PolyOuts;
-    scanbeam_list<value_type>           m_Scanbeam;
-    join_list<value_type>               m_Joins;
-    join_list<value_type>               m_GhostJoins;
-    intersect_list<value_type>          m_IntersectList;
-    maxima_list                         m_Maxima;
-    clip_type                           m_ClipType;
-    edge_ptr<value_type>                m_ActiveEdges;
-    edge_ptr<value_type>                m_SortedEdges;
-    fill_type                           m_ClipFillType;
-    fill_type                           m_SubjFillType;
-    bool                                m_PreserveCollinear;
-    bool                                m_HasOpenPaths;
-    bool                                m_ExecuteLocked;
-    bool                                m_ReverseOutput;
-    bool                                m_UsingPolyTree; 
-    bool                                m_StrictSimple;
 
-public:
-    
-    clipper() : 
-        m_MinimaList(),
-        m_CurrentLM(m_MinimaList.begin()),
-        m_edges(),
-        m_PolyOuts(),
-        m_Scanbeam(),
-        m_Joins(),
-        m_GhostJoins(),
-        m_IntersectList(),
-        m_Maxima(),
-        m_ActiveEdges(nullptr),
-        m_SortedEdges(nullptr),
-        m_ClipFillType(fill_type_even_odd),
-        m_SubjFillType(fill_type_even_odd),
-        m_PreserveCollinear(false),
-        m_HasOpenPaths(false),
-        m_ExecuteLocked(false),
-        m_ReverseOutput(false),
-        m_UsingPolyTree(false),
-        m_StrictSimple(false)
+    local_minimum_list<value_type> m_MinimaList;
+    local_minimum_itr<value_type> m_CurrentLM;
+    std::vector<edge_list<value_type> > m_edges;
+    ring_list<value_type> m_PolyOuts;
+    scanbeam_list<value_type> m_Scanbeam;
+    join_list<value_type> m_Joins;
+    join_list<value_type> m_GhostJoins;
+    intersect_list<value_type> m_IntersectList;
+    maxima_list m_Maxima;
+    clip_type m_ClipType;
+    edge_ptr<value_type> m_ActiveEdges;
+    edge_ptr<value_type> m_SortedEdges;
+    fill_type m_ClipFillType;
+    fill_type m_SubjFillType;
+    bool m_PreserveCollinear;
+    bool m_HasOpenPaths;
+    bool m_ExecuteLocked;
+    bool m_ReverseOutput;
+    bool m_UsingPolyTree;
+    bool m_StrictSimple;
+
+   public:
+    clipper()
+        : m_MinimaList(),
+          m_CurrentLM(m_MinimaList.begin()),
+          m_edges(),
+          m_PolyOuts(),
+          m_Scanbeam(),
+          m_Joins(),
+          m_GhostJoins(),
+          m_IntersectList(),
+          m_Maxima(),
+          m_ActiveEdges(nullptr),
+          m_SortedEdges(nullptr),
+          m_ClipFillType(fill_type_even_odd),
+          m_SubjFillType(fill_type_even_odd),
+          m_PreserveCollinear(false),
+          m_HasOpenPaths(false),
+          m_ExecuteLocked(false),
+          m_ReverseOutput(false),
+          m_UsingPolyTree(false),
+          m_StrictSimple(false)
     {
     }
-    
-    ~clipper()
-    {
-        clear();
-    }
-    
-    bool add_line(mapbox::geometry::line_string<value_type> const& pg)
+
+    ~clipper() { clear(); }
+    bool add_line(mapbox::geometry::line_string<value_type> const & pg)
     {
         bool success = add_line_string(pg, m_edges, m_MinimaList);
         if (success)
@@ -85,18 +84,17 @@ public:
         return success;
     }
 
-    bool add_ring(mapbox::geometry::linear_ring<value_type> const& pg, 
+    bool add_ring(mapbox::geometry::linear_ring<value_type> const & pg,
                   polygon_type p_type = polygon_type_subject)
     {
         return add_linear_ring(pg, m_edges, m_MinimaList, p_type);
     }
 
-    bool add_polygon(mapbox::geometry::polygon<value_type> const& ppg, 
+    bool add_polygon(mapbox::geometry::polygon<value_type> const & ppg,
                      polygon_type p_type = polygon_type_subject)
     {
         bool result = false;
-        for (std::size_t i = 0; i < ppg.size(); ++i)
-        {
+        for (std::size_t i = 0; i < ppg.size(); ++i) {
             if (add_ring(ppg[i], p_type))
             {
                 result = true;
@@ -118,13 +116,16 @@ public:
         m_CurrentLM = m_MinimaList.begin();
         if (m_CurrentLM == m_MinimaList.end())
         {
-            return; //ie nothing to process
+            return; // ie nothing to process
         }
-        std::stable_sort(m_MinimaList.begin(), m_MinimaList.end(), local_minimum_sorter<value_type>());
+        std::stable_sort(m_MinimaList.begin(), m_MinimaList.end(),
+                         local_minimum_sorter<value_type>());
 
-        m_Scanbeam = scanbeam_list<value_type>(); //clears/resets priority_queue
-        //reset all edges ...
-        for (auto const& lm = m_MinimaList.begin(); lm != m_MinimaList.end(); ++lm)
+        m_Scanbeam = scanbeam_list<value_type>(); // clears/resets
+                                                  // priority_queue
+        // reset all edges ...
+        for (auto const & lm = m_MinimaList.begin(); lm != m_MinimaList.end();
+             ++lm)
         {
             m_Scanbeam.push(lm->Y);
             edge_ptr<value_type> e = lm->left_bound;
@@ -149,7 +150,7 @@ public:
 
     box<value_type> get_bounds()
     {
-        box<value_type> result = { 0, 0, 0, 0 };
+        box<value_type> result = {0, 0, 0, 0};
         auto lm = m_MinimaList.begin();
         if (lm == m_MinimaList.end())
         {
@@ -159,16 +160,13 @@ public:
         result.top = lm->left_bound->bot.y;
         result.right = lm->left_bound->bot.x;
         result.bottom = lm->left_bound->bot.y;
-        while (lm != m_MinimaList.end())
-        {
-            //todo - needs fixing for open paths
+        while (lm != m_MinimaList.end()) {
+            // todo - needs fixing for open paths
             result.bottom = std::max(result.bottom, lm->left_bound->bot.y);
             edge_ptr<value_type> e = lm->left_bound;
-            for (;;)
-            {
+            for (;;) {
                 edge_ptr<value_type> bottomE = e;
-                while (e->next_in_LML)
-                {
+                while (e->next_in_LML) {
                     if (e->bot.x < result.left)
                     {
                         result.left = e->bot.x;
@@ -197,37 +195,13 @@ public:
         }
         return result;
     }
-    
-    bool preserve_collinear() 
-    {
-        return m_PreserveCollinear;
-    }
 
-    void preserve_collinear(bool value)
-    {
-        m_PreserveCollinear = value;
-    }
-    
-    bool strictly_simple() 
-    {
-        return m_StrictSimple;
-    }
-
-    void strictly_simple(bool value)
-    {
-        m_StrictSimple = value;
-    }
-    
-    bool reverse_output() 
-    {
-        return m_ReverseOutput;
-    }
-
-    void reverse_output(bool value)
-    {
-        m_ReverseOutput = value;
-    }
-  
+    bool preserve_collinear() { return m_PreserveCollinear; }
+    void preserve_collinear(bool value) { m_PreserveCollinear = value; }
+    bool strictly_simple() { return m_StrictSimple; }
+    void strictly_simple(bool value) { m_StrictSimple = value; }
+    bool reverse_output() { return m_ReverseOutput; }
+    void reverse_output(bool value) { m_ReverseOutput = value; }
     /*
     bool Execute(clip_type clipType,
                  linear_ring_list<value_type> &solution,
@@ -236,7 +210,7 @@ public:
     {
 
     }
-    
+
     bool Execute(clip_type clipType,
                  polygon_tree<value_type> & polytree,
                  fill_type subjFillType,
@@ -246,5 +220,6 @@ public:
     }
     */
 };
-
-}}}
+}
+}
+}

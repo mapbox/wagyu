@@ -5,8 +5,10 @@
 // stl
 #include <vector>
 
-namespace mapbox { namespace geometry {
-
+namespace mapbox
+{
+namespace geometry
+{
 template <typename T, template <typename...> class Cont = std::vector>
 struct line_string : Cont<point<T> >
 {
@@ -15,5 +17,5 @@ struct line_string : Cont<point<T> >
     using container_type = Cont<point_type>;
     using container_type::container_type;
 };
-
-}}
+}
+}

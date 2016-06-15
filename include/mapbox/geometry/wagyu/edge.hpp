@@ -9,8 +9,12 @@
 #include <iostream>
 #endif
 
-namespace mapbox { namespace geometry { namespace wagyu {
-
+namespace mapbox
+{
+namespace geometry
+{
+namespace wagyu
+{
 template <typename T>
 struct edge;
 
@@ -25,43 +29,44 @@ struct edge
 {
     using value_type = T;
     mapbox::geometry::point<value_type> bot;
-    mapbox::geometry::point<value_type> curr; //current (updated for every new scanbeam)
+    mapbox::geometry::point<value_type>
+        curr; // current (updated for every new scanbeam)
     mapbox::geometry::point<value_type> top;
-    double       dx;
-    int          index;
-    edge_ptr<T>  next;
-    edge_ptr<T>  prev;
-    edge_ptr<T>  next_in_LML;
-    edge_ptr<T>  next_in_AEL;
-    edge_ptr<T>  prev_in_AEL;
-    edge_ptr<T>  next_in_SEL;
-    edge_ptr<T>  prev_in_SEL;
+    double dx;
+    int index;
+    edge_ptr<T> next;
+    edge_ptr<T> prev;
+    edge_ptr<T> next_in_LML;
+    edge_ptr<T> next_in_AEL;
+    edge_ptr<T> prev_in_AEL;
+    edge_ptr<T> next_in_SEL;
+    edge_ptr<T> prev_in_SEL;
     std::int32_t winding_count;
-    std::int32_t winding_count2; //winding count of the opposite polytype
-    std::int8_t  winding_delta; //1 or -1 depending on winding direction
+    std::int32_t winding_count2; // winding count of the opposite polytype
+    std::int8_t winding_delta;   // 1 or -1 depending on winding direction
     polygon_type poly_type;
-    edge_side    side; //side only refers to current side of solution poly
+    edge_side side; // side only refers to current side of solution poly
 
-    edge(mapbox::geometry::point<value_type> current, 
+    edge(mapbox::geometry::point<value_type> current,
          mapbox::geometry::point<value_type> next_pt,
-         polygon_type type) :
-        bot(current),
-        curr(current),
-        top(current),
-        dx(0.0),
-        index(EDGE_UNASSIGNED),
-        next(nullptr),
-        prev(nullptr),
-        next_in_LML(nullptr),
-        next_in_AEL(nullptr),
-        prev_in_AEL(nullptr),
-        next_in_SEL(nullptr),
-        prev_in_SEL(nullptr),
-        winding_count(0),
-        winding_count2(0),
-        winding_delta(0),
-        poly_type(type),
-        side(edge_left)
+         polygon_type type)
+        : bot(current),
+          curr(current),
+          top(current),
+          dx(0.0),
+          index(EDGE_UNASSIGNED),
+          next(nullptr),
+          prev(nullptr),
+          next_in_LML(nullptr),
+          next_in_AEL(nullptr),
+          prev_in_AEL(nullptr),
+          next_in_SEL(nullptr),
+          prev_in_SEL(nullptr),
+          winding_count(0),
+          winding_count2(0),
+          winding_delta(0),
+          poly_type(type),
+          side(edge_left)
     {
         if (current.y >= next_pt.y)
         {
@@ -81,19 +86,16 @@ struct edge
             dx = static_cast<double>(top.x - bot.x) / dy;
         }
     }
-
 };
 
 template <typename T>
 using edge_list = std::list<edge<T> >;
 
-
 #ifdef DEBUG
 
 template <class charT, class traits, typename T>
-inline std::basic_ostream<charT,traits>& 
-operator << (std::basic_ostream<charT,traits>& out,
-             const edge<T>& e)
+inline std::basic_ostream<charT, traits> & operator<<(
+    std::basic_ostream<charT, traits> & out, const edge<T> & e)
 {
     out << "Edge: " << std::endl;
     out << " bot x: " << e.bot.x << " y: " << e.bot.y << std::endl;
@@ -102,6 +104,7 @@ operator << (std::basic_ostream<charT,traits>& out,
     return out;
 }
 
-#endif                                            
-
-}}}
+#endif
+}
+}
+}

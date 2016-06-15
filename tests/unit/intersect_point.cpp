@@ -6,14 +6,14 @@
 TEST_CASE("test intersection of points")
 {
     using namespace mapbox::geometry::wagyu;
-    mapbox::geometry::point<std::int64_t> p1 = { -1, -2 };
-    mapbox::geometry::point<std::int64_t> p2 = { 9, 5 };
-    mapbox::geometry::point<std::int64_t> p3 = { 0, 0 };
-    mapbox::geometry::point<std::int64_t> p4 = { 13, 6 };
-    
+    mapbox::geometry::point<std::int64_t> p1 = {-1, -2};
+    mapbox::geometry::point<std::int64_t> p2 = {9, 5};
+    mapbox::geometry::point<std::int64_t> p3 = {0, 0};
+    mapbox::geometry::point<std::int64_t> p4 = {13, 6};
+
     // Initialize result points
-    mapbox::geometry::point<std::int64_t> r1 = { 0, 0 };
-    
+    mapbox::geometry::point<std::int64_t> r1 = {0, 0};
+
     edge<std::int64_t> e1(p1, p2, polygon_type_subject);
     edge<std::int64_t> e2(p2, p3, polygon_type_subject);
     edge<std::int64_t> e3(p3, p4, polygon_type_subject);
@@ -25,7 +25,7 @@ TEST_CASE("test intersection of points")
     CHECK(e1.top.x == -1);
     CHECK(e1.top.y == -2);
     CHECK(e1.dx == Approx(1.4285714286));
-    
+
     CHECK(e2.bot.x == 9);
     CHECK(e2.bot.y == 5);
     CHECK(e2.curr.x == 9);
@@ -33,7 +33,7 @@ TEST_CASE("test intersection of points")
     CHECK(e2.top.x == 0);
     CHECK(e2.top.y == 0);
     CHECK(e2.dx == Approx(1.8));
-    
+
     CHECK(e3.bot.x == 13);
     CHECK(e3.bot.y == 6);
     CHECK(e3.curr.x == 0);
@@ -83,7 +83,7 @@ TEST_CASE("test intersection of points")
     CHECK(e3.curr.y == 5);
     // The active edge list would be e2, e1, e3
     CHECK_FALSE(e1.curr.x > e2.curr.x); // No intersection of points
-    CHECK(e3.curr.x > e1.curr.x); // Intersection!
+    CHECK(e3.curr.x > e1.curr.x);       // Intersection!
     intersection_point(e1, e3, r1);
 
     CHECK(r1.x == 7);
@@ -93,14 +93,14 @@ TEST_CASE("test intersection of points")
 TEST_CASE("test intersection of points - switch axis values")
 {
     using namespace mapbox::geometry::wagyu;
-    mapbox::geometry::point<std::int64_t> p1 = { -2, -1 };
-    mapbox::geometry::point<std::int64_t> p2 = { 5, 9 };
-    mapbox::geometry::point<std::int64_t> p3 = { 0, 0 };
-    mapbox::geometry::point<std::int64_t> p4 = { 6, 13 };
-    
+    mapbox::geometry::point<std::int64_t> p1 = {-2, -1};
+    mapbox::geometry::point<std::int64_t> p2 = {5, 9};
+    mapbox::geometry::point<std::int64_t> p3 = {0, 0};
+    mapbox::geometry::point<std::int64_t> p4 = {6, 13};
+
     // Initialize result points
-    mapbox::geometry::point<std::int64_t> r1 = { 0, 0 };
-    
+    mapbox::geometry::point<std::int64_t> r1 = {0, 0};
+
     edge<std::int64_t> e1(p1, p2, polygon_type_subject);
     edge<std::int64_t> e2(p2, p3, polygon_type_subject);
     edge<std::int64_t> e3(p3, p4, polygon_type_subject);
@@ -112,7 +112,7 @@ TEST_CASE("test intersection of points - switch axis values")
     CHECK(e1.top.x == -2);
     CHECK(e1.top.y == -1);
     CHECK(e1.dx == Approx(0.7));
-    
+
     CHECK(e2.bot.x == 5);
     CHECK(e2.bot.y == 9);
     CHECK(e2.curr.x == 5);
@@ -120,7 +120,7 @@ TEST_CASE("test intersection of points - switch axis values")
     CHECK(e2.top.x == 0);
     CHECK(e2.top.y == 0);
     CHECK(e2.dx == Approx(0.5555555556));
-    
+
     CHECK(e3.bot.x == 6);
     CHECK(e3.bot.y == 13);
     CHECK(e3.curr.x == 0);
@@ -170,7 +170,7 @@ TEST_CASE("test intersection of points - switch axis values")
     CHECK(e3.curr.y == 9);
     // The active edge list would be e1, e2, e3
     CHECK_FALSE(e1.curr.x > e2.curr.x); // No intersection of points
-    CHECK(e1.curr.x > e3.curr.x); // Intersection!
+    CHECK(e1.curr.x > e3.curr.x);       // Intersection!
     intersection_point(e1, e3, r1);
 
     CHECK(r1.x == 3);
