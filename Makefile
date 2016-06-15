@@ -2,7 +2,7 @@ CC := $(CC)
 CXX := $(CXX)
 CXXFLAGS := $(CXXFLAGS) -Iinclude -std=c++14
 RELEASE_FLAGS := -O3 -DNDEBUG
-WARNING_FLAGS := -Wall -Wextra -Werror -Wshadow -Wno-unsequenced -Wtautological-compare -Wheader-hygiene
+WARNING_FLAGS := -Wall -Wextra -Werror -Wsign-compare -Wfloat-equal -Wfloat-conversion -Wshadow -Wno-unsequenced
 DEBUG_FLAGS := -g -O0 -DDEBUG -fno-inline-functions -fno-omit-frame-pointer
 
 default: test
