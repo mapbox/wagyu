@@ -10,6 +10,7 @@
 namespace mapbox {
 namespace geometry {
 namespace wagyu {
+
 template <typename T>
 double area(mapbox::geometry::linear_ring<T> const& poly) {
     std::size_t size = poly.size();

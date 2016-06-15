@@ -9,6 +9,7 @@
 namespace mapbox {
 namespace geometry {
 namespace wagyu {
+
 template <typename T>
 void set_hole_state(edge_ptr<T> e, ring_ptr<T> ring, ring_list<T>& rings) {
     edge_ptr<T> e2 = e->prev_in_AEL;
