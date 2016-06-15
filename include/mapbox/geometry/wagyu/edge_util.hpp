@@ -613,6 +613,58 @@ bool add_linear_ring(mapbox::geometry::linear_ring<T> const& path_geometry,
     add_ring_to_local_minima_list(new_edges, minima_list);
     return true;
 }
+
+template <typename T>
+void process_edges_at_top_of_scanbeam(T top_y,
+                                      edge_ptr<T> active_edges,
+                                      std::list<T>& maxima) {
+    std::list<T> next_maxima;
+    edge_ptr<T>* e = active_edges;
+    while (e) {
+        // 1. Process maxima, treating them as if they are "bent" horizontal edges,
+        // but exclude maxima with horizontal edges. E can't be a horizontal.
+
+        bool is_maxima_edge = is_maxima(e, top_y);
+
+        if (is_maxima_edge) {
+            edge_ptr<T> e_max_pair = get_maxima_pair_ex(e);
+            is_maxima_edge = (!e_max_pair || !is_horizontal(*e_max_pair));
+        }
+
+        if (is_maxima_edge) {
+            maxima.push_back(e->top.x);
+            next_maxima.push_back(e->top.x);
+        }
+
+        if (is_maxima_edge) {
+            edge<T> e_prev = e->prev_in_AEL;
+            do_maxima(e);
+            if (!e_prev) {
+                e = active_edges;
+            } else {
+                e = e_prev->next_in_AEL;
+            }
+        } else {
+            // 2. Promote horizontal edges. If not horizontal, update curr.x and curr.y.
+
+            if (is_intermediate(e, top_y) && is_horizontal(*e->next_in_LML)) {
+                update_edge_into_AEL(e);
+                if (e->out_index == 0) {
+                    add_out_point(e, e->bot);
+                    maxima.push_back(e->top.x);
+                    maxima.push_back(e->bot.x);
+                    next_maxima.push_back(e->bot.x);
+                }
+                add_edge_to_SEL(e);
+            } else {
+                e->curr.x = top_x(*e, top_y);
+                e->curr.y = top_y;
+            }
+        }
+
+        // XXX ENF
+    }
+}
 }
 }
 }
