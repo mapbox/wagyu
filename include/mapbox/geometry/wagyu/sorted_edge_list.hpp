@@ -15,14 +15,14 @@ void add_edge_to_SEL(edge_ptr<T> edge)
     if (!m_SortedEdges)
     {
         m_SortedEdges = edge;
-        edge->PrevInSEL = 0;
-        edge->NextInSEL = 0;
+        edge->prevInSEL = 0;
+        edge->nextInSEL = 0;
     }
     else
     {
-        edge->NextInSEL = m_SortedEdges;
-        edge->PrevInSEL = 0;
-        m_SortedEdges->PrevInSEL = edge;
+        edge->nextInSEL = m_SortedEdges;
+        edge->prevInSEL = 0;
+        m_SortedEdges->prevInSEL = edge;
         m_SortedEdges = edge;
     }
 }

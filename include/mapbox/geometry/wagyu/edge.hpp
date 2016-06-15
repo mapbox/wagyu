@@ -1,7 +1,7 @@
 #pragma once
 
-#include <list>
 #include <limits>
+#include <list>
 
 #include <mapbox/geometry/point.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
