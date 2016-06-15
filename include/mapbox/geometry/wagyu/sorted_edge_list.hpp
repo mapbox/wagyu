@@ -107,17 +107,19 @@ void copy_AEL_to_SEL(const_edge_ptr<T> active_edge_list, edge_ptr<T>& sorted_edg
     }
 }
 
-void pop_edge_from_SEL(edge_ptr<T>& e, edge_ptr<T>& sorted_edges_list) 
+template <typename T>
+bool pop_edge_from_SEL(edge_ptr<T>& e, edge_ptr<T>& sorted_edges_list) 
 {
     if (!sorted_edges_list) return false;
-    edge = sorted_edges_list;
-    delete_edge_from_SEL(edge, sorted_edges_list);
+    e = sorted_edges_list;
+    delete_edge_from_SEL(e, sorted_edges_list);
     return true;
 }
 
+template <typename T>
 void delete_edge_from_SEL(edge_ptr<T> e, edge_ptr<T>& sorted_edges_list) {
-    auto prev = e->prev_in_SEL;
-    auto next = e->next_in_SEL;
+    edge_ptr<T> prev = e->prev_in_SEL;
+    edge_ptr<T> next = e->next_in_SEL;
 
     // edge was already deleted
     if (!prev && !next && e != sorted_edges_list) return;
