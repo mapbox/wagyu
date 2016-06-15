@@ -2,6 +2,7 @@
 
 #include <limits>
 #include <list>
+#include <cmath>
 
 #include <mapbox/geometry/point.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cmath>
+
 #include <mapbox/geometry/point.hpp>
 #include <mapbox/geometry/polygon.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>

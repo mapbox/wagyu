@@ -1,6 +1,7 @@
 #pragma once
 
 #include <limits>
+#include <cmath>
 
 #include <mapbox/geometry/wagyu/edge.hpp>
 #include <mapbox/geometry/wagyu/util.hpp>
