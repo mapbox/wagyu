@@ -1,5 +1,7 @@
 #pragma once
 
+#include <limits>
+
 #include <mapbox/geometry/wagyu/edge.hpp>
 #include <mapbox/geometry/wagyu/util.hpp>
 
@@ -24,22 +26,26 @@ inline T nearest_along_y_dimension(T const edge_bot_x,
     {
         if (edge_bot_y >= ip_y)
         {
-            result = std::floor(((ip_x + 0.5) / edge_dx + by) + 0.5);
+            result = static_cast<value_type>(std::floor(
+                ((static_cast<double>(ip_x) + 0.5) / edge_dx + by) + 0.5));
         }
         else
         {
-            result = std::ceil(((ip_x + 0.5) / edge_dx + by) - 0.5);
+            result = static_cast<value_type>(std::ceil(
+                ((static_cast<double>(ip_x) + 0.5) / edge_dx + by) - 0.5));
         }
     }
     else if (edge_bot_x < ip_x)
     {
         if (edge_bot_y >= ip_y)
         {
-            result = std::floor(((ip_x - 0.5) / edge_dx + by) + 0.5);
+            result = static_cast<value_type>(std::floor(
+                ((static_cast<double>(ip_x) - 0.5) / edge_dx + by) + 0.5));
         }
         else
         {
-            result = std::ceil(((ip_x - 0.5) / edge_dx + by) - 0.5);
+            result = static_cast<value_type>(std::ceil(
+                ((static_cast<double>(ip_x) - 0.5) / edge_dx + by) - 0.5));
         }
     }
     else if (edge_bot_y > ip_y)
@@ -90,22 +96,26 @@ inline T nearest_along_x_dimension(T const edge_bot_x,
     {
         if (edge_bot_x >= ip_x)
         {
-            result = std::floor(((ip_y + 0.5) * edge_dx + bx) + 0.5);
+            result = static_cast<value_type>(std::floor(
+                ((static_cast<double>(ip_y) + 0.5) * edge_dx + bx) + 0.5));
         }
         else
         {
-            result = std::ceil(((ip_y + 0.5) * edge_dx + bx) - 0.5);
+            result = static_cast<value_type>(std::ceil(
+                ((static_cast<double>(ip_y) + 0.5) * edge_dx + bx) - 0.5));
         }
     }
     else if (edge_bot_y < ip_y)
     {
         if (edge_bot_x >= ip_x)
         {
-            result = std::floor(((ip_y - 0.5) * edge_dx + bx) + 0.5);
+            result = static_cast<value_type>(std::floor(
+                ((static_cast<double>(ip_y) - 0.5) * edge_dx + bx) + 0.5));
         }
         else
         {
-            result = std::ceil(((ip_y - 0.5) * edge_dx + bx) - 0.5);
+            result = static_cast<value_type>(std::ceil(
+                ((static_cast<double>(ip_y) - 0.5) * edge_dx + bx) - 0.5));
         }
     }
     else if (edge_bot_x > ip_x)
@@ -147,10 +157,9 @@ void intersection_point(edge<T> const & Edge1,
                         mapbox::geometry::point<T> & ip)
 {
     // This method finds the FIRST intersecting point in integer space between
-    // two edges
-    // that is closest to the bot point of the edges.
+    // two edges that is closest to the bot point of the edges.
     using value_type = T;
-    if (Edge1.dx == Edge2.dx)
+    if (std::abs(Edge1.dx - Edge2.dx) <= std::numeric_limits<double>::epsilon())
     {
         ip.y = Edge1.curr.y;
         ip.x = get_current_x(Edge1, ip.y);
@@ -168,15 +177,18 @@ void intersection_point(edge<T> const & Edge1,
             double b2 = Edge2.bot.y - (Edge2.bot.x / Edge2.dx);
             if (Edge2.bot.x == Edge1.bot.x)
             {
-                ip.y = std::round(ip.x / Edge2.dx + b2);
+                ip.y = static_cast<value_type>(
+                    std::round(static_cast<double>(ip.x) / Edge2.dx + b2));
             }
             else if (Edge2.bot.x < Edge1.bot.x)
             {
-                ip.y = std::round((ip.x - 0.5) / Edge2.dx + b2);
+                ip.y = static_cast<value_type>(std::round(
+                    (static_cast<double>(ip.x) - 0.5) / Edge2.dx + b2));
             }
             else
             {
-                ip.y = std::round((ip.x + 0.5) / Edge2.dx + b2);
+                ip.y = static_cast<value_type>(std::round(
+                    (static_cast<double>(ip.x) + 0.5) / Edge2.dx + b2));
             }
         }
     }
@@ -192,15 +204,18 @@ void intersection_point(edge<T> const & Edge1,
             double b1 = Edge1.bot.y - (Edge1.bot.x / Edge1.dx);
             if (Edge1.bot.x == Edge2.bot.x)
             {
-                ip.y = std::round(ip.x / Edge1.dx + b1);
+                ip.y = static_cast<value_type>(
+                    std::round(static_cast<double>(ip.x) / Edge1.dx + b1));
             }
             else if (Edge1.bot.x < Edge2.bot.x)
             {
-                ip.y = std::round((ip.x - 0.5) / Edge1.dx + b1);
+                ip.y = static_cast<value_type>(std::round(
+                    (static_cast<double>(ip.x) - 0.5) / Edge1.dx + b1));
             }
             else
             {
-                ip.y = std::round((ip.x + 0.5) / Edge1.dx + b1);
+                ip.y = static_cast<value_type>(std::round(
+                    (static_cast<double>(ip.x) + 0.5) / Edge1.dx + b1));
             }
         }
     }
@@ -209,14 +224,14 @@ void intersection_point(edge<T> const & Edge1,
         double b1 = Edge1.bot.x - Edge1.bot.y * Edge1.dx;
         double b2 = Edge2.bot.x - Edge2.bot.y * Edge2.dx;
         double q = (b2 - b1) / (Edge1.dx - Edge2.dx);
-        ip.y = std::round(q);
+        ip.y = static_cast<value_type>(std::round(q));
         if (std::fabs(Edge1.dx) < std::fabs(Edge2.dx))
         {
-            ip.x = std::round(Edge1.dx * q + b1);
+            ip.x = static_cast<value_type>(std::round(Edge1.dx * q + b1));
         }
         else
         {
-            ip.x = std::round(Edge2.dx * q + b2);
+            ip.x = static_cast<value_type>(std::round(Edge2.dx * q + b2));
         }
         // the idea is simply to looking closer
         // towards the origins of the lines (Edge1.bot and Edge2.bot)

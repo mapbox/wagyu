@@ -60,7 +60,7 @@ TEST_CASE("edge adding ring - square closed")
     CHECK(itr->bot.y == 5);
     CHECK(itr->curr.x == 0);
     CHECK(itr->curr.y == 5);
-    CHECK(itr->dx == HORIZONTAL);
+    CHECK(itr->dx == Approx(HORIZONTAL));
     ++itr;
     CHECK(itr->top.x == 5);
     CHECK(itr->top.y == 0);
@@ -76,7 +76,7 @@ TEST_CASE("edge adding ring - square closed")
     CHECK(itr->bot.y == 0);
     CHECK(itr->curr.x == 5);
     CHECK(itr->curr.y == 0);
-    CHECK(itr->dx == HORIZONTAL);
+    CHECK(itr->dx == Approx(HORIZONTAL));
     ++itr;
     CHECK(itr == edges.end());
 }
@@ -114,7 +114,7 @@ TEST_CASE("edge adding ring - square not closed")
     CHECK(itr->bot.y == 5);
     CHECK(itr->curr.x == 0);
     CHECK(itr->curr.y == 5);
-    CHECK(itr->dx == HORIZONTAL);
+    CHECK(itr->dx == Approx(HORIZONTAL));
     ++itr;
     CHECK(itr->top.x == 5);
     CHECK(itr->top.y == 0);
@@ -130,7 +130,7 @@ TEST_CASE("edge adding ring - square not closed")
     CHECK(itr->bot.y == 0);
     CHECK(itr->curr.x == 5);
     CHECK(itr->curr.y == 0);
-    CHECK(itr->dx == HORIZONTAL);
+    CHECK(itr->dx == Approx(HORIZONTAL));
     ++itr;
     CHECK(itr == edges.end());
 }
@@ -168,7 +168,7 @@ TEST_CASE("edge adding ring - triangle closed")
     CHECK(itr->bot.y == 10);
     CHECK(itr->curr.x == 10);
     CHECK(itr->curr.y == 5);
-    CHECK(itr->dx == -1.0);
+    CHECK(itr->dx == Approx(-1.0));
     ++itr;
     CHECK(itr->top.x == 0);
     CHECK(itr->top.y == 0);
@@ -176,7 +176,7 @@ TEST_CASE("edge adding ring - triangle closed")
     CHECK(itr->bot.y == 10);
     CHECK(itr->curr.x == 5);
     CHECK(itr->curr.y == 10);
-    CHECK(itr->dx == 0.5);
+    CHECK(itr->dx == Approx(0.5));
     ++itr;
     CHECK(itr == edges.end());
 }
@@ -213,7 +213,7 @@ TEST_CASE("edge adding ring - triangle not closed")
     CHECK(itr->bot.y == 10);
     CHECK(itr->curr.x == 10);
     CHECK(itr->curr.y == 5);
-    CHECK(itr->dx == -1.0);
+    CHECK(itr->dx == Approx(-1.0));
     ++itr;
     CHECK(itr->top.x == 0);
     CHECK(itr->top.y == 0);
@@ -221,7 +221,7 @@ TEST_CASE("edge adding ring - triangle not closed")
     CHECK(itr->bot.y == 10);
     CHECK(itr->curr.x == 5);
     CHECK(itr->curr.y == 10);
-    CHECK(itr->dx == 0.5);
+    CHECK(itr->dx == Approx(0.5));
     ++itr;
     CHECK(itr == edges.end());
 }
@@ -264,7 +264,7 @@ TEST_CASE("edge adding ring - square closed - collinear points")
     CHECK(itr->bot.y == 5);
     CHECK(itr->curr.x == 0);
     CHECK(itr->curr.y == 5);
-    CHECK(itr->dx == HORIZONTAL);
+    CHECK(itr->dx == Approx(HORIZONTAL));
     ++itr;
     CHECK(itr->top.x == 5);
     CHECK(itr->top.y == 0);
@@ -280,7 +280,7 @@ TEST_CASE("edge adding ring - square closed - collinear points")
     CHECK(itr->bot.y == 0);
     CHECK(itr->curr.x == 5);
     CHECK(itr->curr.y == 0);
-    CHECK(itr->dx == HORIZONTAL);
+    CHECK(itr->dx == Approx(HORIZONTAL));
     ++itr;
     CHECK(itr == edges.end());
 }
@@ -322,7 +322,7 @@ TEST_CASE("edge adding ring - square not closed - collinear points")
     CHECK(itr->bot.y == 5);
     CHECK(itr->curr.x == 0);
     CHECK(itr->curr.y == 5);
-    CHECK(itr->dx == HORIZONTAL);
+    CHECK(itr->dx == Approx(HORIZONTAL));
     ++itr;
     CHECK(itr->top.x == 5);
     CHECK(itr->top.y == 0);
@@ -338,7 +338,7 @@ TEST_CASE("edge adding ring - square not closed - collinear points")
     CHECK(itr->bot.y == 0);
     CHECK(itr->curr.x == 5);
     CHECK(itr->curr.y == 0);
-    CHECK(itr->dx == HORIZONTAL);
+    CHECK(itr->dx == Approx(HORIZONTAL));
     ++itr;
     CHECK(itr == edges.end());
 }
@@ -382,7 +382,7 @@ TEST_CASE("edge adding ring - square closed - repeated points")
     CHECK(itr->bot.y == 5);
     CHECK(itr->curr.x == 0);
     CHECK(itr->curr.y == 5);
-    CHECK(itr->dx == HORIZONTAL);
+    CHECK(itr->dx == Approx(HORIZONTAL));
     ++itr;
     CHECK(itr->top.x == 5);
     CHECK(itr->top.y == 0);
@@ -398,7 +398,7 @@ TEST_CASE("edge adding ring - square closed - repeated points")
     CHECK(itr->bot.y == 0);
     CHECK(itr->curr.x == 5);
     CHECK(itr->curr.y == 0);
-    CHECK(itr->dx == HORIZONTAL);
+    CHECK(itr->dx == Approx(HORIZONTAL));
     ++itr;
     CHECK(itr == edges.end());
 }
@@ -450,7 +450,7 @@ TEST_CASE("edge adding ring - square closed - repeated and collinear points")
     CHECK(itr->bot.y == 5);
     CHECK(itr->curr.x == 0);
     CHECK(itr->curr.y == 5);
-    CHECK(itr->dx == HORIZONTAL);
+    CHECK(itr->dx == Approx(HORIZONTAL));
     ++itr;
     CHECK(itr->top.x == 5);
     CHECK(itr->top.y == 0);
@@ -466,7 +466,7 @@ TEST_CASE("edge adding ring - square closed - repeated and collinear points")
     CHECK(itr->bot.y == 0);
     CHECK(itr->curr.x == 5);
     CHECK(itr->curr.y == 0);
-    CHECK(itr->dx == HORIZONTAL);
+    CHECK(itr->dx == Approx(HORIZONTAL));
     ++itr;
     CHECK(itr == edges.end());
 }
@@ -509,7 +509,7 @@ TEST_CASE("edge adding ring - square closed - spikes")
     CHECK(itr->bot.y == 5);
     CHECK(itr->curr.x == 0);
     CHECK(itr->curr.y == 5);
-    CHECK(itr->dx == HORIZONTAL);
+    CHECK(itr->dx == Approx(HORIZONTAL));
     ++itr;
     CHECK(itr->top.x == 5);
     CHECK(itr->top.y == 0);
@@ -525,7 +525,7 @@ TEST_CASE("edge adding ring - square closed - spikes")
     CHECK(itr->bot.y == 0);
     CHECK(itr->curr.x == 5);
     CHECK(itr->curr.y == 0);
-    CHECK(itr->dx == HORIZONTAL);
+    CHECK(itr->dx == Approx(HORIZONTAL));
     ++itr;
     CHECK(itr == edges.end());
 }
@@ -566,7 +566,7 @@ TEST_CASE("edge adding ring - square closed - zigzag")
     CHECK(itr->bot.y == 5);
     CHECK(itr->curr.x == 0);
     CHECK(itr->curr.y == 5);
-    CHECK(itr->dx == HORIZONTAL);
+    CHECK(itr->dx == Approx(HORIZONTAL));
     ++itr;
     CHECK(itr->top.x == 5);
     CHECK(itr->top.y == 0);
@@ -582,7 +582,7 @@ TEST_CASE("edge adding ring - square closed - zigzag")
     CHECK(itr->bot.y == 0);
     CHECK(itr->curr.x == 5);
     CHECK(itr->curr.y == 0);
-    CHECK(itr->dx == HORIZONTAL);
+    CHECK(itr->dx == Approx(HORIZONTAL));
     ++itr;
     CHECK(itr == edges.end());
 }

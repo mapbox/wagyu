@@ -15,7 +15,7 @@ TEST_CASE("test edge initialization - same two points")
     CHECK(e1.curr.y == 10);
     CHECK(e1.top.x == 100);
     CHECK(e1.top.y == 10);
-    CHECK(e1.dx == HORIZONTAL);
+    CHECK(e1.dx == Approx(HORIZONTAL));
     CHECK(e1.next == nullptr);
     CHECK(e1.prev == nullptr);
     CHECK(e1.next_in_LML == nullptr);
@@ -44,7 +44,7 @@ TEST_CASE("test edge initialization - horizontal segment")
     CHECK(e1.curr.y == 10);
     CHECK(e1.top.x == 100);
     CHECK(e1.top.y == 10);
-    CHECK(e1.dx == HORIZONTAL);
+    CHECK(e1.dx == Approx(HORIZONTAL));
 
     CHECK(e2.bot.x == 100);
     CHECK(e2.bot.y == 10);
@@ -52,7 +52,7 @@ TEST_CASE("test edge initialization - horizontal segment")
     CHECK(e2.curr.y == 10);
     CHECK(e2.top.x == 10);
     CHECK(e2.top.y == 10);
-    CHECK(e2.dx == HORIZONTAL);
+    CHECK(e2.dx == Approx(HORIZONTAL));
 }
 
 TEST_CASE("test edge initialization - vertical segment")
@@ -69,7 +69,7 @@ TEST_CASE("test edge initialization - vertical segment")
     CHECK(e1.curr.y == 10);
     CHECK(e1.top.x == 10);
     CHECK(e1.top.y == 10);
-    CHECK(e1.dx == 0.0);
+    CHECK(e1.dx == Approx(0.0));
 
     CHECK(e2.bot.x == 10);
     CHECK(e2.bot.y == 100);
@@ -77,5 +77,5 @@ TEST_CASE("test edge initialization - vertical segment")
     CHECK(e2.curr.y == 100);
     CHECK(e2.top.x == 10);
     CHECK(e2.top.y == 10);
-    CHECK(e2.dx == 0.0);
+    CHECK(e2.dx == Approx(0.0));
 }

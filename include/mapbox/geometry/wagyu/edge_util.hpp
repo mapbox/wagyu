@@ -1,7 +1,7 @@
 #pragma once
 
-#include <mapbox/geometry/point.hpp>
 #include <mapbox/geometry/line_string.hpp>
+#include <mapbox/geometry/point.hpp>
 #include <mapbox/geometry/polygon.hpp>
 
 #include <mapbox/geometry/wagyu/config.hpp>

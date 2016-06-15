@@ -408,7 +408,7 @@ bool slopes_equal(mapbox::geometry::point<T> const & pt1,
 template <typename T>
 inline bool is_horizontal(edge<T> const & e)
 {
-    return e.dx == HORIZONTAL;
+    return e.dx <= HORIZONTAL;
 }
 
 template <typename T>
@@ -552,7 +552,7 @@ bool get_overlap_segment(mapbox::geometry::point<T> pt1a,
 }
 
 template <typename T>
-bool FirstIsBottomPt(const_point_ptr<T> btmPt1, const_point_ptr<T> btmPt2)
+bool first_is_bottom_point(const_point_ptr<T> btmPt1, const_point_ptr<T> btmPt2)
 {
     point_ptr<T> p = btmPt1->prev;
     while ((p->Pt == btmPt1->Pt) && (p != btmPt1)) {
@@ -575,8 +575,10 @@ bool FirstIsBottomPt(const_point_ptr<T> btmPt1, const_point_ptr<T> btmPt2)
     }
     double dx2n = std::fabs(GetDx(btmPt2->Pt, p->Pt));
 
-    if (std::max(dx1p, dx1n) == std::max(dx2p, dx2n) &&
-        std::min(dx1p, dx1n) == std::min(dx2p, dx2n))
+    if (std::abs(std::max(dx1p, dx1n) - std::max(dx2p, dx2n)) <
+            std::numeric_limits<double>::epsilon() &&
+        std::abs(std::min(dx1p, dx1n) - std::min(dx2p, dx2n)) <
+            std::numeric_limits<double>::epsilon())
     {
         return Area(btmPt1) > 0; // if otherwise identical use orientation
     }

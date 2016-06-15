@@ -8,9 +8,9 @@
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/edge.hpp>
 #include <mapbox/geometry/wagyu/edge_util.hpp>
+#include <mapbox/geometry/wagyu/intersect.hpp>
 #include <mapbox/geometry/wagyu/join.hpp>
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
-#include <mapbox/geometry/wagyu/intersect.hpp>
 #include <mapbox/geometry/wagyu/polytree.hpp>
 #include <mapbox/geometry/wagyu/ring.hpp>
 #include <mapbox/geometry/wagyu/scanbeam.hpp>
