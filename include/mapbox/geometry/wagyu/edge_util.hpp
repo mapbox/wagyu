@@ -640,9 +640,16 @@ edge_ptr<T> get_maxima_pair_ex(edge_ptr<T> e) {
     }
     return result;
 
+
 template <typename T>
 void process_horizontals() {
-
+    m_Maxima.sort();
+    edge_ptr<T> horz_edge;
+    while (pop_edge_from_SEL(horz_edge, m_SortedEdges))
+    {
+        process_horizontal(horz_edge);
+    }
+    m_Maxima.clear();
 }
 
 }
