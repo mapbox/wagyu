@@ -21,3 +21,6 @@ debug: build-debug
 
 clean:
 	rm test
+
+indent:
+	clang-format -i -style="{BasedOnStyle: Google, IndentWidth: 4, UseTab: Never, AllowShortIfStatementsOnASingleLine: false, ColumnLimit: 0, ContinuationIndentWidth: 4, SpaceAfterCStyleCast: true, IndentCaseLabels: true, AllowShortBlocksOnASingleLine: true, AllowShortFunctionsOnASingleLine: true, BreakBeforeBraces: Allman, BinPackParameters: false, ColumnLimit: 80, DerivePointerAlignment: false, PointerAlignment: Middle, SpacesBeforeTrailingComments: 1, BreakBeforeBinaryOperators: None}" $(filter-out ./tests/catch.hpp, $(shell find . '(' -name '*.hpp' -o -name '*.cpp' ')' -print))

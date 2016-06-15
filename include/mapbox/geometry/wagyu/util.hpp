@@ -5,10 +5,14 @@
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/ring.hpp>
 
-namespace mapbox { namespace geometry { namespace wagyu {
-
+namespace mapbox
+{
+namespace geometry
+{
+namespace wagyu
+{
 template <typename T>
-double Area(mapbox::geometry::linear_ring<T> const& poly)
+double Area(mapbox::geometry::linear_ring<T> const & poly)
 {
     std::size_t size = poly.size();
     if (size < 3)
@@ -20,12 +24,13 @@ double Area(mapbox::geometry::linear_ring<T> const& poly)
     auto itr = poly.begin();
     auto itr_prev = poly.end();
     --itr_prev;
-    a += static_cast<double>(itr_prev->x + itr->x) * static_cast<double>(itr_prev->y - itr->y);
+    a += static_cast<double>(itr_prev->x + itr->x) *
+         static_cast<double>(itr_prev->y - itr->y);
     ++itr;
     itr_prev = poly.begin();
-    for (;itr != poly.end(); ++itr, ++itr_prev)
-    {
-        a += static_cast<double>(itr_prev->x + itr->x) * static_cast<double>(itr_prev->y - itr->y);
+    for (; itr != poly.end(); ++itr, ++itr_prev) {
+        a += static_cast<double>(itr_prev->x + itr->x) *
+             static_cast<double>(itr_prev->y - itr->y);
     }
     return -a * 0.5;
 }
@@ -39,29 +44,29 @@ double Area(point_ptr<T> op)
         return 0.0;
     }
     double a = 0.0;
-    do 
+    do
     {
-        a += static_cast<double>(op->prev->x + op->x) * static_cast<double>(op->prev->y - op->y);
+        a += static_cast<double>(op->prev->x + op->x) *
+             static_cast<double>(op->prev->y - op->y);
         op = op->next;
-    }
-    while (op != startOp);
+    } while (op != startOp);
     return a * 0.5;
 }
 
 template <typename T>
-double Area(ring<T> const& polygon_ring)
+double Area(ring<T> const & polygon_ring)
 {
-  return Area(polygon_ring.Pts);
+    return Area(polygon_ring.Pts);
 }
 
 template <typename T>
-bool Orientation(mapbox::geometry::linear_ring<T> const& poly)
+bool Orientation(mapbox::geometry::linear_ring<T> const & poly)
 {
     return Area(poly) >= 0;
 }
 
 template <typename T>
-bool PointIsVertex(mapbox::geometry::point<T> const& Pt, point_ptr<T> pp)
+bool PointIsVertex(mapbox::geometry::point<T> const & Pt, point_ptr<T> pp)
 {
     point_ptr<T> pp2 = pp;
     do
@@ -71,8 +76,7 @@ bool PointIsVertex(mapbox::geometry::point<T> const& Pt, point_ptr<T> pp)
             return true;
         }
         pp2 = pp2->next;
-    }
-    while (pp2 != pp);
+    } while (pp2 != pp);
     return false;
 }
 
@@ -84,9 +88,10 @@ enum point_in_polygon_result : std::int8_t
 };
 
 template <typename T>
-point_in_polygon_result PointInPolygon(point<T> const& pt, mapbox::geometry::linear_ring<T> const& path)
+point_in_polygon_result PointInPolygon(
+    point<T> const & pt, mapbox::geometry::linear_ring<T> const & path)
 {
-    //returns 0 if false, +1 if true, -1 if pt ON polygon boundary
+    // returns 0 if false, +1 if true, -1 if pt ON polygon boundary
     std::size_t cnt = path.size();
     if (cnt < 3)
     {
@@ -98,7 +103,8 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, mapbox::geometry::lin
     --itr_prev;
     if (itr->y == pt.y)
     {
-        if ((itr->x == pt.x) || (itr_prev->y == pt.y && ((itr->x > pt.x) == (itr_prev->x < pt.x))))
+        if ((itr->x == pt.x) ||
+            (itr_prev->y == pt.y && ((itr->x > pt.x) == (itr_prev->x < pt.x))))
         {
             return point_on_polygon;
         }
@@ -121,15 +127,18 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, mapbox::geometry::lin
             }
             else
             {
-                double d = static_cast<double>(itr_prev->x - pt.x) * static_cast<double>(itr->y - pt.y) - 
-                        static_cast<double>(itr->x - pt.x) * static_cast<double>(itr_prev->y - pt.y);
+                double d = static_cast<double>(itr_prev->x - pt.x) *
+                               static_cast<double>(itr->y - pt.y) -
+                           static_cast<double>(itr->x - pt.x) *
+                               static_cast<double>(itr_prev->y - pt.y);
                 if (d <= 0)
                 {
                     return point_on_polygon;
                 }
                 if ((d > 0) == (itr->y > itr_prev->y))
                 {
-                    // Switch between point outside polygon and point inside polygon
+                    // Switch between point outside polygon and point inside
+                    // polygon
                     if (result == point_outside_polygon)
                     {
                         result = point_inside_polygon;
@@ -140,20 +149,23 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, mapbox::geometry::lin
                     }
                 }
             }
-        } 
+        }
         else
         {
             if (itr->x > pt.x)
             {
-                double d = static_cast<double>(itr_prev->x - pt.x) * static_cast<double>(itr->y - pt.y) - 
-                        static_cast<double>(itr->x - pt.x) * static_cast<double>(itr_prev->y - pt.y);
+                double d = static_cast<double>(itr_prev->x - pt.x) *
+                               static_cast<double>(itr->y - pt.y) -
+                           static_cast<double>(itr->x - pt.x) *
+                               static_cast<double>(itr_prev->y - pt.y);
                 if (d <= 0)
                 {
                     return point_on_polygon;
                 }
                 if ((d > 0) == (itr->y > itr_prev->y))
                 {
-                    // Switch between point outside polygon and point inside polygon
+                    // Switch between point outside polygon and point inside
+                    // polygon
                     if (result == point_outside_polygon)
                     {
                         result = point_inside_polygon;
@@ -168,11 +180,11 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, mapbox::geometry::lin
     }
     ++itr;
     itr_prev = path.begin();
-    for (; itr != path.end(); ++itr, ++itr_prev)
-    {
+    for (; itr != path.end(); ++itr, ++itr_prev) {
         if (itr->y == pt.y)
         {
-            if ((itr->x == pt.x) || (itr_prev->y == pt.y && ((itr->x > pt.x) == (itr_prev->x < pt.x))))
+            if ((itr->x == pt.x) || (itr_prev->y == pt.y &&
+                                     ((itr->x > pt.x) == (itr_prev->x < pt.x))))
             {
                 return point_on_polygon;
             }
@@ -183,7 +195,8 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, mapbox::geometry::lin
             {
                 if (itr->x > pt.x)
                 {
-                    // Switch between point outside polygon and point inside polygon
+                    // Switch between point outside polygon and point inside
+                    // polygon
                     if (result == point_outside_polygon)
                     {
                         result = point_inside_polygon;
@@ -195,15 +208,18 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, mapbox::geometry::lin
                 }
                 else
                 {
-                    double d = static_cast<double>(itr_prev->x - pt.x) * static_cast<double>(itr->y - pt.y) - 
-                            static_cast<double>(itr->x - pt.x) * static_cast<double>(itr_prev->y - pt.y);
+                    double d = static_cast<double>(itr_prev->x - pt.x) *
+                                   static_cast<double>(itr->y - pt.y) -
+                               static_cast<double>(itr->x - pt.x) *
+                                   static_cast<double>(itr_prev->y - pt.y);
                     if (d <= 0)
                     {
                         return point_on_polygon;
                     }
                     if ((d > 0) == (itr->y > itr_prev->y))
                     {
-                        // Switch between point outside polygon and point inside polygon
+                        // Switch between point outside polygon and point inside
+                        // polygon
                         if (result == point_outside_polygon)
                         {
                             result = point_inside_polygon;
@@ -214,20 +230,23 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, mapbox::geometry::lin
                         }
                     }
                 }
-            } 
+            }
             else
             {
                 if (itr->x > pt.x)
                 {
-                    double d = static_cast<double>(itr_prev->x - pt.x) * static_cast<double>(itr->y - pt.y) - 
-                            static_cast<double>(itr->x - pt.x) * static_cast<double>(itr_prev->y - pt.y);
+                    double d = static_cast<double>(itr_prev->x - pt.x) *
+                                   static_cast<double>(itr->y - pt.y) -
+                               static_cast<double>(itr->x - pt.x) *
+                                   static_cast<double>(itr_prev->y - pt.y);
                     if (d <= 0)
                     {
                         return point_on_polygon;
                     }
                     if ((d > 0) == (itr->y > itr_prev->y))
                     {
-                        // Switch between point outside polygon and point inside polygon
+                        // Switch between point outside polygon and point inside
+                        // polygon
                         if (result == point_outside_polygon)
                         {
                             result = point_inside_polygon;
@@ -240,21 +259,22 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, mapbox::geometry::lin
                 }
             }
         }
-    } 
+    }
     return result;
 }
 
 template <typename T>
-point_in_polygon_result PointInPolygon(point<T> const& pt, point_ptr<T> op)
+point_in_polygon_result PointInPolygon(point<T> const & pt, point_ptr<T> op)
 {
-    //returns 0 if false, +1 if true, -1 if pt ON polygon boundary
+    // returns 0 if false, +1 if true, -1 if pt ON polygon boundary
     point_in_polygon_result result = point_outside_polygon;
     point_ptr<T> startOp = op;
     do
     {
         if (op->next->y == pt.y)
         {
-            if ((op->next->x == pt.x) || (op->y == pt.y && ((op->next->x > pt.x) == (op->x < pt.x))))
+            if ((op->next->x == pt.x) ||
+                (op->y == pt.y && ((op->next->x > pt.x) == (op->x < pt.x))))
             {
                 return point_on_polygon;
             }
@@ -265,7 +285,8 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, point_ptr<T> op)
             {
                 if (op->next->x > pt.x)
                 {
-                    // Switch between point outside polygon and point inside polygon
+                    // Switch between point outside polygon and point inside
+                    // polygon
                     if (result == point_outside_polygon)
                     {
                         result = point_inside_polygon;
@@ -277,15 +298,18 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, point_ptr<T> op)
                 }
                 else
                 {
-                    double d = static_cast<double>(op->x - pt.x) * static_cast<double>(op->next->y - pt.y) - 
-                            static_cast<double>(op->next->x - pt.x) * static_cast<double>(op->y - pt.y);
+                    double d = static_cast<double>(op->x - pt.x) *
+                                   static_cast<double>(op->next->y - pt.y) -
+                               static_cast<double>(op->next->x - pt.x) *
+                                   static_cast<double>(op->y - pt.y);
                     if (d <= 0)
                     {
                         return point_on_polygon;
                     }
                     if ((d > 0) == (op->next->y > op->y))
                     {
-                        // Switch between point outside polygon and point inside polygon
+                        // Switch between point outside polygon and point inside
+                        // polygon
                         if (result == point_outside_polygon)
                         {
                             result = point_inside_polygon;
@@ -301,15 +325,18 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, point_ptr<T> op)
             {
                 if (op->next->Pt.x > pt.x)
                 {
-                    double d = static_cast<double>(op->x - pt.x) * static_cast<double>(op->next->y - pt.y) - 
-                            static_cast<double>(op->next->x - pt.x) * static_cast<double>(op->y - pt.y);
+                    double d = static_cast<double>(op->x - pt.x) *
+                                   static_cast<double>(op->next->y - pt.y) -
+                               static_cast<double>(op->next->x - pt.x) *
+                                   static_cast<double>(op->y - pt.y);
                     if (d <= 0)
                     {
                         return point_on_polygon;
                     }
                     if ((d > 0) == (op->next->Pt.y > op->Pt.y))
                     {
-                        // Switch between point outside polygon and point inside polygon
+                        // Switch between point outside polygon and point inside
+                        // polygon
                         if (result == point_outside_polygon)
                         {
                             result = point_inside_polygon;
@@ -321,10 +348,9 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, point_ptr<T> op)
                     }
                 }
             }
-        } 
+        }
         op = op->next;
-    }
-    while (startOp != op);
+    } while (startOp != op);
     return result;
 }
 
@@ -334,7 +360,8 @@ bool Poly2ContainsPoly1(point_ptr<T> OutPt1, point_ptr<T> OutPt2)
     point_ptr<T> op = OutPt1;
     do
     {
-        //nb: PointInPolygon returns 0 if false, +1 if true, -1 if pt on polygon
+        // nb: PointInPolygon returns 0 if false, +1 if true, -1 if pt on
+        // polygon
         point_in_polygon_result res = PointInPolygon(*op, OutPt2);
         if (res != point_on_polygon)
         {
@@ -347,44 +374,45 @@ bool Poly2ContainsPoly1(point_ptr<T> OutPt1, point_ptr<T> OutPt2)
                 return false;
             }
         }
-        op = op->next; 
-    }
-    while (op != OutPt1);
-    return true; 
+        op = op->next;
+    } while (op != OutPt1);
+    return true;
 }
 
 template <typename T>
-bool slopes_equal(edge<T> const& e1,
-                  edge<T> const& e2)
+bool slopes_equal(edge<T> const & e1, edge<T> const & e2)
 {
-    return (e1.Top.y - e1.Bot.y) * (e2.Top.x - e2.Bot.x) == (e1.Top.x - e1.Bot.x) * (e2.Top.y - e2.Bot.y);
+    return (e1.Top.y - e1.Bot.y) * (e2.Top.x - e2.Bot.x) ==
+           (e1.Top.x - e1.Bot.x) * (e2.Top.y - e2.Bot.y);
 }
 
 template <typename T>
-bool slopes_equal(mapbox::geometry::point<T> const& pt1, 
-                  mapbox::geometry::point<T> const& pt2, 
-                  mapbox::geometry::point<T> const& pt3)
+bool slopes_equal(mapbox::geometry::point<T> const & pt1,
+                  mapbox::geometry::point<T> const & pt2,
+                  mapbox::geometry::point<T> const & pt3)
 {
-    return (pt1.y - pt2.y) * (pt2.x - pt3.x) == (pt1.x - pt2.x) * (pt2.y - pt3.y);
+    return (pt1.y - pt2.y) * (pt2.x - pt3.x) ==
+           (pt1.x - pt2.x) * (pt2.y - pt3.y);
 }
 
 template <typename T>
-bool slopes_equal(mapbox::geometry::point<T> const& pt1,
-                  mapbox::geometry::point<T> const& pt2, 
-                  mapbox::geometry::point<T> const& pt3, 
-                  mapbox::geometry::point<T> const& pt4)
+bool slopes_equal(mapbox::geometry::point<T> const & pt1,
+                  mapbox::geometry::point<T> const & pt2,
+                  mapbox::geometry::point<T> const & pt3,
+                  mapbox::geometry::point<T> const & pt4)
 {
-    return (pt1.y - pt2.y) * (pt3.x - pt4.x) == (pt1.x - pt2.x) * (pt3.y - pt4.y);
+    return (pt1.y - pt2.y) * (pt3.x - pt4.x) ==
+           (pt1.x - pt2.x) * (pt3.y - pt4.y);
 }
 
 template <typename T>
-inline bool is_horizontal(edge<T> const& e)
+inline bool is_horizontal(edge<T> const & e)
 {
     return e.dx == HORIZONTAL;
 }
 
 template <typename T>
-inline double GetDx(point<T> const& pt1, point<T> const& pt2)
+inline double GetDx(point<T> const & pt1, point<T> const & pt2)
 {
     if (pt1.y == pt2.y)
     {
@@ -392,14 +420,15 @@ inline double GetDx(point<T> const& pt1, point<T> const& pt2)
     }
     else
     {
-        return static_cast<double>(pt2.x - pt2.x) / static_cast<double>(pt2.y - pt1.y);
+        return static_cast<double>(pt2.x - pt2.x) /
+               static_cast<double>(pt2.y - pt1.y);
     }
 }
 
 template <typename T>
 inline void Swapsides(edge<T> & Edge1, edge<T> & Edge2)
 {
-    edge_side side =  Edge1.side;
+    edge_side side = Edge1.side;
     Edge1.side = Edge2.side;
     Edge2.side = side;
 }
@@ -407,13 +436,13 @@ inline void Swapsides(edge<T> & Edge1, edge<T> & Edge2)
 template <typename T>
 inline void SwapPolyIndexes(edge<T> & Edge1, edge<T> & Edge2)
 {
-  std::size_t index =  Edge1.index;
-  Edge1.index = Edge2.index;
-  Edge2.index = index;
+    std::size_t index = Edge1.index;
+    Edge1.index = Edge2.index;
+    Edge2.index = index;
 }
 
 template <typename T>
-inline T get_current_x(edge<T> const& edge, const T current_y)
+inline T get_current_x(edge<T> const & edge, const T current_y)
 {
     if (current_y == edge.top.y)
     {
@@ -421,7 +450,9 @@ inline T get_current_x(edge<T> const& edge, const T current_y)
     }
     else
     {
-        return edge.bot.x + static_cast<T>(std::round(edge.dx * static_cast<double>(current_y - edge.bot.y)));
+        return edge.bot.x +
+               static_cast<T>(std::round(
+                   edge.dx * static_cast<double>(current_y - edge.bot.y)));
     }
 }
 
@@ -441,12 +472,12 @@ void ReversePolyPtLinks(point_ptr<T> pp)
         pp1->next = pp1->prev;
         pp1->prev = pp2;
         pp1 = pp2;
-    } 
-    while( pp1 != pp );
+    } while (pp1 != pp);
 }
 
 template <typename T>
-void swap_points(mapbox::geometry::point<T> &pt1, mapbox::geometry::point<T> &pt2)
+void swap_points(mapbox::geometry::point<T> & pt1,
+                 mapbox::geometry::point<T> & pt2)
 {
     mapbox::geometry::point<T> tmp = pt1;
     pt1 = pt2;
@@ -454,14 +485,14 @@ void swap_points(mapbox::geometry::point<T> &pt1, mapbox::geometry::point<T> &pt
 }
 
 template <typename T>
-bool get_overlap_segment(mapbox::geometry::point<T> pt1a, 
-                       mapbox::geometry::point<T> pt1b,
-                       mapbox::geometry::point<T> pt2a,
-                       mapbox::geometry::point<T> pt2b, 
-                       mapbox::geometry::point<T> &pt1, 
-                       mapbox::geometry::point<T> &pt2)
+bool get_overlap_segment(mapbox::geometry::point<T> pt1a,
+                         mapbox::geometry::point<T> pt1b,
+                         mapbox::geometry::point<T> pt2a,
+                         mapbox::geometry::point<T> pt2b,
+                         mapbox::geometry::point<T> & pt1,
+                         mapbox::geometry::point<T> & pt2)
 {
-    //precondition: segments are Collinear.
+    // precondition: segments are Collinear.
     if (std::abs(pt1a.x - pt1b.x) > std::abs(pt1a.y - pt1b.y))
     {
         if (pt1a.x > pt1b.x)
@@ -476,7 +507,7 @@ bool get_overlap_segment(mapbox::geometry::point<T> pt1a,
         {
             pt1 = pt1a;
         }
-        else 
+        else
         {
             pt1 = pt2a;
         }
@@ -484,7 +515,7 @@ bool get_overlap_segment(mapbox::geometry::point<T> pt1a,
         {
             pt2 = pt1b;
         }
-        else 
+        else
         {
             pt2 = pt2b;
         }
@@ -524,26 +555,22 @@ template <typename T>
 bool FirstIsBottomPt(const_point_ptr<T> btmPt1, const_point_ptr<T> btmPt2)
 {
     point_ptr<T> p = btmPt1->prev;
-    while ((p->Pt == btmPt1->Pt) && (p != btmPt1))
-    {
+    while ((p->Pt == btmPt1->Pt) && (p != btmPt1)) {
         p = p->prev;
     }
     double dx1p = std::fabs(GetDx(btmPt1->Pt, p->Pt));
     p = btmPt1->next;
-    while ((p->Pt == btmPt1->Pt) && (p != btmPt1))
-    {
+    while ((p->Pt == btmPt1->Pt) && (p != btmPt1)) {
         p = p->next;
     }
     double dx1n = std::fabs(GetDx(btmPt1->Pt, p->Pt));
     p = btmPt2->prev;
-    while ((p->Pt == btmPt2->Pt) && (p != btmPt2))
-    {
+    while ((p->Pt == btmPt2->Pt) && (p != btmPt2)) {
         p = p->prev;
     }
     double dx2p = std::fabs(GetDx(btmPt2->Pt, p->Pt));
     p = btmPt2->next;
-    while ((p->Pt == btmPt2->Pt) && (p != btmPt2))
-    {
+    while ((p->Pt == btmPt2->Pt) && (p != btmPt2)) {
         p = p->next;
     }
     double dx2n = std::fabs(GetDx(btmPt2->Pt, p->Pt));
@@ -551,7 +578,7 @@ bool FirstIsBottomPt(const_point_ptr<T> btmPt1, const_point_ptr<T> btmPt2)
     if (std::max(dx1p, dx1n) == std::max(dx2p, dx2n) &&
         std::min(dx1p, dx1n) == std::min(dx2p, dx2n))
     {
-        return Area(btmPt1) > 0; //if otherwise identical use orientation
+        return Area(btmPt1) > 0; // if otherwise identical use orientation
     }
     else
     {
@@ -564,8 +591,7 @@ point_ptr<T> GetBottomPt(point_ptr<T> pp)
 {
     point_ptr<T> dups = 0;
     point_ptr<T> p = pp->next;
-    while (p != pp)
-    {
+    while (p != pp) {
         if (p->Pt.y > pp->Pt.y)
         {
             pp = p;
@@ -590,16 +616,14 @@ point_ptr<T> GetBottomPt(point_ptr<T> pp)
     }
     if (dups)
     {
-        //there appears to be at least 2 vertices at BottomPt so ...
-        while (dups != p)
-        {
+        // there appears to be at least 2 vertices at BottomPt so ...
+        while (dups != p) {
             if (!FirstIsBottomPt(p, dups))
             {
                 pp = dups;
             }
             dups = dups->next;
-            while (dups->Pt != pp->Pt)
-            {
+            while (dups->Pt != pp->Pt) {
                 dups = dups->next;
             }
         }
@@ -627,10 +651,7 @@ bool Pt2IsBetweenPt1AndPt3(mapbox::geometry::point<T> pt1,
 }
 
 template <typename T>
-bool horizontal_segments_overlap(T seg1a,
-                                 T seg1b,
-                                 T seg2a,
-                                 T seg2b)
+bool horizontal_segments_overlap(T seg1a, T seg1b, T seg2a, T seg2b)
 {
     // Note: the use of swap here is rather confusing, perhaps
     // we should change the logic?
@@ -644,5 +665,6 @@ bool horizontal_segments_overlap(T seg1a,
     }
     return (seg1a < seg2b) && (seg2a < seg1b);
 }
-
-}}}
+}
+}
+}

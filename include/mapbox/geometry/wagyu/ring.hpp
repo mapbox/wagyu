@@ -3,8 +3,12 @@
 #include <mapbox/geometry/wagyu/point.hpp>
 #include <mapbox/geometry/wagyu/polytree.hpp>
 
-namespace mapbox { namespace geometry { namespace wagyu {
-
+namespace mapbox
+{
+namespace geometry
+{
+namespace wagyu
+{
 template <typename T>
 struct ring;
 
@@ -17,22 +21,24 @@ using const_ring_ptr = ring<T> * const;
 template <typename T>
 struct ring
 {
-    std::size_t         index;
-    bool                is_hole;
-    bool                is_open;
-    ring_ptr<T>         first_left;  //see comments in clipper.pas
-    point_ptr<T>        points;
-    point_ptr<T>        bottom_point;
+    std::size_t index;
+    bool is_hole;
+    bool is_open;
+    ring_ptr<T> first_left; // see comments in clipper.pas
+    point_ptr<T> points;
+    point_ptr<T> bottom_point;
     polygon_node_ptr<T> poly_node;
 
-    ring() :
-        index(0),
-        is_hole(false),
-        is_open(false),
-        first_left(nullptr),
-        points(nullptr),
-        bottom_point(nullptr),
-        poly_node(nullptr) {}
+    ring()
+        : index(0),
+          is_hole(false),
+          is_open(false),
+          first_left(nullptr),
+          points(nullptr),
+          bottom_point(nullptr),
+          poly_node(nullptr)
+    {
+    }
 };
 
 template <typename T>
@@ -71,12 +77,11 @@ std::size_t count(const const_point_ptr<T> & orig_node)
 {
     std::size_t size = 0;
     const_point_ptr<T> n = orig_node;
-    do 
+    do
     {
         n = get_next(n);
         ++size;
-    } 
-    while (n != orig_node);
+    } while (n != orig_node);
     return size;
 }
 
@@ -127,9 +132,8 @@ void reverse(point_ptr<T> & p)
     point_ptr<T> f = get_next(p);
     point_ptr<T> i = get_next(f);
     point_ptr<T> e = p;
-    
-    while (i != e)
-    {
+
+    while (i != e) {
         point_ptr<T> n = i;
         i = get_next(i);
         transfer(f, n, i);
@@ -148,5 +152,6 @@ ring_ptr<T> create_new_ring(ring_list<T> & rings)
     result->index = rings.size() - 1;
     return result;
 }
-
-}}}
+}
+}
+}
