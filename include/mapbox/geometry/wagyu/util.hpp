@@ -10,8 +10,9 @@
 namespace mapbox {
 namespace geometry {
 namespace wagyu {
+
 template <typename T>
-double Area(mapbox::geometry::linear_ring<T> const& poly) {
+double area(mapbox::geometry::linear_ring<T> const& poly) {
     std::size_t size = poly.size();
     if (size < 3) {
         return 0.0;
@@ -31,7 +32,7 @@ double Area(mapbox::geometry::linear_ring<T> const& poly) {
 }
 
 template <typename T>
-double Area(point_ptr<T> op) {
+double area(point_ptr<T> op) {
     point_ptr<T> startOp = op;
     if (!op) {
         return 0.0;
@@ -45,13 +46,13 @@ double Area(point_ptr<T> op) {
 }
 
 template <typename T>
-double Area(ring<T> const& polygon_ring) {
-    return Area(polygon_ring.Pts);
+double area(ring<T> const& polygon_ring) {
+    return area(polygon_ring.points);
 }
 
 template <typename T>
-bool Orientation(mapbox::geometry::linear_ring<T> const& poly) {
-    return Area(poly) >= 0;
+bool orientation(mapbox::geometry::linear_ring<T> const& poly) {
+    return area(poly) >= 0;
 }
 
 template <typename T>
@@ -310,15 +311,6 @@ inline bool is_horizontal(edge<T> const& e) {
 }
 
 template <typename T>
-inline double GetDx(point<T> const& pt1, point<T> const& pt2) {
-    if (pt1.y == pt2.y) {
-        return HORIZONTAL;
-    } else {
-        return static_cast<double>(pt2.x - pt2.x) / static_cast<double>(pt2.y - pt1.y);
-    }
-}
-
-template <typename T>
 bool is_even_odd_fill_type(edge<T> const& edge,
                            fill_type subject_fill_type,
                            fill_type clip_fill_type) {
@@ -348,22 +340,6 @@ inline T get_current_x(edge<T> const& edge, const T current_y) {
         return edge.bot.x +
                static_cast<T>(std::round(edge.dx * static_cast<double>(current_y - edge.bot.y)));
     }
-}
-
-template <typename T>
-void ReversePolyPtLinks(point_ptr<T> pp) {
-    if (!pp) {
-        return;
-    }
-    point_ptr<T> pp1;
-    point_ptr<T> pp2;
-    pp1 = pp;
-    do {
-        pp2 = pp1->next;
-        pp1->next = pp1->prev;
-        pp1->prev = pp2;
-        pp1 = pp2;
-    } while (pp1 != pp);
 }
 
 template <typename T>
@@ -418,74 +394,6 @@ bool get_overlap_segment(mapbox::geometry::point<T> pt1a,
         }
         return pt1.y > pt2.y;
     }
-}
-
-template <typename T>
-bool first_is_bottom_point(const_point_ptr<T> btmPt1, const_point_ptr<T> btmPt2) {
-    point_ptr<T> p = btmPt1->prev;
-    while ((p->Pt == btmPt1->Pt) && (p != btmPt1)) {
-        p = p->prev;
-    }
-    double dx1p = std::fabs(GetDx(btmPt1->Pt, p->Pt));
-    p = btmPt1->next;
-    while ((p->Pt == btmPt1->Pt) && (p != btmPt1)) {
-        p = p->next;
-    }
-    double dx1n = std::fabs(GetDx(btmPt1->Pt, p->Pt));
-    p = btmPt2->prev;
-    while ((p->Pt == btmPt2->Pt) && (p != btmPt2)) {
-        p = p->prev;
-    }
-    double dx2p = std::fabs(GetDx(btmPt2->Pt, p->Pt));
-    p = btmPt2->next;
-    while ((p->Pt == btmPt2->Pt) && (p != btmPt2)) {
-        p = p->next;
-    }
-    double dx2n = std::fabs(GetDx(btmPt2->Pt, p->Pt));
-
-    if (std::fabs(std::max(dx1p, dx1n) - std::max(dx2p, dx2n)) <
-            std::numeric_limits<double>::epsilon() &&
-        std::fabs(std::min(dx1p, dx1n) - std::min(dx2p, dx2n)) <
-            std::numeric_limits<double>::epsilon()) {
-        return Area(btmPt1) > 0; // if otherwise identical use orientation
-    } else {
-        return (dx1p >= dx2p && dx1p >= dx2n) || (dx1n >= dx2p && dx1n >= dx2n);
-    }
-}
-
-template <typename T>
-point_ptr<T> GetBottomPt(point_ptr<T> pp) {
-    point_ptr<T> dups = 0;
-    point_ptr<T> p = pp->next;
-    while (p != pp) {
-        if (p->Pt.y > pp->Pt.y) {
-            pp = p;
-            dups = 0;
-        } else if (p->Pt.y == pp->Pt.y && p->Pt.x <= pp->Pt.x) {
-            if (p->Pt.x < pp->Pt.x) {
-                dups = 0;
-                pp = p;
-            } else {
-                if (p->next != pp && p->prev != pp) {
-                    dups = p;
-                }
-            }
-        }
-        p = p->next;
-    }
-    if (dups) {
-        // there appears to be at least 2 vertices at BottomPt so ...
-        while (dups != p) {
-            if (!FirstIsBottomPt(p, dups)) {
-                pp = dups;
-            }
-            dups = dups->next;
-            while (dups->Pt != pp->Pt) {
-                dups = dups->next;
-            }
-        }
-    }
-    return pp;
 }
 
 template <typename T>

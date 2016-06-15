@@ -619,8 +619,6 @@ bool add_linear_ring(mapbox::geometry::linear_ring<T> const& path_geometry,
     return true;
 }
 
-
-
 template <typename T>
 void process_horizontals(std::list<T>& maxima, edge_ptr<T>& sorted_edges_list) {
     maxima.sort();

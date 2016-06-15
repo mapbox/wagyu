@@ -3,6 +3,17 @@
 namespace mapbox {
 namespace geometry {
 namespace wagyu {
+
+template <typename T>
+inline bool is_maxima(edge_ptr<T> e, T y) {
+    return e && e->top.y == y && !e->next_in_LML;
+}
+
+template <typename T>
+inline bool is_intermediate(edge_ptr<T> e, T y) {
+    return e && e->top.y == y && e->next_in_LML;
+}
+
 template <typename T>
 void add_edge_to_SEL(edge_ptr<T> edge, edge_ptr<T>& sorted_edges_list) {
     // SEL pointers in PEdge are reused to build a list of horizontal edges.

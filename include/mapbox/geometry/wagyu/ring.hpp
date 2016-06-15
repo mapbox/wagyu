@@ -92,7 +92,7 @@ void link_after(point_ptr<T>& node, point_ptr<T>& new_node) {
 }
 
 template <typename T>
-void transfer(point_ptr<T>& p, point_ptr<T>& b, point_ptr<T>& e) {
+void transfer_point(point_ptr<T>& p, point_ptr<T>& b, point_ptr<T>& e) {
     if (b != e) {
         point_ptr<T> prev_p = get_prev(p);
         point_ptr<T> prev_b = get_prev(b);
@@ -109,7 +109,7 @@ void transfer(point_ptr<T>& p, point_ptr<T>& b, point_ptr<T>& e) {
 }
 
 template <typename T>
-void reverse(point_ptr<T>& p) {
+void reverse_ring(point_ptr<T>& p) {
     point_ptr<T> f = get_next(p);
     point_ptr<T> i = get_next(f);
     point_ptr<T> e = p;
@@ -117,10 +117,33 @@ void reverse(point_ptr<T>& p) {
     while (i != e) {
         point_ptr<T> n = i;
         i = get_next(i);
-        transfer(f, n, i);
+        transfer_point(f, n, i);
         f = n;
     }
 }
+
+// Another version of reversing rings
+// evaluate later!!!
+/*
+template <typename T>
+void reverse_ring(point_ptr<T> pp)
+{
+    if (!pp)
+    {
+        return;
+    }
+    point_ptr<T> pp1;
+    point_ptr<T> pp2;
+    pp1 = pp;
+    do
+    {
+        pp2 = pp1->next;
+        pp1->next = pp1->prev;
+        pp1->prev = pp2;
+        pp1 = pp2;
+    } while (pp1 != pp);
+}
+*/
 
 template <typename T>
 using ring_list = std::vector<ring_ptr<T>>;
