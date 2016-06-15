@@ -4,6 +4,7 @@
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/edge.hpp>
 #include <mapbox/geometry/wagyu/edge_util.hpp>
+#include <mapbox/geometry/wagyu/join.hpp>
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
 #include <mapbox/geometry/wagyu/ring.hpp>
 #include <mapbox/geometry/wagyu/ring_util.hpp>
@@ -178,7 +179,7 @@ void process_edges_at_top_of_scanbeam(T top_y,
         }
 
         if (is_maxima_edge) {
-            edge<T> e_prev = e->prev_in_AEL;
+            edge_ptr<T> e_prev = e->prev_in_AEL;
             do_maxima(e);
             if (!e_prev) {
                 e = active_edges;
@@ -206,13 +207,13 @@ void process_edges_at_top_of_scanbeam(T top_y,
         // When E is being touched by another edge, make sure both edges have a vertex here.
 
         if (e->index >= 0 && e->winding_delta != 0) {
-            edge<T> e_prev = e->prev_in_AEL;
+            edge_ptr<T> e_prev = e->prev_in_AEL;
             while (e_prev && e->prev->curr.x == e->curr.x) {
                 if (e_prev->index >= 0 && e_prev->winding_delta != 0 &&
                     !(e->bot == e_prev->bot && e->top == e_prev->top)) {
                     mapbox::geometry::point<T> pt = e->curr;
-                    point<T> op = add_point(e_prev, pt, rings);
-                    point<T> op2 = add_point(e, pt, rings);
+                    point_ptr<T> op = add_point(e_prev, pt, rings);
+                    point_ptr<T> op2 = add_point(e, pt, rings);
                     joins.emplace_back(op, op2, pt); // strictly simple type 3 join
                 }
                 e_prev = e_prev->prev_in_AEL;

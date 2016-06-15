@@ -149,7 +149,7 @@ void update_edge_into_AEL(edge_ptr<T>& e, edge_ptr<T>& active_edges, scanbeam_li
     if (Aelnext) {
         Aelnext->prev_in_AEL = e->next_in_LML;
     }
-    e->next_in_LML->Side = e->Side;
+    e->next_in_LML->side = e->side;
     e->next_in_LML->winding_delta = e->winding_delta;
     e->next_in_LML->winding_count = e->winding_count;
     e->next_in_LML->winding_count2 = e->winding_count2;

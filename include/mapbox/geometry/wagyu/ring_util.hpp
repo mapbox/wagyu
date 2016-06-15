@@ -103,8 +103,8 @@ point_ptr<T> add_local_minimum_point(edge_ptr<T> e1,
     if (prev_edge && prev_edge->index >= 0) {
         value_type x_prev = get_current_x(*prev_edge, pt.y);
         value_type x_edge = get_current_x(*e, pt.y);
-        if (xprev == x_edge && e->winding_delta != 0 && prev_edge->winding_delta != 0 &&
-            slopes_equal(mapbox::geometry::point<value_type>(xprev, pt.y), prev_edge->top,
+        if (x_prev == x_edge && e->winding_delta != 0 && prev_edge->winding_delta != 0 &&
+            slopes_equal(mapbox::geometry::point<value_type>(x_prev, pt.y), prev_edge->top,
                          mapbox::geometry::point<value_type>(x_edge, pt.y), e->top)) {
             point_ptr<T> outpt = add_point(prev_edge, pt, rings);
             joins.emplace_back(result, outpt, e->top);
