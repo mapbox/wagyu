@@ -286,8 +286,8 @@ bool Poly2ContainsPoly1(point_ptr<T> OutPt1, point_ptr<T> OutPt2) {
 
 template <typename T>
 bool slopes_equal(edge<T> const& e1, edge<T> const& e2) {
-    return (e1.Top.y - e1.Bot.y) * (e2.Top.x - e2.Bot.x) ==
-           (e1.Top.x - e1.Bot.x) * (e2.Top.y - e2.Bot.y);
+    return (e1.top.y - e1.bot.y) * (e2.top.x - e2.bot.x) ==
+           (e1.top.x - e1.bot.x) * (e2.top.y - e2.bot.y);
 }
 
 template <typename T>

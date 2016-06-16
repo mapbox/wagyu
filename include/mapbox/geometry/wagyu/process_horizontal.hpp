@@ -16,7 +16,7 @@ namespace wagyu {
 
 template <typename T>
 point_ptr<T> get_last_point(edge_ptr<T> e, ring_list<T> const& rings) {
-    ring_ptr<T> outRec = rings[e->OutIdx];
+    ring_ptr<T> outRec = rings[e->index];
     if (e->side == edge_left)
     {
         return outRec->points;
@@ -43,11 +43,14 @@ void get_horizontal_direction(edge_ptr<T> edge, horizontal_direction& dir, T& le
 template <typename T>
 void process_horizontal(edge_ptr<T> edge, 
     maxima_list<T>& maxima, 
-    edge_ptr<T>& sorted_edge_list,
     edge_ptr<T>& active_edge_list,
+    edge_ptr<T>& sorted_edge_list,
+    clip_type cliptype,
+    fill_type subject_fill_type,
+    fill_type clip_fill_type,
+    ring_list<T> rings,
     join_list<T>& joins,
     join_list<T>& ghost_joins,
-    ring_list<T> rings,
     scanbeam_list<T>& scanbeam
 ) {
     bool m_StrictSimple = true;
@@ -62,7 +65,7 @@ void process_horizontal(edge_ptr<T> edge,
 
     // locate the final consecutive horizontal edge starting from this one;
     // multiple horizontals in a row will be linked
-    while (last_horizontal->next_in_LML && is_horizontal(last_horizontal->next_in_LML)) {
+    while (last_horizontal->next_in_LML && is_horizontal(*last_horizontal->next_in_LML)) {
         last_horizontal = last_horizontal->next_in_LML;
     }
 
@@ -109,7 +112,7 @@ void process_horizontal(edge_ptr<T> edge,
                 } else {
                     while (max_reverse_iter != maxima.rend() && *max_reverse_iter > e->curr.x) {
                         if (edge->index >= 0 && !is_open)
-                            add_point(edge, mapbox::geometry::point<T>(*max_reverse_iter, edge->bot.y));
+                            add_point(edge, mapbox::geometry::point<T>(*max_reverse_iter, edge->bot.y), rings);
                         ++max_reverse_iter;
                     }
                 }
@@ -152,9 +155,13 @@ void process_horizontal(edge_ptr<T> edge,
             }
             
             if (dir == left_to_right) {
-                intersect_edges(edge, e, mapbox::geometry::point<T>(e->curr.x, edge->curr.y));
+                intersect_edges(edge, e, mapbox::geometry::point<T>(e->curr.x, edge->curr.y),
+                                cliptype, subject_fill_type, clip_fill_type, 
+                                rings, joins, active_edge_list);
             } else {
-                intersect_edges(e, edge, mapbox::geometry::point<T>(e->curr.x, edge->curr.y));
+                intersect_edges(e, edge, mapbox::geometry::point<T>(e->curr.x, edge->curr.y),
+                                cliptype, subject_fill_type, clip_fill_type, 
+                                rings, joins, active_edge_list);
             }
 
             edge_ptr<T> e_next = get_next_in_AEL(e, dir);
@@ -163,7 +170,7 @@ void process_horizontal(edge_ptr<T> edge,
         } // end while (e)
 
         // Break out of loop if HorzEdge.NextInLML is not also horizontal ...
-        if (!edge->next_in_LML || !is_horizontal(edge->next_in_LML))
+        if (!edge->next_in_LML || !is_horizontal(*edge->next_in_LML))
             break;
 
         update_edge_into_AEL(edge, active_edge_list, scanbeam);
@@ -178,10 +185,10 @@ void process_horizontal(edge_ptr<T> edge,
         {
             if (e_next_horizontal->index >= 0 &&
                 horizontal_segments_overlap(
-                    edge->bot.X,
-                    edge->top.X, 
-                    e_next_horizontal->bot.X, 
-                    e_next_horizontal->top.X
+                    edge->bot.x,
+                    edge->top.x, 
+                    e_next_horizontal->bot.x, 
+                    e_next_horizontal->top.x
                 )
             ) {
                 point_ptr<T> p2 = get_last_point(e_next_horizontal, rings);
@@ -211,7 +218,7 @@ void process_horizontal(edge_ptr<T> edge,
                     (e_next->curr.x == edge->top.x) && (e_next->winding_delta != 0))
                 {
                   //IntPoint pt = horzEdge->Top;
-                  AddOutPt(e_next, edge->top, rings);
+                  add_point(e_next, edge->top, rings);
                 }
             }
             update_edge_into_AEL(edge, active_edge_list, scanbeam);
@@ -227,7 +234,7 @@ void process_horizontal(edge_ptr<T> edge,
                 (e_prev->index >= 0 && e_prev->curr.y > e_prev->top.y &&
                 slopes_equal(*edge, *e_prev)))
             {
-                point<T> p2 = add_point(e_prev, edge->bot, rings);
+                point_ptr<T> p2 = add_point(e_prev, edge->bot, rings);
                 joins.emplace_back(p1, p2, edge->top);
             }
             else if (e_next && e_next->curr.x == edge->bot.x &&
@@ -235,7 +242,7 @@ void process_horizontal(edge_ptr<T> edge,
                 e_next->index >= 0 && e_next->curr.y > e_next->top.y &&
                 slopes_equal(*edge, *e_next))
             {
-                point<T> p2 = add_point(e_next, edge->bot, rings);
+                point_ptr<T> p2 = add_point(e_next, edge->bot, rings);
                 joins.emplace_back(p1, p2, edge->top);
             }
         } else update_edge_into_AEL(edge, active_edge_list, scanbeam);

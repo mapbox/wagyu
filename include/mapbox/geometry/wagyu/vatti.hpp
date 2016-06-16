@@ -10,7 +10,6 @@
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
 #include <mapbox/geometry/wagyu/local_minimum_util.hpp>
 #include <mapbox/geometry/wagyu/process_horizontal.hpp>
-#include <mapbox/geometry/wagyu/process_horizontal.hpp>
 #include <mapbox/geometry/wagyu/ring.hpp>
 #include <mapbox/geometry/wagyu/ring_util.hpp>
 #include <mapbox/geometry/wagyu/sorted_edge_list.hpp>
@@ -301,7 +300,8 @@ void process_edges_at_top_of_scanbeam(T top_y,
         ++lm;
     }
 
-    process_horizontals(maxima, sorted_edge_list, active_edge_list, joins, ghost_joins, rings, scanbeam);
+    process_horizontals(maxima, active_edge_list, sorted_edge_list, cliptype, 
+                        subject_fill_type, clip_fill_type, rings, joins, ghost_joins, scanbeam);
 
     if (!next_maxima.empty()) {
         maxima.insert(maxima.end(), next_maxima.begin(), next_maxima.end());
@@ -382,17 +382,21 @@ bool pop_from_scanbeam(T& Y, scanbeam_list<T>& scanbeam) {
 
 template <typename T>
 void process_horizontals(maxima_list<T>& maxima, 
-    edge_ptr<T>& sorted_edge_list,
     edge_ptr<T>& active_edge_list,
+    edge_ptr<T>& sorted_edge_list,
+    clip_type cliptype,
+    fill_type subject_fill_type,
+    fill_type clip_fill_type,
+    ring_list<T> rings,
     join_list<T>& joins,
     join_list<T>& ghost_joins,
-    ring_list<T> rings,
     scanbeam_list<T>& scanbeam
 ) {
     maxima.sort();
     edge_ptr<T> horz_edge;
     while (pop_edge_from_SEL(horz_edge, sorted_edge_list)) {
-        process_horizontal(horz_edge, maxima, sorted_edge_list, active_edge_list, joins, ghost_joins, rings, scanbeam);
+        process_horizontal(horz_edge, maxima, active_edge_list, sorted_edge_list, cliptype, 
+                            subject_fill_type, clip_fill_type, rings, joins, ghost_joins, scanbeam);
     }
     maxima.clear();
 }
@@ -425,7 +429,8 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
                                  subject_fill_type, clip_fill_type);
     while (pop_from_scanbeam(top_y, scanbeam) ||
            local_minima_pending(current_local_min, minima_list)) {
-        process_horizontals(max_list, sorted_edge_list, active_edge_list, joins, ghost_joins, rings, scanbeam);
+        process_horizontals(max_list, active_edge_list, sorted_edge_list, cliptype,
+                            subject_fill_type, clip_fill_type, rings, joins, ghost_joins, scanbeam);
         ghost_joins.clear();
 
         if (!process_intersections(top_y, active_edge_list, sorted_edge_list, cliptype,
