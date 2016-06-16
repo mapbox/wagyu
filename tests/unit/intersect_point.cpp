@@ -3,19 +3,21 @@
 #include <mapbox/geometry/wagyu/edge.hpp>
 #include <mapbox/geometry/wagyu/intersect_point.hpp>
 
+using namespace mapbox::geometry::wagyu;
+using T = std::int64_t;
+
 TEST_CASE("test intersection of points") {
-    using namespace mapbox::geometry::wagyu;
-    mapbox::geometry::point<std::int64_t> p1 = { -1, -2 };
-    mapbox::geometry::point<std::int64_t> p2 = { 9, 5 };
-    mapbox::geometry::point<std::int64_t> p3 = { 0, 0 };
-    mapbox::geometry::point<std::int64_t> p4 = { 13, 6 };
+    mapbox::geometry::point<T> p1 = { -1, -2 };
+    mapbox::geometry::point<T> p2 = { 9, 5 };
+    mapbox::geometry::point<T> p3 = { 0, 0 };
+    mapbox::geometry::point<T> p4 = { 13, 6 };
 
     // Initialize result points
-    mapbox::geometry::point<std::int64_t> r1 = { 0, 0 };
+    mapbox::geometry::point<T> r1 = { 0, 0 };
 
-    edge<std::int64_t> e1(p1, p2, polygon_type_subject);
-    edge<std::int64_t> e2(p2, p3, polygon_type_subject);
-    edge<std::int64_t> e3(p3, p4, polygon_type_subject);
+    edge<T> e1(p1, p2, polygon_type_subject);
+    edge<T> e2(p2, p3, polygon_type_subject);
+    edge<T> e3(p3, p4, polygon_type_subject);
 
     CHECK(e1.bot.x == 9);
     CHECK(e1.bot.y == 5);
@@ -41,7 +43,7 @@ TEST_CASE("test intersection of points") {
     CHECK(e3.top.y == 0);
     CHECK(e3.dx == Approx(2.1666666667));
 
-    std::int64_t top_y = -2;
+    T top_y = -2;
     // Scanbeam would start at -2 and add e1
     e1.curr.y = top_y;
     e1.curr.x = get_current_x(e1, top_y);
@@ -90,18 +92,17 @@ TEST_CASE("test intersection of points") {
 }
 
 TEST_CASE("test intersection of points - switch axis values") {
-    using namespace mapbox::geometry::wagyu;
-    mapbox::geometry::point<std::int64_t> p1 = { -2, -1 };
-    mapbox::geometry::point<std::int64_t> p2 = { 5, 9 };
-    mapbox::geometry::point<std::int64_t> p3 = { 0, 0 };
-    mapbox::geometry::point<std::int64_t> p4 = { 6, 13 };
+    mapbox::geometry::point<T> p1 = { -2, -1 };
+    mapbox::geometry::point<T> p2 = { 5, 9 };
+    mapbox::geometry::point<T> p3 = { 0, 0 };
+    mapbox::geometry::point<T> p4 = { 6, 13 };
 
     // Initialize result points
-    mapbox::geometry::point<std::int64_t> r1 = { 0, 0 };
+    mapbox::geometry::point<T> r1 = { 0, 0 };
 
-    edge<std::int64_t> e1(p1, p2, polygon_type_subject);
-    edge<std::int64_t> e2(p2, p3, polygon_type_subject);
-    edge<std::int64_t> e3(p3, p4, polygon_type_subject);
+    edge<T> e1(p1, p2, polygon_type_subject);
+    edge<T> e2(p2, p3, polygon_type_subject);
+    edge<T> e3(p3, p4, polygon_type_subject);
 
     CHECK(e1.bot.x == 5);
     CHECK(e1.bot.y == 9);
@@ -127,7 +128,7 @@ TEST_CASE("test intersection of points - switch axis values") {
     CHECK(e3.top.y == 0);
     CHECK(e3.dx == Approx(0.4615384615));
 
-    std::int64_t top_y = -1;
+    T top_y = -1;
     // Scanbeam would start at -1 and add e1
     e1.curr.y = top_y;
     e1.curr.x = get_current_x(e1, top_y);

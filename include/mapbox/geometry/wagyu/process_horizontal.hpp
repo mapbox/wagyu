@@ -27,6 +27,8 @@ void get_horizontal_direction(edge<T> edge, horizontal_direction& dir, T& left, 
     dir = horizontal_direction::right_to_left;
   }
 }
+
+
 }
 }
 }

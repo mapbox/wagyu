@@ -2,11 +2,13 @@
 
 #include <mapbox/geometry/wagyu/edge.hpp>
 
+using namespace mapbox::geometry::wagyu;
+using T = std::int64_t;
+
 TEST_CASE("test edge initialization - same two points") {
-    using namespace mapbox::geometry::wagyu;
-    mapbox::geometry::point<std::int64_t> p1 = { 100, 10 };
-    mapbox::geometry::point<std::int64_t> p2 = { 100, 10 };
-    edge<std::int64_t> e1(p1, p2, polygon_type_subject);
+    mapbox::geometry::point<T> p1 = { 100, 10 };
+    mapbox::geometry::point<T> p2 = { 100, 10 };
+    edge<T> e1(p1, p2, polygon_type_subject);
 
     CHECK(e1.bot.x == 100);
     CHECK(e1.bot.y == 10);
@@ -30,11 +32,10 @@ TEST_CASE("test edge initialization - same two points") {
 }
 
 TEST_CASE("test edge initialization - horizontal segment") {
-    using namespace mapbox::geometry::wagyu;
-    mapbox::geometry::point<std::int64_t> p1 = { 10, 10 };
-    mapbox::geometry::point<std::int64_t> p2 = { 100, 10 };
-    edge<std::int64_t> e1(p1, p2, polygon_type_subject);
-    edge<std::int64_t> e2(p2, p1, polygon_type_subject);
+    mapbox::geometry::point<T> p1 = { 10, 10 };
+    mapbox::geometry::point<T> p2 = { 100, 10 };
+    edge<T> e1(p1, p2, polygon_type_subject);
+    edge<T> e2(p2, p1, polygon_type_subject);
 
     CHECK(e1.bot.x == 10);
     CHECK(e1.bot.y == 10);
@@ -54,11 +55,10 @@ TEST_CASE("test edge initialization - horizontal segment") {
 }
 
 TEST_CASE("test edge initialization - vertical segment") {
-    using namespace mapbox::geometry::wagyu;
-    mapbox::geometry::point<std::int64_t> p1 = { 10, 10 };
-    mapbox::geometry::point<std::int64_t> p2 = { 10, 100 };
-    edge<std::int64_t> e1(p1, p2, polygon_type_subject);
-    edge<std::int64_t> e2(p2, p1, polygon_type_subject);
+    mapbox::geometry::point<T> p1 = { 10, 10 };
+    mapbox::geometry::point<T> p2 = { 10, 100 };
+    edge<T> e1(p1, p2, polygon_type_subject);
+    edge<T> e2(p2, p1, polygon_type_subject);
 
     CHECK(e1.bot.x == 10);
     CHECK(e1.bot.y == 100);
