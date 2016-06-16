@@ -390,24 +390,6 @@ void process_horizontals(maxima_list<T>& maxima, edge_ptr<T>& sorted_edges_list)
 }
 
 template <typename T>
-void reverse_poly_point_links(point<T>* pp) {
-    if (!pp) {
-        return;
-    }
-
-    point<T>* pp1;
-    point<T>* pp2;
-
-    pp1 = pp;
-    do {
-        pp2 = pp1->next;
-        pp1->next = pp1->prev;
-        pp1->prev = pp2;
-        pp1 = pp2;
-    } while (pp1 != pp);
-}
-
-template <typename T>
 bool execute_vatti(local_minimum_list<T>& minima_list,
                    ring_list<T> rings,
                    clip_type cliptype,
@@ -460,7 +442,7 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
 
         // left out m_ReverseOutput
         if (outrec->is_hole == (area(*outrec) > 0)) {
-            reverse_poly_point_links(outrec->points);
+            reverse_ring(outrec->points);
         }
     }
 
