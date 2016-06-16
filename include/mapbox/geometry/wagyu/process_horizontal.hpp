@@ -166,9 +166,31 @@ void process_horizontal(edge_ptr<T> edge,
             break;
 
         update_edge_into_AEL(edge, active_edge_list, scanbeam);
-        if (edge->index >= 0) AddOutPt(edge, edge->bot);
+        if (edge->index >= 0) add_point(edge, edge->bot, rings);
         get_horizontal_direction(edge, dir, left, right);
     } // end for (;;)
+
+    if (edge->index >= 0 && !p1) {
+        p1 = GetLastOutPt(edge);
+        edge_ptr<T> e_next_horizontal = sorted_edge_list;
+        while (e_next_horizontal)
+        {
+            if (e_next_horizontal->index >= 0 &&
+                horizontal_segments_overlap(
+                    edge->bot.X,
+                    edge->top.X, 
+                    e_next_horizontal->bot.X, 
+                    e_next_horizontal->top.X
+                )
+            ) {
+                point_ptr<T> p2 = GetLastOutPt(e_next_horizontal);
+                joins.emplace_back(p2, p1, e_next_horizontal->top);
+            }
+            e_next_horizontal = e_next_horizontal->next_in_SEL;
+        }
+        ghost_joins.emplace_back(p1, nullptr, edge->top);
+    }
+
 }
 }
 }
