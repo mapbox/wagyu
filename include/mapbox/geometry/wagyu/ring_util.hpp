@@ -345,37 +345,6 @@ void add_local_maximum_point(edge_ptr<T> e1,
         append_ring(e2, e1, rings, active_edge_list);
     }
 }
-
-template <typename T>
-ring_ptr<T> get_lowermost_ring(ring_ptr<T> ring1, ring_ptr<T> ring2) {
-    // Work out which polygon fragment has the correct hole state
-
-    if (!ring1->bottom_point) {
-        ring1->bottom_point = get_bottom_point(ring1->points);
-    }
-    if (!ring2->bottom_point) {
-        ring2->bottom_point = get_bottom_point(ring2->points);
-    }
-    point_ptr<T> point1 = ring1->bottom_point;
-    point_ptr<T> point2 = ring2->bottom_point;
-    if (point1->y > point2->y) {
-        return ring1;
-    } else if (point1->y < point2->y) {
-        return ring2;
-    } else if (point1->x < point2->x) {
-        return ring1;
-    } else if (point1->x > point2->x) {
-        return ring2;
-    } else if (point1->next == point1) {
-        return ring2;
-    } else if (point2->next == point2) {
-        return ring1;
-    } else if (first_is_bottom_point(point1, point2)) {
-        return ring1;
-    } else {
-        return ring2;
-    }
-}
 }
 }
 }

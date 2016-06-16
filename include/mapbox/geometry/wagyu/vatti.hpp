@@ -466,7 +466,7 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
         } else if (ring1_right_of_ring2(ring2, ring1)) {
             hole_state_ring = ring1;
         } else {
-            hole_state_ring = get_lowermost_ring(ring1, ring2);
+            hole_state_ring = get_lower_most_ring(ring1, ring2);
         }
 
 // XXX ENF left off here
