@@ -15,12 +15,24 @@ namespace geometry {
 namespace wagyu {
 
 template <typename T>
-void get_horizontal_direction(edge_ptr<T> edge, horizontal_direction& dir, T& left, T& right)
-{
+point_ptr<T> get_last_point(edge_ptr<T> e, ring_list<T> const& rings) {
+    ring_ptr<T> outRec = rings[e->OutIdx];
+    if (e->side == edge_left)
+    {
+        return outRec->points;
+    }
+    else
+    {
+        return outRec->points->prev;
+    }
+}
+
+template <typename T>
+void get_horizontal_direction(edge_ptr<T> edge, horizontal_direction& dir, T& left, T& right) {
     if (edge->bot.x < edge->top.x) {
         left = edge->bot.x;
         right = edge->top.x;
-        dir = horizontal_direction::left_to_right; 
+        dir = horizontal_direction::left_to_right;
     } else {
         left = edge->top.x;
         right = edge->bot.x;
@@ -29,11 +41,10 @@ void get_horizontal_direction(edge_ptr<T> edge, horizontal_direction& dir, T& le
 }
 
 template <typename T>
-void process_horizontal(edge_ptr<T> edge, 
-    maxima_list<T>& maxima, 
-    edge_ptr<T>& sorted_edge_list,
-    edge_ptr<T>& active_edge_list) 
-{
+void process_horizontal(edge_ptr<T> edge,
+                        maxima_list<T>& maxima,
+                        edge_ptr<T>& sorted_edge_list,
+                        edge_ptr<T>& active_edge_list) {
     T left;
     T right;
     horizontal_direction dir;
@@ -46,24 +57,27 @@ void process_horizontal(edge_ptr<T> edge,
     // locate the final consecutive horizontal edge starting from this one;
     // multiple horizontals in a row will be linked
     while (last_horizontal->next_in_LML && is_horizontal(last_horizontal->next_in_LML)) {
-        last_horizontal = last_horizontal->next_in_LML;  
+        last_horizontal = last_horizontal->next_in_LML;
     }
 
-    if (!last_horizontal->next_in_LML) edge_max_pair = get_maxima_pair(last_horizontal);
+    if (!last_horizontal->next_in_LML)
+        edge_max_pair = get_maxima_pair(last_horizontal);
 
-    maxima_list::const_iterator max_iter;
-    maxima_list::const_reverse_iterator max_reverse_iter;
+    typename maxima_list<T>::const_iterator max_iter;
+    typename maxima_list<T>::const_reverse_iterator max_reverse_iter;
 
     if (!maxima.empty()) {
-        //get the first maxima in range (X) ...
+        // get the first maxima in range (X) ...
         if (dir == horizontal_direction::left_to_right) {
             max_iter = maxima.begin();
-            while (max_iter != maxima.end() && *max_iter <= edge->bot.x) max_iter++;
+            while (max_iter != maxima.end() && *max_iter <= edge->bot.x)
+                max_iter++;
             if (max_iter != maxima.end() && *max_iter >= last_horizontal->top.x)
                 max_iter = maxima.end();
         } else {
             max_reverse_iter = maxima.rbegin();
-            while (max_reverse_iter != maxima.rend() && *max_reverse_iter > edge->bot.x) max_reverse_iter++;
+            while (max_reverse_iter != maxima.rend() && *max_reverse_iter > edge->bot.x)
+                max_reverse_iter++;
             if (max_reverse_iter != maxima.rend() && *max_reverse_iter <= last_horizontal->top.x)
                 max_reverse_iter = maxima.rend();
         }
@@ -71,92 +85,92 @@ void process_horizontal(edge_ptr<T> edge,
 
     point_ptr<T> p1 = nullptr;
 
-    //loop through consec. horizontal edges
+    // loop through consec. horizontal edges
     for (;;) {
         bool is_last_horizontal = (edge == last_horizontal);
         edge_ptr<T> e = get_next_in_AEL(edge, dir);
 
         while (e) {
-            //this code block inserts extra coords into horizontal edges (in output
-            //polygons) wherever maxima touch these horizontal edges. This helps
+            // this code block inserts extra coords into horizontal edges (in output
+            // polygons) wherever maxima touch these horizontal edges. This helps
             //'simplifying' polygons (ie if the Simplify property is set).
             if (!maxima.empty()) {
                 if (dir == horizontal_direction::left_to_right) {
                     while (max_iter != maxima.end() && *max_iter < e->curr.x) {
                         if (edge->index >= 0 && !is_open) {
-                            add_point(edge, mapbox::geometry::point(*max_iter, edge->bot.y), rings);
+                            add_point(edge, mapbox::geometry::point<T>(*max_iter, edge->bot.y), rings);
                         }
                         max_iter++;
                     }
                 } else {
                     while (max_reverse_iter != maxima.rend() && *max_reverse_iter > e->curr.x) {
                         if (edge->index >= 0 && !is_open)
-                            add_point(edge, mapbox::geometry::point(*max_reverse_iter, edge->bot.y));
+                            add_point(edge,
+                                      mapbox::geometry::point<T>(*max_reverse_iter, edge->bot.y));
                         max_reverse_iter++;
                     }
                 }
             };
 
             if ((dir == horizontal_direct::left_to_right && e->curr.x > right) ||
-                (dir == horizontal_direct::right_to_left && e->curr.x < left)) break;
+                (dir == horizontal_direct::right_to_left && e->curr.x < left))
+                break;
 
-            //Also break if we've got to the end of an intermediate horizontal edge ...
-            //nb: Smaller Dx's are to the right of larger Dx's ABOVE the horizontal.
-            if (e->curr.x == edge->top.x && edge->next_in_LML && 
-                e->dx < edge->next_in_LML->dx) break;
+            // Also break if we've got to the end of an intermediate horizontal edge ...
+            // nb: Smaller Dx's are to the right of larger Dx's ABOVE the horizontal.
+            if (e->curr.x == edge->top.x && edge->next_in_LML && e->dx < edge->next_in_LML->dx)
+                break;
 
-            //note: may be done multiple times
+            // note: may be done multiple times
             if (edge->index >= 0 && !is_open) {
                 p1 = add_point(edge, e->curr, rings);
                 edge_ptr<T> e_next_horizontal = sorted_edge_list;
 
                 while (e_next_horizontal) {
                     if (e_next_horizontal->index >= 0 &&
-                        horizontal_segments_overlap(
-                            edge->bot.x,
-                            edge->top.x, 
-                            e_next_horizontal->bot.x, 
-                            e_next_horizontal->top.x
-                        )
-                    ) {
-                        point_ptr<T> p2 = GetLastOutPt(e_next_horizontal);
+                        horizontal_segments_overlap(edge->bot.x, edge->top.x,
+                                                    e_next_horizontal->bot.x,
+                                                    e_next_horizontal->top.x)) {
+                        point_ptr<T> p2 = get_last_point(e_next_horizontal, rings);
                         AddJoin(p2, p1, e_next_horizontal->top);
                     }
                     e_next_horizontal = e_next_horizontal->next_in_SEL;
                 }
                 AddGhostJoin(p1, edge->bot);
             }
-        
-            //OK, so far we're still in range of the horizontal Edge  but make sure
-            //we're at the last of consec. horizontals when matching with eMaxPair
+
+            // OK, so far we're still in range of the horizontal Edge  but make sure
+            // we're at the last of consec. horizontals when matching with eMaxPair
             if (e == edge_max_pair && is_last_horizontal) {
-              if (edge->index >= 0)
-                AddLocalMaxPoly(edge, edge_max_pair, edge->top);
-              delete_from_AEL(edge);
-              delete_from_AEL(edge_max_pair);
-              return;
-            }
-            
-            if (dir == horizontal_direction::left_to_right) {
-              point<T> pt = {e->curr.x, edge->curr.y};
-              IntersectEdges(edge, e, pt);
-            } else {
-              point<T> pt = {e->curr.x, edge->curr.y};
-              IntersectEdges(e, edge, pt);
+                if (edge->index >= 0)
+                    AddLocalMaxPoly(edge, edge_max_pair, edge->top);
+                delete_from_AEL(edge);
+                delete_from_AEL(edge_max_pair);
+                return;
             }
 
-            edge_ptr<T> e_next = GetNextInAEL(e, dir);
+            if (dir == horizontal_direction::left_to_right) {
+                point<T> pt = { e->curr.x, edge->curr.y };
+                IntersectEdges(edge, e, pt);
+            } else {
+                point<T> pt = { e->curr.x, edge->curr.y };
+                IntersectEdges(e, edge, pt);
+            }
+
+            edge_ptr<T> e_next = get_next_in_AEL(e, dir);
             swap_positions_in_AEL(edge, e, active_edge_list);
             e = e_next;
-        } //end while (e)
+        } // end while (e)
 
-        //Break out of loop if HorzEdge.NextInLML is not also horizontal ...
-        if (!edge->next_in_LML || !is_horizontal(edge->next_in_LML)) break;
+        // Break out of loop if HorzEdge.NextInLML is not also horizontal ...
+        if (!edge->next_in_LML || !is_horizontal(edge->next_in_LML))
+            break;
 
         UpdateEdgeIntoAEL(edge);
-        if (edge->index >= 0) AddOutPt(edge, edge->bot);
+        if (edge->index >= 0)
+            AddOutPt(edge, edge->bot);
         get_horizontal_direction(edge, dir, left, right);
-    } //end for (;;)
+    } // end for (;;)
 }
 }
 }
