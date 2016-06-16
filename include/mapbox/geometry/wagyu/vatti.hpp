@@ -157,12 +157,12 @@ void insert_local_minima_into_AEL(T const botY,
 template <typename T>
 void process_edges_at_top_of_scanbeam(T top_y,
                                       edge_ptr<T> active_edges,
-                                      scanbeam_list<T> & scanbeam,
+                                      scanbeam_list<T>& scanbeam,
                                       maxima_list<T>& maxima,
                                       local_minimum_list<T>& minima_list,
                                       local_minimum_itr<T>& current_lm,
-                                      ring_list<T> & rings,
-                                      join_list<T> & joins) {
+                                      ring_list<T>& rings,
+                                      join_list<T>& joins) {
     maxima_list<T> next_maxima;
     edge_ptr<T> e = active_edges;
     while (e) {
@@ -275,9 +275,8 @@ void process_edges_at_top_of_scanbeam(T top_y,
 }
 
 template <typename T>
-void setup_scanbeam(local_minimum_list<T> & minima_list, scanbeam_list<T> & scanbeam) {
-    if (minima_list.empty())
-    {
+void setup_scanbeam(local_minimum_list<T>& minima_list, scanbeam_list<T>& scanbeam) {
+    if (minima_list.empty()) {
         return; // ie nothing to process
     }
     std::stable_sort(minima_list.begin(), minima_list.end(), local_minimum_sorter());
@@ -302,9 +301,8 @@ void setup_scanbeam(local_minimum_list<T> & minima_list, scanbeam_list<T> & scan
 }
 
 template <typename T>
-bool pop_from_scanbeam(T & Y, scanbeam_list<T> & scanbeam) {
-    if (scanbeam.empty())
-    {
+bool pop_from_scanbeam(T& Y, scanbeam_list<T>& scanbeam) {
+    if (scanbeam.empty()) {
         return false;
     }
     Y = scanbeam.top();
@@ -326,75 +324,48 @@ void process_horizontals(maxima_list& maxima, edge_ptr<T>& sorted_edges_list) {
     maxima.clear();
 }
 
-template <typename T>
-bool execute_vatti(local_minimum_list<T> & minima_list,
+bool execute_vatti(local_minimum_list<T>& minima_list,
                    ring_list<T> rings,
                    clip_type cliptype,
                    fill_type subject_fill_type,
                    fill_type clip_fill_type) {
-{
-    using value_type = T;
-    edge_ptr<value_type> active_edge_list = nullptr;
-    edge_ptr<value_type> sorted_edge_list = nullptr;
-    scanbeam_list<value_type> scanbeam;
-    maxima_list max_list;
-    value_type bot_y;
-    value_type top_y;
-    join_list<T> joins;
-    join_list<T> ghost_joins;
-
-    setup_scanbeam(minima_list, scanbeam);
-    
-    local_minimum_itr<T> current_local_min = minima_list.begin();
-    
-    if (!pop_from_scanbeam(bot_y, scanbeam))
     {
-        return false;
-    }
-    insert_local_minima_into_AEL(bot_y,
-                                 current_local_min,
-                                 minima_list,
-                                 active_edge_list,
-                                 sorted_edge_list,
-                                 rings,
-                                 joins,
-                                 ghost_joins,
-                                 scanbeam,
-                                 cliptype,
-                                 subject_fill_type,
-                                 clip_fill_type);
-    while (pop_from_scanbeam(top_y, scanbeam) || LocalMinimaPending()) {
-        process_horizontals();
-        ghost_joins.clear();
+        using value_type = T;
+        edge_ptr<value_type> active_edge_list = nullptr;
+        edge_ptr<value_type> sorted_edge_list = nullptr;
+        scanbeam_list<value_type> scanbeam;
+        maxima_list max_list;
+        value_type bot_y;
+        value_type top_y;
+        join_list<T> joins;
+        join_list<T> ghost_joins;
 
-        if (!process_intersections(top_y, active_edge_list, sorted_edge_list))
-        {
+        setup_scanbeam(minima_list, scanbeam);
+
+        local_minimum_itr<T> current_local_min = minima_list.begin();
+
+        if (!pop_from_scanbeam(bot_y, scanbeam)) {
             return false;
         }
-        process_edges_at_top_of_scanbeam(top_y,
-                                         active_edge_list,
-                                         scanbeam,
-                                         max_list,
-                                         minima_list,
-                                         current_local_min,
-                                         rings,
-                                         joins);
-        bot_y = top_y;
-        insert_local_minima_into_AEL(bot_y,
-                                     current_local_min,
-                                     minima_list,
-                                     active_edge_list,
-                                     sorted_edge_list,
-                                     rings,
-                                     joins,
-                                     ghost_joins,
-                                     scanbeam,
-                                     cliptype,
-                                     subject_fill_type,
-                                     clip_fill_type);
-    }
-}
+        insert_local_minima_into_AEL(bot_y, current_local_min, minima_list, active_edge_list,
+                                     sorted_edge_list, rings, joins, ghost_joins, scanbeam,
+                                     cliptype, subject_fill_type, clip_fill_type);
+        while (pop_from_scanbeam(top_y, scanbeam) ||
+               local_minima_pending(current_local_minima, minima_list)) {
+            process_horizontals();
+            ghost_joins.clear();
 
+            if (!process_intersections(top_y, active_edge_list, sorted_edge_list)) {
+                return false;
+            }
+            process_edges_at_top_of_scanbeam(top_y, active_edge_list, scanbeam, max_list,
+                                             minima_list, current_local_min, rings, joins);
+            bot_y = top_y;
+            insert_local_minima_into_AEL(bot_y, current_local_min, minima_list, active_edge_list,
+                                         sorted_edge_list, rings, joins, ghost_joins, scanbeam,
+                                         cliptype, subject_fill_type, clip_fill_type);
+        }
+    }
 }
 }
 }

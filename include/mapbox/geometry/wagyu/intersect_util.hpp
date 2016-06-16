@@ -291,7 +291,6 @@ bool process_intersections(T top_y, edge_ptr<T> active_edge_list, edge_ptr<T>& s
         return false;
     }
 }
-
 }
 }
 }

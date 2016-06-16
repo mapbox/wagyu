@@ -98,7 +98,7 @@ TEST_CASE("test is minima") {
     e3.next_in_LML = &e3;
 
     // neither prev/next next_in_LML points back at e2
-    CHECK(is_minima(&e2) == true); 
+    CHECK(is_minima(&e2) == true);
     // both prev/next next_in_LML points back to e3
     CHECK(is_minima(&e3) == false);
 }
