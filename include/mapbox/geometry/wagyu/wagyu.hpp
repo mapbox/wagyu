@@ -2,65 +2,38 @@
 
 #include <list>
 
+#include <mapbox/geometry/line_string.hpp>
 #include <mapbox/geometry/polygon.hpp>
 
-#include <mapbox/geometry/wagyu/box.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
+#include <mapbox/geometry/wagyu/box.hpp>
 #include <mapbox/geometry/wagyu/edge.hpp>
 #include <mapbox/geometry/wagyu/edge_util.hpp>
-#include <mapbox/geometry/wagyu/intersect.hpp>
-#include <mapbox/geometry/wagyu/join.hpp>
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
-#include <mapbox/geometry/wagyu/polytree.hpp>
-#include <mapbox/geometry/wagyu/ring.hpp>
-#include <mapbox/geometry/wagyu/scanbeam.hpp>
+#include <mapbox/geometry/wagyu/vatti.hpp>
 
 namespace mapbox {
 namespace geometry {
 namespace wagyu {
+
 template <typename T>
 class clipper {
 private:
     using value_type = T;
 
     local_minimum_list<value_type> minima_list;
-    local_minimum_itr<value_type> current_local_minima;
     std::vector<edge_list<value_type>> m_edges;
-    ring_list<value_type> m_PolyOuts;
-    scanbeam_list<value_type> scanbeam;
-    join_list<value_type> m_Joins;
-    join_list<value_type> m_GhostJoins;
-    intersect_list<value_type> m_IntersectList;
-    clip_type m_ClipType;
-    edge_ptr<value_type> m_ActiveEdges;
-    edge_ptr<value_type> m_SortedEdges;
-    fill_type m_ClipFillType;
-    fill_type m_SubjFillType;
     bool allow_collinear;
     bool has_open_paths;
-    bool m_ExecuteLocked;
     bool reverse_output_rings;
-    bool m_UsingPolyTree;
 
 public:
     clipper()
         : minima_list(),
-          current_local_minima(minima_list.begin()),
           m_edges(),
-          m_PolyOuts(),
-          scanbeam(),
-          m_Joins(),
-          m_GhostJoins(),
-          m_IntersectList(),
-          m_ActiveEdges(nullptr),
-          m_SortedEdges(nullptr),
-          m_ClipFillType(fill_type_even_odd),
-          m_SubjFillType(fill_type_even_odd),
           allow_collinear(false),
           has_open_paths(false),
-          m_ExecuteLocked(false),
-          reverse_output_rings(false),
-          m_UsingPolyTree(false) {
+          reverse_output_rings(false) {
     }
 
     ~clipper() {
@@ -156,11 +129,12 @@ public:
     }
 
     bool execute(clip_type cliptype,
-                 // linear_ring_list<value_type> &solution,
+                 mapbox::geometry::polygon<value_type> &solution,
                  fill_type subject_fill_type,
                  fill_type clip_fill_type) {
+        solution.clear(); // put here to do nothing for now.
         ring_list<T> rings;
-        execute_vatti(minima_list, rings, cliptype, subject_fill_type, clip_fill_type);
+        return execute_vatti(minima_list, rings, cliptype, subject_fill_type, clip_fill_type);
     }
 };
 }

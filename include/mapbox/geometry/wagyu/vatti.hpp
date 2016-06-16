@@ -329,7 +329,6 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
                    clip_type cliptype,
                    fill_type subject_fill_type,
                    fill_type clip_fill_type) {
-    {
         using value_type = T;
         edge_ptr<value_type> active_edge_list = nullptr;
         edge_ptr<value_type> sorted_edge_list = nullptr;
@@ -351,8 +350,8 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
                                      sorted_edge_list, rings, joins, ghost_joins, scanbeam,
                                      cliptype, subject_fill_type, clip_fill_type);
         while (pop_from_scanbeam(top_y, scanbeam) ||
-               local_minima_pending(current_local_minima, minima_list)) {
-            process_horizontals();
+               local_minima_pending(current_local_min, minima_list)) {
+            //process_horizontals();
             ghost_joins.clear();
 
             if (!process_intersections(top_y, active_edge_list, sorted_edge_list)) {
@@ -365,6 +364,7 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
                                          sorted_edge_list, rings, joins, ghost_joins, scanbeam,
                                          cliptype, subject_fill_type, clip_fill_type);
         }
+        return true;
     }
 }
 }
