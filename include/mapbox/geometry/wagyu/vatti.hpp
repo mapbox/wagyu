@@ -10,11 +10,11 @@
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
 #include <mapbox/geometry/wagyu/local_minimum_util.hpp>
 #include <mapbox/geometry/wagyu/process_horizontal.hpp>
+#include <mapbox/geometry/wagyu/process_horizontal.hpp>
 #include <mapbox/geometry/wagyu/ring.hpp>
 #include <mapbox/geometry/wagyu/ring_util.hpp>
 #include <mapbox/geometry/wagyu/sorted_edge_list.hpp>
 #include <mapbox/geometry/wagyu/util.hpp>
-#include <mapbox/geometry/wagyu/process_horizontal.hpp>
 
 namespace mapbox {
 namespace geometry {
@@ -417,7 +417,7 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
                                  subject_fill_type, clip_fill_type);
     while (pop_from_scanbeam(top_y, scanbeam) ||
            local_minima_pending(current_local_min, minima_list)) {
-        // process_horizontals();
+        process_horizontals(max_list, sorted_edge_list);
         ghost_joins.clear();
 
         if (!process_intersections(top_y, active_edge_list, sorted_edge_list, cliptype,

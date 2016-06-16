@@ -369,6 +369,12 @@ bool is_contributing(edge<T> const& edge,
         return true;
     }
 }
+
+template <typename T>
+edge_ptr<T> get_next_in_AEL(edge_ptr<T> e, horizontal_direction dir) {
+    return dir == left_to_right ? e->next_in_AEL : e->prev_in_AEL;
+}
+
 }
 }
 }
