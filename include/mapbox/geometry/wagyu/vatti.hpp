@@ -554,9 +554,7 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
                                      cliptype, subject_fill_type, clip_fill_type);
     }
 
-    for (size_t i = 0; i < rings.size(); ++i) {
-        ring_ptr<T> outrec = rings[i];
-
+    for (auto outrec : rings) {
         if (!outrec->points || outrec->is_open) {
             continue;
         }
