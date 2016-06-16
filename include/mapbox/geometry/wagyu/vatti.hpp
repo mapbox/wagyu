@@ -401,6 +401,114 @@ void process_horizontals(maxima_list<T>& maxima,
     maxima.clear();
 }
 
+template<typename T>
+ring<T> *get_ring(ring_list<T> &rings, int index) {
+    ring<T> *r = rings[index];
+    while (r != rings[r->index]) {
+        r = rings[r->index];
+    }
+    return r;
+}
+
+template<typename T>
+ring<T> *create_ring(ring_list<T> &rings) {
+    ring<T> *r = new ring<T>;
+    r->is_hole = false;
+    r->is_open = false;
+    r->first_left = 0;
+    r->points = 0;
+    r->bottom_point = 0;
+    r->poly_node = 0;
+    rings.push_back(r);
+    r->index = rings.size() - 1;
+    return r;
+}
+
+template<typename T>
+int point_count(point<T> *points) {
+    if (!points) {
+        return 0;
+    }
+
+    int n = 0;
+    point<T> *p = points;
+    do {
+        n++;
+        p = p->next;
+    } while (p != points);
+
+    return n;
+}
+
+template<typename T>
+void join_common_edges(join_list<T> &joins, ring_list<T> &rings) {
+    for (size_t i = 0; i < joins.size(); i++) {
+        join<T>* join = &joins[i];
+
+        ring<T> *ring1 = get_ring(rings, join->point1->index);
+        ring<T> *ring2 = get_ring(rings, join->point2->index);
+
+        if (!ring1->points || !ring2->points) {
+            continue;
+        }
+        if (ring1->is_open || ring2->is_open) {
+            continue;
+        }
+
+        // Get the polygon fragment with the corringt hole state (FirstLeft)
+        // before calling join_points().
+
+        ring<T> *hole_state_ring;
+        if (ring1 == ring2) {
+            hole_state_ring = ring1;
+        } else if (ring1_right_of_ring2(ring1, ring2)) {
+            hole_state_ring = ring2;
+        } else if (ring1_right_of_ring2(ring2, ring1)) {
+            hole_state_ring = ring1;
+        } else {
+            hole_state_ring = get_lowermost_ring(ring1, ring2);
+        }
+
+// XXX ENF left off here
+#if 0
+        if (!join_points(join, ring1, ring2)) {
+            continue;
+        }
+#endif
+
+        if (ring1 == ring2) {
+            // Instead of joining two polygons, we have created a new one
+            // by splitting one polygon into two.
+
+            ring1->bottom_point = 0;
+            ring2 = create_ring(rings);
+
+            if (point_count(join->point1) > point_count(join->point2)) {
+                ring1->points = join->point1;
+                ring2->points = join->point2;
+            } else {
+                ring1->points = join->point2;
+                ring2->points = join->point1;
+            }
+ 
+            // Update indices in points in ring2
+// XXX ENF left off here
+#if 0
+            update_out_point_indices(*ring2);
+
+            if (poly2_contains_poly1(ring2->points, ring1->points)) {
+                // ring 1 contains ring 2
+
+                ring2->is_hole = !ring1->is_hole;
+                ring2->first_left = ring1;
+
+                // XXX ENF left off here
+            }
+#endif
+        }
+    }
+}
+
 template <typename T>
 bool execute_vatti(local_minimum_list<T>& minima_list,
                    ring_list<T> rings,
@@ -457,6 +565,10 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         if (outrec->is_hole == (area(*outrec) > 0)) {
             reverse_ring(outrec->points);
         }
+    }
+
+    if (!joins.empty()) {
+        join_common_edges(joins, rings);
     }
 
     return true;
