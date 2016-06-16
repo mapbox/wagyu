@@ -27,7 +27,6 @@ using local_minimum_list = std::vector<local_minimum<T>>;
 
 template <typename T>
 using local_minimum_itr = typename local_minimum_list<T>::iterator;
-
 }
 }
 }

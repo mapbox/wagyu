@@ -26,6 +26,11 @@ bool pop_local_minima(T Y,
     return true;
 }
 
+template <typename T>
+bool local_minima_pending(local_minimum_itr<T>& current_local_minimum,
+                          local_minimum_list<T>& minima_list) {
+    return (current_local_minimum != minima_list.end());
+}
 }
 }
 }

@@ -49,7 +49,6 @@ enum end_type {
 
 template <typename T>
 using maxima_list = std::list<T>;
-
 }
 }
 }
