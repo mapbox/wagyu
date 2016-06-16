@@ -32,19 +32,24 @@ void get_horizontal_direction(edge_ptr<T> edge, horizontal_direction& dir, T& le
     if (edge->bot.x < edge->top.x) {
         left = edge->bot.x;
         right = edge->top.x;
-        dir = horizontal_direction::left_to_right;
+        dir = left_to_right; 
     } else {
         left = edge->top.x;
         right = edge->bot.x;
-        dir = horizontal_direction::right_to_left;
+        dir = right_to_left;
     }
 }
 
 template <typename T>
-void process_horizontal(edge_ptr<T> edge,
-                        maxima_list<T>& maxima,
-                        edge_ptr<T>& sorted_edge_list,
-                        edge_ptr<T>& active_edge_list) {
+void process_horizontal(edge_ptr<T> edge, 
+    maxima_list<T>& maxima, 
+    edge_ptr<T>& sorted_edge_list,
+    edge_ptr<T>& active_edge_list,
+    join_list<T>& joins,
+    join_list<T>& ghost_joins,
+    ring_list<T> rings,
+    scanbeam_list<T>& scanbeam) 
+{
     T left;
     T right;
     horizontal_direction dir;
@@ -67,17 +72,15 @@ void process_horizontal(edge_ptr<T> edge,
     typename maxima_list<T>::const_reverse_iterator max_reverse_iter;
 
     if (!maxima.empty()) {
-        // get the first maxima in range (X) ...
-        if (dir == horizontal_direction::left_to_right) {
+        //get the first maxima in range (X) ...
+        if (dir == left_to_right) {
             max_iter = maxima.begin();
-            while (max_iter != maxima.end() && *max_iter <= edge->bot.x)
-                max_iter++;
+            while (max_iter != maxima.end() && *max_iter <= edge->bot.x) ++max_iter;
             if (max_iter != maxima.end() && *max_iter >= last_horizontal->top.x)
                 max_iter = maxima.end();
         } else {
             max_reverse_iter = maxima.rbegin();
-            while (max_reverse_iter != maxima.rend() && *max_reverse_iter > edge->bot.x)
-                max_reverse_iter++;
+            while (max_reverse_iter != maxima.rend() && *max_reverse_iter > edge->bot.x) ++max_reverse_iter;
             if (max_reverse_iter != maxima.rend() && *max_reverse_iter <= last_horizontal->top.x)
                 max_reverse_iter = maxima.rend();
         }
@@ -95,26 +98,24 @@ void process_horizontal(edge_ptr<T> edge,
             // polygons) wherever maxima touch these horizontal edges. This helps
             //'simplifying' polygons (ie if the Simplify property is set).
             if (!maxima.empty()) {
-                if (dir == horizontal_direction::left_to_right) {
+                if (dir == left_to_right) {
                     while (max_iter != maxima.end() && *max_iter < e->curr.x) {
                         if (edge->index >= 0 && !is_open) {
                             add_point(edge, mapbox::geometry::point<T>(*max_iter, edge->bot.y), rings);
                         }
-                        max_iter++;
+                        ++max_iter;
                     }
                 } else {
                     while (max_reverse_iter != maxima.rend() && *max_reverse_iter > e->curr.x) {
                         if (edge->index >= 0 && !is_open)
-                            add_point(edge,
-                                      mapbox::geometry::point<T>(*max_reverse_iter, edge->bot.y));
-                        max_reverse_iter++;
+                            add_point(edge, mapbox::geometry::point<T>(*max_reverse_iter, edge->bot.y));
+                        ++max_reverse_iter;
                     }
                 }
             };
 
-            if ((dir == horizontal_direct::left_to_right && e->curr.x > right) ||
-                (dir == horizontal_direct::right_to_left && e->curr.x < left))
-                break;
+            if ((dir == left_to_right && e->curr.x > right) ||
+                (dir == right_to_left && e->curr.x < left)) break;
 
             // Also break if we've got to the end of an intermediate horizontal edge ...
             // nb: Smaller Dx's are to the right of larger Dx's ABOVE the horizontal.
@@ -131,30 +132,28 @@ void process_horizontal(edge_ptr<T> edge,
                         horizontal_segments_overlap(edge->bot.x, edge->top.x,
                                                     e_next_horizontal->bot.x,
                                                     e_next_horizontal->top.x)) {
-                        point_ptr<T> p2 = get_last_point(e_next_horizontal, rings);
-                        AddJoin(p2, p1, e_next_horizontal->top);
+                        point_ptr<T> p2 = GetLastOutPt(e_next_horizontal);
+                        joins.emplace_back(p2, p1, e_next_horizontal->top);
                     }
                     e_next_horizontal = e_next_horizontal->next_in_SEL;
                 }
-                AddGhostJoin(p1, edge->bot);
+                ghost_joins.emplace_back(p1, nullptr, edge->bot);
             }
 
             // OK, so far we're still in range of the horizontal Edge  but make sure
             // we're at the last of consec. horizontals when matching with eMaxPair
             if (e == edge_max_pair && is_last_horizontal) {
                 if (edge->index >= 0)
-                    AddLocalMaxPoly(edge, edge_max_pair, edge->top);
+                    add_local_maximum_point(edge, edge_max_pair, edge->top, rings, active_edge_list);
                 delete_from_AEL(edge);
                 delete_from_AEL(edge_max_pair);
                 return;
             }
-
-            if (dir == horizontal_direction::left_to_right) {
-                point<T> pt = { e->curr.x, edge->curr.y };
-                IntersectEdges(edge, e, pt);
+            
+            if (dir == left_to_right) {
+                intersect_edges(edge, e, mapbox::geometry::point<T>(e->curr.x, edge->curr.y));
             } else {
-                point<T> pt = { e->curr.x, edge->curr.y };
-                IntersectEdges(e, edge, pt);
+                intersect_edges(e, edge, mapbox::geometry::point<T>(e->curr.x, edge->curr.y));
             }
 
             edge_ptr<T> e_next = get_next_in_AEL(e, dir);
@@ -166,9 +165,8 @@ void process_horizontal(edge_ptr<T> edge,
         if (!edge->next_in_LML || !is_horizontal(edge->next_in_LML))
             break;
 
-        UpdateEdgeIntoAEL(edge);
-        if (edge->index >= 0)
-            AddOutPt(edge, edge->bot);
+        update_edge_into_AEL(edge, active_edge_list, scanbeam);
+        if (edge->index >= 0) AddOutPt(edge, edge->bot);
         get_horizontal_direction(edge, dir, left, right);
     } // end for (;;)
 }

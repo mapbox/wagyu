@@ -16,7 +16,7 @@ TEST_CASE("get_horizontal_direction finds edge direction") {
 
     process_horizontal(&e1, dir, left, right);
 
-    CHECK(dir == horizontal_direction::left_to_right);
+    CHECK(dir == left_to_right);
     CHECK(left == p1.x);
     CHECK(right == p2.x);
 
@@ -25,7 +25,7 @@ TEST_CASE("get_horizontal_direction finds edge direction") {
 
     process_horizontal(&e2, dir, left, right);
 
-    CHECK(dir == horizontal_direction::right_to_left);
+    CHECK(dir == right_to_left);
     CHECK(left == p2.x);
     CHECK(right == p1.x);
 };
