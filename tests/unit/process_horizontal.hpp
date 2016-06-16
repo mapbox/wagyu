@@ -14,7 +14,7 @@ TEST_CASE("get_horizontal_direction finds edge direction") {
     T right;
     horizontal_direction dir;
 
-    process_horizontal(e1, dir, left, right);
+    process_horizontal(&e1, dir, left, right);
 
     CHECK(dir == horizontal_direction::left_to_right);
     CHECK(left == p1.x);
@@ -23,7 +23,7 @@ TEST_CASE("get_horizontal_direction finds edge direction") {
     // flip horizontal direction
     edge<T> e2(p2, p1, polygon_type_subject);
 
-    process_horizontal(e2, dir, left, right);
+    process_horizontal(&e2, dir, left, right);
 
     CHECK(dir == horizontal_direction::right_to_left);
     CHECK(left == p2.x);

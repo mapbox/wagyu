@@ -14,6 +14,7 @@
 #include <mapbox/geometry/wagyu/ring_util.hpp>
 #include <mapbox/geometry/wagyu/sorted_edge_list.hpp>
 #include <mapbox/geometry/wagyu/util.hpp>
+#include <mapbox/geometry/wagyu/process_horizontal.hpp>
 
 namespace mapbox {
 namespace geometry {
