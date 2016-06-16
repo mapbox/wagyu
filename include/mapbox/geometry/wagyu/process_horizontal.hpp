@@ -15,6 +15,19 @@ namespace geometry {
 namespace wagyu {
 
 template <typename T>
+point_ptr<T> get_last_point(edge_ptr<T> e, ring_list<T> const& rings) {
+    ring_ptr<T> outRec = rings[e->OutIdx];
+    if (e->side == edge_left)
+    {
+        return outRec->points;
+    }
+    else
+    {
+        return outRec->points->prev;
+    }
+}
+
+template <typename T>
 void get_horizontal_direction(edge_ptr<T> edge, horizontal_direction& dir, T& left, T& right) {
     if (edge->bot.x < edge->top.x) {
         left = edge->bot.x;
@@ -118,7 +131,7 @@ void process_horizontal(edge_ptr<T> edge,
                         horizontal_segments_overlap(edge->bot.x, edge->top.x,
                                                     e_next_horizontal->bot.x,
                                                     e_next_horizontal->top.x)) {
-                        point_ptr<T> p2 = GetLastOutPt(e_next_horizontal);
+                        point_ptr<T> p2 = get_last_point(e_next_horizontal, rings);
                         AddJoin(p2, p1, e_next_horizontal->top);
                     }
                     e_next_horizontal = e_next_horizontal->next_in_SEL;
@@ -144,7 +157,7 @@ void process_horizontal(edge_ptr<T> edge,
                 IntersectEdges(e, edge, pt);
             }
 
-            edge_ptr<T> e_next = GetNextInAEL(e, dir);
+            edge_ptr<T> e_next = get_next_in_AEL(e, dir);
             swap_positions_in_AEL(edge, e, active_edge_list);
             e = e_next;
         } // end while (e)
