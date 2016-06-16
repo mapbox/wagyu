@@ -139,8 +139,8 @@ void update_edge_into_AEL(edge_ptr<T>& e, edge_ptr<T>& active_edges, scanbeam_li
     }
 
     e->next_in_LML->index = e->index;
-    edge<T>* Aelprev = e->prev_in_AEL;
-    edge<T>* Aelnext = e->next_in_AEL;
+    edge_ptr<T> Aelprev = e->prev_in_AEL;
+    edge_ptr<T> Aelnext = e->next_in_AEL;
     if (Aelprev) {
         Aelprev->next_in_AEL = e->next_in_LML;
     } else {
