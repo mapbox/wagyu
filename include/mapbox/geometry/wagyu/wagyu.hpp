@@ -53,7 +53,6 @@ public:
           m_Joins(),
           m_GhostJoins(),
           m_IntersectList(),
-          m_Maxima(),
           m_ActiveEdges(nullptr),
           m_SortedEdges(nullptr),
           m_ClipFillType(fill_type_even_odd),
