@@ -351,7 +351,7 @@ ring_ptr<T> get_lowermost_ring(ring_ptr<T> ring1, ring_ptr<T> ring2) {
     // Work out which polygon fragment has the correct hole state
 
     if (!ring1->bottom_point) {
-        ring1->bottom_point= get_bottom_point(ring1->points);
+        ring1->bottom_point = get_bottom_point(ring1->points);
     }
     if (!ring2->bottom_point) {
         ring2->bottom_point = get_bottom_point(ring2->points);

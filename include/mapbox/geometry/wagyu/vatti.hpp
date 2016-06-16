@@ -300,8 +300,8 @@ void process_edges_at_top_of_scanbeam(T top_y,
         ++lm;
     }
 
-    process_horizontals(maxima, active_edge_list, sorted_edge_list, cliptype, 
-                        subject_fill_type, clip_fill_type, rings, joins, ghost_joins, scanbeam);
+    process_horizontals(maxima, active_edge_list, sorted_edge_list, cliptype, subject_fill_type,
+                        clip_fill_type, rings, joins, ghost_joins, scanbeam);
 
     if (!next_maxima.empty()) {
         maxima.insert(maxima.end(), next_maxima.begin(), next_maxima.end());
@@ -381,38 +381,37 @@ bool pop_from_scanbeam(T& Y, scanbeam_list<T>& scanbeam) {
 }
 
 template <typename T>
-void process_horizontals(maxima_list<T>& maxima, 
-    edge_ptr<T>& active_edge_list,
-    edge_ptr<T>& sorted_edge_list,
-    clip_type cliptype,
-    fill_type subject_fill_type,
-    fill_type clip_fill_type,
-    ring_list<T> rings,
-    join_list<T>& joins,
-    join_list<T>& ghost_joins,
-    scanbeam_list<T>& scanbeam
-) {
+void process_horizontals(maxima_list<T>& maxima,
+                         edge_ptr<T>& active_edge_list,
+                         edge_ptr<T>& sorted_edge_list,
+                         clip_type cliptype,
+                         fill_type subject_fill_type,
+                         fill_type clip_fill_type,
+                         ring_list<T> rings,
+                         join_list<T>& joins,
+                         join_list<T>& ghost_joins,
+                         scanbeam_list<T>& scanbeam) {
     maxima.sort();
     edge_ptr<T> horz_edge;
     while (pop_edge_from_SEL(horz_edge, sorted_edge_list)) {
-        process_horizontal(horz_edge, maxima, active_edge_list, sorted_edge_list, cliptype, 
-                            subject_fill_type, clip_fill_type, rings, joins, ghost_joins, scanbeam);
+        process_horizontal(horz_edge, maxima, active_edge_list, sorted_edge_list, cliptype,
+                           subject_fill_type, clip_fill_type, rings, joins, ghost_joins, scanbeam);
     }
     maxima.clear();
 }
 
-template<typename T>
-ring<T> *get_ring(ring_list<T> &rings, int index) {
-    ring<T> *r = rings[index];
+template <typename T>
+ring<T>* get_ring(ring_list<T>& rings, int index) {
+    ring<T>* r = rings[index];
     while (r != rings[r->index]) {
         r = rings[r->index];
     }
     return r;
 }
 
-template<typename T>
-ring<T> *create_ring(ring_list<T> &rings) {
-    ring<T> *r = new ring<T>;
+template <typename T>
+ring<T>* create_ring(ring_list<T>& rings) {
+    ring<T>* r = new ring<T>;
     r->is_hole = false;
     r->is_open = false;
     r->first_left = 0;
@@ -424,14 +423,14 @@ ring<T> *create_ring(ring_list<T> &rings) {
     return r;
 }
 
-template<typename T>
-int point_count(point<T> *points) {
+template <typename T>
+int point_count(point<T>* points) {
     if (!points) {
         return 0;
     }
 
     int n = 0;
-    point<T> *p = points;
+    point<T>* p = points;
     do {
         n++;
         p = p->next;
@@ -440,13 +439,13 @@ int point_count(point<T> *points) {
     return n;
 }
 
-template<typename T>
-void join_common_edges(join_list<T> &joins, ring_list<T> &rings) {
+template <typename T>
+void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
     for (size_t i = 0; i < joins.size(); i++) {
         join<T>* join = &joins[i];
 
-        ring<T> *ring1 = get_ring(rings, join->point1->index);
-        ring<T> *ring2 = get_ring(rings, join->point2->index);
+        ring<T>* ring1 = get_ring(rings, join->point1->index);
+        ring<T>* ring2 = get_ring(rings, join->point2->index);
 
         if (!ring1->points || !ring2->points) {
             continue;
@@ -458,7 +457,7 @@ void join_common_edges(join_list<T> &joins, ring_list<T> &rings) {
         // Get the polygon fragment with the corringt hole state (FirstLeft)
         // before calling join_points().
 
-        ring<T> *hole_state_ring;
+        ring<T>* hole_state_ring;
         if (ring1 == ring2) {
             hole_state_ring = ring1;
         } else if (ring1_right_of_ring2(ring1, ring2)) {
@@ -490,8 +489,8 @@ void join_common_edges(join_list<T> &joins, ring_list<T> &rings) {
                 ring1->points = join->point2;
                 ring2->points = join->point1;
             }
- 
-            // Update indices in points in ring2
+
+// Update indices in points in ring2
 // XXX ENF left off here
 #if 0
             update_out_point_indices(*ring2);
@@ -546,8 +545,8 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
             return false;
         }
         process_edges_at_top_of_scanbeam(top_y, active_edge_list, sorted_edge_list, scanbeam,
-                                         max_list, minima_list, current_local_min, rings, joins, ghost_joins,
-                                         cliptype, subject_fill_type, clip_fill_type);
+                                         max_list, minima_list, current_local_min, rings, joins,
+                                         ghost_joins, cliptype, subject_fill_type, clip_fill_type);
         bot_y = top_y;
         insert_local_minima_into_AEL(bot_y, current_local_min, minima_list, active_edge_list,
                                      sorted_edge_list, rings, joins, ghost_joins, scanbeam,
