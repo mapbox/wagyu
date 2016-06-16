@@ -46,6 +46,7 @@ bool pop_local_minima(T Y,
     ++current_local_minimum;
     return true;
 }
+
 }
 }
 }

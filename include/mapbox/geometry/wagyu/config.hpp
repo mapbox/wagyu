@@ -7,6 +7,7 @@
 namespace mapbox {
 namespace geometry {
 namespace wagyu {
+
 enum clip_type : std::uint8_t {
     clip_type_intersection = 0,
     clip_type_union,
@@ -43,6 +44,10 @@ enum end_type {
     end_type_open_square,
     end_type_open_round
 };
+
+template <typename T>
+using maxima_list = std::list<T>;
+
 }
 }
 }

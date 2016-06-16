@@ -10,6 +10,7 @@
 namespace mapbox {
 namespace geometry {
 namespace wagyu {
+
 struct intersect_list_sorter {
     template <typename T>
     inline bool intersect_list_sort(intersect_node_ptr<T> node1, intersect_node_ptr<T> node2) {
@@ -54,24 +55,6 @@ bool fixup_intersection_order(edge_ptr<T> active_edge_list,
         swap_positions_in_SEL(intersects[i]->edge1, intersects[i]->edge2);
     }
     return true;
-}
-
-template <typename T>
-bool process_intersections(T top_y, edge_ptr<T> active_edges, intersect_list<T>& intersects) {
-    if (!active_edges) {
-        return true;
-    }
-
-    build_intersect_list(top_y);
-
-    size_t s = intersects.size();
-    if (s == 0) {
-        return true;
-    } else if (s == 1 || fixup_intersection_order(intersects)) {
-        return true;
-    } else {
-        return false;
-    }
 }
 
 template <typename T>
@@ -288,6 +271,27 @@ void intersect_edges(edge_ptr<T> e1,
         }
     }
 }
+
+template <typename T>
+bool process_intersections(T top_y, edge_ptr<T> active_edge_list, edge_ptr<T>& sorted_edge_list) {
+    if (!active_edges) {
+        return true;
+    }
+    intersect_list<T> intersects;
+
+    build_intersect_list(top_y);
+
+    size_t s = intersects.size();
+    if (s == 0) {
+        return true;
+    } else if (s == 1 || fixup_intersection_order(active_edge_list, sorted_edge_list, intersects) {
+        process_intersect_list();
+        return true;
+    } else {
+        return false;
+    }
+}
+
 }
 }
 }

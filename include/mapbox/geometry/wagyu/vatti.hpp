@@ -154,6 +154,7 @@ void insert_local_minima_into_AEL(T const botY,
 template <typename T>
 void process_edges_at_top_of_scanbeam(T top_y,
                                       edge_ptr<T> active_edges,
+<<<<<<< Updated upstream
                                       scanbeam_list<T>& scanbeam,
                                       std::list<T>& maxima,
                                       local_minimum_list<T>& minima_list,
@@ -161,6 +162,15 @@ void process_edges_at_top_of_scanbeam(T top_y,
                                       ring_list<T>& rings,
                                       join_list<T>& joins) {
     std::list<T> next_maxima;
+=======
+                                      scanbeam_list<T> & scanbeam,
+                                      maxima_list<T>& maxima,
+                                      local_minimum_list<T>& minima_list,
+                                      local_minimum_itr<T>& current_lm,
+                                      ring_list<T> & rings,
+                                      join_list<T> & joins) {
+    maxima_list<T> next_maxima;
+>>>>>>> Stashed changes
     edge_ptr<T> e = active_edges;
     while (e) {
         // 1. Process maxima, treating them as if they are "bent" horizontal edges,
@@ -271,8 +281,116 @@ void process_edges_at_top_of_scanbeam(T top_y,
     }
 }
 
-bool execute_vatti() {
+template <typename T>
+void setup_scanbeam(local_minimum_list<T> & minima_list, scanbeam_list<T> & scanbeam) {
+    if (minima_list.empty())
+    {
+        return; // ie nothing to process
+    }
+    std::stable_sort(minima_list.begin(), minima_list.end(), local_minimum_sorter());
+
+    // reset all edges ...
+    for (auto lm = minima_list.begin(); lm != minima_list.end(); ++lm) {
+        scanbeam.push(lm->y);
+        edge_ptr<T> e = lm->left_bound;
+        if (e) {
+            e->curr = e->bot;
+            e->side = edge_left;
+            e->index = EDGE_UNASSIGNED;
+        }
+
+        e = lm->right_bound;
+        if (e) {
+            e->curr = e->bot;
+            e->side = edge_right;
+            e->index = EDGE_UNASSIGNED;
+        }
+    }
 }
+
+template <typename T>
+bool pop_from_scanbeam(T & Y, scanbeam_list<T> & scanbeam) {
+    if (scanbeam.empty())
+    {
+        return false;
+    }
+    Y = scanbeam.top();
+    scanbeam.pop();
+    while (!scanbeam.empty() && Y == scanbeam.top()) {
+        scanbeam.pop();
+    } // Pop duplicates.
+    return true;
+}
+
+template <typename T>
+bool execute_vatti(local_minimum_list<T> & minima_list,
+                   ring_list<T> rings,
+                   clip_type cliptype,
+                   fill_type subject_fill_type,
+                   fill_type clip_fill_type) {
+{
+    using value_type = T;
+    edge_ptr<value_type> active_edge_list = nullptr;
+    edge_ptr<value_type> sorted_edge_list = nullptr;
+    scanbeam_list<value_type> scanbeam;
+    maxima_list max_list;
+    value_type bot_y;
+    value_type top_y;
+    join_list<T> joins;
+    join_list<T> ghost_joins;
+
+    setup_scanbeam(minima_list, scanbeam);
+    
+    local_minimum_itr<T> current_local_min = minima_list.begin();
+    
+    if (!pop_from_scanbeam(bot_y, scanbeam))
+    {
+        return false;
+    }
+    insert_local_minima_into_AEL(bot_y,
+                                 current_local_min,
+                                 minima_list,
+                                 active_edge_list,
+                                 sorted_edge_list,
+                                 rings,
+                                 joins,
+                                 ghost_joins,
+                                 scanbeam,
+                                 cliptype,
+                                 subject_fill_type,
+                                 clip_fill_type);
+    while (pop_from_scanbeam(top_y, scanbeam) || LocalMinimaPending()) {
+        ProcessHorizontals();
+        ghost_joins.clear();
+
+        if (!process_intersections(top_y, active_edge_list, sorted_edge_list))
+        {
+            return false;
+        }
+        process_edges_at_top_of_scanbeam(top_y,
+                                         active_edge_list,
+                                         scanbeam,
+                                         max_list,
+                                         minima_list,
+                                         current_local_min,
+                                         rings,
+                                         joins);
+        bot_y = top_y;
+        insert_local_minima_into_AEL(bot_y,
+                                     current_local_min,
+                                     minima_list,
+                                     active_edge_list,
+                                     sorted_edge_list,
+                                     rings,
+                                     joins,
+                                     ghost_joins,
+                                     scanbeam,
+                                     cliptype,
+                                     subject_fill_type,
+                                     clip_fill_type);
+    }
+}
+
 }
 }
 }
