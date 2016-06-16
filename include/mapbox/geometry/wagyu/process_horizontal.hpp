@@ -132,7 +132,7 @@ void process_horizontal(edge_ptr<T> edge,
                         horizontal_segments_overlap(edge->bot.x, edge->top.x,
                                                     e_next_horizontal->bot.x,
                                                     e_next_horizontal->top.x)) {
-                        point_ptr<T> p2 = GetLastOutPt(e_next_horizontal);
+                        point_ptr<T> p2 = get_last_point(e_next_horizontal, rings);
                         joins.emplace_back(p2, p1, e_next_horizontal->top);
                     }
                     e_next_horizontal = e_next_horizontal->next_in_SEL;
@@ -145,8 +145,8 @@ void process_horizontal(edge_ptr<T> edge,
             if (e == edge_max_pair && is_last_horizontal) {
                 if (edge->index >= 0)
                     add_local_maximum_point(edge, edge_max_pair, edge->top, rings, active_edge_list);
-                delete_from_AEL(edge);
-                delete_from_AEL(edge_max_pair);
+                delete_from_AEL(edge, active_edge_list);
+                delete_from_AEL(edge_max_pair, active_edge_list);
                 return;
             }
             
@@ -171,7 +171,7 @@ void process_horizontal(edge_ptr<T> edge,
     } // end for (;;)
 
     if (edge->index >= 0 && !p1) {
-        p1 = GetLastOutPt(edge);
+        p1 = get_last_point(edge, rings);
         edge_ptr<T> e_next_horizontal = sorted_edge_list;
         while (e_next_horizontal)
         {
@@ -183,7 +183,7 @@ void process_horizontal(edge_ptr<T> edge,
                     e_next_horizontal->top.X
                 )
             ) {
-                point_ptr<T> p2 = GetLastOutPt(e_next_horizontal);
+                point_ptr<T> p2 = get_last_point(e_next_horizontal, rings);
                 joins.emplace_back(p2, p1, e_next_horizontal->top);
             }
             e_next_horizontal = e_next_horizontal->next_in_SEL;
@@ -191,6 +191,57 @@ void process_horizontal(edge_ptr<T> edge,
         ghost_joins.emplace_back(p1, nullptr, edge->top);
     }
 
+    if (edge->next_in_LML) {
+        if(edge->index >= 0) {
+            p1 = add_point(edge, edge->top, rings);
+            //When StrictlySimple and 'edge' is being touched by another edge, then
+            //make sure both edges have a vertex here ...
+            if (m_StrictSimple) {  
+                edge_ptr<T> e_prev = edge->prev_in_AEL;
+                edge_ptr<T> e_next = edge->next_in_AEL;
+
+                if ((edge->winding_delta != 0) && e_prev && (e_prev->index >= 0) &&
+                  (e_prev->curr.x == edge->top.x) && (e_prev->winding_delta != 0))
+                {
+                  //IntPoint pt = horzEdge->Top;
+                  add_point(e_prev, edge->top, rings);
+                }
+                if ((edge->winding_delta != 0) && e_next && (e_next->index >= 0) &&
+                    (e_next->curr.x == edge->top.x) && (e_next->winding_delta != 0))
+                {
+                  //IntPoint pt = horzEdge->Top;
+                  AddOutPt(e_next, edge->top, rings);
+                }
+            }
+            update_edge_into_AEL(edge, active_edge_list, scanbeam);
+
+            if (edge->winding_delta == 0) return;
+
+            //nb: HorzEdge is no longer horizontal here
+            edge_ptr<T> e_prev = edge->prev_in_AEL;
+            edge_ptr<T> e_next = edge->next_in_AEL;
+
+            if (e_prev && e_prev->curr.x == edge->bot.x &&
+                e_prev->curr.y == edge->bot.y && e_prev->winding_delta != 0 &&
+                (e_prev->index >= 0 && e_prev->curr.y > e_prev->top.y &&
+                slopes_equal(*edge, *e_prev)))
+            {
+                point<T> p2 = add_point(e_prev, edge->bot, rings);
+                joins.emplace_back(p1, p2, edge->top);
+            }
+            else if (e_next && e_next->curr.x == edge->bot.x &&
+                e_next->curr.y == edge->bot.y && e_next->winding_delta != 0 &&
+                e_next->index >= 0 && e_next->curr.y > e_next->top.y &&
+                slopes_equal(*edge, *e_next))
+            {
+                point<T> p2 = add_point(e_next, edge->bot, rings);
+                joins.emplace_back(p1, p2, edge->top);
+            }
+        } else update_edge_into_AEL(edge, active_edge_list, scanbeam);
+    } else {
+        if (edge->index >= 0) add_point(edge, edge->top, rings);
+        delete_from_AEL(edge, active_edge_list);
+    }
 }
 }
 }
