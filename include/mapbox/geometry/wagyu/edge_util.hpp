@@ -32,8 +32,13 @@ template <typename T>
 inline void reverse_horizontal(edge<T>& e) {
     // swap horizontal edges' top and bottom x's so they follow the natural
     // progression of the bounds - ie so their xbots will align with the
-    // adjoining lower edge. [Helpful in the ProcessHorizontal() method.]
+    // adjoining lower edge. [Helpful in the process_horizontal() method.]
     std::swap(e.top.x, e.bot.x);
+}
+
+template <typename T>
+inline bool is_minima(edge_ptr<T> e) {
+    return e && (e->prev->next_in_LML != e) && (e->next->next_in_LML != e);
 }
 
 template <typename T>
@@ -634,7 +639,19 @@ edge_ptr<T> get_maxima_pair_ex(edge_ptr<T> e) {
         return 0;
     }
     return result;
+
+
+template <typename T>
+void process_horizontals(std::list<T>& maxima, edge_ptr<T>& sorted_edges_list) {
+    maxima.sort();
+    edge_ptr<T> horz_edge;
+    while (pop_edge_from_SEL(horz_edge, sorted_edges_list))
+    {
+        process_horizontal(horz_edge);
+    }
+    maxima.clear();
 }
+
 }
 }
 }
