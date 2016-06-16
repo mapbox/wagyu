@@ -84,15 +84,14 @@ void process_horizontal(edge_ptr<T> edge,
                 if (dir == horizontal_direction::left_to_right) {
                     while (max_iter != maxima.end() && *max_iter < e->curr.x) {
                         if (edge->index >= 0 && !is_open) {
-                            point<T> pt = {*max_iter, edge->bot.y};
-                            AddOutPt(edge, pt);
+                            add_point(edge, mapbox::geometry::point(*max_iter, edge->bot.y), rings);
                         }
                         max_iter++;
                     }
                 } else {
                     while (max_reverse_iter != maxima.rend() && *max_reverse_iter > e->curr.x) {
                         if (edge->index >= 0 && !is_open)
-                            AddOutPt(edge, IntPoint(*max_reverse_iter, edge->bot.y));
+                            add_point(edge, mapbox::geometry::point(*max_reverse_iter, edge->bot.y));
                         max_reverse_iter++;
                     }
                 }
@@ -108,7 +107,7 @@ void process_horizontal(edge_ptr<T> edge,
 
             //note: may be done multiple times
             if (edge->index >= 0 && !is_open) {
-                p1 = AddOutPt(edge, e->curr);
+                p1 = add_point(edge, e->curr, rings);
                 edge_ptr<T> e_next_horizontal = sorted_edge_list;
 
                 while (e_next_horizontal) {
