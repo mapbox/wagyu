@@ -158,7 +158,7 @@ void update_edge_into_AEL(edge_ptr<T>& e, edge_ptr<T>& active_edges, scanbeam_li
     e->prev_in_AEL = Aelprev;
     e->next_in_AEL = Aelnext;
     if (!is_horizontal(*e)) {
-        scanbeam.push_back(e->top.y);
+        scanbeam.push(e->top.y);
     }
 }
 
