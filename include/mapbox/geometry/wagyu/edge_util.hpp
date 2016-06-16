@@ -639,7 +639,7 @@ edge_ptr<T> get_maxima_pair_ex(edge_ptr<T> e) {
         return 0;
     }
     return result;
-
+}
 
 template <typename T>
 void process_horizontals(std::list<T>& maxima, edge_ptr<T>& sorted_edges_list) {
@@ -652,6 +652,20 @@ void process_horizontals(std::list<T>& maxima, edge_ptr<T>& sorted_edges_list) {
     maxima.clear();
 }
 
+
+template <typename T>
+void get_horizontal_direction(edge<T> edge, horizontal_direction& dir, T& left, T& right)
+{
+  if (edge.bot.x < edge.top.x) {
+    left = edge.bot.x;
+    right = edge.top.x;
+    dir = horizontal_direction::left_to_right; 
+  } else {
+    left = edge.top.x;
+    right = edge.bot.x;
+    dir = horizontal_direction::right_to_left;
+  }
+}
 }
 }
 }
