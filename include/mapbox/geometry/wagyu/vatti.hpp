@@ -401,8 +401,8 @@ void process_horizontals(maxima_list<T>& maxima,
 }
 
 template <typename T>
-ring<T>* get_ring(ring_list<T>& rings, int index) {
-    ring<T>* r = rings[index];
+ring_ptr<T> get_ring(ring_list<T>& rings, int index) {
+    ring_ptr<T> r = rings[index];
     while (r != rings[r->index]) {
         r = rings[r->index];
     }
@@ -410,8 +410,8 @@ ring<T>* get_ring(ring_list<T>& rings, int index) {
 }
 
 template <typename T>
-ring<T>* create_ring(ring_list<T>& rings) {
-    ring<T>* r = new ring<T>;
+ring_ptr<T> create_ring(ring_list<T>& rings) {
+    ring_ptr<T> r = new ring<T>;
     r->is_hole = false;
     r->is_open = false;
     r->first_left = 0;
@@ -424,13 +424,13 @@ ring<T>* create_ring(ring_list<T>& rings) {
 }
 
 template <typename T>
-int point_count(point<T>* points) {
+int point_count(point_ptr<T> points) {
     if (!points) {
         return 0;
     }
 
     int n = 0;
-    point<T>* p = points;
+    point_ptr<T> p = points;
     do {
         n++;
         p = p->next;
@@ -442,10 +442,10 @@ int point_count(point<T>* points) {
 template <typename T>
 void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
     for (size_t i = 0; i < joins.size(); i++) {
-        join<T>* join = &joins[i];
+        join_ptr<T> join = &joins[i];
 
-        ring<T>* ring1 = get_ring(rings, join->point1->index);
-        ring<T>* ring2 = get_ring(rings, join->point2->index);
+        ring_ptr<T> ring1 = get_ring(rings, join->point1->index);
+        ring_ptr<T> ring2 = get_ring(rings, join->point2->index);
 
         if (!ring1->points || !ring2->points) {
             continue;
@@ -457,7 +457,7 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
         // Get the polygon fragment with the corringt hole state (FirstLeft)
         // before calling join_points().
 
-        ring<T>* hole_state_ring;
+        ring_ptr<T> hole_state_ring;
         if (ring1 == ring2) {
             hole_state_ring = ring1;
         } else if (ring1_right_of_ring2(ring1, ring2)) {
@@ -554,7 +554,7 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
     }
 
     for (size_t i = 0; i < rings.size(); ++i) {
-        ring<T>* outrec = rings[i];
+        ring_ptr<T> outrec = rings[i];
 
         if (!outrec->points || outrec->is_open) {
             continue;
