@@ -30,7 +30,7 @@ struct join {
 };
 
 template <typename T>
-using join_list = std::vector<join_ptr<T>>;
+using join_list = std::vector<join<T>>;
 }
 }
 }

@@ -282,7 +282,7 @@ void process_edges_at_top_of_scanbeam(T top_y,
                     mapbox::geometry::point<T> pt = e->curr;
                     point_ptr<T> op = add_point(e_prev, pt, rings);
                     point_ptr<T> op2 = add_point(e, pt, rings);
-                    joins.push_back(new join<T>(op, op2, pt)); // strictly simple type 3 join
+                    joins.emplace_back(op, op2, pt); // strictly simple type 3 join
                 }
                 e_prev = e_prev->prev_in_AEL;
             }
@@ -326,13 +326,13 @@ void process_edges_at_top_of_scanbeam(T top_y,
                 slopes_equal(e->curr, e->top, e_prev->curr, e_prev->top) &&
                 (e->winding_delta != 0) && (e_prev->winding_delta != 0)) {
                 point_ptr<T> op2 = add_point(e_prev, e->bot, rings);
-                joins.push_back(new join<T>(op, op2, e->top));
+                joins.emplace_back(op, op2, e->top);
             } else if (e_next && e_next->curr.x == e->bot.x && e_next->curr.y == e->bot.y &&
                        e->next->index >= 0 && e_next->curr.y > e_next->top.y &&
                        slopes_equal(e->curr, e->top, e_next->curr, e_next->top) &&
                        (e->winding_delta != 0) && (e_next->winding_delta != 0)) {
                 point_ptr<T> op2 = add_point(e_next, e->bot, rings);
-                joins.push_back(new join<T>(op, op2, e->top));
+                joins.emplace_back(op, op2, e->top);
             }
         }
         e = e->next_in_AEL;
