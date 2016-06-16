@@ -7,6 +7,7 @@
 #include <mapbox/geometry/wagyu/intersect_util.hpp>
 #include <mapbox/geometry/wagyu/join.hpp>
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
+#include <mapbox/geometry/wagyu/local_minimum_util.hpp>
 #include <mapbox/geometry/wagyu/ring.hpp>
 #include <mapbox/geometry/wagyu/ring_util.hpp>
 #include <mapbox/geometry/wagyu/sorted_edge_list.hpp>
@@ -155,15 +156,6 @@ void insert_local_minima_into_AEL(T const botY,
 template <typename T>
 void process_edges_at_top_of_scanbeam(T top_y,
                                       edge_ptr<T> active_edges,
-<<<<<<< Updated upstream
-                                      scanbeam_list<T>& scanbeam,
-                                      std::list<T>& maxima,
-                                      local_minimum_list<T>& minima_list,
-                                      local_minimum_itr<T>& current_lm,
-                                      ring_list<T>& rings,
-                                      join_list<T>& joins) {
-    std::list<T> next_maxima;
-=======
                                       scanbeam_list<T> & scanbeam,
                                       maxima_list<T>& maxima,
                                       local_minimum_list<T>& minima_list,
@@ -171,7 +163,6 @@ void process_edges_at_top_of_scanbeam(T top_y,
                                       ring_list<T> & rings,
                                       join_list<T> & joins) {
     maxima_list<T> next_maxima;
->>>>>>> Stashed changes
     edge_ptr<T> e = active_edges;
     while (e) {
         // 1. Process maxima, treating them as if they are "bent" horizontal edges,
@@ -361,7 +352,7 @@ bool execute_vatti(local_minimum_list<T> & minima_list,
                                  subject_fill_type,
                                  clip_fill_type);
     while (pop_from_scanbeam(top_y, scanbeam) || LocalMinimaPending()) {
-        ProcessHorizontals();
+        process_horizontals();
         ghost_joins.clear();
 
         if (!process_intersections(top_y, active_edge_list, sorted_edge_list))
