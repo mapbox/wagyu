@@ -48,8 +48,9 @@ void process_horizontal(edge_ptr<T> edge,
     join_list<T>& joins,
     join_list<T>& ghost_joins,
     ring_list<T> rings,
-    scanbeam_list<T>& scanbeam) 
-{
+    scanbeam_list<T>& scanbeam
+) {
+    bool m_StrictSimple = true;
     T left;
     T right;
     horizontal_direction dir;
