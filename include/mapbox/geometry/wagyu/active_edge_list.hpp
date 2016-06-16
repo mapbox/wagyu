@@ -369,7 +369,6 @@ bool is_contributing(edge<T> const& edge,
         return true;
     }
 }
-
 }
 }
 }

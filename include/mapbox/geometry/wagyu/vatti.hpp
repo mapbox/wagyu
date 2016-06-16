@@ -154,12 +154,12 @@ void insert_local_minima_into_AEL(T const botY,
 template <typename T>
 void process_edges_at_top_of_scanbeam(T top_y,
                                       edge_ptr<T> active_edges,
-                                      scanbeam_list<T> & scanbeam,
+                                      scanbeam_list<T>& scanbeam,
                                       std::list<T>& maxima,
                                       local_minimum_list<T>& minima_list,
                                       local_minimum_itr<T>& current_lm,
-                                      ring_list<T> & rings,
-                                      join_list<T> & joins) {
+                                      ring_list<T>& rings,
+                                      join_list<T>& joins) {
     std::list<T> next_maxima;
     edge_ptr<T> e = active_edges;
     while (e) {
@@ -271,11 +271,8 @@ void process_edges_at_top_of_scanbeam(T top_y,
     }
 }
 
-bool execute_vatti()
-{
-
+bool execute_vatti() {
 }
-
 }
 }
 }
