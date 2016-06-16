@@ -22,7 +22,6 @@ template <typename T>
 class clipper {
 private:
     using value_type = T;
-    using maxima_list = std::list<value_type>;
 
     local_minimum_list<value_type> m_MinimaList;
     local_minimum_itr<value_type> m_CurrentLM;
@@ -32,7 +31,6 @@ private:
     join_list<value_type> m_Joins;
     join_list<value_type> m_GhostJoins;
     intersect_list<value_type> m_IntersectList;
-    maxima_list m_Maxima;
     clip_type m_ClipType;
     edge_ptr<value_type> m_ActiveEdges;
     edge_ptr<value_type> m_SortedEdges;
