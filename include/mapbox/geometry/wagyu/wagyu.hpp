@@ -133,7 +133,11 @@ public:
                  fill_type clip_fill_type) {
         solution.clear(); // put here to do nothing for now.
         ring_list<T> rings;
-        return execute_vatti(minima_list, rings, cliptype, subject_fill_type, clip_fill_type);
+        bool worked = execute_vatti(minima_list, rings, cliptype, subject_fill_type, clip_fill_type);
+        for (auto & ring : rings) {
+            delete ring;
+        }
+        return worked;
     }
 };
 }
