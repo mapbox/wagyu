@@ -5,8 +5,8 @@
 #include <mapbox/geometry/line_string.hpp>
 #include <mapbox/geometry/polygon.hpp>
 
-#include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/box.hpp>
+#include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/edge.hpp>
 #include <mapbox/geometry/wagyu/edge_util.hpp>
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
@@ -66,7 +66,6 @@ public:
 
     void clear() {
         minima_list.clear();
-        current_local_minima = minima_list.begin();
         m_edges.clear();
         has_open_paths = false;
     }
@@ -129,7 +128,7 @@ public:
     }
 
     bool execute(clip_type cliptype,
-                 mapbox::geometry::polygon<value_type> &solution,
+                 mapbox::geometry::polygon<value_type>& solution,
                  fill_type subject_fill_type,
                  fill_type clip_fill_type) {
         solution.clear(); // put here to do nothing for now.

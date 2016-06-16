@@ -172,13 +172,13 @@ void set_winding_count(edge<T>& edge,
     edge_ptr<value_type> e = edge.prev_in_AEL;
     // find the edge of the same polytype that immediately preceeds 'edge' in
     // AEL
-    while (e && ((e->PolyTyp != edge.PolyTyp) || (e->winding_delta == 0))) {
+    while (e && ((e->poly_type != edge.poly_type) || (e->winding_delta == 0))) {
         e = e->prev_in_AEL;
     }
     if (!e) {
         if (edge.winding_delta == 0) {
             fill_type pft =
-                (edge.PolyTyp == polygon_type_subject ? subject_fill_type : clip_fill_type);
+                (edge.poly_type == polygon_type_subject ? subject_fill_type : clip_fill_type);
             edge.winding_count = (pft == fill_type_negative ? -1 : 1);
         } else {
             edge.winding_count = edge.winding_delta;
@@ -196,7 +196,7 @@ void set_winding_count(edge<T>& edge,
             bool Inside = true;
             edge_ptr<value_type> e2 = e->prev_in_AEL;
             while (e2) {
-                if (e2->PolyTyp == e->PolyTyp && e2->winding_delta != 0) {
+                if (e2->poly_type == e->poly_type && e2->winding_delta != 0) {
                     Inside = !Inside;
                 }
                 e2 = e2->prev_in_AEL;
@@ -268,7 +268,7 @@ bool is_contributing(edge<T> const& edge,
                      fill_type clip_fill_type) {
     fill_type pft = subject_fill_type;
     fill_type pft2 = clip_fill_type;
-    if (edge.PolyTyp != polygon_type_subject) {
+    if (edge.poly_type != polygon_type_subject) {
         pft = clip_fill_type;
         pft2 = subject_fill_type;
     }
@@ -324,7 +324,7 @@ bool is_contributing(edge<T> const& edge,
         }
         break;
     case clip_type_difference:
-        if (edge.PolyTyp == polygon_type_subject) {
+        if (edge.poly_type == polygon_type_subject) {
             switch (pft2) {
             case fill_type_even_odd:
             case fill_type_non_zero:

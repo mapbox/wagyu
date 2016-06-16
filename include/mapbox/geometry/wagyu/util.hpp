@@ -325,7 +325,7 @@ template <typename T>
 bool is_even_odd_alt_fill_type(edge<T> const& edge,
                                fill_type subject_fill_type,
                                fill_type clip_fill_type) {
-    if (edge.PolyTyp == polygon_type_subject) {
+    if (edge.poly_type == polygon_type_subject) {
         return clip_fill_type == fill_type_even_odd;
     } else {
         return subject_fill_type == fill_type_even_odd;

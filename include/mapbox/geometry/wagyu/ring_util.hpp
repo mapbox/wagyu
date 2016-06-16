@@ -226,7 +226,7 @@ ring_ptr<T> get_lower_most_ring(ring_ptr<T> outRec1, ring_ptr<T> outRec2) {
 template <typename T>
 bool ring1_right_of_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2) {
     do {
-        ring1 = ring1->FirstLeft;
+        ring1 = ring1->first_left;
         if (ring1 == ring2) {
             return true;
         }

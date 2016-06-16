@@ -1,8 +1,11 @@
 #pragma once
 
+#include <mapbox/geometry/wagyu/active_edge_list.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/edge_util.hpp>
 #include <mapbox/geometry/wagyu/intersect.hpp>
+#include <mapbox/geometry/wagyu/intersect_point.hpp>
+#include <mapbox/geometry/wagyu/join.hpp>
 #include <mapbox/geometry/wagyu/ring_util.hpp>
 #include <mapbox/geometry/wagyu/sorted_edge_list.hpp>
 #include <mapbox/geometry/wagyu/util.hpp>
@@ -11,14 +14,14 @@ namespace mapbox {
 namespace geometry {
 namespace wagyu {
 
+template <typename T>
 struct intersect_list_sorter {
-    template <typename T>
-    inline bool intersect_list_sort(intersect_node_ptr<T> node1, intersect_node_ptr<T> node2) {
-        if (node2->pt.y != node1->pt.y) {
-            return node2->pt.y < node1->pt.y;
+    inline bool operator()(intersect_node<T> const& node1, intersect_node<T> const& node2) {
+        if (node2.pt.y != node1.pt.y) {
+            return node2.pt.y < node1.pt.y;
         } else {
-            return (node2->edge1->winding_count2 + node2->edge2->winding_count2) >
-                   (node1->edge1->winding_count2 + node1->edge2->winding_count2);
+            return (node2.edge1->winding_count2 + node2.edge2->winding_count2) >
+                   (node1.edge1->winding_count2 + node1.edge2->winding_count2);
         }
     }
 };
@@ -37,13 +40,13 @@ bool fixup_intersection_order(edge_ptr<T> active_edge_list,
     // so reorder the intersections to ensure this if necessary.
 
     copy_AEL_to_SEL(active_edge_list, sorted_edge_list);
-    std::stable_sort(intersects.begin(), intersects.end(), intersect_list_sorter());
+    std::stable_sort(intersects.begin(), intersects.end(), intersect_list_sorter<T>());
 
     size_t n = intersects.size();
     for (size_t i = 0; i < n; ++i) {
-        if (!edges_adjacent(*intersects[i])) {
+        if (!edges_adjacent(intersects[i])) {
             size_t j = i + 1;
-            while (j < n && !edges_adjacent(*intersects[j])) {
+            while (j < n && !edges_adjacent(intersects[j])) {
                 j++;
             }
             if (j == n) {
@@ -52,7 +55,7 @@ bool fixup_intersection_order(edge_ptr<T> active_edge_list,
             }
             std::swap(intersects[i], intersects[j]);
         }
-        swap_positions_in_SEL(intersects[i]->edge1, intersects[i]->edge2);
+        swap_positions_in_SEL(intersects[i].edge1, intersects[i].edge2, sorted_edge_list);
     }
     return true;
 }
@@ -60,7 +63,7 @@ bool fixup_intersection_order(edge_ptr<T> active_edge_list,
 template <typename T>
 void intersect_edges(edge_ptr<T> e1,
                      edge_ptr<T> e2,
-                     mapbox::geometry::point<T>& pt,
+                     mapbox::geometry::point<T> const& pt,
                      clip_type cliptype,
                      fill_type subject_fill_type,
                      fill_type clip_fill_type,
@@ -172,8 +175,7 @@ void intersect_edges(edge_ptr<T> e1,
         e1Wc = -e1->winding_count;
         break;
     case fill_type_even_odd:
-    case:
-    fill_type_non_zero:
+    case fill_type_non_zero:
     default:
         e1Wc = std::abs(e1->winding_count);
     }
@@ -185,16 +187,15 @@ void intersect_edges(edge_ptr<T> e1,
         e2Wc = -e2->winding_count;
         break;
     case fill_type_even_odd:
-    case:
-    fill_type_non_zero:
+    case fill_type_non_zero:
     default:
         e2Wc = std::abs(e2->winding_count);
     }
 
     if (e1Contributing && e2Contributing) {
         if ((e1Wc != 0 && e1Wc != 1) || (e2Wc != 0 && e2Wc != 1) ||
-            (e1->poly_type != e2->poly_type && cliptype != clip_type_xor)) {
-            add_local_max_point(e1, e2, pt, rings, active_edge_list);
+            (e1->poly_type != e2->poly_type && cliptype != clip_type_x_or)) {
+            add_local_maximum_point(e1, e2, pt, rings, active_edge_list);
         } else {
             add_point(e1, pt, rings);
             add_point(e2, pt, rings);
@@ -263,7 +264,7 @@ void intersect_edges(edge_ptr<T> e1,
                     add_local_minimum_point(e1, e2, pt, rings, joins);
                 }
                 break;
-            case clip_type_xor:
+            case clip_type_x_or:
                 add_local_minimum_point(e1, e2, pt, rings, joins);
             }
         } else {
@@ -273,19 +274,90 @@ void intersect_edges(edge_ptr<T> e1,
 }
 
 template <typename T>
-bool process_intersections(T top_y, edge_ptr<T> active_edge_list, edge_ptr<T>& sorted_edge_list) {
-    if (!active_edges) {
+void build_intersect_list(T top_y,
+                          edge_ptr<T> active_edge_list,
+                          edge_ptr<T>& sorted_edge_list,
+                          intersect_list<T>& intersects) {
+    if (!active_edge_list) {
+        return;
+    }
+
+    // prepare for sorting ...
+    edge_ptr<T> e = active_edge_list;
+    sorted_edge_list = e;
+    while (e) {
+        e->prev_in_SEL = e->prev_in_AEL;
+        e->next_in_SEL = e->next_in_AEL;
+        e->curr.x = get_current_x(*e, top_y);
+        e = e->next_in_AEL;
+    }
+
+    // bubblesort ...
+    bool isModified;
+    do {
+        isModified = false;
+        e = sorted_edge_list;
+        while (e->next_in_SEL) {
+            edge_ptr<T> enext = e->next_in_SEL;
+            mapbox::geometry::point<T> pt;
+            if (e->curr.x > enext->curr.x) {
+                intersection_point(*e, *enext, pt);
+                if (pt.y < top_y) {
+                    pt = mapbox::geometry::point<T>(get_current_x(*e, top_y), top_y);
+                }
+                intersects.emplace_back(e, enext, pt);
+                swap_positions_in_SEL(e, enext, sorted_edge_list);
+                isModified = true;
+            } else
+                e = enext;
+        }
+        if (e->prev_in_SEL) {
+            e->prev_in_SEL->next_in_SEL = nullptr;
+        } else {
+            break;
+        }
+    } while (isModified);
+
+    sorted_edge_list = nullptr; // important
+}
+
+template <typename T>
+void process_intersect_list(intersect_list<T> const& intersects,
+                            clip_type cliptype,
+                            fill_type subject_fill_type,
+                            fill_type clip_fill_type,
+                            ring_list<T>& rings,
+                            join_list<T>& joins,
+                            edge_ptr<T>& active_edge_list) {
+    for (auto const& node : intersects) {
+        intersect_edges(node.edge1, node.edge2, node.pt, cliptype, subject_fill_type,
+                        clip_fill_type, rings, joins, active_edge_list);
+        swap_positions_in_AEL(node.edge1, node.edge2, active_edge_list);
+    }
+}
+
+template <typename T>
+bool process_intersections(T top_y,
+                           edge_ptr<T>& active_edge_list,
+                           edge_ptr<T>& sorted_edge_list,
+                           clip_type cliptype,
+                           fill_type subject_fill_type,
+                           fill_type clip_fill_type,
+                           ring_list<T>& rings,
+                           join_list<T>& joins) {
+    if (!active_edge_list) {
         return true;
     }
     intersect_list<T> intersects;
 
-    build_intersect_list(top_y);
+    build_intersect_list(top_y, active_edge_list, sorted_edge_list, intersects);
 
     size_t s = intersects.size();
     if (s == 0) {
         return true;
-    } else if (s == 1 || fixup_intersection_order(active_edge_list, sorted_edge_list, intersects) {
-        process_intersect_list();
+    } else if (s == 1 || fixup_intersection_order(active_edge_list, sorted_edge_list, intersects)) {
+        process_intersect_list(intersects, cliptype, subject_fill_type, clip_fill_type, rings,
+                               joins, active_edge_list);
         return true;
     } else {
         return false;

@@ -20,7 +20,6 @@ TEST_CASE("get_horizontal_direction finds edge direction") {
     CHECK(left == p1.x);
     CHECK(right == p2.x);
 
-
     // flip horizontal direction
     edge<T> e2(p2, p1, polygon_type_subject);
 

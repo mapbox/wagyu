@@ -76,19 +76,19 @@ std::size_t count(const const_point_ptr<T>& orig_node) {
 template <typename T>
 void link_before(point_ptr<T>& node, point_ptr<T>& new_node) {
     point_ptr<T> prev_node = get_prev(node);
-    set_previous(new_node, prev_node);
+    set_prev(new_node, prev_node);
     set_next(new_node, node);
-    set_previous(node, new_node);
+    set_prev(node, new_node);
     set_next(prev_node, new_node);
 }
 
 template <typename T>
 void link_after(point_ptr<T>& node, point_ptr<T>& new_node) {
     point_ptr<T> next_node = get_next(node);
-    set_previous(new_node, node);
+    set_prev(new_node, node);
     set_next(new_node, next_node);
     set_next(node, new_node);
-    set_previous(next_node, new_node);
+    set_prev(next_node, new_node);
 }
 
 template <typename T>
