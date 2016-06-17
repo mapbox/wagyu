@@ -563,7 +563,7 @@ bool get_overlap(const T a1, const T a2, const T b1, const T b2, T& left, T& rig
 }
 
 template <typename T>
-bool join_points(join_ptr<T> j, ring_ptr<T> outrec1, ring_ptr<T> outrec2) {
+bool join_points(join_ptr<T> j, ring_ptr<T> ring1, ring_ptr<T> ring2) {
     point_ptr<T> op1 = j->point1, op1b;
     point_ptr<T> op2 = j->point2, op2b;
 
@@ -578,7 +578,7 @@ bool join_points(join_ptr<T> j, ring_ptr<T> outrec1, ring_ptr<T> outrec2) {
     bool is_horizontal = (j->point1->y == j->off_point.y);
 
     if (is_horizontal && (j->off_point == *j->point1) && (j->off_point == *j->point2)) {
-        if (outrec1 == outrec2) {
+        if (ring1 == ring2) {
             // First, op1 next and op2 prev
 
             op1b = j->point1->next;
@@ -758,7 +758,7 @@ bool join_points(join_ptr<T> j, ring_ptr<T> outrec1, ring_ptr<T> outrec2) {
         }
 
         if ((op1b == op1) || (op2b == op2) || (op1b == op2b) ||
-            ((outrec1 == outrec2) && (reverse1 == reverse2))) {
+            ((ring1 == ring2) && (reverse1 == reverse2))) {
             return false;
         }
 
@@ -868,11 +868,11 @@ template <typename T>
 void fixup_first_lefts3(ring_ptr<T> old_ring, ring_ptr<T> new_ring, ring_list<T>& rings) {
     // reassigns FirstLeft WITHOUT testing if new_ring contains the polygon
     for (size_t i = 0; i < rings.size(); ++i) {
-        ring_ptr<T> outRec = rings[i];
+        ring_ptr<T> ring = rings[i];
         // unused variable `firstLeft`: is this a bug? (dane)
-        // ring* firstLeft = ParseFirstLeft(outRec->FirstLeft);
-        if (outRec->points && outRec->first_left == old_ring)
-            outRec->first_left = new_ring;
+        // ring* firstLeft = ParseFirstLeft(ring->FirstLeft);
+        if (ring->points && ring->first_left == old_ring)
+            ring->first_left = new_ring;
     }
 }
 
@@ -1024,14 +1024,14 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
                                      cliptype, subject_fill_type, clip_fill_type);
     }
 
-    for (auto outrec : rings) {
-        if (!outrec->points || outrec->is_open) {
+    for (auto ring : rings) {
+        if (!ring->points || ring->is_open) {
             continue;
         }
 
         // left out m_ReverseOutput
-        if (outrec->is_hole == (area(*outrec) > 0)) {
-            reverse_ring(outrec->points);
+        if (ring->is_hole == (area(*ring) > 0)) {
+            reverse_ring(ring->points);
         }
     }
 
