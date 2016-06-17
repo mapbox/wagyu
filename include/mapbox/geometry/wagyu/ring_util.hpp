@@ -374,6 +374,19 @@ void reverse_polygon_point_links(point_ptr<T> pp) {
         pp1 = pp2;
     } while (pp1 != pp);
 }
+
+template <typename T>
+void dispose_out_points(point_ptr<T>& pp) {
+    if (pp == 0) {
+        return;
+    }
+    pp->prev->next = 0;
+    while (pp) {
+        point_ptr<T> tmpPp = pp;
+        pp = pp->next;
+        delete tmpPp;
+    }
+}
 }
 }
 }

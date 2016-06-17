@@ -980,6 +980,67 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
 }
 
 template <typename T>
+void fixup_out_polyline(ring<T>& outrec) {
+    point_ptr<T> pp = outrec.points;
+    point_ptr<T> lastPP = pp->prev;
+    while (pp != lastPP) {
+        pp = pp->next;
+        if (*pp == *pp->prev) {
+            if (pp == lastPP)
+                lastPP = pp->prev;
+            point_ptr<T> tmpPP = pp->prev;
+            tmpPP->next = pp->next;
+            pp->next->prev = tmpPP;
+            delete pp;
+            pp = tmpPP;
+        }
+    }
+
+    if (pp == pp->prev) {
+        dispose_out_points(pp);
+        outrec.points = 0;
+        return;
+    }
+}
+
+template <typename T>
+void fixup_out_polygon(ring<T>& outrec) {
+    // FixupOutPolygon() - removes duplicate points and simplifies consecutive
+    // parallel edges by removing the middle vertex.
+    point_ptr<T> lastOK = 0;
+    outrec.bottom_point = 0;
+    point_ptr<T> pp = outrec.points;
+
+    for (;;) {
+        if (pp->prev == pp || pp->prev == pp->next) {
+            dispose_out_points(pp);
+            outrec.points = 0;
+            return;
+        }
+
+        // test for duplicate points and collinear edges ...
+        if ((*pp == *pp->next) || (*pp == *pp->prev) ||
+            (slopes_equal(*pp->prev, *pp, *pp->next) &&
+             (!point_2_is_between_point_1_and_point_3(*pp->prev, *pp, *pp->next)))) {
+            lastOK = 0;
+            point_ptr<T> tmp = pp;
+            pp->prev->next = pp->next;
+            pp->next->prev = pp->prev;
+            pp = pp->prev;
+            delete tmp;
+        } else if (pp == lastOK)
+            break;
+        else {
+            if (!lastOK) {
+                lastOK = pp;
+            }
+            pp = pp->next;
+        }
+    }
+    outrec.points = pp;
+}
+
+template <typename T>
 bool execute_vatti(local_minimum_list<T>& minima_list,
                    ring_list<T>& rings,
                    clip_type cliptype,
@@ -1037,6 +1098,19 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
 
     if (!joins.empty()) {
         join_common_edges(joins, rings);
+    }
+
+    // unfortunately FixupOutPolygon() must be done after JoinCommonEdges()
+    for (size_t i = 0; i < rings.size(); ++i) {
+        ring_ptr<T> ring = rings[i];
+        if (!ring->points) {
+            continue;
+        }
+        if (ring->is_open) {
+            fixup_out_polyline(*ring);
+        } else {
+            fixup_out_polygon(*ring);
+        }
     }
 
     return true;

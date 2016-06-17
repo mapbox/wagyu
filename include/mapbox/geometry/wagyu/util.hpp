@@ -305,6 +305,13 @@ bool slopes_equal(mapbox::geometry::wagyu::point<T> const& pt1,
 }
 
 template <typename T>
+bool slopes_equal(mapbox::geometry::wagyu::point<T> const& pt1,
+                  mapbox::geometry::wagyu::point<T> const& pt2,
+                  mapbox::geometry::wagyu::point<T> const& pt3) {
+    return (pt1.y - pt2.y) * (pt2.x - pt3.x) == (pt1.x - pt2.x) * (pt2.y - pt3.y);
+}
+
+template <typename T>
 bool slopes_equal(mapbox::geometry::point<T> const& pt1,
                   mapbox::geometry::point<T> const& pt2,
                   mapbox::geometry::point<T> const& pt3,
@@ -404,9 +411,9 @@ bool get_overlap_segment(mapbox::geometry::point<T> pt1a,
 }
 
 template <typename T>
-bool Pt2IsBetweenPt1AndPt3(mapbox::geometry::point<T> pt1,
-                           mapbox::geometry::point<T> pt2,
-                           mapbox::geometry::point<T> pt3) {
+bool point_2_is_between_point_1_and_point_3(mapbox::geometry::wagyu::point<T> pt1,
+                                            mapbox::geometry::wagyu::point<T> pt2,
+                                            mapbox::geometry::wagyu::point<T> pt3) {
     if ((pt1 == pt3) || (pt1 == pt2) || (pt3 == pt2)) {
         return false;
     } else if (pt1.x != pt3.x) {
