@@ -865,6 +865,18 @@ void fixup_first_lefts2(ring_ptr<T> inner_ring, ring_ptr<T> outer_ring, ring_lis
 }
 
 template <typename T>
+void fixup_first_lefts3(ring_ptr<T> old_ring, ring_ptr<T> new_ring, ring_list<T>& rings) {
+    // reassigns FirstLeft WITHOUT testing if new_ring contains the polygon
+    for (size_t i = 0; i < rings.size(); ++i) {
+        ring_ptr<T> outRec = rings[i];
+        // unused variable `firstLeft`: is this a bug? (dane)
+        // ring* firstLeft = ParseFirstLeft(outRec->FirstLeft);
+        if (outRec->points && outRec->first_left == old_ring)
+            outRec->first_left = new_ring;
+    }
+}
+
+template <typename T>
 void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
     for (size_t i = 0; i < joins.size(); i++) {
         join_ptr<T> join = &joins[i];
@@ -946,11 +958,23 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
                 ring2->is_hole = ring1->is_hole;
                 ring2->first_left = ring1->first_left;
 
-                // fixup first_left pointers that may need reassigning to OutRec2
+                // fixup first_left pointers that may need reassigning to ring2
                 fixup_first_lefts1(ring1, ring2, rings);
             }
+        } else {
+            // joined 2 polygons together ...
 
-            // XXX ENF left off here
+            ring2->points = 0;
+            ring2->bottom_point = 0;
+            ring2->index = ring1->index;
+
+            ring1->is_hole = hole_state_ring->is_hole;
+            if (hole_state_ring == ring2) {
+                ring1->first_left = ring2->first_left;
+            }
+            ring2->first_left = ring1;
+
+            fixup_first_lefts3(ring2, ring1, rings);
         }
     }
 }
