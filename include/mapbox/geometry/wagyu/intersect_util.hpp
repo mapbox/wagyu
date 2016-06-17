@@ -308,8 +308,9 @@ void build_intersect_list(T top_y,
                 intersects.emplace_back(e, enext, pt);
                 swap_positions_in_SEL(e, enext, sorted_edge_list);
                 isModified = true;
-            } else
+            } else {
                 e = enext;
+            }
         }
         if (e->prev_in_SEL) {
             e->prev_in_SEL->next_in_SEL = nullptr;
@@ -358,10 +359,11 @@ bool process_intersections(T top_y,
     } else if (s == 1 || fixup_intersection_order(active_edge_list, sorted_edge_list, intersects)) {
         process_intersect_list(intersects, cliptype, subject_fill_type, clip_fill_type, rings,
                                joins, active_edge_list);
-        return true;
     } else {
         return false;
     }
+    sorted_edge_list = nullptr;
+    return true;
 }
 }
 }
