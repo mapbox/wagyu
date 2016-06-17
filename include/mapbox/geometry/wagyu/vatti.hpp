@@ -548,8 +548,25 @@ bool join_points(join_ptr<T> j, ring_ptr<T> outrec1, ring_ptr<T> outrec2) {
         if (reverse1) {
             op1b = duplicate_point(op1, false);
             op2b = duplicate_point(op2, true);
+            op1->prev = op2;
+            op2->next = op1;
+            op1b->next = op2b;
+            op2b->prev = op1b;
+            j->point1 = op1;
+            j->point2 = op1b;
+            return true;
+        } else {
+            op1b = duplicate_point(op1, true);
+            op2b = duplicate_point(op2, false);
+            op1->next = op2;
+            op2->prev = op1;
+            op1b->prev = op2b;
+            op2b->next = op1b;
+            j->point1 = op1;
+            j->point2 = op1b;
+            return true;
         }
-
+    } else if (is_horizontal) {
         // XXX ENF left off here
     }
 
