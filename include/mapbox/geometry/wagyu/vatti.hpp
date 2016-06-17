@@ -788,6 +788,66 @@ bool join_points(join_ptr<T> j, ring_ptr<T> outrec1, ring_ptr<T> outrec2) {
 }
 
 template <typename T>
+void update_point_indices(ring<T>& ring) {
+    point_ptr<T> op = ring.points;
+    do {
+        op->index = ring.index;
+        op = op->prev;
+    } while (op != ring.points);
+}
+
+template <typename T>
+ring_ptr<T> parse_first_left(ring_ptr<T> first_left) {
+    while (first_left && !first_left->points) {
+        first_left = first_left->first_left;
+    }
+    return first_left;
+}
+
+template <typename T>
+void fixup_first_lefts2(ring_ptr<T> inner_ring, ring_ptr<T> outer_ring, ring_list<T>& rings) {
+    // A polygon has split into two such that one is now the inner of the other.
+    // It's possible that these polygons now wrap around other polygons, so check
+    // every polygon that's also contained by outer_ring's first_left container
+    //(including 0) to see if they've become inner to the new inner polygon ...
+    for (size_t i = 0; i < rings.size(); ++i) {
+        ring_ptr<T> ring = rings[i];
+
+        if (!ring->points || ring == outer_ring || ring == inner_ring) {
+            continue;
+        }
+        ring_ptr<T> firstLeft = parse_first_left(ring->first_left);
+        if (firstLeft != inner_ring && firstLeft != outer_ring) {
+            continue;
+        }
+        if (poly2_contains_poly1(ring->points, inner_ring->points)) {
+            if (ring->is_hole == inner_ring->is_hole) {
+                ring->is_hole = !ring->is_hole;
+                reverse_polygon_point_links(ring->points);
+            }
+            ring->first_left = inner_ring;
+        } else {
+            if (ring->is_hole == outer_ring->is_hole) {
+                if (Poly2ContainsPoly1(ring->points, outer_ring->points)) {
+                    ring->first_left = outer_ring;
+                } else {
+                    ring->first_left = parse_first_left(outer_ring->first_left);
+                }
+            } else {
+                if (area(ring->points) == 0.0 &&
+                    !Poly2ContainsPoly1(ring->points, outer_ring->points)) {
+                    ring->is_hole = !ring->is_hole;
+                    ring->first_left = parse_first_left(outer_ring->first_left);
+                    reverse_polygon_point_links(ring->points);
+                } else {
+                    ring->first_left = outer_ring;
+                }
+            }
+        }
+    }
+}
+
+template <typename T>
 void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
     for (size_t i = 0; i < joins.size(); i++) {
         join_ptr<T> join = &joins[i];
@@ -802,7 +862,7 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
             continue;
         }
 
-        // Get the polygon fragment with the corringt hole state (FirstLeft)
+        // Get the polygon fragment with the corringt hole state (first_left)
         // before calling join_points().
 
         ring_ptr<T> hole_state_ring;
@@ -835,10 +895,7 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
                 ring2->points = join->point1;
             }
 
-// Update indices in points in ring2
-// XXX ENF left off here
-#if 0
-            update_out_point_indices(*ring2);
+            update_point_indices(*ring2);
 
             if (poly2_contains_poly1(ring2->points, ring1->points)) {
                 // ring 1 contains ring 2
@@ -846,9 +903,18 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
                 ring2->is_hole = !ring1->is_hole;
                 ring2->first_left = ring1;
 
+                // outRec1 contains outRec2 ...
+                ring2->is_hole = !ring1->is_hole;
+                ring2->first_left = ring1;
+
+                fixup_first_lefts2(ring2, ring1, rings);
+
+                if (ring2->is_hole == (area(*ring2) > 0)) {
+                    reverse_polygon_point_links(ring2->points);
+                }
+
                 // XXX ENF left off here
             }
-#endif
         }
     }
 }

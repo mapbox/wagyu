@@ -345,6 +345,35 @@ void add_local_maximum_point(edge_ptr<T> e1,
         append_ring(e2, e1, rings, active_edge_list);
     }
 }
+
+template <typename T>
+bool poly2_contains_poly1(point_ptr<T> outpt1, point_ptr<T> outpt2) {
+    point_ptr<T> op = outpt1;
+    do {
+        // nb: PointInPolygon returns 0 if false, +1 if true, -1 if pt on polygon
+        int res = point_in_polygon(*op, outpt2);
+        if (res >= 0) {
+            return res > 0;
+        }
+        op = op->next;
+    } while (op != outpt1);
+    return true;
+}
+
+template <typename T>
+void reverse_polygon_point_links(point_ptr<T> pp) {
+    if (!pp) {
+        return;
+    }
+    point_ptr<T> pp1, pp2;
+    pp1 = pp;
+    do {
+        pp2 = pp1->next;
+        pp1->next = pp1->prev;
+        pp1->prev = pp2;
+        pp1 = pp2;
+    } while (pp1 != pp);
+}
 }
 }
 }

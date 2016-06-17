@@ -74,8 +74,8 @@ enum point_in_polygon_result : std::int8_t {
 };
 
 template <typename T>
-point_in_polygon_result PointInPolygon(point<T> const& pt,
-                                       mapbox::geometry::linear_ring<T> const& path) {
+point_in_polygon_result point_in_polygon(point<T> const& pt,
+                                         mapbox::geometry::linear_ring<T> const& path) {
     // returns 0 if false, +1 if true, -1 if pt ON polygon boundary
     std::size_t cnt = path.size();
     if (cnt < 3) {
@@ -200,7 +200,7 @@ point_in_polygon_result PointInPolygon(point<T> const& pt,
 }
 
 template <typename T>
-point_in_polygon_result PointInPolygon(point<T> const& pt, point_ptr<T> op) {
+point_in_polygon_result point_in_polygon(point<T> const& pt, point_ptr<T> op) {
     // returns 0 if false, +1 if true, -1 if pt ON polygon boundary
     point_in_polygon_result result = point_outside_polygon;
     point_ptr<T> startOp = op;
@@ -240,7 +240,7 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, point_ptr<T> op) {
                     }
                 }
             } else {
-                if (op->next->Pt.x > pt.x) {
+                if (op->next->x > pt.x) {
                     double d =
                         static_cast<double>(op->x - pt.x) *
                             static_cast<double>(op->next->y - pt.y) -
@@ -248,7 +248,7 @@ point_in_polygon_result PointInPolygon(point<T> const& pt, point_ptr<T> op) {
                     if (d <= 0) {
                         return point_on_polygon;
                     }
-                    if ((d > 0) == (op->next->Pt.y > op->Pt.y)) {
+                    if ((d > 0) == (op->next->y > op->y)) {
                         // Switch between point outside polygon and point inside
                         // polygon
                         if (result == point_outside_polygon) {
@@ -269,9 +269,9 @@ template <typename T>
 bool Poly2ContainsPoly1(point_ptr<T> OutPt1, point_ptr<T> OutPt2) {
     point_ptr<T> op = OutPt1;
     do {
-        // nb: PointInPolygon returns 0 if false, +1 if true, -1 if pt on
+        // nb: point_in_polygon returns 0 if false, +1 if true, -1 if pt on
         // polygon
-        point_in_polygon_result res = PointInPolygon(*op, OutPt2);
+        point_in_polygon_result res = point_in_polygon(*op, OutPt2);
         if (res != point_on_polygon) {
             if (res == point_inside_polygon) {
                 return true;
