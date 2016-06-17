@@ -322,13 +322,10 @@ void process_edges_at_top_of_scanbeam(T top_y,
             edge_ptr<T> e_prev = e->prev_in_AEL;
             edge_ptr<T> e_next = e->next_in_AEL;
 
-            if (e_prev && e_prev->curr.x == e->bot.x &&
-                e_prev->curr.y == e->bot.y && op &&
-                e_prev->index >= 0 &&
-                e_prev->curr.y > e_prev->top.y &&
+            if (e_prev && e_prev->curr.x == e->bot.x && e_prev->curr.y == e->bot.y && op &&
+                e_prev->index >= 0 && e_prev->curr.y > e_prev->top.y &&
                 slopes_equal(e->curr, e->top, e_prev->curr, e_prev->top) &&
-                (e->winding_delta != 0) && (e_prev->winding_delta != 0)) 
-            {
+                (e->winding_delta != 0) && (e_prev->winding_delta != 0)) {
                 point_ptr<T> op2 = add_point(e_prev, e->bot, rings);
                 joins.emplace_back(op, op2, e->top);
             } else if (e_next && e_next->curr.x == e->bot.x && e_next->curr.y == e->bot.y && op &&
