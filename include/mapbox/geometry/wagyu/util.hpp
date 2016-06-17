@@ -298,6 +298,13 @@ bool slopes_equal(mapbox::geometry::point<T> const& pt1,
 }
 
 template <typename T>
+bool slopes_equal(mapbox::geometry::wagyu::point<T> const& pt1,
+                  mapbox::geometry::wagyu::point<T> const& pt2,
+                  mapbox::geometry::point<T> const& pt3) {
+    return (pt1.y - pt2.y) * (pt2.x - pt3.x) == (pt1.x - pt2.x) * (pt2.y - pt3.y);
+}
+
+template <typename T>
 bool slopes_equal(mapbox::geometry::point<T> const& pt1,
                   mapbox::geometry::point<T> const& pt2,
                   mapbox::geometry::point<T> const& pt3,

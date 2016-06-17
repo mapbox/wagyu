@@ -569,12 +569,12 @@ bool join_points(join_ptr<T> j, ring_ptr<T> outrec1, ring_ptr<T> outrec2) {
     point_ptr<T> op2 = j->point2, op2b;
 
     // There are 3 kinds of joins for output polygons ...
-    // 1. Horizontal joins where Join.OutPt1 & Join.OutPt2 are vertices anywhere
-    // along (horizontal) collinear edges (& Join.OffPt is on the same horizontal).
-    // 2. Non-horizontal joins where Join.OutPt1 & Join.OutPt2 are at the same
-    // location at the Bottom of the overlapping segment (& Join.OffPt is above).
+    // 1. Horizontal joins where Join.point1 & Join.point2 are vertices anywhere
+    // along (horizontal) collinear edges (& Join.off_point is on the same horizontal).
+    // 2. Non-horizontal joins where Join.point1 & Join.point2 are at the same
+    // location at the Bottom of the overlapping segment (& Join.off_point is above).
     // 3. StrictSimple joins where edges touch but are not collinear and where
-    // Join.OutPt1, Join.OutPt2 & Join.OffPt all share the same point.
+    // Join.point1, Join.point2 & Join.off_point all share the same point.
 
     bool is_horizontal = (j->point1->y == j->off_point.y);
 
@@ -672,7 +672,7 @@ bool join_points(join_ptr<T> j, ring_ptr<T> outrec1, ring_ptr<T> outrec2) {
         }
     } else if (is_horizontal) {
         // treat horizontal joins differently to non-horizontal joins since with
-        // them we're not yet sure where the overlapping is. OutPt1.Pt & OutPt2.Pt
+        // them we're not yet sure where the overlapping is. point1.Pt & point2.Pt
         // may be anywhere along the horizontal edge.
         op1b = op1;
         while (op1->prev->y == op1->y && op1->prev != op1b && op1->prev != op2) {
@@ -724,10 +724,67 @@ bool join_points(join_ptr<T> j, ring_ptr<T> outrec1, ring_ptr<T> outrec2) {
         j->point2 = op2;
         return join_horizontal(op1, op1b, op2, op2b, pt, discard_left_side);
     } else {
-        // XXX ENF left off here
-    }
+        // nb: For non-horizontal joins ...
+        //    1. Jr.point1.Pt.Y == Jr.point2.Pt.Y
+        //    2. Jr.point1.Pt > Jr.off_point.Y
 
-    return true; // XXX
+        // make sure the polygons are correctly oriented ...
+        op1b = op1->next;
+        while ((*op1b == *op1) && (op1b != op1)) {
+            op1b = op1b->next;
+        }
+        bool reverse1 = ((op1b->y > op1->y) || !slopes_equal(*op1, *op1b, j->off_point));
+        if (reverse1) {
+            op1b = op1->prev;
+            while ((*op1b == *op1) && (op1b != op1)) {
+                op1b = op1b->prev;
+            }
+            if ((op1b->y > op1->y) || !slopes_equal(*op1, *op1b, j->off_point)) {
+                return false;
+            }
+        };
+        op2b = op2->next;
+        while ((*op2b == *op2) && (op2b != op2)) {
+            op2b = op2b->next;
+        }
+        bool reverse2 = ((op2b->y > op2->y) || !slopes_equal(*op2, *op2b, j->off_point));
+        if (reverse2) {
+            op2b = op2->prev;
+            while ((*op2b == *op2) && (op2b != op2)) {
+                op2b = op2b->prev;
+            }
+            if ((op2b->y > op2->y) || !slopes_equal(*op2, *op2b, j->off_point)) {
+                return false;
+            }
+        }
+
+        if ((op1b == op1) || (op2b == op2) || (op1b == op2b) ||
+            ((outrec1 == outrec2) && (reverse1 == reverse2))) {
+            return false;
+        }
+
+        if (reverse1) {
+            op1b = duplicate_point(op1, false);
+            op2b = duplicate_point(op2, true);
+            op1->prev = op2;
+            op2->next = op1;
+            op1b->next = op2b;
+            op2b->prev = op1b;
+            j->point1 = op1;
+            j->point2 = op1b;
+            return true;
+        } else {
+            op1b = duplicate_point(op1, true);
+            op2b = duplicate_point(op2, false);
+            op1->next = op2;
+            op2->prev = op1;
+            op1b->prev = op2b;
+            op2b->next = op1b;
+            j->point1 = op1;
+            j->point2 = op1b;
+            return true;
+        }
+    }
 }
 
 template <typename T>
