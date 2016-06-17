@@ -54,18 +54,18 @@ void insert_edge_into_AEL(edge_ptr<T> edge, edge_ptr<T> start_edge, edge_ptr<T>&
 
 template <typename T>
 void delete_from_AEL(edge_ptr<T> e, edge_ptr<T>& active_edges) {
-    edge_ptr<T> Aelprev = e->prev_in_AEL;
-    edge_ptr<T> Aelnext = e->next_in_AEL;
-    if (!Aelprev && !Aelnext && (e != active_edges)) {
+    edge_ptr<T> ael_prev = e->prev_in_AEL;
+    edge_ptr<T> ael_next = e->next_in_AEL;
+    if (!ael_prev && !ael_next && (e != active_edges)) {
         return; // already deleted
     }
-    if (Aelprev) {
-        Aelprev->next_in_AEL = Aelnext;
+    if (ael_prev) {
+        ael_prev->next_in_AEL = ael_next;
     } else {
-        active_edges = Aelnext;
+        active_edges = ael_next;
     }
-    if (Aelnext) {
-        Aelnext->prev_in_AEL = Aelprev;
+    if (ael_next) {
+        ael_next->prev_in_AEL = ael_prev;
     }
     e->next_in_AEL = nullptr;
     e->prev_in_AEL = nullptr;

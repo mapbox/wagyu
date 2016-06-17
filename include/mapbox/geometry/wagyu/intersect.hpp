@@ -4,6 +4,10 @@
 
 #include <mapbox/geometry/wagyu/edge.hpp>
 
+#ifdef DEBUG
+#include <iostream>
+#endif
+
 namespace mapbox {
 namespace geometry {
 namespace wagyu {
@@ -31,6 +35,18 @@ struct intersect_node {
 
 template <typename T>
 using intersect_list = std::vector<intersect_node<T>>;
+
+#ifdef DEBUG
+
+template <class charT, class traits, typename T>
+inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
+                                                     const intersect_node<T>& e) {
+    out << "Intersect: " << std::endl;
+    out << " point x: " << e.pt.x << " y: " << e.pt.y << std::endl;
+    return out;
+}
+
+#endif
 }
 }
 }
