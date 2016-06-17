@@ -460,6 +460,110 @@ point_ptr<T> duplicate_point(point_ptr<T> pt, bool insert_after) {
 }
 
 template <typename T>
+bool join_horizontal(point_ptr<T> op1,
+                     point_ptr<T> op1b,
+                     point_ptr<T> op2,
+                     point_ptr<T> op2b,
+                     const point<T> Pt,
+                     bool discard_left) {
+    horizontal_direction dir1 = (op1->x > op1b->x ? horizontal_direction::right_to_left
+                                                  : horizontal_direction::left_to_right);
+    horizontal_direction dir2 = (op2->x > op2b->x ? horizontal_direction::right_to_left
+                                                  : horizontal_direction::left_to_right);
+    if (dir1 == dir2)
+        return false;
+
+    // When discard_left, we want Op1b to be on the Left of Op1, otherwise we
+    // want Op1b to be on the Right. (And likewise with Op2 and Op2b.)
+    // So, to facilitate this while inserting Op1b and Op2b ...
+    // when discard_left, make sure we're AT or RIGHT of Pt before adding Op1b,
+    // otherwise make sure we're AT or LEFT of Pt. (Likewise with Op2b.)
+
+    if (dir1 == horizontal_direction::left_to_right) {
+        while (op1->next->x <= Pt.x && op1->next->x >= op1->x && op1->next->y == Pt.y)
+            op1 = op1->next;
+        if (discard_left && (op1->x != Pt.x))
+            op1 = op1->next;
+        op1b = duplicate_point(op1, !discard_left);
+        if (*op1b != Pt) {
+            op1 = op1b;
+            *op1 = Pt;
+            op1b = duplicate_point(op1, !discard_left);
+        }
+    } else {
+        while (op1->next->x >= Pt.x && op1->next->x <= op1->x && op1->next->y == Pt.y)
+            op1 = op1->next;
+        if (!discard_left && (op1->x != Pt.x))
+            op1 = op1->next;
+        op1b = duplicate_point(op1, discard_left);
+        if (*op1b != Pt) {
+            op1 = op1b;
+            *op1 = Pt;
+            op1b = duplicate_point(op1, discard_left);
+        }
+    }
+
+    if (dir2 == horizontal_direction::left_to_right) {
+        while (op2->next->x <= Pt.x && op2->next->x >= op2->x && op2->next->y == Pt.y)
+            op2 = op2->next;
+        if (discard_left && (op2->x != Pt.x))
+            op2 = op2->next;
+        op2b = duplicate_point(op2, !discard_left);
+        if (*op2b != Pt) {
+            op2 = op2b;
+            *op2 = Pt;
+            op2b = duplicate_point(op2, !discard_left);
+        };
+    } else {
+        while (op2->next->x >= Pt.x && op2->next->x <= op2->x && op2->next->y == Pt.y)
+            op2 = op2->next;
+        if (!discard_left && (op2->x != Pt.x))
+            op2 = op2->next;
+        op2b = duplicate_point(op2, discard_left);
+        if (*op2b != Pt) {
+            op2 = op2b;
+            *op2 = Pt;
+            op2b = duplicate_point(op2, discard_left);
+        };
+    };
+
+    if ((dir1 == horizontal_direction::left_to_right) == discard_left) {
+        op1->prev = op2;
+        op2->next = op1;
+        op1b->next = op2b;
+        op2b->prev = op1b;
+    } else {
+        op1->next = op2;
+        op2->prev = op1;
+        op1b->prev = op2b;
+        op2b->next = op1b;
+    }
+    return true;
+}
+
+template <typename T>
+bool get_overlap(const T a1, const T a2, const T b1, const T b2, T& left, T& right) {
+    if (a1 < a2) {
+        if (b1 < b2) {
+            left = std::max(a1, b1);
+            right = std::min(a2, b2);
+        } else {
+            left = std::max(a1, b2);
+            right = std::min(a2, b1);
+        }
+    } else {
+        if (b1 < b2) {
+            left = std::max(a2, b1);
+            right = std::min(a1, b2);
+        } else {
+            left = std::max(a2, b2);
+            right = std::min(a1, b1);
+        }
+    }
+    return left < right;
+}
+
+template <typename T>
 bool join_points(join_ptr<T> j, ring_ptr<T> outrec1, ring_ptr<T> outrec2) {
     point_ptr<T> op1 = j->point1, op1b;
     point_ptr<T> op2 = j->point2, op2b;
@@ -567,6 +671,59 @@ bool join_points(join_ptr<T> j, ring_ptr<T> outrec1, ring_ptr<T> outrec2) {
             return true;
         }
     } else if (is_horizontal) {
+        // treat horizontal joins differently to non-horizontal joins since with
+        // them we're not yet sure where the overlapping is. OutPt1.Pt & OutPt2.Pt
+        // may be anywhere along the horizontal edge.
+        op1b = op1;
+        while (op1->prev->y == op1->y && op1->prev != op1b && op1->prev != op2) {
+            op1 = op1->prev;
+        }
+        while (op1b->next->y == op1b->y && op1b->next != op1 && op1b->next != op2) {
+            op1b = op1b->next;
+        }
+        if (op1b->next == op1 || op1b->next == op2) {
+            return false; // a flat 'polygon'
+        }
+
+        op2b = op2;
+        while (op2->prev->y == op2->y && op2->prev != op2b && op2->prev != op1b) {
+            op2 = op2->prev;
+        }
+        while (op2b->next->y == op2b->y && op2b->next != op2 && op2b->next != op1) {
+            op2b = op2b->next;
+        }
+        if (op2b->next == op2 || op2b->next == op1) {
+            return false; // a flat 'polygon'
+        }
+
+        T left, right;
+        // Op1 --> Op1b & Op2 --> Op2b are the extremites of the horizontal edges
+        if (!get_overlap(op1->x, op1b->x, op2->x, op2b->x, left, right)) {
+            return false;
+        }
+
+        // DiscardleftSide: when overlapping edges are joined, a spike will created
+        // which needs to be cleaned up. However, we don't want Op1 or Op2 caught up
+        // on the discard Side as either may still be needed for other joins ...
+        point<T> pt(0, 0);
+        bool discard_left_side;
+        if (op1->x >= left && op1->x <= right) {
+            pt = *op1;
+            discard_left_side = (op1->x > op1b->x);
+        } else if (op2->x >= left && op2->x <= right) {
+            pt = *op2;
+            discard_left_side = (op2->x > op2b->x);
+        } else if (op1b->x >= left && op1b->x <= right) {
+            pt = *op1b;
+            discard_left_side = op1b->x > op1->x;
+        } else {
+            pt = *op2b;
+            discard_left_side = (op2b->x > op2->x);
+        }
+        j->point1 = op1;
+        j->point2 = op2;
+        return join_horizontal(op1, op1b, op2, op2b, pt, discard_left_side);
+    } else {
         // XXX ENF left off here
     }
 
