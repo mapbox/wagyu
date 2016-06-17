@@ -271,25 +271,24 @@ void process_edges_at_top_of_scanbeam(T top_y,
                 e->curr.x = get_current_x(*e, top_y);
                 e->curr.y = top_y;
             }
-        }
 
-        // When E is being touched by another edge, make sure both edges have a vertex here.
-
-        if (e->index >= 0 && e->winding_delta != 0) {
-            edge_ptr<T> e_prev = e->prev_in_AEL;
-            while (e_prev && e->prev->curr.x == e->curr.x) {
-                if (e_prev->index >= 0 && e_prev->winding_delta != 0 &&
-                    !(e->bot == e_prev->bot && e->top == e_prev->top)) {
-                    mapbox::geometry::point<T> pt = e->curr;
-                    point_ptr<T> op = add_point(e_prev, pt, rings);
-                    point_ptr<T> op2 = add_point(e, pt, rings);
-                    joins.emplace_back(op, op2, pt); // strictly simple type 3 join
+            // When E is being touched by another edge, make sure both edges have a vertex here.
+            if (e->index >= 0 && e->winding_delta != 0) {
+                edge_ptr<T> e_prev = e->prev_in_AEL;
+                while (e_prev && e->prev->curr.x == e->curr.x) {
+                    if (e_prev->index >= 0 && e_prev->winding_delta != 0 &&
+                        !(e->bot == e_prev->bot && e->top == e_prev->top)) {
+                        mapbox::geometry::point<T> pt = e->curr;
+                        point_ptr<T> op = add_point(e_prev, pt, rings);
+                        point_ptr<T> op2 = add_point(e, pt, rings);
+                        joins.emplace_back(op, op2, pt); // strictly simple type 3 join
+                    }
+                    e_prev = e_prev->prev_in_AEL;
                 }
-                e_prev = e_prev->prev_in_AEL;
             }
-        }
 
-        e = e->next_in_AEL;
+            e = e->next_in_AEL;
+        }
     }
 
     local_minimum_itr<T> lm = current_lm;
@@ -323,13 +322,16 @@ void process_edges_at_top_of_scanbeam(T top_y,
             edge_ptr<T> e_prev = e->prev_in_AEL;
             edge_ptr<T> e_next = e->next_in_AEL;
 
-            if (e_prev && e_prev->curr.x == e->bot.x && e_prev->index >= 0 &&
+            if (e_prev && e_prev->curr.x == e->bot.x &&
+                e_prev->curr.y == e->bot.y && op &&
+                e_prev->index >= 0 &&
                 e_prev->curr.y > e_prev->top.y &&
                 slopes_equal(e->curr, e->top, e_prev->curr, e_prev->top) &&
-                (e->winding_delta != 0) && (e_prev->winding_delta != 0)) {
+                (e->winding_delta != 0) && (e_prev->winding_delta != 0)) 
+            {
                 point_ptr<T> op2 = add_point(e_prev, e->bot, rings);
                 joins.emplace_back(op, op2, e->top);
-            } else if (e_next && e_next->curr.x == e->bot.x && e_next->curr.y == e->bot.y &&
+            } else if (e_next && e_next->curr.x == e->bot.x && e_next->curr.y == e->bot.y && op &&
                        e->next->index >= 0 && e_next->curr.y > e_next->top.y &&
                        slopes_equal(e->curr, e->top, e_next->curr, e_next->top) &&
                        (e->winding_delta != 0) && (e_next->winding_delta != 0)) {
@@ -921,7 +923,7 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
 
 template <typename T>
 bool execute_vatti(local_minimum_list<T>& minima_list,
-                   ring_list<T> rings,
+                   ring_list<T>& rings,
                    clip_type cliptype,
                    fill_type subject_fill_type,
                    fill_type clip_fill_type) {
