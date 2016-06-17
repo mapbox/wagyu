@@ -260,7 +260,7 @@ void process_edges_at_top_of_scanbeam(T top_y,
 
             if (is_intermediate(e, top_y) && is_horizontal(*e->next_in_LML)) {
                 update_edge_into_AEL(e, active_edge_list, scanbeam);
-                if (e->index == 0) {
+                if (e->index >= 0) {
                     add_point(e, e->bot, rings);
                     maxima.push_back(e->top.x);
                     maxima.push_back(e->bot.x);
@@ -329,7 +329,7 @@ void process_edges_at_top_of_scanbeam(T top_y,
                 point_ptr<T> op2 = add_point(e_prev, e->bot, rings);
                 joins.emplace_back(op, op2, e->top);
             } else if (e_next && e_next->curr.x == e->bot.x && e_next->curr.y == e->bot.y && op &&
-                       e->next->index >= 0 && e_next->curr.y > e_next->top.y &&
+                       e_next->index >= 0 && e_next->curr.y > e_next->top.y &&
                        slopes_equal(e->curr, e->top, e_next->curr, e_next->top) &&
                        (e->winding_delta != 0) && (e_next->winding_delta != 0)) {
                 point_ptr<T> op2 = add_point(e_next, e->bot, rings);
