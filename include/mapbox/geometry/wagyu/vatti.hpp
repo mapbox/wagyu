@@ -441,17 +441,36 @@ int point_count(point_ptr<T> points) {
 }
 
 template <typename T>
+point_ptr<T> duplicate_point(point_ptr<T> pt, bool insert_after) {
+    point_ptr<T> result = new point<T>(pt->x, pt->y);
+    result->index = pt->index;
+
+    if (insert_after) {
+        result->next = pt->next;
+        result->prev = pt;
+        pt->next->prev = result;
+        pt->next = result;
+    } else {
+        result->prev = pt->prev;
+        result->next = pt;
+        pt->prev->next = result;
+        pt->prev = result;
+    }
+    return result;
+}
+
+template <typename T>
 bool join_points(join_ptr<T> j, ring_ptr<T> outrec1, ring_ptr<T> outrec2) {
     point_ptr<T> op1 = j->point1, op1b;
     point_ptr<T> op2 = j->point2, op2b;
 
-    //There are 3 kinds of joins for output polygons ...
-    //1. Horizontal joins where Join.OutPt1 & Join.OutPt2 are vertices anywhere
-    //along (horizontal) collinear edges (& Join.OffPt is on the same horizontal).
-    //2. Non-horizontal joins where Join.OutPt1 & Join.OutPt2 are at the same
-    //location at the Bottom of the overlapping segment (& Join.OffPt is above).
-    //3. StrictSimple joins where edges touch but are not collinear and where
-    //Join.OutPt1, Join.OutPt2 & Join.OffPt all share the same point.
+    // There are 3 kinds of joins for output polygons ...
+    // 1. Horizontal joins where Join.OutPt1 & Join.OutPt2 are vertices anywhere
+    // along (horizontal) collinear edges (& Join.OffPt is on the same horizontal).
+    // 2. Non-horizontal joins where Join.OutPt1 & Join.OutPt2 are at the same
+    // location at the Bottom of the overlapping segment (& Join.OffPt is above).
+    // 3. StrictSimple joins where edges touch but are not collinear and where
+    // Join.OutPt1, Join.OutPt2 & Join.OffPt all share the same point.
 
     bool is_horizontal = (j->point1->y == j->off_point.y);
 
@@ -506,6 +525,29 @@ bool join_points(join_ptr<T> j, ring_ptr<T> outrec1, ring_ptr<T> outrec2) {
             }
 
             return false;
+        }
+
+        // Strictly simple join
+
+        op1b = j->point1->next;
+        while (op1b != op1 && *op1b == j->off_point) {
+            op1b = op1b->next;
+        }
+        bool reverse1 = op1b->y > j->off_point.y;
+
+        op2b = j->point2->next;
+        while (op2b != op2 && *op2b == j->off_point) {
+            op2b = op2b->next;
+        }
+        bool reverse2 = op2b->y > j->off_point.y;
+
+        if (reverse1 == reverse2) {
+            return false;
+        }
+
+        if (reverse1) {
+            op1b = duplicate_point(op1, false);
+            op2b = duplicate_point(op2, true);
         }
 
         // XXX ENF left off here
