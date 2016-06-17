@@ -464,7 +464,7 @@ bool join_horizontal(point_ptr<T> op1,
                      point_ptr<T> op1b,
                      point_ptr<T> op2,
                      point_ptr<T> op2b,
-                     const point<T> Pt,
+                     const point<T> pt,
                      bool discard_left) {
     horizontal_direction dir1 = (op1->x > op1b->x ? horizontal_direction::right_to_left
                                                   : horizontal_direction::left_to_right);
@@ -476,53 +476,53 @@ bool join_horizontal(point_ptr<T> op1,
     // When discard_left, we want Op1b to be on the Left of Op1, otherwise we
     // want Op1b to be on the Right. (And likewise with Op2 and Op2b.)
     // So, to facilitate this while inserting Op1b and Op2b ...
-    // when discard_left, make sure we're AT or RIGHT of Pt before adding Op1b,
-    // otherwise make sure we're AT or LEFT of Pt. (Likewise with Op2b.)
+    // when discard_left, make sure we're AT or RIGHT of pt before adding Op1b,
+    // otherwise make sure we're AT or LEFT of pt. (Likewise with Op2b.)
 
     if (dir1 == horizontal_direction::left_to_right) {
-        while (op1->next->x <= Pt.x && op1->next->x >= op1->x && op1->next->y == Pt.y)
+        while (op1->next->x <= pt.x && op1->next->x >= op1->x && op1->next->y == pt.y)
             op1 = op1->next;
-        if (discard_left && (op1->x != Pt.x))
+        if (discard_left && (op1->x != pt.x))
             op1 = op1->next;
         op1b = duplicate_point(op1, !discard_left);
-        if (*op1b != Pt) {
+        if (*op1b != pt) {
             op1 = op1b;
-            *op1 = Pt;
+            *op1 = pt;
             op1b = duplicate_point(op1, !discard_left);
         }
     } else {
-        while (op1->next->x >= Pt.x && op1->next->x <= op1->x && op1->next->y == Pt.y)
+        while (op1->next->x >= pt.x && op1->next->x <= op1->x && op1->next->y == pt.y)
             op1 = op1->next;
-        if (!discard_left && (op1->x != Pt.x))
+        if (!discard_left && (op1->x != pt.x))
             op1 = op1->next;
         op1b = duplicate_point(op1, discard_left);
-        if (*op1b != Pt) {
+        if (*op1b != pt) {
             op1 = op1b;
-            *op1 = Pt;
+            *op1 = pt;
             op1b = duplicate_point(op1, discard_left);
         }
     }
 
     if (dir2 == horizontal_direction::left_to_right) {
-        while (op2->next->x <= Pt.x && op2->next->x >= op2->x && op2->next->y == Pt.y)
+        while (op2->next->x <= pt.x && op2->next->x >= op2->x && op2->next->y == pt.y)
             op2 = op2->next;
-        if (discard_left && (op2->x != Pt.x))
+        if (discard_left && (op2->x != pt.x))
             op2 = op2->next;
         op2b = duplicate_point(op2, !discard_left);
-        if (*op2b != Pt) {
+        if (*op2b != pt) {
             op2 = op2b;
-            *op2 = Pt;
+            *op2 = pt;
             op2b = duplicate_point(op2, !discard_left);
         };
     } else {
-        while (op2->next->x >= Pt.x && op2->next->x <= op2->x && op2->next->y == Pt.y)
+        while (op2->next->x >= pt.x && op2->next->x <= op2->x && op2->next->y == pt.y)
             op2 = op2->next;
-        if (!discard_left && (op2->x != Pt.x))
+        if (!discard_left && (op2->x != pt.x))
             op2 = op2->next;
         op2b = duplicate_point(op2, discard_left);
-        if (*op2b != Pt) {
+        if (*op2b != pt) {
             op2 = op2b;
-            *op2 = Pt;
+            *op2 = pt;
             op2b = duplicate_point(op2, discard_left);
         };
     };
