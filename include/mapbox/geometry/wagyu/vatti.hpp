@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unordered_map>
+
 #include <mapbox/geometry/wagyu/active_edge_list.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/edge.hpp>
@@ -866,11 +868,11 @@ void fixup_first_lefts2(ring_ptr<T> inner_ring, ring_ptr<T> outer_ring, ring_lis
 
 template <typename T>
 void fixup_first_lefts3(ring_ptr<T> old_ring, ring_ptr<T> new_ring, ring_list<T>& rings) {
-    // reassigns FirstLeft WITHOUT testing if new_ring contains the polygon
+    // reassigns first_left WITHOUT testing if new_ring contains the polygon
     for (size_t i = 0; i < rings.size(); ++i) {
         ring_ptr<T> ring = rings[i];
         // unused variable `firstLeft`: is this a bug? (dane)
-        // ring* firstLeft = ParseFirstLeft(ring->FirstLeft);
+        // ring* firstLeft = parse_first_left(ring->first_left);
         if (ring->points && ring->first_left == old_ring)
             ring->first_left = new_ring;
     }
@@ -1041,6 +1043,534 @@ void fixup_out_polygon(ring<T>& outrec) {
 }
 
 template <typename T>
+struct point_ptr_pair {
+    point_ptr<T> op1;
+    point_ptr<T> op2;
+};
+
+template <typename T>
+bool find_intersect_loop(std::unordered_multimap<size_t, point_ptr_pair<T>>& dupeRec,
+                         std::list<std::pair<int, point_ptr_pair<T>>>& iList,
+                         ring_ptr<T> outRec_parent,
+                         size_t idx_origin,
+                         size_t idx_search,
+                         std::set<int>& visited,
+                         point_ptr<T> orig_pt,
+                         point_ptr<T> prev_pt,
+                         ring_list<T>& rings) {
+    auto range = dupeRec.equal_range(idx_search);
+    // Check for direct connection
+    for (auto it = range.first; it != range.second;) {
+        ring_ptr<T> itRec1 = get_ring(rings, it->second.op1->index);
+        ring_ptr<T> itRec2 = get_ring(rings, it->second.op2->index);
+        if (itRec1->index != idx_search || (!itRec1->is_hole && !itRec2->is_hole)) {
+            it = dupeRec.erase(it);
+            continue;
+        }
+        if (itRec2->index == idx_origin &&
+            (outRec_parent == itRec2 || outRec_parent == parse_first_left(itRec2->first_left)) &&
+            *prev_pt != *it->second.op2 && *orig_pt != *it->second.op2) {
+            iList.emplace_front(idx_search, it->second);
+            return true;
+        }
+        ++it;
+    }
+    range = dupeRec.equal_range(idx_search);
+    visited.insert(idx_search);
+    // Check for connection through chain of other intersections
+    for (auto it = range.first;
+         it != range.second && it != dupeRec.end() && it->first == idx_search; ++it) {
+        ring_ptr<T> itRec = get_ring(rings, it->second.op2->index);
+        if (visited.count(itRec->index) > 0 ||
+            (outRec_parent != itRec && outRec_parent != parse_first_left(itRec->first_left)) ||
+            *prev_pt == *it->second.op2) {
+            continue;
+        }
+        if (find_intersect_loop(dupeRec, iList, outRec_parent, idx_origin, itRec->index, visited,
+                                orig_pt, it->second.op2, rings)) {
+            iList.emplace_front(idx_search, it->second);
+            return true;
+        }
+    }
+    return false;
+}
+
+template <typename T>
+bool fix_intersects(std::unordered_multimap<size_t, point_ptr_pair<T>>& dupeRec,
+                    point_ptr<T> op_j,
+                    point_ptr<T> op_k,
+                    ring_ptr<T> outRec_j,
+                    ring_ptr<T> outRec_k,
+                    ring_list<T>& rings) {
+    if (!outRec_j->is_hole && !outRec_k->is_hole) {
+        // Both are not holes, return nothing to do.
+        return false;
+    }
+    ring_ptr<T> outRec_origin;
+    ring_ptr<T> outRec_search;
+    ring_ptr<T> outRec_parent;
+    point_ptr<T> op_origin_1;
+    point_ptr<T> op_origin_2;
+    if (!outRec_j->is_hole) {
+        outRec_origin = outRec_j;
+        outRec_parent = outRec_origin;
+        outRec_search = outRec_k;
+        op_origin_1 = op_j;
+        op_origin_2 = op_k;
+    } else if (!outRec_k->is_hole) {
+        outRec_origin = outRec_k;
+        outRec_parent = outRec_origin;
+        outRec_search = outRec_j;
+        op_origin_1 = op_k;
+        op_origin_2 = op_j;
+
+    } else // both are holes
+    {
+        // Order doesn't matter
+        outRec_origin = outRec_j;
+        outRec_parent = parse_first_left(outRec_origin->first_left);
+        outRec_search = outRec_k;
+        op_origin_1 = op_j;
+        op_origin_2 = op_k;
+    }
+    if (outRec_parent != parse_first_left(outRec_search->first_left)) {
+        // The two holes do not have the same parent, do not add them
+        // simply return!
+        return false;
+    }
+    bool found = false;
+    std::list<std::pair<int, point_ptr_pair<T>>> iList;
+    auto range = dupeRec.equal_range(outRec_search->index);
+    // Check for direct connection
+    for (auto it = range.first; it != range.second;) {
+        ring_ptr<T> itRec1 = get_ring(rings, it->second.op1->index);
+        ring_ptr<T> itRec2 = get_ring(rings, it->second.op2->index);
+        if (outRec_search->index != itRec1->index || outRec_search->index == itRec2->index) {
+            it = dupeRec.erase(it);
+            continue;
+        }
+        if (itRec2->index == outRec_origin->index) {
+            found = true;
+            if (*op_origin_1 != *it->second.op2) {
+                iList.emplace_back(outRec_search->index, it->second);
+                break;
+            }
+        }
+        ++it;
+    }
+    if (!found) {
+        range = dupeRec.equal_range(outRec_search->index);
+        std::set<int> visited;
+        visited.insert(outRec_search->index);
+        // Check for connection through chain of other intersections
+        for (auto it = range.first;
+             it != range.second && it != dupeRec.end() && it->first == outRec_search->index; ++it) {
+            ring_ptr<T> itRec = get_ring(rings, it->second.op2->index);
+            if (itRec->index != outRec_search->index && *op_origin_2 != *it->second.op2 &&
+                (outRec_parent == itRec || outRec_parent == parse_first_left(itRec->first_left)) &&
+                find_intersect_loop(dupeRec, iList, outRec_parent, outRec_origin->index,
+                                    itRec->index, visited, op_origin_2, it->second.op2, rings)) {
+                found = true;
+                iList.emplace_front(outRec_search->index, it->second);
+                break;
+            }
+        }
+    }
+    if (!found) {
+        point_ptr_pair<T> intPt_origin = { op_origin_1, op_origin_2 };
+        point_ptr_pair<T> intPt_search = { op_origin_2, op_origin_1 };
+        dupeRec.emplace(outRec_origin->index, intPt_origin);
+        dupeRec.emplace(outRec_search->index, intPt_search);
+        return false;
+    }
+
+    if (iList.empty()) {
+        return false;
+    }
+    if (outRec_origin->is_hole) {
+        for (auto& iRing : iList) {
+            ring_ptr<T> outRec_itr = get_ring(rings, iRing.first);
+            if (!outRec_itr->is_hole) {
+                // Make the hole the origin!
+                point_ptr<T> op1 = op_origin_1;
+                op_origin_1 = iRing.second.op1;
+                iRing.second.op1 = op1;
+                point_ptr<T> op2 = op_origin_2;
+                op_origin_2 = iRing.second.op2;
+                iRing.second.op2 = op2;
+                iRing.first = outRec_origin->index;
+                outRec_origin = outRec_itr;
+                outRec_parent = outRec_origin;
+                break;
+            }
+        }
+    }
+
+    // Switch
+    point_ptr<T> op_origin_1_next = op_origin_1->next;
+    point_ptr<T> op_origin_2_next = op_origin_2->next;
+    op_origin_1->next = op_origin_2_next;
+    op_origin_2->next = op_origin_1_next;
+    op_origin_1_next->prev = op_origin_2;
+    op_origin_2_next->prev = op_origin_1;
+
+    for (auto iRing : iList) {
+        point_ptr<T> op_search_1 = iRing.second.op1;
+        point_ptr<T> op_search_2 = iRing.second.op2;
+        point_ptr<T> op_search_1_next = op_search_1->next;
+        point_ptr<T> op_search_2_next = op_search_2->next;
+        op_search_1->next = op_search_2_next;
+        op_search_2->next = op_search_1_next;
+        op_search_1_next->prev = op_search_2;
+        op_search_2_next->prev = op_search_1;
+    }
+
+    ring_ptr<T> outRec_new = create_ring(rings);
+    outRec_new->is_hole = false;
+    if (outRec_origin->is_hole && ((area(op_origin_1) < 0))) {
+        outRec_origin->points = op_origin_1;
+        outRec_new->points = op_origin_2;
+    } else {
+        outRec_origin->points = op_origin_2;
+        outRec_new->points = op_origin_1;
+    }
+
+    update_point_indices(*outRec_origin);
+    update_point_indices(*outRec_new);
+
+    outRec_origin->bottom_point = 0;
+
+    std::list<std::pair<int, point_ptr_pair<T>>> move_list;
+    for (auto iRing : iList) {
+        ring_ptr<T> outRec_itr = get_ring(rings, iRing.first);
+        outRec_itr->points = 0;
+        outRec_itr->bottom_point = 0;
+        outRec_itr->index = outRec_origin->index;
+        if (outRec_origin->is_hole) {
+            outRec_itr->first_left = parse_first_left(outRec_origin->first_left);
+        } else {
+            outRec_itr->first_left = outRec_origin;
+        }
+        outRec_itr->is_hole = outRec_origin->is_hole;
+        if (true) {
+            fixup_first_lefts3(outRec_itr, outRec_origin, rings);
+        }
+    }
+    if (outRec_origin->is_hole) {
+        outRec_new->first_left = outRec_origin;
+    } else {
+        outRec_new->first_left = outRec_origin->first_left;
+    }
+    if (true) {
+        if (outRec_origin->is_hole) {
+            fixup_first_lefts2(outRec_new, outRec_origin, rings);
+        } else {
+            fixup_first_lefts1(outRec_origin, outRec_new, rings);
+        }
+    }
+    for (auto iRing : iList) {
+        auto range_itr = dupeRec.equal_range(iRing.first);
+        if (range_itr.first != range_itr.second) {
+            for (auto it = range_itr.first; it != range_itr.second; ++it) {
+                ring_ptr<T> itRec = get_ring(rings, it->second.op1->index);
+                ring_ptr<T> itRec2 = get_ring(rings, it->second.op2->index);
+                if (itRec == itRec2) {
+                    continue;
+                }
+                ring_ptr<T> flRec;
+                ring_ptr<T> flRec2;
+                if (itRec->is_hole) {
+                    flRec = parse_first_left(itRec->first_left);
+                } else {
+                    flRec = itRec;
+                }
+                if (itRec2->is_hole) {
+                    flRec2 = parse_first_left(itRec2->first_left);
+                } else {
+                    flRec2 = itRec2;
+                }
+                if ((itRec->is_hole || itRec2->is_hole) && (flRec == flRec2)) {
+                    move_list.emplace_back(itRec->index, it->second);
+                }
+            }
+            dupeRec.erase(iRing.first);
+        }
+    }
+    auto range_itr = dupeRec.equal_range(outRec_origin->index);
+    for (auto it = range_itr.first; it != range_itr.second;) {
+        ring_ptr<T> itRec = get_ring(rings, it->second.op1->index);
+        ring_ptr<T> itRec2 = get_ring(rings, it->second.op2->index);
+        if (itRec == itRec2) {
+            it = dupeRec.erase(it);
+            continue;
+        }
+        ring_ptr<T> flRec;
+        ring_ptr<T> flRec2;
+        if (itRec->is_hole) {
+            flRec = parse_first_left(itRec->first_left);
+        } else {
+            flRec = itRec;
+        }
+        if (itRec2->is_hole) {
+            flRec2 = parse_first_left(itRec2->first_left);
+        } else {
+            flRec2 = itRec2;
+        }
+        if (itRec->index != outRec_origin->index) {
+            if ((itRec->is_hole || itRec2->is_hole) && (flRec == flRec2)) {
+                move_list.emplace_back(itRec->index, it->second);
+            }
+            it = dupeRec.erase(it);
+        } else {
+            if ((itRec->is_hole || itRec2->is_hole) && (flRec == flRec2)) {
+                ++it;
+            } else {
+                it = dupeRec.erase(it);
+            }
+        }
+    }
+
+    if (!move_list.empty()) {
+        dupeRec.insert(move_list.begin(), move_list.end());
+    }
+    return true;
+}
+
+template <typename T>
+struct point_ptr_cmp {
+    inline bool operator()(point_ptr<T> op1, point_ptr<T> op2) {
+        if (op1->y > op2->y) {
+            return true;
+        } else if (op1->y < op2->y) {
+            return false;
+        } else if (op1->x < op2->x) {
+            return true;
+        } else if (op1->x > op2->x) {
+            return false;
+        } else {
+            return (op1->index < op2->index);
+        }
+    }
+};
+
+template <typename T>
+void do_simple_polygons(ring_list<T>& rings) {
+    std::vector<point_ptr<T>> out_points;
+    {
+        size_t i = 0;
+        while (i < rings.size()) {
+            ring_ptr<T> outrec = rings[i++];
+            point_ptr<T> op = outrec->points;
+            if (!op || outrec->is_open)
+                continue;
+            do {
+                out_points.push_back(op);
+                op = op->next;
+            } while (op != outrec->points);
+        }
+    }
+    std::stable_sort(out_points.begin(), out_points.end(), point_ptr_cmp<T>());
+    std::unordered_multimap<size_t, point_ptr_pair<T>> dupeRec;
+    dupeRec.reserve(rings.size());
+    std::size_t count = 0;
+    for (std::size_t i = 1; i < out_points.size(); ++i) {
+        if (*out_points[i] == *out_points[i - 1]) {
+            ++count;
+            continue;
+        }
+        if (count > 0) {
+            for (std::size_t j = (i - count - 1); j < i; ++j) {
+                if (out_points[j]->index < 0)
+                    continue;
+                ring_ptr<T> outRec_j = get_ring(rings, out_points[j]->index);
+                size_t idx_j = outRec_j->index;
+                for (std::size_t k = j + 1; k < i; ++k) {
+                    if (out_points[k]->index < 0)
+                        continue;
+                    ring_ptr<T> outRec_k = get_ring(rings, out_points[k]->index);
+                    size_t idx_k = outRec_k->index;
+                    if (idx_k == idx_j) {
+                        point_ptr<T> op = out_points[j];
+                        point_ptr<T> op2 = out_points[k];
+                        ring_ptr<T> outrec = outRec_j;
+                        if (op != op2 && op2->next != op && op2->prev != op) {
+                            // split the polygon into two ...
+                            point_ptr<T> op3 = op->prev;
+                            point_ptr<T> op4 = op2->prev;
+                            op->prev = op4;
+                            op4->next = op;
+                            op2->prev = op3;
+                            op3->next = op2;
+
+                            ring_ptr<T> outrec2 = create_ring(rings);
+                            if (point_count(op) > point_count(op2)) {
+                                outrec->points = op;
+                                outrec2->points = op2;
+                            } else {
+                                outrec->points = op2;
+                                outrec2->points = op;
+                            }
+                            update_point_indices(*outrec);
+                            update_point_indices(*outrec2);
+                            if (poly2_contains_poly1(outrec2->points, outrec->points)) {
+                                // OutRec2 is contained by OutRec1 ...
+                                outrec2->is_hole = !outrec->is_hole;
+                                outrec2->first_left = outrec;
+                                fixup_first_lefts2(outrec2, outrec, rings);
+                                auto range = dupeRec.equal_range(idx_j);
+                                std::list<std::pair<int, point_ptr_pair<T>>> move_list;
+                                for (auto it = range.first; it != range.second;) {
+                                    ring_ptr<T> itRec = get_ring(rings, it->second.op1->index);
+                                    ring_ptr<T> itRec2 = get_ring(rings, it->second.op2->index);
+                                    ring_ptr<T> flRec;
+                                    ring_ptr<T> flRec2;
+                                    if (itRec->is_hole) {
+                                        flRec = parse_first_left(itRec->first_left);
+                                    } else {
+                                        flRec = itRec;
+                                    }
+                                    if (itRec2->is_hole) {
+                                        flRec2 = parse_first_left(itRec2->first_left);
+                                    } else {
+                                        flRec2 = itRec2;
+                                    }
+                                    if (itRec->index != idx_j) {
+                                        if ((itRec->is_hole || itRec2->is_hole) &&
+                                            (flRec == flRec2)) {
+                                            move_list.emplace_back(itRec->index, it->second);
+                                        }
+                                        it = dupeRec.erase(it);
+                                    } else {
+                                        if ((itRec->is_hole || itRec2->is_hole) &&
+                                            (flRec == flRec2)) {
+                                            ++it;
+                                        } else {
+                                            it = dupeRec.erase(it);
+                                        }
+                                    }
+                                }
+                                if (!move_list.empty()) {
+                                    dupeRec.insert(move_list.begin(), move_list.end());
+                                }
+                                if (!outrec->is_hole) {
+                                    point_ptr_pair<T> intPt1 = { outrec->points, outrec2->points };
+                                    point_ptr_pair<T> intPt2 = { outrec2->points, outrec->points };
+                                    dupeRec.emplace(outrec->index, intPt1);
+                                    dupeRec.emplace(outrec2->index, intPt2);
+                                }
+                            } else if (Poly2ContainsPoly1(outrec->points, outrec2->points)) {
+                                // OutRec1 is contained by OutRec2 ...
+                                outrec2->is_hole = outrec->is_hole;
+                                outrec->is_hole = !outrec2->is_hole;
+                                outrec2->first_left = outrec->first_left;
+                                outrec->first_left = outrec2;
+                                fixup_first_lefts2(outrec, outrec2, rings);
+                                auto range = dupeRec.equal_range(idx_j);
+                                std::list<std::pair<int, point_ptr_pair<T>>> move_list;
+                                for (auto it = range.first; it != range.second;) {
+                                    ring_ptr<T> itRec = get_ring(rings, it->second.op1->index);
+                                    ring_ptr<T> itRec2 = get_ring(rings, it->second.op2->index);
+                                    ring_ptr<T> flRec;
+                                    ring_ptr<T> flRec2;
+                                    if (itRec->is_hole) {
+                                        flRec = parse_first_left(itRec->first_left);
+                                    } else {
+                                        flRec = itRec;
+                                    }
+                                    if (itRec2->is_hole) {
+                                        flRec2 = parse_first_left(itRec2->first_left);
+                                    } else {
+                                        flRec2 = itRec2;
+                                    }
+                                    if (itRec->index != idx_j) {
+                                        if ((itRec->is_hole || itRec2->is_hole) &&
+                                            (flRec == flRec2)) {
+                                            move_list.emplace_back(itRec->index, it->second);
+                                        }
+                                        it = dupeRec.erase(it);
+                                    } else {
+                                        if ((itRec->is_hole || itRec2->is_hole) &&
+                                            (flRec == flRec2)) {
+                                            ++it;
+                                        } else {
+                                            it = dupeRec.erase(it);
+                                        }
+                                    }
+                                }
+                                if (!move_list.empty()) {
+                                    dupeRec.insert(move_list.begin(), move_list.end());
+                                }
+                                if (!outrec2->is_hole) {
+                                    point_ptr_pair<T> intPt1 = { outrec->points, outrec2->points };
+                                    point_ptr_pair<T> intPt2 = { outrec2->points, outrec->points };
+                                    dupeRec.emplace(outrec->index, intPt1);
+                                    dupeRec.emplace(outrec2->index, intPt2);
+                                }
+                            } else {
+                                // the 2 polygons are separate ...
+                                outrec2->is_hole = outrec->is_hole;
+                                outrec2->first_left = outrec->first_left;
+                                fixup_first_lefts1(outrec, outrec2, rings);
+                                auto range = dupeRec.equal_range(idx_j);
+                                std::list<std::pair<int, point_ptr_pair<T>>> move_list;
+                                for (auto it = range.first; it != range.second;) {
+                                    ring_ptr<T> itRec = get_ring(rings, it->second.op1->index);
+                                    ring_ptr<T> itRec2 = get_ring(rings, it->second.op2->index);
+                                    ring_ptr<T> flRec;
+                                    ring_ptr<T> flRec2;
+                                    if (itRec->is_hole) {
+                                        flRec = parse_first_left(itRec->first_left);
+                                    } else {
+                                        flRec = itRec;
+                                    }
+                                    if (itRec2->is_hole) {
+                                        flRec2 = parse_first_left(itRec2->first_left);
+                                    } else {
+                                        flRec2 = itRec2;
+                                    }
+                                    if (itRec->index != idx_j) {
+                                        if ((itRec->is_hole || itRec2->is_hole) &&
+                                            (flRec == flRec2)) {
+                                            move_list.emplace_back(itRec->index, it->second);
+                                        }
+                                        it = dupeRec.erase(it);
+                                    } else {
+                                        if ((itRec->is_hole || itRec2->is_hole) &&
+                                            (flRec == flRec2)) {
+                                            ++it;
+                                        } else {
+                                            it = dupeRec.erase(it);
+                                        }
+                                    }
+                                }
+                                if (!move_list.empty()) {
+                                    dupeRec.insert(move_list.begin(), move_list.end());
+                                }
+                                if (outrec2->is_hole) {
+                                    point_ptr_pair<T> intPt1 = { outrec->points, outrec2->points };
+                                    point_ptr_pair<T> intPt2 = { outrec2->points, outrec->points };
+                                    dupeRec.emplace(outrec->index, intPt1);
+                                    dupeRec.emplace(outrec2->index, intPt2);
+                                }
+                            }
+                            outRec_j = get_ring(rings, out_points[j]->index);
+                            idx_j = outRec_j->index;
+                        }
+                        continue;
+                    }
+                    if (fix_intersects(dupeRec, out_points[j], out_points[k], outRec_j, outRec_k,
+                                       rings)) {
+                        outRec_j = get_ring(rings, out_points[j]->index);
+                        idx_j = outRec_j->index;
+                    }
+                }
+            }
+            count = 0;
+        }
+    }
+}
+
+template <typename T>
 bool execute_vatti(local_minimum_list<T>& minima_list,
                    ring_list<T>& rings,
                    clip_type cliptype,
@@ -1112,6 +1642,8 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
             fixup_out_polygon(*ring);
         }
     }
+
+    do_simple_polygons(rings);
 
     return true;
 }
