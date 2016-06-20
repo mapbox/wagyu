@@ -1645,16 +1645,13 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
 
     do_simple_polygons(rings);
 
-        for (size_t i = 0; i < rings.size(); ++i)
-        {
-          ring_ptr<T> ring = rings[i];
-          if (!ring->points || ring->is_open)
-          {
-              continue;
-          }
-          fixup_out_polygon(*ring, false);
+    for (size_t i = 0; i < rings.size(); ++i) {
+        ring_ptr<T> ring = rings[i];
+        if (!ring->points || ring->is_open) {
+            continue;
         }
-
+        fixup_out_polygon(*ring, false);
+    }
 
     return true;
 }
