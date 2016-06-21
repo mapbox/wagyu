@@ -419,7 +419,6 @@ ring_ptr<T> create_ring(ring_list<T>& rings) {
     r->first_left = 0;
     r->points = 0;
     r->bottom_point = 0;
-    r->poly_node = 0;
     rings.push_back(r);
     r->index = rings.size() - 1;
     return r;

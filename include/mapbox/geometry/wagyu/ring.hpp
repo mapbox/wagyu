@@ -1,7 +1,6 @@
 #pragma once
 
 #include <mapbox/geometry/wagyu/point.hpp>
-#include <mapbox/geometry/wagyu/polytree.hpp>
 
 namespace mapbox {
 namespace geometry {
@@ -23,7 +22,7 @@ struct ring {
     ring_ptr<T> first_left; // see comments in clipper.pas
     point_ptr<T> points;
     point_ptr<T> bottom_point;
-    polygon_node_ptr<T> poly_node;
+    mapbox::geometry::polygon<T>* poly_ptr;
 
     ring()
         : index(0),
@@ -32,7 +31,7 @@ struct ring {
           first_left(nullptr),
           points(nullptr),
           bottom_point(nullptr),
-          poly_node(nullptr) {
+          poly_ptr(nullptr) {
     }
 };
 
@@ -65,7 +64,7 @@ void init(const_point_ptr<T>& node) {
 template <typename T>
 std::size_t count(const const_point_ptr<T>& orig_node) {
     std::size_t size = 0;
-    const_point_ptr<T> n = orig_node;
+    point_ptr<T> n = orig_node;
     do {
         n = get_next(n);
         ++size;
