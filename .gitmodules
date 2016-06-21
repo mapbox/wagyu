@@ -1,0 +1,3 @@
+[submodule ".mason"]
+	path = .mason
+	url = git@github.com:mapbox/mason.git
