@@ -1,4 +1,6 @@
 test
+fixture-tester
 build
 *.swp
 mason_packages
+*.dSYM

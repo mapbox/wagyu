@@ -1,6 +1,7 @@
 #pragma once
 
 #include <unordered_map>
+#include <set>
 
 #include <mapbox/geometry/wagyu/active_edge_list.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
