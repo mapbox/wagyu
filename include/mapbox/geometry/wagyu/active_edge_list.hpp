@@ -26,30 +26,23 @@ inline bool e2_inserts_before_e1(edge<T> const& e1, edge<T> const& e2) {
 }
 
 template <typename T>
-void insert_edge_into_AEL(edge_ptr<T> edge, edge_ptr<T> start_edge, edge_ptr<T>& active_edges) {
-    if (!active_edges) {
-        edge->prev_in_AEL = nullptr;
-        edge->next_in_AEL = nullptr;
-        active_edges = edge;
-    } else if (!start_edge && e2_inserts_before_e1(*active_edges, *edge)) {
-        edge->prev_in_AEL = nullptr;
-        edge->next_in_AEL = active_edges;
-        active_edges->prev_in_AEL = edge;
-        active_edges = edge;
-    } else {
-        if (!start_edge) {
-            start_edge = active_edges;
-        }
-        while (start_edge->next_in_AEL && !e2_inserts_before_e1(*start_edge->next_in_AEL, *edge)) {
-            start_edge = start_edge->next_in_AEL;
-        }
-        edge->next_in_AEL = start_edge->next_in_AEL;
-        if (start_edge->next_in_AEL) {
-            start_edge->next_in_AEL->prev_in_AEL = edge;
-        }
-        edge->prev_in_AEL = start_edge;
-        start_edge->next_in_AEL = edge;
+void insert_edge_into_AEL(edge_list_itr<T> edge, edge_list<T> & bound, edge_list<T>& active_edges) {
+    auto itr = active_edges.begin();
+    while (itr != active_edges.end() && !e2_inserts_before_e1(*itr, *edge)) {
+        ++itr;
     }
+    active_edges.splice(itr, bound, edge);
+}
+
+template <typename T>
+void insert_edge_into_AEL(edge_list_itr<T> edge, 
+                          edge_list_itr<T> itr,
+                          edge_list<T> & bound,
+                          edge_list<T>& active_edges) {
+    while (itr != active_edges.end() && !e2_inserts_before_e1(*itr, *edge)) {
+        ++itr;
+    }
+    active_edges.splice(itr, bound, edge);
 }
 
 template <typename T>
@@ -163,50 +156,62 @@ void update_edge_into_AEL(edge_ptr<T>& e, edge_ptr<T>& active_edges, scanbeam_li
 }
 
 template <typename T>
-void set_winding_count(edge<T>& edge,
+void set_winding_count(edge_list_itr<T> const& edge_itr,
+                       edge_ptr_list<T> & active_edge_list,
                        clip_type cliptype,
                        fill_type subject_fill_type,
-                       fill_type clip_fill_type,
-                       edge_ptr<T> active_edges) {
+                       fill_type clip_fill_type ) {
     using value_type = T;
-    edge_ptr<value_type> e = edge.prev_in_AEL;
-    // find the edge of the same polytype that immediately preceeds 'edge' in
-    // AEL
-    while (e && ((e->poly_type != edge.poly_type) || (e->winding_delta == 0))) {
-        e = e->prev_in_AEL;
-    }
-    if (!e) {
+    
+    edge<T> & edge = *edge_itr;
+    auto e = edge_list_rev_itr<T>(edge_itr)
+    if (e == active_edge_list.rend())
+    {
         if (edge.winding_delta == 0) {
             fill_type pft =
-                (edge.poly_type == polygon_type_subject ? subject_fill_type : clip_fill_type);
+                (edge.poly_type == polygon_type_subject) ? subject_fill_type : clip_fill_type;
             edge.winding_count = (pft == fill_type_negative ? -1 : 1);
         } else {
             edge.winding_count = edge.winding_delta;
         }
         edge.winding_count2 = 0;
-        e = active_edges; // ie get ready to calc winding_count2
+        return;
+    }
+
+    // find the edge of the same polytype that immediately preceeds 'edge' in
+    // AEL
+    while (e != active_edge_list.rend() && (e->poly_type != edge.poly_type || e->winding_delta == 0)) {
+        ++e;
+    }
+    if (e == active_edge_list.rend()) {
+        if (edge.winding_delta == 0) {
+            fill_type pft =
+                (edge.poly_type == polygon_type_subject) ? subject_fill_type : clip_fill_type;
+            edge.winding_count = (pft == fill_type_negative ? -1 : 1);
+        } else {
+            edge.winding_count = edge.winding_delta;
+        }
+        edge.winding_count2 = 0;
     } else if (edge.winding_delta == 0 && cliptype != clip_type_union) {
         edge.winding_count = 1;
         edge.winding_count2 = e->winding_count2;
-        e = e->next_in_AEL; // ie get ready to calc winding_count2
     } else if (is_even_odd_fill_type(edge, subject_fill_type, clip_fill_type)) {
         // EvenOdd filling ...
         if (edge.winding_delta == 0) {
             // are we inside a subj polygon ...
-            bool Inside = true;
-            edge_ptr<value_type> e2 = e->prev_in_AEL;
-            while (e2) {
+            bool inside = true;
+            auto e2 = e;
+            while (e2 != active_edge_list.rend()) {
                 if (e2->poly_type == e->poly_type && e2->winding_delta != 0) {
-                    Inside = !Inside;
+                    inside = !inside;
                 }
-                e2 = e2->prev_in_AEL;
+                ++e2;
             }
-            edge.winding_count = (Inside ? 0 : 1);
+            edge.winding_count = (inside ? 0 : 1);
         } else {
             edge.winding_count = edge.winding_delta;
         }
         edge.winding_count2 = e->winding_count2;
-        e = e->next_in_AEL; // ie get ready to calc winding_count2
     } else {
         // nonZero, Positive or Negative filling ...
         if (e->winding_count * e->winding_delta < 0) {
@@ -240,23 +245,23 @@ void set_winding_count(edge<T>& edge,
             }
         }
         edge.winding_count2 = e->winding_count2;
-        e = e->next_in_AEL; // ie get ready to calc winding_count2
     }
 
     // update winding_count2 ...
+    auto e_foward = e.base();
     if (is_even_odd_alt_fill_type(edge, subject_fill_type, clip_fill_type)) {
         // EvenOdd filling ...
-        while (e != &edge) {
-            if (e->winding_delta != 0) {
+        while (e_forward != edge_itr) {
+            if (e_forward->winding_delta != 0) {
                 edge.winding_count2 = (edge.winding_count2 == 0 ? 1 : 0);
             }
-            e = e->next_in_AEL;
+            ++e_forward;
         }
     } else {
         // nonZero, Positive or Negative filling ...
-        while (e != &edge) {
-            edge.winding_count2 += e->winding_delta;
-            e = e->next_in_AEL;
+        while (e_forward != edge_itr) {
+            edge.winding_count2 += e_forward->winding_delta;
+            ++e_forward;
         }
     }
 }

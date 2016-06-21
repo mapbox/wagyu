@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include <mapbox/geometry/wagyu/active_edge_list.hpp>
+#include <mapbox/geometry/wagyu/build_edges.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/edge.hpp>
 #include <mapbox/geometry/wagyu/edge_util.hpp>
@@ -24,11 +25,188 @@ namespace geometry {
 namespace wagyu {
 
 template <typename T>
-void insert_local_minima_into_AEL(T const botY,
+bool add_line_string(mapbox::geometry::line_string<T> const& path_geometry,
+                     std::vector<edge_list<T>>& edges,
+                     local_minimum_list<T>& minima_list) {
+    bool is_flat = true;
+    edges.emplace_back();
+    auto& new_edges = edges.back();
+    if (!build_edge_list(path_geometry, new_edges, is_flat) || new_edges.empty()) {
+        edges.pop_back();
+        return false;
+    }
+    add_line_to_local_minima_list(new_edges, minima_list);
+    return true;
+}
+
+template <typename T>
+bool add_linear_ring(mapbox::geometry::linear_ring<T> const& path_geometry,
+                     std::vector<edge_list<T>>& edges,
+                     local_minimum_list<T>& minima_list,
+                     polygon_type p_type) {
+    edges.emplace_back();
+    auto& new_edges = edges.back();
+    if (!build_edge_list(path_geometry, new_edges, p_type) || new_edges.empty()) {
+        edges.pop_back();
+        return false;
+    }
+    add_ring_to_local_minima_list(new_edges, minima_list);
+    return true;
+}
+
+template <typename T>
+void insert_local_minimum_into_AEL(edge_list<T> & left_bound,
+                                   edge_list<T> & right_bound,
+                                   edge_list<T>& active_edge_list,
+                                   edge_ptr_list<T>& horizontal_edge_list,
+                                   ring_list<T>& rings,
+                                   join_list<T>& joins,
+                                   join_list<T>& ghost_joins,
+                                   scanbeam_list<T>& scanbeam,
+                                   clip_type cliptype,
+                                   fill_type subject_fill_type,
+                                   fill_type clip_fill_type) {
+    using value_type = T;
+    point_ptr<value_type> p1 = nullptr;
+    edge_list_itr<T> lb_edge_itr;
+    edge_list_itr<T> rb_edge_itr;
+    
+    if (left_bound.empty() && !right_bound.empty()) {
+        // No left bound so only rightbound!
+        // nb: don't insert LB into either AEL or SEL
+        rb_edge_itr = right_bound.begin();
+        insert_edge_into_AEL(rb_edge_itr, right_bound, active_edge_list);
+        set_winding_count(rb_edge_itr, active_edge_list, cliptype, subject_fill_type, clip_fill_type);
+        if (is_contributing(*rb_edge_itr, cliptype, subject_fill_type, clip_fill_type)) {
+            p1 = add_first_point(rb_edge_itr, active_edge_list, right_bound->bot, rings);
+            if (rb_edge_itr->winding_delta != 0) {
+                auto e_prev = edge_ptr_list_rev_itr<T>(rb_edge_itr);
+                if (e_prev != active_edge_list.rend() && e_prev->ring && e_prev->curr.x == rb_edge_itr->curr.x &&
+                    e_prev->winding_delta != 0) {
+                    add_point_to_ring(e_prev, rb_edge_itr->curr);
+                }
+                auto e_next = rb_edge_itr + 1;
+                if (e_next != active_edge_list.end() && e_next->ring && e_next->curr.x == rb_edge_itr->curr.x &&
+                    e_next->winding_delta != 0) {
+                    add_point_to_ring(e_next, rb_edge_itr->curr);
+                }
+            }
+        }
+    } else if (right_bound.empty() && !left_bound.empty()) { 
+        // No right bound so only left bound!
+        lb_edge_itr = left_bound.begin();
+        insert_edge_into_AEL(lb_edge_itr, left_bound, active_edge_list);
+        set_winding_count(lb_edge_itr, active_edge_list, cliptype, subject_fill_type, clip_fill_type);
+        if (is_contributing(*lb_edge_itr, cliptype, subject_fill_type, clip_fill_type)) {
+            p1 = add_first_point(lb_edge_itr, active_edge_list, left_bound->bot, rings);
+            if (lb_edge_itr->winding_delta != 0) {
+                auto e_prev = edge_ptr_list_rev_itr<T>(lb_edge_itr);
+                if (e_prev != active_edge_list.rend() && e_prev->ring && e_prev->curr.x == lb_edge_itr->curr.x &&
+                    e_prev->winding_delta != 0) {
+                    add_point_to_ring(e_prev, lb_edge_itr->curr);
+                }
+                auto e_next = lb_edge_itr + 1;
+                if (e_next != active_edge_list.end() && e_next->ring && e_next->curr.x == lb_edge_itr->curr.x &&
+                    e_next->winding_delta != 0) {
+                    add_point_to_ring(e_next, lb_edge_itr->curr);
+                }
+            }
+        }
+        scanbeam.push(lb_edge_itr->top.y);
+    } else {
+        // Both left and right bound
+        lb_edge_itr = left_bound.begin();
+        rb_edge_itr = right_bound.begin();
+        insert_edge_into_AEL(lb_edge_itr, left_bound, active_edge_list);
+        insert_edge_into_AEL(rb_edge_itr, lb_edge_itr, right_bound, active_edge_list);
+        set_winding_count(lb_edge_itr, active_edge_list, cliptype, subject_fill_type, clip_fill_type);
+        rb_edge_itr->winding_count = lb_edge_itr->winding_count;
+        rb_edge_itr->winding_count2 = lb_edge_itr->winding_count2;
+        if (is_contributing(*lb_edge_itr, cliptype, subject_fill_type, clip_fill_type)) {
+            p1 = add_local_minimum_point(lb_edge_itr, rb_edge_itr, lb->bot, rings, joins);
+            if (lb_edge_itr->winding_delta != 0) {
+                auto e_prev = edge_ptr_list_rev_itr<T>(lb_edge_itr);
+                if (e_prev != active_edge_list.rend() && e_prev->ring && e_prev->curr.x == lb_edge_itr->curr.x &&
+                    e_prev->winding_delta != 0) {
+                    add_point_to_ring(e_prev, lb_edge_itr->curr);
+                }
+                auto e_next = rb_edge_itr + 1;
+                if (e_next != active_edge_list.end() && e_next->ring && e_next->curr.x == rb_edge_itr->curr.x &&
+                    e_next->winding_delta != 0) {
+                    add_point_to_ring(e_next, rb_edge_itr->curr);
+                }
+            }
+        }
+        scanbeam.push(lb_edge_itr->top.y);
+    }
+
+    if (!right_bound.empty()) {
+        if (is_horizontal(*rb_edge_itr)) {
+            horizontal_edge_list.push_back(&(*rb_edge_itr));
+            if (right_bound->next_in_LML) {
+                scanbeam.push(right_bound->next_in_LML->top.y);
+            }
+        } else {
+            scanbeam.push(right_bound->top.y);
+        }
+    }
+
+    if (left_bound.empty() || right_bound.empty()) {
+        continue;
+    }
+
+    // if any output polygons share an edge, they'll need joining later ...
+    if (p1 && is_horizontal(*right_bound) && !ghost_joins.empty() && right_bound->winding_delta != 0) {
+        for (auto jr = ghost_joins.begin(); jr != ghost_joins.end(); ++jr) {
+            // if the horizontal Rb and a 'ghost' horizontal overlap, then
+            // convert
+            // the 'ghost' join to a real join ready for later ...
+            if (horizontal_segments_overlap(jr->point1->x, jr->off_point.x, right_bound->bot.x,
+                                            right_bound->top.x)) {
+                joins.emplace_back(jr->point1, p1, jr->off_point);
+            }
+        }
+    }
+
+    if (left_bound->index >= 0 && left_bound->prev_in_AEL && left_bound->prev_in_AEL->curr.x == left_bound->bot.x &&
+        left_bound->prev_in_AEL->index >= 0 &&
+        slopes_equal(left_bound->prev_in_AEL->bot, left_bound->prev_in_AEL->top, left_bound->curr, left_bound->top) &&
+        left_bound->winding_delta != 0 && left_bound->prev_in_AEL->winding_delta != 0) {
+        point_ptr<value_type> p2 = add_point(left_bound->prev_in_AEL, left_bound->bot, rings);
+        joins.emplace_back(p1, p2, left_bound->top);
+    }
+
+    if (left_bound->next_in_AEL != right_bound) {
+        if (right_bound->index >= 0 && right_bound->prev_in_AEL->index >= 0 &&
+            slopes_equal(right_bound->prev_in_AEL->curr, right_bound->prev_in_AEL->top, right_bound->curr, right_bound->top) &&
+            right_bound->winding_delta != 0 && right_bound->prev_in_AEL->winding_delta != 0) {
+            point_ptr<value_type> p2 = add_point(right_bound->prev_in_AEL, right_bound->bot, rings);
+            joins.emplace_back(p1, p2, right_bound->top);
+        }
+
+        edge_ptr<value_type> e = left_bound->next_in_AEL;
+        if (e) {
+            while (e != right_bound) {
+                // nb: For calculating winding counts etc, IntersectEdges()
+                // assumes
+                // that param1 will be to the Right of param2 ABOVE the
+                // intersection ...
+                // Note: order important here
+                intersect_edges(right_bound, e, left_bound->curr, cliptype, subject_fill_type, clip_fill_type,
+                                rings, joins, active_edge_list);
+                e = e->next_in_AEL;
+            }
+        }
+    }
+}
+
+template <typename T>
+void insert_local_minima_into_AEL(T const bot_y,
                                   local_minimum_itr<T>& current_local_min,
                                   local_minimum_list<T>& minima_list,
-                                  edge_ptr<T>& active_edge_list,
-                                  edge_ptr<T>& sorted_edge_list,
+                                  local_minimum_list<T>& active_minima_list,
+                                  edge_list<T>& active_edge_list,
+                                  edge_ptr_list<T>& sorted_edge_list,
                                   ring_list<T>& rings,
                                   join_list<T>& joins,
                                   join_list<T>& ghost_joins,
@@ -36,126 +214,23 @@ void insert_local_minima_into_AEL(T const botY,
                                   clip_type cliptype,
                                   fill_type subject_fill_type,
                                   fill_type clip_fill_type) {
-    using value_type = T;
-    local_minimum_ptr<T> lm;
-    while (pop_local_minima(botY, lm, current_local_min, minima_list)) {
-        edge_ptr<value_type> lb = lm->left_bound;
-        edge_ptr<value_type> rb = lm->right_bound;
-        point_ptr<value_type> p1 = nullptr;
-        if (!lb) {
-            // nb: don't insert LB into either AEL or SEL
-            insert_edge_into_AEL(rb, static_cast<edge_ptr<T>>(nullptr), active_edge_list);
-            set_winding_count(*rb, cliptype, subject_fill_type, clip_fill_type, active_edge_list);
-            if (is_contributing(*rb, cliptype, subject_fill_type, clip_fill_type)) {
-                p1 = add_point(rb, rb->bot, rings);
-                edge_ptr<value_type> eprev = rb->prev_in_AEL;
-                if (rb->index >= 0 && rb->winding_delta != 0 && eprev && eprev->index >= 0 &&
-                    eprev->curr.x == rb->curr.x && eprev->winding_delta != 0) {
-                    add_point(eprev, rb->curr, rings);
-                }
-                edge_ptr<value_type> enext = rb->next_in_AEL;
-                if (rb->index >= 0 && rb->winding_delta != 0 && enext && enext->index >= 0 &&
-                    enext->curr.x == rb->curr.x && enext->winding_delta != 0) {
-                    add_point(enext, rb->curr, rings);
-                }
-            }
-        } else if (!rb) {
-            insert_edge_into_AEL(lb, static_cast<edge_ptr<T>>(nullptr), active_edge_list);
-            set_winding_count(*lb, cliptype, subject_fill_type, clip_fill_type, active_edge_list);
-            if (is_contributing(*lb, cliptype, subject_fill_type, clip_fill_type)) {
-                p1 = add_point(lb, lb->bot, rings);
-                edge_ptr<value_type> eprev = lb->prev_in_AEL;
-                if (lb->index >= 0 && lb->winding_delta != 0 && eprev && eprev->index >= 0 &&
-                    eprev->curr.x == lb->curr.x && eprev->winding_delta != 0) {
-                    add_point(eprev, lb->curr, rings);
-                }
-                edge_ptr<value_type> enext = lb->next_in_AEL;
-                if (lb->index >= 0 && lb->winding_delta != 0 && enext && enext->index >= 0 &&
-                    enext->curr.x == lb->curr.x && enext->winding_delta != 0) {
-                    add_point(enext, lb->curr, rings);
-                }
-            }
-            scanbeam.push(lb->top.y);
-        } else {
-            insert_edge_into_AEL(lb, static_cast<edge_ptr<T>>(nullptr), active_edge_list);
-            insert_edge_into_AEL(rb, lb, active_edge_list);
-            set_winding_count(*lb, cliptype, subject_fill_type, clip_fill_type, active_edge_list);
-            rb->winding_count = lb->winding_count;
-            rb->winding_count2 = lb->winding_count2;
-            if (is_contributing(*lb, cliptype, subject_fill_type, clip_fill_type)) {
-                p1 = add_local_minimum_point(lb, rb, lb->bot, rings, joins);
-                edge_ptr<value_type> eprev = lb->prev_in_AEL;
-                if (lb->index >= 0 && lb->winding_delta != 0 && eprev && eprev->index >= 0 &&
-                    eprev->curr.x == lb->curr.x && eprev->winding_delta != 0) {
-                    add_point(eprev, lb->curr, rings);
-                }
-                edge_ptr<value_type> enext = rb->next_in_AEL;
-                if (rb->index >= 0 && rb->winding_delta != 0 && enext && enext->index >= 0 &&
-                    enext->curr.x == rb->curr.x && enext->winding_delta != 0) {
-                    add_point(enext, rb->curr, rings);
-                }
-            }
-            scanbeam.push(lb->top.y);
-        }
-
-        if (rb) {
-            if (is_horizontal(*rb)) {
-                add_edge_to_SEL(rb, sorted_edge_list);
-                if (rb->next_in_LML) {
-                    scanbeam.push(rb->next_in_LML->top.y);
-                }
-            } else {
-                scanbeam.push(rb->top.y);
-            }
-        }
-
-        if (!lb || !rb) {
-            continue;
-        }
-
-        // if any output polygons share an edge, they'll need joining later ...
-        if (p1 && is_horizontal(*rb) && !ghost_joins.empty() && rb->winding_delta != 0) {
-            for (auto jr = ghost_joins.begin(); jr != ghost_joins.end(); ++jr) {
-                // if the horizontal Rb and a 'ghost' horizontal overlap, then
-                // convert
-                // the 'ghost' join to a real join ready for later ...
-                if (horizontal_segments_overlap(jr->point1->x, jr->off_point.x, rb->bot.x,
-                                                rb->top.x)) {
-                    joins.emplace_back(jr->point1, p1, jr->off_point);
-                }
-            }
-        }
-
-        if (lb->index >= 0 && lb->prev_in_AEL && lb->prev_in_AEL->curr.x == lb->bot.x &&
-            lb->prev_in_AEL->index >= 0 &&
-            slopes_equal(lb->prev_in_AEL->bot, lb->prev_in_AEL->top, lb->curr, lb->top) &&
-            lb->winding_delta != 0 && lb->prev_in_AEL->winding_delta != 0) {
-            point_ptr<value_type> p2 = add_point(lb->prev_in_AEL, lb->bot, rings);
-            joins.emplace_back(p1, p2, lb->top);
-        }
-
-        if (lb->next_in_AEL != rb) {
-            if (rb->index >= 0 && rb->prev_in_AEL->index >= 0 &&
-                slopes_equal(rb->prev_in_AEL->curr, rb->prev_in_AEL->top, rb->curr, rb->top) &&
-                rb->winding_delta != 0 && rb->prev_in_AEL->winding_delta != 0) {
-                point_ptr<value_type> p2 = add_point(rb->prev_in_AEL, rb->bot, rings);
-                joins.emplace_back(p1, p2, rb->top);
-            }
-
-            edge_ptr<value_type> e = lb->next_in_AEL;
-            if (e) {
-                while (e != rb) {
-                    // nb: For calculating winding counts etc, IntersectEdges()
-                    // assumes
-                    // that param1 will be to the Right of param2 ABOVE the
-                    // intersection ...
-                    // Note: order important here
-                    intersect_edges(rb, e, lb->curr, cliptype, subject_fill_type, clip_fill_type,
-                                    rings, joins, active_edge_list);
-                    e = e->next_in_AEL;
-                }
-            }
-        }
+    auto lm = minima_list.begin();
+    while (bot_y == lm->y && lm != minima_list.end())
+    {
+        auto lm_next = lm + 1;
+        insert_local_minimum_into_AEL(lm.left_bound,
+                                      lm.right_bound,
+                                      active_edge_list,
+                                      sorted_edge_list,
+                                      rings,
+                                      joins,
+                                      ghost_joins,
+                                      scanbeam,
+                                      cliptype,
+                                      subject_fill_type,
+                                      clip_fill_type);
+        active_minima_list.splice(active_minima_list.end(), minima_list, lm);
+        lm = lm_next;
     }
 }
 
@@ -341,32 +416,6 @@ void process_edges_at_top_of_scanbeam(T top_y,
             }
         }
         e = e->next_in_AEL;
-    }
-}
-
-template <typename T>
-void setup_scanbeam(local_minimum_list<T>& minima_list, scanbeam_list<T>& scanbeam) {
-    if (minima_list.empty()) {
-        return; // ie nothing to process
-    }
-    std::stable_sort(minima_list.begin(), minima_list.end(), local_minimum_sorter<T>());
-
-    // reset all edges ...
-    for (auto lm = minima_list.begin(); lm != minima_list.end(); ++lm) {
-        scanbeam.push(lm->y);
-        edge_ptr<T> e = lm->left_bound;
-        if (e) {
-            e->curr = e->bot;
-            e->side = edge_left;
-            e->index = EDGE_UNASSIGNED;
-        }
-
-        e = lm->right_bound;
-        if (e) {
-            e->curr = e->bot;
-            e->side = edge_right;
-            e->index = EDGE_UNASSIGNED;
-        }
     }
 }
 
@@ -1548,9 +1597,12 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
                    clip_type cliptype,
                    fill_type subject_fill_type,
                    fill_type clip_fill_type) {
+    
     using value_type = T;
-    edge_ptr<value_type> active_edge_list = nullptr;
-    edge_ptr<value_type> sorted_edge_list = nullptr;
+    
+    local_minimum_list<T> active_minima_list;
+    edge_list<value_type> active_edge_list;
+    edge_ptr_list<value_type> sorted_edge_list;
     scanbeam_list<value_type> scanbeam;
     maxima_list<value_type> max_list;
     value_type bot_y;
@@ -1558,18 +1610,21 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
     join_list<value_type> joins;
     join_list<value_type> ghost_joins;
 
+    if (minima_list.empty()) {
+        return false;
+    }
+
+    sort_local_minima(minima_list);
     setup_scanbeam(minima_list, scanbeam);
-
-    local_minimum_itr<T> current_local_min = minima_list.begin();
-
+    
     if (!pop_from_scanbeam(bot_y, scanbeam)) {
         return false;
     }
-    insert_local_minima_into_AEL(bot_y, current_local_min, minima_list, active_edge_list,
+
+    insert_local_minima_into_AEL(bot_y, minima_list, active_minima_list, active_edge_list,
                                  sorted_edge_list, rings, joins, ghost_joins, scanbeam, cliptype,
                                  subject_fill_type, clip_fill_type);
-    while (pop_from_scanbeam(top_y, scanbeam) ||
-           local_minima_pending(current_local_min, minima_list)) {
+    while (pop_from_scanbeam(top_y, scanbeam) || !minima_list.empty()) {
         process_horizontals(max_list, sorted_edge_list, active_edge_list, joins, ghost_joins, rings,
                             scanbeam, cliptype, subject_fill_type, clip_fill_type);
         ghost_joins.clear();

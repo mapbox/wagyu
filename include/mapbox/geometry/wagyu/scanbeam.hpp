@@ -3,12 +3,12 @@
 #include <queue>
 
 #include <mapbox/geometry/wagyu/config.hpp>
-#include <mapbox/geometry/wagyu/intersect.hpp>
-#include <mapbox/geometry/wagyu/util.hpp>
+#include <mapbox/geometry/wagyu/local_minimum.hpp>
 
 namespace mapbox {
 namespace geometry {
 namespace wagyu {
+
 template <typename T>
 using scanbeam_list = std::priority_queue<T>;
 
@@ -25,6 +25,15 @@ bool pop_scanbeam(scanbeam_list<T>& scanbeam, T& Y) {
     }
     return true;
 }
+
+template <typename T>
+void setup_scanbeam(local_minimum_list<T>& minima_list, scanbeam_list<T>& scanbeam) {
+    
+    for (auto lm = minima_list.begin(); lm != minima_list.end(); ++lm) {
+        scanbeam.push(lm->y);
+    }
+}
+
 }
 }
 }

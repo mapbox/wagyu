@@ -17,9 +17,13 @@ using const_local_minimum_ptr = local_minimum<T>* const;
 
 template <typename T>
 struct local_minimum {
+    edge_list<T> left_bound;
+    edge_list<T> right_bound;
     T y;
-    edge_ptr<T> left_bound;
-    edge_ptr<T> right_bound;
+
+    local_minimum(T y_, edge_list<T>&& left_bound_, edge_list<T>&& right_bound_)
+        : left_bound(left_bound_), right_bound(right_bound_), y(y_) {
+    }
 };
 
 template <typename T>

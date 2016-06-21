@@ -9,38 +9,32 @@
 namespace mapbox {
 namespace geometry {
 namespace wagyu {
-template <typename T>
-struct ring;
 
-template <typename T>
-using ring_ptr = ring<T>*;
-
-template <typename T>
-using const_ring_ptr = ring<T>* const;
+// NOTE: ring is forward declared in wagyu/point.hpp
 
 template <typename T>
 struct ring {
-    std::size_t index;
     std::size_t ring_index; // To support unset 0 is undefined and indexes offset by 1
-    bool is_hole;
-    bool is_open;
+    ring_ptr<T> replacement_ring;
     ring_ptr<T> first_left;
     point_ptr<T> points;
     point_ptr<T> bottom_point;
+    bool is_hole;
+    bool is_open;
 
-    ring()
-        : index(0),
+    ring() :
           ring_index(0),
-          is_hole(false),
-          is_open(false),
+          replacement_ring(this),
           first_left(nullptr),
           points(nullptr),
-          bottom_point(nullptr) {
-    }
+          bottom_point(nullptr),
+          is_hole(false),
+          is_open(false) {}
 };
 
 template <typename T>
 using ring_list = std::vector<ring_ptr<T>>;
+//using ring_list = std::list<ring_ptr<T>>;
 
 template <typename T>
 ring_ptr<T> create_new_ring(ring_list<T>& rings) {
@@ -230,6 +224,7 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
 }
 
 #endif
+
 }
 }
 }

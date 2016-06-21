@@ -30,14 +30,7 @@ struct edge {
     mapbox::geometry::point<value_type> curr; // updated every new scanbeam
     mapbox::geometry::point<value_type> top;
     double dx;
-    int index;
-    edge_ptr<T> next;
-    edge_ptr<T> prev;
-    edge_ptr<T> next_in_LML;
-    edge_ptr<T> next_in_AEL;
-    edge_ptr<T> prev_in_AEL;
-    edge_ptr<T> next_in_SEL;
-    edge_ptr<T> prev_in_SEL;
+    ring_ptr<T> ring;
     std::int32_t winding_count;
     std::int32_t winding_count2; // winding count of the opposite polytype
     std::int8_t winding_delta;   // 1 or -1 depending on winding direction
@@ -51,14 +44,7 @@ struct edge {
           curr(current),
           top(current),
           dx(0.0),
-          index(EDGE_UNASSIGNED),
-          next(nullptr),
-          prev(nullptr),
-          next_in_LML(nullptr),
-          next_in_AEL(nullptr),
-          prev_in_AEL(nullptr),
-          next_in_SEL(nullptr),
-          prev_in_SEL(nullptr),
+          ring(nullptr),
           winding_count(0),
           winding_count2(0),
           winding_delta(0),
@@ -82,7 +68,19 @@ template <typename T>
 using edge_list = std::list<edge<T>>;
 
 template <typename T>
+using edge_list_itr = typename edge_list<T>::iterator;
+
+template <typename T>
+using edge_list_rev_itr = typename edge_list<T>::reverse_iterator;
+
+template <typename T>
 using edge_ptr_list = std::list<edge_ptr<T>>;
+
+template <typename T>
+using edge_ptr_list_itr = typename edge_ptr_list<T>::iterator;
+
+template <typename T>
+using edge_ptr_list_rev_itr = typename edge_ptr_list<T>::reverse_iterator;
 
 #ifdef DEBUG
 
