@@ -8,6 +8,9 @@ MASON ?= .mason/mason
 
 default: test
 
+$(MASON):
+	git submodule update --init
+
 mason_packages: $(MASON)
 	$(MASON) install geometry 0.7.0 && $(MASON) link geometry 0.7.0
 
