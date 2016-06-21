@@ -14,10 +14,10 @@ $(MASON):
 mason_packages: $(MASON)
 	$(MASON) install geometry 0.7.0 && $(MASON) link geometry 0.7.0
 
-build-test: tests/* include/mapbox/geometry/* Makefile
+build-test: tests/* include/mapbox/geometry/* mason_packages Makefile
 	$(CXX) $(RELEASE_FLAGS) tests/test.cpp tests/unit/*.cpp $(WARNING_FLAGS) $(CXXFLAGS) -I./tests -o test
 
-build-debug: tests/* include/mapbox/geometry/* Makefile
+build-debug: tests/* include/mapbox/geometry/* mason_packages Makefile
 	$(CXX) $(DEBUG_FLAGS) tests/test.cpp tests/unit/*.cpp $(WARNING_FLAGS) $(CXXFLAGS) -I./tests -o test
 
 test: build-test
