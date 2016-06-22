@@ -389,7 +389,7 @@ void process_horizontals(maxima_list<T>& maxima,
                          edge_ptr<T>& active_edge_list,
                          join_list<T>& joins,
                          join_list<T>& ghost_joins,
-                         ring_list<T> rings,
+                         ring_list<T>& rings,
                          scanbeam_list<T>& scanbeam,
                          clip_type cliptype,
                          fill_type subject_fill_type,
@@ -1616,7 +1616,7 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
                                      cliptype, subject_fill_type, clip_fill_type);
     }
 
-    for (auto ring : rings) {
+    for (auto & ring : rings) {
         if (!ring->points || ring->is_open) {
             continue;
         }
