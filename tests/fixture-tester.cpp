@@ -31,10 +31,16 @@ void parse_file(const char* file_path,
     Document document;
     document.ParseStream<0, UTF8<>, FileReadStream>(in_stream);
 
+    if (!document.IsArray()) {
+        throw std::runtime_error(("Input file (" + std::string(file_path) + ") is not valid json"));
+    }
     // todo catch parsing errors
     for (SizeType i = 0; i < document.Size(); ++i) {
         mapbox::geometry::linear_ring<value_type> lr;
 
+        if (!document[i].IsArray()) {
+            throw std::runtime_error("A ring (in " + std::string(file_path) + ") is not a valid json array");
+        }
         for (SizeType j = 0; j < document[i].Size(); ++j) {
             lr.push_back({document[i][j][0].GetInt(), document[i][j][1].GetInt()});
         } 
