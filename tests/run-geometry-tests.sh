@@ -1,5 +1,12 @@
+#!/usr/bin/env bash
+
+# ./tests/run-geometry-tests.sh ./fixture-tester
+
 for filename in $(ls ./tests/geometry-test-data/input-polyjson)
 do
-    echo $filename
-    ./fixture-tester ./tests/fixtures/clip-clockwise-square.json ./tests/geometry-test-data/input-polyjson/$filename > ./tests/output-polyjson/$filename
+    for type in union difference x_or intersection
+    do
+        echo $type $filename
+        $1 -t $type ./tests/fixtures/clip-clockwise-square.json ./tests/geometry-test-data/input-polyjson/$filename > ./tests/output-polyjson/$type-$filename
+    done
 done
