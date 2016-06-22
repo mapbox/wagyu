@@ -13,6 +13,7 @@ $(MASON):
 
 mason_packages/.link/include/mapbox/geometry.hpp: $(MASON)
 	$(MASON) install geometry 0.7.0 && $(MASON) link geometry 0.7.0
+	$(MASON) install rapidjson 1.0.2 && $(MASON) link rapidjson 1.0.2
 
 build-test: tests/* include/mapbox/geometry/* mason_packages/.link/include/mapbox/geometry.hpp Makefile
 	$(CXX) $(RELEASE_FLAGS) tests/test.cpp tests/unit/*.cpp $(WARNING_FLAGS) $(CXXFLAGS) -I./tests -o test
@@ -20,14 +21,18 @@ build-test: tests/* include/mapbox/geometry/* mason_packages/.link/include/mapbo
 build-debug: tests/* include/mapbox/geometry/* mason_packages/.link/include/mapbox/geometry.hpp Makefile
 	$(CXX) $(DEBUG_FLAGS) tests/test.cpp tests/unit/*.cpp $(WARNING_FLAGS) $(CXXFLAGS) -I./tests -o test
 
-test: build-test
+build-fixture-tester:
+	$(CXX) $(DEBUG_FLAGS) tests/fixture-tester.cpp $(WARNING_FLAGS) $(CXXFLAGS)  -o fixture-tester
+
+test: build-test build-fixture-tester
 	./test
 
-debug: build-debug
+debug: build-debug build-fixture-tester
 	./test
 
 clean:
 	rm -f test
+	rm -f fixture-tester
 	rm -rf ./mason_packages
 
 indent:

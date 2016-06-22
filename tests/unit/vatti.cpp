@@ -8,29 +8,8 @@ using namespace mapbox::geometry::wagyu;
 using T = std::int64_t;
 
 TEST_CASE("simple test of entire vatti") {
-    // mapbox::geometry::polygon<T> polygon;
-    // mapbox::geometry::linear_ring<T> ring;
-    // ring.push_back({ 0, 0 });
-    // ring.push_back({ 1000, 5000 });
-    // ring.push_back({ 4000, 5200 });
-    // ring.push_back({ 1000, 1000 });
-    // ring.push_back({ 5500, 4000 });
-    // ring.push_back({ 5000, 500 });
-    // ring.push_back({ 0, 0 });
-    // polygon.push_back(ring);
-
-    // mapbox::geometry::polygon<T> polygon2;
-    // mapbox::geometry::linear_ring<T> ring2;
-    // ring2.push_back({ 2000, 2000 });
-    // ring2.push_back({ 1000, 7000 });
-    // ring2.push_back({ 6000, 7500 });
-    // ring2.push_back({ 7000, 2500 });
-    // ring2.push_back({ 2000, 2000 });
-    // polygon2.push_back(ring2);
 
     mapbox::geometry::wagyu::clipper<T> clipper;
-    // CHECK(clipper.add_polygon(polygon));
-    // clipper.add_polygon(polygon2, polygon_type::polygon_type_clip);
     mapbox::geometry::polygon<T> polygon0;
     mapbox::geometry::linear_ring<T> ring0_0;
     ring0_0.push_back({-79102, 0});
@@ -74,7 +53,7 @@ TEST_CASE("simple test of entire vatti") {
 
     clipper.add_polygon(polygon2, polygon_type::polygon_type_subject);
 
-
     std::vector<mapbox::geometry::polygon<T>> solution;
     clipper.execute(clip_type_union, solution, fill_type_even_odd, fill_type_even_odd);
+
 }
