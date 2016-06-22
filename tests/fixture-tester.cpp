@@ -39,6 +39,35 @@ void parse_file(const char* file_path,
     fclose(file);
 }
 
+void polys_to_json(Document& output, std::vector<mapbox::geometry::polygon<value_type>> solution) {
+    output.SetArray();
+    Document::AllocatorType& allocator = output.GetAllocator();
+    output.Reserve(solution.size(), allocator);
+
+    // Polygons
+    for (std::size_t p = 0; p < solution.size(); ++p) {
+        output.PushBack(Value().SetArray(), allocator);
+        output[p].Reserve(solution[p].size(), allocator);
+
+        // Rings
+        for (std::size_t r = 0; r < solution[p].size(); ++r) {
+            output[p].PushBack(Value().SetArray(), allocator);
+            output[p][r].Reserve(solution[p][r].size(), allocator);
+
+            // Coordinates
+            for (auto coord : solution[p][r]) {
+                Value cvalue;
+                cvalue.SetArray();
+                cvalue.PushBack(Value().SetInt(coord.x), allocator);
+                cvalue.PushBack(Value().SetInt(coord.y), allocator);
+                output[p][r].PushBack(cvalue, allocator);
+            }
+        }
+    }
+}
+
+
+
 int main(int argc, char* const argv[]) {
     if (argc < 3) {
         std::cout << "Error: too few parameters\n" << std::endl;
@@ -83,30 +112,7 @@ int main(int argc, char* const argv[]) {
     clipper.execute(operation, solution, fill_type_even_odd, fill_type_even_odd);
 
     Document output;
-    output.SetArray();
-    Document::AllocatorType& allocator = output.GetAllocator();
-    output.Reserve(solution.size(), allocator);
-
-    // Polygons
-    for (std::size_t p = 0; p < solution.size(); ++p) {
-        output.PushBack(Value().SetArray(), allocator);
-        output[p].Reserve(solution[p].size(), allocator);
-
-        // Rings
-        for (std::size_t r = 0; r < solution[p].size(); ++r) {
-            output[p].PushBack(Value().SetArray(), allocator);
-            output[p][r].Reserve(solution[p][r].size(), allocator);
-
-            // Coordinates
-            for (auto coord : solution[p][r]) {
-                Value cvalue;
-                cvalue.SetArray();
-                cvalue.PushBack(Value().SetInt(coord.x), allocator);
-                cvalue.PushBack(Value().SetInt(coord.y), allocator);
-                output[p][r].PushBack(cvalue, allocator);
-            }
-        }
-    }
+    polys_to_json(output, solution);
 
     char write_buffer[65536];
     FileWriteStream out_stream(stdout, write_buffer, sizeof(write_buffer));
