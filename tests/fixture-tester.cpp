@@ -13,6 +13,12 @@ using namespace rapidjson;
 using namespace mapbox::geometry::wagyu;
 using value_type = std::int64_t;
 
+struct Options {
+    clip_type operation = clip_type_union;
+    char* subject_file;
+    char* clip_file;
+} options;
+
 
 void parse_file(const char* file_path, 
     clipper<value_type>& clipper, 
@@ -26,7 +32,6 @@ void parse_file(const char* file_path,
     document.ParseStream<0, UTF8<>, FileReadStream>(in_stream);
 
     // todo catch parsing errors
-
     for (SizeType i = 0; i < document.Size(); ++i) {
         mapbox::geometry::linear_ring<value_type> lr;
 
@@ -66,6 +71,39 @@ void polys_to_json(Document& output, std::vector<mapbox::geometry::polygon<value
     }
 }
 
+void parse_options(int argc, char* const argv[]) { 
+    bool skip = false;
+    for (int i = 1; i < argc; ++i) {
+        // if this argument is already being used 
+        // as the value for a flag, we skip it
+        if (skip) {
+            skip = false;
+            continue;
+        }
+
+        if (strcmp(argv[i], "-t") == 0) {
+            std::string type = argv[i + 1];
+            if (type.compare("union") == 0) {
+                options.operation = clip_type_union;
+            } else if (type.compare("intersection") == 0) {
+                options.operation = clip_type_intersection;
+            } else if (type.compare("difference") == 0) {
+                options.operation = clip_type_difference;
+            } else if (type.compare("x_or") == 0) {
+                options.operation = clip_type_x_or;
+            }
+            skip = true;
+        } else {
+            // If we didn't catch this argument as a flag or a flag value,
+            // set the input files
+            if (options.subject_file == NULL) {
+                options.subject_file = argv[i];
+            } else {
+                options.clip_file = argv[i];
+            }
+        }
+    }
+}
 
 
 int main(int argc, char* const argv[]) {
@@ -77,39 +115,14 @@ int main(int argc, char* const argv[]) {
         std::cout << "  -t     type of operation (default: union)\n" << std::endl;
         return -1;
     }
+    parse_options(argc, argv);
 
     clipper<value_type> clipper;
-    std::string type = "union";
-
-    if (argc == 5 && strcmp(argv[1],"-t") == 0) {
-        type = argv[2];
-        parse_file(argv[3], clipper, polygon_type_subject);
-        parse_file(argv[4], clipper, polygon_type_clip);
-    } else if (argc == 5 && strcmp(argv[3], "-t") == 0) {
-        type = argv[4];
-        parse_file(argv[1], clipper, polygon_type_subject);
-        parse_file(argv[2], clipper, polygon_type_clip);
-    } else {
-        parse_file(argv[1], clipper, polygon_type_subject);
-        parse_file(argv[2], clipper, polygon_type_clip);
-    }
-
-    clip_type operation;
-
-    if (type.compare("union") == 0) {
-        operation = clip_type_union;
-    } else if (type.compare("intersection") == 0) {
-        operation = clip_type_intersection;
-    } else if (type.compare("difference") == 0) {
-        operation = clip_type_difference;
-    } else if (type.compare("x_or") == 0) {
-        operation = clip_type_x_or;
-    } else {
-        operation = clip_type_union;
-    }
+    parse_file(options.subject_file, clipper, polygon_type_subject);
+    parse_file(options.clip_file, clipper, polygon_type_clip);
 
     std::vector<mapbox::geometry::polygon<value_type>> solution;
-    clipper.execute(operation, solution, fill_type_even_odd, fill_type_even_odd);
+    clipper.execute(options.operation, solution, fill_type_even_odd, fill_type_even_odd);
 
     Document output;
     polys_to_json(output, solution);
