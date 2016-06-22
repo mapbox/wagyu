@@ -561,13 +561,13 @@ bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry,
         }
 
         edges.emplace_back(pt2, pt3, p_type);
-        ++itr;
         pt1 = pt2;
         pt2 = pt3;
-        pt3 = *itr;
+        ++itr;
         if (itr == path_geometry.end()) {
             break;
         }
+        pt3 = *itr;
     }
 
     // If the geometry does not explicity close the geometry

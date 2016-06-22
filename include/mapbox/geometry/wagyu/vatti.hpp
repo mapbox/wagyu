@@ -414,19 +414,6 @@ ring_ptr<T> get_ring(ring_list<T>& rings, int index) {
 }
 
 template <typename T>
-ring_ptr<T> create_ring(ring_list<T>& rings) {
-    ring_ptr<T> r = new ring<T>;
-    r->is_hole = false;
-    r->is_open = false;
-    r->first_left = 0;
-    r->points = 0;
-    r->bottom_point = 0;
-    rings.push_back(r);
-    r->index = rings.size() - 1;
-    return r;
-}
-
-template <typename T>
 int point_count(point_ptr<T> points) {
     if (!points) {
         return 0;
@@ -917,7 +904,7 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
             // by splitting one polygon into two.
 
             ring1->bottom_point = 0;
-            ring2 = create_ring(rings);
+            ring2 = create_new_ring(rings);
 
             if (point_count(join->point1) > point_count(join->point2)) {
                 ring1->points = join->point1;
@@ -967,8 +954,8 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
         } else {
             // joined 2 polygons together ...
 
-            ring2->points = 0;
-            ring2->bottom_point = 0;
+            ring2->points = nullptr;
+            ring2->bottom_point = nullptr;
             ring2->index = ring1->index;
 
             ring1->is_hole = hole_state_ring->is_hole;
@@ -1001,7 +988,7 @@ void fixup_out_polyline(ring<T>& ring) {
 
     if (pp == pp->prev) {
         dispose_out_points(pp);
-        ring.points = 0;
+        ring.points = nullptr;
         return;
     }
 }
@@ -1010,14 +997,14 @@ template <typename T>
 void fixup_out_polygon(ring<T>& ring, bool simple) {
     // FixupOutPolygon() - removes duplicate points and simplifies consecutive
     // parallel edges by removing the middle vertex.
-    point_ptr<T> lastOK = 0;
-    ring.bottom_point = 0;
+    point_ptr<T> lastOK = nullptr;
+    ring.bottom_point = nullptr;
     point_ptr<T> pp = ring.points;
 
     for (;;) {
         if (pp->prev == pp || pp->prev == pp->next) {
             dispose_out_points(pp);
-            ring.points = 0;
+            ring.points = nullptr;
             return;
         }
 
@@ -1025,7 +1012,7 @@ void fixup_out_polygon(ring<T>& ring, bool simple) {
         if ((*pp == *pp->next) || (*pp == *pp->prev) ||
             (slopes_equal(*pp->prev, *pp, *pp->next) &&
              (!simple || !point_2_is_between_point_1_and_point_3(*pp->prev, *pp, *pp->next)))) {
-            lastOK = 0;
+            lastOK = nullptr;
             point_ptr<T> tmp = pp;
             pp->prev->next = pp->next;
             pp->next->prev = pp->prev;
@@ -1226,7 +1213,7 @@ bool fix_intersects(std::unordered_multimap<size_t, point_ptr_pair<T>>& dupe_rin
         op_search_2_next->prev = op_search_1;
     }
 
-    ring_ptr<T> ring_new = create_ring(rings);
+    ring_ptr<T> ring_new = create_new_ring(rings);
     ring_new->is_hole = false;
     if (ring_origin->is_hole && ((area(op_origin_1) < 0))) {
         ring_origin->points = op_origin_1;
@@ -1239,13 +1226,13 @@ bool fix_intersects(std::unordered_multimap<size_t, point_ptr_pair<T>>& dupe_rin
     update_point_indices(*ring_origin);
     update_point_indices(*ring_new);
 
-    ring_origin->bottom_point = 0;
+    ring_origin->bottom_point = nullptr;
 
     std::list<std::pair<int, point_ptr_pair<T>>> move_list;
-    for (auto iRing : iList) {
+    for (auto & iRing : iList) {
         ring_ptr<T> ring_itr = get_ring(rings, iRing.first);
-        ring_itr->points = 0;
-        ring_itr->bottom_point = 0;
+        ring_itr->points = nullptr;
+        ring_itr->bottom_point = nullptr;
         ring_itr->index = ring_origin->index;
         if (ring_origin->is_hole) {
             ring_itr->first_left = parse_first_left(ring_origin->first_left);
@@ -1403,7 +1390,7 @@ void do_simple_polygons(ring_list<T>& rings) {
                             op2->prev = op3;
                             op3->next = op2;
 
-                            ring_ptr<T> ring2 = create_ring(rings);
+                            ring_ptr<T> ring2 = create_new_ring(rings);
                             if (point_count(op) > point_count(op2)) {
                                 ring->points = op;
                                 ring2->points = op2;

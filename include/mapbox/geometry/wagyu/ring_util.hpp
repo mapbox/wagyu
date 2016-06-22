@@ -51,7 +51,6 @@ point_ptr<T> add_point(edge_ptr<T> e, mapbox::geometry::point<T> const& pt, ring
         // ring->points is the 'Left-most' point & ring->points->prev is the
         // 'Right-most'
         point_ptr<T> op = ring->points;
-
         bool ToFront = (e->side == edge_left);
         if (ToFront && (pt == *op)) {
             return op;
@@ -377,10 +376,10 @@ void reverse_polygon_point_links(point_ptr<T> pp) {
 
 template <typename T>
 void dispose_out_points(point_ptr<T>& pp) {
-    if (pp == 0) {
+    if (pp == nullptr) {
         return;
     }
-    pp->prev->next = 0;
+    pp->prev->next = nullptr;
     while (pp) {
         point_ptr<T> tmpPp = pp;
         pp = pp->next;

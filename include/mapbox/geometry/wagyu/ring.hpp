@@ -107,6 +107,7 @@ void transfer_point(point_ptr<T>& p, point_ptr<T>& b, point_ptr<T>& e) {
     }
 }
 
+/*
 template <typename T>
 void reverse_ring(point_ptr<T>& p) {
     point_ptr<T> f = get_next(p);
@@ -120,10 +121,10 @@ void reverse_ring(point_ptr<T>& p) {
         f = n;
     }
 }
+*/
 
 // Another version of reversing rings
 // evaluate later!!!
-/*
 template <typename T>
 void reverse_ring(point_ptr<T> pp)
 {
@@ -142,7 +143,6 @@ void reverse_ring(point_ptr<T> pp)
         pp1 = pp2;
     } while (pp1 != pp);
 }
-*/
 
 template <typename T>
 using ring_list = std::vector<ring_ptr<T>>;
