@@ -27,11 +27,12 @@ build-fixture-tester:
 test: build-test build-fixture-tester
 	./test
 
-debug: build-test-debug build-fixture-tester
+debug: build-debug build-fixture-tester
 	./test
 
 clean:
 	rm -f test
+	rm -f fixture-tester
 	rm -rf ./mason_packages
 
 indent:
