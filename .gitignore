@@ -4,3 +4,4 @@ build
 *.swp
 mason_packages
 *.dSYM
+tests/output-polyjson
