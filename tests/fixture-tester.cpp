@@ -44,22 +44,43 @@ int main(int argc, char* const argv[]) {
         std::cout << "Error: too few parameters\n" << std::endl;
         std::cout << "Usage:" << std::endl;
         std::cout << "  ./fixture-test ./path/to/subject.json ./path/to/object.json\n" << std::endl;
+        std::cout << "Options:" << std::endl;
+        std::cout << "  -t     type of operation (default: union)\n" << std::endl;
         return -1;
     }
 
     clipper<value_type> clipper;
+    std::string type = "union";
 
-    try {
+    if (argc == 5 && strcmp(argv[1],"-t") == 0) {
+        type = argv[2];
+        parse_file(argv[3], clipper, polygon_type_subject);
+        parse_file(argv[4], clipper, polygon_type_clip);
+    } else if (argc == 5 && strcmp(argv[3], "-t") == 0) {
+        type = argv[4];
         parse_file(argv[1], clipper, polygon_type_subject);
         parse_file(argv[2], clipper, polygon_type_clip);
-    } catch (std::exception const& ex) {
-        std::cerr << "Error: " << ex.what() << std::endl;
-        return -1;
+    } else {
+        parse_file(argv[1], clipper, polygon_type_subject);
+        parse_file(argv[2], clipper, polygon_type_clip);
+    }
+
+    clip_type operation;
+
+    if (type.compare("union") == 0) {
+        operation = clip_type_union;
+    } else if (type.compare("intersection") == 0) {
+        operation = clip_type_intersection;
+    } else if (type.compare("difference") == 0) {
+        operation = clip_type_difference;
+    } else if (type.compare("x_or") == 0) {
+        operation = clip_type_x_or;
+    } else {
+        operation = clip_type_union;
     }
 
     std::vector<mapbox::geometry::polygon<value_type>> solution;
-    clipper.execute(clip_type_union, solution, fill_type_even_odd, fill_type_even_odd);
-
+    clipper.execute(operation, solution, fill_type_even_odd, fill_type_even_odd);
 
     Document output;
     output.SetArray();
