@@ -40,12 +40,22 @@ void parse_file(const char* file_path,
 }
 
 int main(int argc, char* const argv[]) {
-    if (argc < 2) return -1;
+    if (argc < 3) {
+        std::cout << "Error: too few parameters\n" << std::endl;
+        std::cout << "Usage:" << std::endl;
+        std::cout << "  ./fixture-test ./path/to/subject.json ./path/to/object.json\n" << std::endl;
+        return -1;
+    }
 
     clipper<value_type> clipper;
 
-    parse_file(argv[1], clipper, polygon_type_subject);
-    parse_file(argv[1], clipper, polygon_type_clip);
+    try {
+        parse_file(argv[1], clipper, polygon_type_subject);
+        parse_file(argv[2], clipper, polygon_type_clip);
+    } catch (std::exception const& ex) {
+        std::cerr << "Error: " << ex.what() << std::endl;
+        return -1;
+    }
 
     std::vector<mapbox::geometry::polygon<value_type>> solution;
     clipper.execute(clip_type_union, solution, fill_type_even_odd, fill_type_even_odd);
