@@ -1,7 +1,7 @@
 #pragma once
 
-#include <set>
 #include <algorithm>
+#include <set>
 #include <unordered_map>
 
 #include <mapbox/geometry/wagyu/active_edge_list.hpp>
@@ -568,7 +568,7 @@ bool join_points(join_ptr<T> j, ring_ptr<T> ring1, ring_ptr<T> ring2) {
     bool is_horizontal = (j->point1->y == j->off_point.y);
 
     if (is_horizontal && (j->off_point == *j->point1) && (j->off_point == *j->point2)) {
-        if (ring1 == ring2) {
+        if (ring1 != ring2) {
             // First, op1 next and op2 prev
 
             op1b = j->point1->next;
@@ -903,7 +903,7 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
             // Instead of joining two polygons, we have created a new one
             // by splitting one polygon into two.
 
-            ring1->bottom_point = 0;
+            ring1->bottom_point = nullptr;
             ring2 = create_new_ring(rings);
 
             if (point_count(join->point1) > point_count(join->point2)) {
@@ -1229,7 +1229,7 @@ bool fix_intersects(std::unordered_multimap<size_t, point_ptr_pair<T>>& dupe_rin
     ring_origin->bottom_point = nullptr;
 
     std::list<std::pair<int, point_ptr_pair<T>>> move_list;
-    for (auto & iRing : iList) {
+    for (auto& iRing : iList) {
         ring_ptr<T> ring_itr = get_ring(rings, iRing.first);
         ring_itr->points = nullptr;
         ring_itr->bottom_point = nullptr;
@@ -1603,7 +1603,7 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
                                      cliptype, subject_fill_type, clip_fill_type);
     }
 
-    for (auto & ring : rings) {
+    for (auto& ring : rings) {
         if (!ring->points || ring->is_open) {
             continue;
         }

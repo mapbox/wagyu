@@ -1,13 +1,12 @@
-#include <stdio.h>
-#include <ostream>
+#include "rapidjson/writer.h"
 #include <iostream>
 #include <mapbox/geometry/polygon.hpp>
+#include <mapbox/geometry/wagyu/wagyu.hpp>
+#include <ostream>
 #include <rapidjson/document.h>
-#include "rapidjson/writer.h"
 #include <rapidjson/filereadstream.h>
 #include <rapidjson/filewritestream.h>
-#include <mapbox/geometry/wagyu/wagyu.hpp>
-
+#include <stdio.h>
 
 using namespace rapidjson;
 using namespace mapbox::geometry::wagyu;
@@ -19,11 +18,7 @@ struct Options {
     char* clip_file;
 } options;
 
-
-void parse_file(const char* file_path, 
-    clipper<value_type>& clipper, 
-    polygon_type polytype
-) {
+void parse_file(const char* file_path, clipper<value_type>& clipper, polygon_type polytype) {
     // todo safety checks opening files
     FILE* file = fopen(file_path, "r");
     char read_buffer[65536];
@@ -39,11 +34,12 @@ void parse_file(const char* file_path,
         mapbox::geometry::linear_ring<value_type> lr;
 
         if (!document[i].IsArray()) {
-            throw std::runtime_error("A ring (in " + std::string(file_path) + ") is not a valid json array");
+            throw std::runtime_error("A ring (in " + std::string(file_path) +
+                                     ") is not a valid json array");
         }
         for (SizeType j = 0; j < document[i].Size(); ++j) {
-            lr.push_back({document[i][j][0].GetInt(), document[i][j][1].GetInt()});
-        } 
+            lr.push_back({ document[i][j][0].GetInt(), document[i][j][1].GetInt() });
+        }
         clipper.add_ring(lr, polytype);
     }
 
@@ -77,10 +73,10 @@ void polys_to_json(Document& output, std::vector<mapbox::geometry::polygon<value
     }
 }
 
-void parse_options(int argc, char* const argv[]) { 
+void parse_options(int argc, char* const argv[]) {
     bool skip = false;
     for (int i = 1; i < argc; ++i) {
-        // if this argument is already being used 
+        // if this argument is already being used
         // as the value for a flag, we skip it
         if (skip) {
             skip = false;
@@ -111,7 +107,6 @@ void parse_options(int argc, char* const argv[]) {
     }
 }
 
-
 int main(int argc, char* const argv[]) {
     if (argc < 3) {
         std::cout << "Error: too few parameters\n" << std::endl;
@@ -138,5 +133,5 @@ int main(int argc, char* const argv[]) {
     Writer<FileWriteStream> writer(out_stream);
 
     output.Accept(writer);
+    std::cout << std::endl;
 }
-

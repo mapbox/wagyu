@@ -2,6 +2,10 @@
 
 #include <mapbox/geometry/wagyu/point.hpp>
 
+#ifdef DEBUG
+#include <iostream>
+#endif
+
 namespace mapbox {
 namespace geometry {
 namespace wagyu {
@@ -17,21 +21,21 @@ using const_ring_ptr = ring<T>* const;
 template <typename T>
 struct ring {
     std::size_t index;
+    std::size_t ring_index; // To support unset 0 is undefined and indexes offset by 1
     bool is_hole;
     bool is_open;
-    ring_ptr<T> first_left; // see comments in clipper.pas
+    ring_ptr<T> first_left;
     point_ptr<T> points;
     point_ptr<T> bottom_point;
-    mapbox::geometry::polygon<T>* poly_ptr;
 
     ring()
         : index(0),
+          ring_index(0),
           is_hole(false),
           is_open(false),
           first_left(nullptr),
           points(nullptr),
-          bottom_point(nullptr),
-          poly_ptr(nullptr) {
+          bottom_point(nullptr) {
     }
 };
 
@@ -126,17 +130,14 @@ void reverse_ring(point_ptr<T>& p) {
 // Another version of reversing rings
 // evaluate later!!!
 template <typename T>
-void reverse_ring(point_ptr<T> pp)
-{
-    if (!pp)
-    {
+void reverse_ring(point_ptr<T> pp) {
+    if (!pp) {
         return;
     }
     point_ptr<T> pp1;
     point_ptr<T> pp2;
     pp1 = pp;
-    do
-    {
+    do {
         pp2 = pp1->next;
         pp1->next = pp1->prev;
         pp1->prev = pp2;
@@ -154,6 +155,40 @@ ring_ptr<T> create_new_ring(ring_list<T>& rings) {
     result->index = rings.size() - 1;
     return result;
 }
+
+#ifdef DEBUG
+
+template <class charT, class traits, typename T>
+inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
+                                                     const ring<T>& r) {
+    out << " ring: " << std::endl;
+    out << "  index: " << r.index << std::endl;
+    out << "  points: " << std::endl;
+    auto first_point = r.points;
+    auto pt_itr = r.points;
+    if (first_point) {
+        do {
+            out << "    x: " << pt_itr->x << " y: " << pt_itr->y << std::endl;
+            pt_itr = pt_itr->next;
+        } while (pt_itr != first_point);
+    } else {
+        out << "    NONE" << std::endl;
+    }
+    return out;
+}
+
+template <class charT, class traits, typename T>
+inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
+                                                     const ring_list<T>& rings) {
+    out << "START RING LIST" << std::endl;
+    for (auto& r : rings) {
+        out << *r;
+    }
+    out << "END RING LIST" << std::endl;
+    return out;
+}
+
+#endif
 }
 }
 }

@@ -128,7 +128,7 @@ public:
     }
 
     bool execute(clip_type cliptype,
-                  std::vector<mapbox::geometry::polygon<value_type>>& solution,
+                 std::vector<mapbox::geometry::polygon<value_type>>& solution,
                  fill_type subject_fill_type,
                  fill_type clip_fill_type) {
         solution.clear(); // put here to do nothing for now.
@@ -139,64 +139,62 @@ public:
 
         build_result(solution, rings);
 
-        for (auto & r : rings) {
+        for (auto& r : rings) {
             dispose_out_points(r->points);
             delete r;
         }
-        
+
         return worked;
     }
 
+    void build_result(std::vector<mapbox::geometry::polygon<value_type>>& solution,
+                      ring_list<value_type>& rings) {
 
-    void build_result( std::vector<mapbox::geometry::polygon<value_type>>& solution, ring_list<value_type>& rings) {
-        // loop through once, correcting linkages
+        // loop through constructing polygons
         for (auto& r : rings) {
-            if (!r->points) continue;
+            if (!r->points || r->ring_index) {
+                continue;
+            }
             std::size_t cnt = count(r->points);
             if ((r->is_open && cnt < 2) || (!r->is_open && cnt < 3)) {
                 continue;
             }
-            fix_hole_linkage(r);
-        }
-
-        // loop through again, constructing polygons
-        for (auto& r : rings) {
-            if (!r->points || r->poly_ptr) continue;
             if (r->is_hole) {
                 // create the parent ring polygon first
-                if (!r->first_left->poly_ptr) {
+                auto fl = parse_first_left(r->first_left);
+                if (!fl->ring_index) {
                     solution.emplace_back();
-                    push_ring_to_polygon(&solution.back(), r->first_left);
+                    fl->ring_index = solution.size();
+                    push_ring_to_polygon(solution.back(), fl);
                 }
-                push_ring_to_polygon(r->first_left->poly_ptr, r);
+                push_ring_to_polygon(solution[fl->ring_index - 1], r);
             } else {
                 solution.emplace_back();
-                push_ring_to_polygon(&solution.back(), r);
+                push_ring_to_polygon(solution.back(), r);
             }
         }
     }
 
-    void push_ring_to_polygon(mapbox::geometry::polygon<value_type>* poly, ring_ptr<T>& r) {
+    void push_ring_to_polygon(mapbox::geometry::polygon<value_type>& poly, ring_ptr<T>& r) {
         mapbox::geometry::linear_ring<value_type> lr;
         auto firstPt = r->points;
         auto ptIt = r->points;
         do {
-            lr.push_back({ptIt->x, ptIt->y});       
+            lr.push_back({ ptIt->x, ptIt->y });
             ptIt = ptIt->next;
         } while (ptIt != firstPt);
-        lr.push_back({firstPt->x, firstPt->y}); // close the ring
-        poly->push_back(lr);
-        r->poly_ptr = poly;
+        lr.push_back({ firstPt->x, firstPt->y }); // close the ring
+        poly.push_back(lr);
     }
 
     void fix_hole_linkage(ring_ptr<value_type> r) {
         // skip rings that...
+        auto fl = parse_first_left(r->first_left);
         if (
-            // are an outermost polygon, or  
-            !r->first_left ||     
-            // already has correct owner/child linkage    
-            (r->is_hole != r->first_left->is_hole && r->first_left->points)
-        ) {
+            // are an outermost polygon, or
+            !fl ||
+            // already has correct owner/child linkage
+            (r->is_hole != fl->is_hole && fl->points)) {
             return;
         }
 
