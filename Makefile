@@ -30,7 +30,7 @@ test: build-test build-fixture-tester
 
 debug: build-debug build-fixture-tester
 	./test
-t	./tests/run-geometry-tests.sh ./fixture-tester
+	./tests/run-geometry-tests.sh ./fixture-tester
 
 clean:
 	rm -f test
