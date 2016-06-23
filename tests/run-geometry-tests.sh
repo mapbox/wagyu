@@ -37,7 +37,7 @@ done
 
 TOTAL=$((PASSES + FAILS))
 echo -e "\033[1;32m ✓ $PASSES/$TOTAL \033[0;31m ✗ $FAILS/$TOTAL \033[0m"
-if [ "$FAILS" -gt "1" ]; then 
+if [ "$FAILS" -gt "0" ]; then 
     exit 1;
 fi
 
