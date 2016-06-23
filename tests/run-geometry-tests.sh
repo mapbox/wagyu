@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # ./tests/run-geometry-tests.sh ./fixture-tester
 TESTER="$1"
