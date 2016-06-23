@@ -115,7 +115,7 @@ point_ptr<T> add_local_minimum_point(edge_ptr<T> e1,
 template <typename T>
 inline double get_dx(point<T> const& pt1, point<T> const& pt2) {
     if (pt1.y == pt2.y) {
-        return HORIZONTAL;
+        return std::numeric_limits<double>::infinity();
     } else {
         return static_cast<double>(pt2.x - pt2.x) / static_cast<double>(pt2.y - pt1.y);
     }

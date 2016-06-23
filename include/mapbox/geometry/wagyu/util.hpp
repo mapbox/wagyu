@@ -321,7 +321,7 @@ bool slopes_equal(mapbox::geometry::point<T> const& pt1,
 
 template <typename T>
 inline bool is_horizontal(edge<T> const& e) {
-    return e.dx <= HORIZONTAL;
+    return std::isinf(e.dx);
 }
 
 template <typename T>

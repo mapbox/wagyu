@@ -2,10 +2,6 @@
 
 #include <list>
 
-#define HORIZONTAL (-1.0E+40)
-#define TOLERANCE (1.0e-20)
-#define NEAR_ZERO(val) (((val) > -TOLERANCE) && ((val) < TOLERANCE))
-
 namespace mapbox {
 namespace geometry {
 namespace wagyu {

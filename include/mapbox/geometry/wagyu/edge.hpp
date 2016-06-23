@@ -71,7 +71,7 @@ struct edge {
         }
         double dy = static_cast<double>(top.y - bot.y);
         if (std::fabs(dy) < std::numeric_limits<double>::epsilon()) {
-            dx = HORIZONTAL;
+            dx = std::numeric_limits<double>::infinity();
         } else {
             dx = static_cast<double>(top.x - bot.x) / dy;
         }

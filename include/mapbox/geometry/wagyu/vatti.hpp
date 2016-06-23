@@ -841,7 +841,7 @@ void fixup_first_lefts2(ring_ptr<T> inner_ring, ring_ptr<T> outer_ring, ring_lis
                     ring->first_left = parse_first_left(outer_ring->first_left);
                 }
             } else {
-                if (area(ring->points) == 0.0 &&
+                if (std::abs(area(ring->points)) < std::numeric_limits<double>::epsilon() &&
                     !Poly2ContainsPoly1(ring->points, outer_ring->points)) {
                     ring->is_hole = !ring->is_hole;
                     ring->first_left = parse_first_left(outer_ring->first_left);
