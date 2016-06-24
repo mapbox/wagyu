@@ -28,12 +28,11 @@ bool pop_scanbeam(scanbeam_list<T>& scanbeam, T& Y) {
 
 template <typename T>
 void setup_scanbeam(local_minimum_list<T>& minima_list, scanbeam_list<T>& scanbeam) {
-    
+
     for (auto lm = minima_list.begin(); lm != minima_list.end(); ++lm) {
         scanbeam.push(lm->y);
     }
 }
-
 }
 }
 }

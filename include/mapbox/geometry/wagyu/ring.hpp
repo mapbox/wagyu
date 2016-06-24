@@ -22,14 +22,15 @@ struct ring {
     bool is_hole;
     bool is_open;
 
-    ring() :
-          ring_index(0),
+    ring()
+        : ring_index(0),
           replacement_ring(this),
           first_left(nullptr),
           points(nullptr),
           bottom_point(nullptr),
           is_hole(false),
-          is_open(false) {}
+          is_open(false) {
+    }
 };
 
 template <typename T>

@@ -135,7 +135,7 @@ public:
         ring_list<T> rings;
         bool worked =
             execute_vatti(minima_list, rings, cliptype, subject_fill_type, clip_fill_type);
-        
+
         build_result(solution, rings);
 
         for (auto& r : rings) {

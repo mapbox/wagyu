@@ -14,6 +14,7 @@
 namespace mapbox {
 namespace geometry {
 namespace wagyu {
+
 template <typename T>
 struct edge;
 
@@ -24,32 +25,66 @@ template <typename T>
 using const_edge_ptr = edge<T>* const;
 
 template <typename T>
+using edge_list = std::list<edge<T>>;
+
+template <typename T>
+using edge_list_itr = typename edge_list<T>::iterator;
+
+template <typename T>
+using edge_list_rev_itr = typename edge_list<T>::reverse_iterator;
+
+template <typename T>
+using edge_list_itr_list = std::list<edge_list_itr<T>>;
+
+template <typename T>
+using edge_ptr_list = std::list<edge_ptr<T>>;
+
+template <typename T>
+using edge_ptr_list_itr = typename edge_ptr_list<T>::iterator;
+
+template <typename T>
+using edge_ptr_list_rev_itr = typename edge_ptr_list<T>::reverse_iterator;
+
+template <typename T>
+struct bound {
+
+    edge_list<T> edges;
+    ring_ptr<T> ring;
+    edge_ptr<T> maximum_edge_pair;
+    std::int32_t winding_count;
+    std::int32_t winding_count2; // winding count of the opposite polytype
+    std::int8_t
+        winding_delta; // 1 or -1 depending on winding direction - 0 for "open rings" (linestrings)
+    polygon_type poly_type;
+    edge_side side; // side only refers to current side of solution poly
+
+    bound()
+        : edges(),
+          ring(nullptr),
+          maximum_edge_pair(nullptr),
+          winding_count(0),
+          winding_count2(0),
+          winding_delta(0),
+          poly_type(type),
+          side(edge_left) {
+    }
+
+}
+
+template <typename T>
+using bound_ptr = bound<T>*;
+
+template <typename T>
 struct edge {
     using value_type = T;
     mapbox::geometry::point<value_type> bot;
     mapbox::geometry::point<value_type> curr; // updated every new scanbeam
     mapbox::geometry::point<value_type> top;
     double dx;
-    ring_ptr<T> ring;
-    std::int32_t winding_count;
-    std::int32_t winding_count2; // winding count of the opposite polytype
-    std::int8_t winding_delta;   // 1 or -1 depending on winding direction
-    polygon_type poly_type;
-    edge_side side; // side only refers to current side of solution poly
+    bound_ptr<T> bound; // the bound to which an edge belongs
 
-    edge(mapbox::geometry::point<value_type> current,
-         mapbox::geometry::point<value_type> next_pt,
-         polygon_type type)
-        : bot(current),
-          curr(current),
-          top(current),
-          dx(0.0),
-          ring(nullptr),
-          winding_count(0),
-          winding_count2(0),
-          winding_delta(0),
-          poly_type(type),
-          side(edge_left) {
+    edge(mapbox::geometry::point<value_type> current, mapbox::geometry::point<value_type> next_pt)
+        : bot(current), curr(current), top(current), dx(0.0) {
         if (current.y >= next_pt.y) {
             top = next_pt;
         } else {
@@ -63,24 +98,6 @@ struct edge {
         }
     }
 };
-
-template <typename T>
-using edge_list = std::list<edge<T>>;
-
-template <typename T>
-using edge_list_itr = typename edge_list<T>::iterator;
-
-template <typename T>
-using edge_list_rev_itr = typename edge_list<T>::reverse_iterator;
-
-template <typename T>
-using edge_ptr_list = std::list<edge_ptr<T>>;
-
-template <typename T>
-using edge_ptr_list_itr = typename edge_ptr_list<T>::iterator;
-
-template <typename T>
-using edge_ptr_list_rev_itr = typename edge_ptr_list<T>::reverse_iterator;
 
 #ifdef DEBUG
 

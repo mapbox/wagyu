@@ -26,7 +26,7 @@ inline bool e2_inserts_before_e1(edge<T> const& e1, edge<T> const& e2) {
 }
 
 template <typename T>
-void insert_edge_into_AEL(edge_list_itr<T> edge, edge_list<T> & bound, edge_list<T>& active_edges) {
+void insert_edge_into_AEL(edge_list_itr<T> edge, edge_list<T>& bound, edge_list<T>& active_edges) {
     auto itr = active_edges.begin();
     while (itr != active_edges.end() && !e2_inserts_before_e1(*itr, *edge)) {
         ++itr;
@@ -35,94 +35,14 @@ void insert_edge_into_AEL(edge_list_itr<T> edge, edge_list<T> & bound, edge_list
 }
 
 template <typename T>
-void insert_edge_into_AEL(edge_list_itr<T> edge, 
+void insert_edge_into_AEL(edge_list_itr<T> edge,
                           edge_list_itr<T> itr,
-                          edge_list<T> & bound,
+                          edge_list<T>& bound,
                           edge_list<T>& active_edges) {
     while (itr != active_edges.end() && !e2_inserts_before_e1(*itr, *edge)) {
         ++itr;
     }
     active_edges.splice(itr, bound, edge);
-}
-
-template <typename T>
-void delete_from_AEL(edge_ptr<T> e, edge_ptr<T>& active_edges) {
-    edge_ptr<T> ael_prev = e->prev_in_AEL;
-    edge_ptr<T> ael_next = e->next_in_AEL;
-    if (!ael_prev && !ael_next && (e != active_edges)) {
-        return; // already deleted
-    }
-    if (ael_prev) {
-        ael_prev->next_in_AEL = ael_next;
-    } else {
-        active_edges = ael_next;
-    }
-    if (ael_next) {
-        ael_next->prev_in_AEL = ael_prev;
-    }
-    e->next_in_AEL = nullptr;
-    e->prev_in_AEL = nullptr;
-}
-
-template <typename T>
-void swap_positions_in_AEL(edge_ptr<T> Edge1, edge_ptr<T> Edge2, edge_ptr<T>& active_edges) {
-    // check that one or other edge hasn't already been removed from AEL ...
-    if (Edge1->next_in_AEL == Edge1->prev_in_AEL || Edge2->next_in_AEL == Edge2->prev_in_AEL) {
-        return;
-    }
-
-    if (Edge1->next_in_AEL == Edge2) {
-        edge_ptr<T> next = Edge2->next_in_AEL;
-        if (next) {
-            next->prev_in_AEL = Edge1;
-        }
-        edge_ptr<T> prev = Edge1->prev_in_AEL;
-        if (prev) {
-            prev->next_in_AEL = Edge2;
-        }
-        Edge2->prev_in_AEL = prev;
-        Edge2->next_in_AEL = Edge1;
-        Edge1->prev_in_AEL = Edge2;
-        Edge1->next_in_AEL = next;
-    } else if (Edge2->next_in_AEL == Edge1) {
-        edge_ptr<T> next = Edge1->next_in_AEL;
-        if (next) {
-            next->prev_in_AEL = Edge2;
-        }
-        edge_ptr<T> prev = Edge2->prev_in_AEL;
-        if (prev) {
-            prev->next_in_AEL = Edge1;
-        }
-        Edge1->prev_in_AEL = prev;
-        Edge1->next_in_AEL = Edge2;
-        Edge2->prev_in_AEL = Edge1;
-        Edge2->next_in_AEL = next;
-    } else {
-        edge_ptr<T> next = Edge1->next_in_AEL;
-        edge_ptr<T> prev = Edge1->prev_in_AEL;
-        Edge1->next_in_AEL = Edge2->next_in_AEL;
-        if (Edge1->next_in_AEL) {
-            Edge1->next_in_AEL->prev_in_AEL = Edge1;
-        }
-        Edge1->prev_in_AEL = Edge2->prev_in_AEL;
-        if (Edge1->prev_in_AEL) {
-            Edge1->prev_in_AEL->next_in_AEL = Edge1;
-        }
-        Edge2->next_in_AEL = next;
-        if (Edge2->next_in_AEL) {
-            Edge2->next_in_AEL->prev_in_AEL = Edge2;
-        }
-        Edge2->prev_in_AEL = prev;
-        if (Edge2->prev_in_AEL) {
-            Edge2->prev_in_AEL->next_in_AEL = Edge2;
-        }
-    }
-
-    if (!Edge1->prev_in_AEL) {
-        active_edges = Edge1;
-    } else if (!Edge2->prev_in_AEL) {
-        active_edges = Edge2;
-    }
 }
 
 template <typename T>
@@ -157,123 +77,122 @@ void update_edge_into_AEL(edge_ptr<T>& e, edge_ptr<T>& active_edges, scanbeam_li
 
 template <typename T>
 void set_winding_count(edge_list_itr<T> const& edge_itr,
-                       edge_ptr_list<T> & active_edge_list,
+                       edge_ptr_list<T>& active_edge_list,
                        clip_type cliptype,
                        fill_type subject_fill_type,
-                       fill_type clip_fill_type ) {
+                       fill_type clip_fill_type) {
     using value_type = T;
-    
-    edge<T> & edge = *edge_itr;
-    auto e = edge_list_rev_itr<T>(edge_itr)
-    if (e == active_edge_list.rend())
-    {
-        if (edge.winding_delta == 0) {
+
+    bound<T>& bnd = edge_itr->bound;
+    auto e = edge_list_rev_itr<T>(edge_itr) if (e == active_edge_list.rend()) {
+        if (bnd.winding_delta == 0) {
             fill_type pft =
-                (edge.poly_type == polygon_type_subject) ? subject_fill_type : clip_fill_type;
-            edge.winding_count = (pft == fill_type_negative ? -1 : 1);
+                (bnd.poly_type == polygon_type_subject) ? subject_fill_type : clip_fill_type;
+            bnd.winding_count = (pft == fill_type_negative ? -1 : 1);
         } else {
-            edge.winding_count = edge.winding_delta;
+            bnd.winding_count = bnd.winding_delta;
         }
-        edge.winding_count2 = 0;
+        bnd.winding_count2 = 0;
         return;
     }
 
     // find the edge of the same polytype that immediately preceeds 'edge' in
     // AEL
-    while (e != active_edge_list.rend() && (e->poly_type != edge.poly_type || e->winding_delta == 0)) {
+    while (e != active_edge_list.rend() &&
+           (e->bound->poly_type != bnd.poly_type || e->bound->winding_delta == 0)) {
         ++e;
     }
     if (e == active_edge_list.rend()) {
-        if (edge.winding_delta == 0) {
+        if (bnd.winding_delta == 0) {
             fill_type pft =
-                (edge.poly_type == polygon_type_subject) ? subject_fill_type : clip_fill_type;
-            edge.winding_count = (pft == fill_type_negative ? -1 : 1);
+                (bnd.poly_type == polygon_type_subject) ? subject_fill_type : clip_fill_type;
+            bnd.winding_count = (pft == fill_type_negative ? -1 : 1);
         } else {
-            edge.winding_count = edge.winding_delta;
+            bnd.winding_count = bnd.winding_delta;
         }
-        edge.winding_count2 = 0;
-    } else if (edge.winding_delta == 0 && cliptype != clip_type_union) {
-        edge.winding_count = 1;
-        edge.winding_count2 = e->winding_count2;
-    } else if (is_even_odd_fill_type(edge, subject_fill_type, clip_fill_type)) {
+        bnd.winding_count2 = 0;
+    } else if (bnd.winding_delta == 0 && cliptype != clip_type_union) {
+        bnd.winding_count = 1;
+        bnd.winding_count2 = e->bound->winding_count2;
+    } else if (is_even_odd_fill_type(bnd, subject_fill_type, clip_fill_type)) {
         // EvenOdd filling ...
-        if (edge.winding_delta == 0) {
+        if (bnd.winding_delta == 0) {
             // are we inside a subj polygon ...
             bool inside = true;
             auto e2 = e;
             while (e2 != active_edge_list.rend()) {
-                if (e2->poly_type == e->poly_type && e2->winding_delta != 0) {
+                if (e2->bound->poly_type == e->bound->poly_type && e2->bound->winding_delta != 0) {
                     inside = !inside;
                 }
                 ++e2;
             }
-            edge.winding_count = (inside ? 0 : 1);
+            bnd.winding_count = (inside ? 0 : 1);
         } else {
-            edge.winding_count = edge.winding_delta;
+            bnd.winding_count = bnd.winding_delta;
         }
-        edge.winding_count2 = e->winding_count2;
+        bnd.winding_count2 = e->bound->winding_count2;
     } else {
         // nonZero, Positive or Negative filling ...
-        if (e->winding_count * e->winding_delta < 0) {
+        if (e->bound->winding_count * e->bound->winding_delta < 0) {
             // prev edge is 'decreasing' WindCount (WC) toward zero
             // so we're outside the previous polygon ...
-            if (std::abs(e->winding_count) > 1) {
+            if (std::abs(e->bound->winding_count) > 1) {
                 // outside prev poly but still inside another.
                 // when reversing direction of prev poly use the same WC
-                if (e->winding_delta * edge.winding_delta < 0) {
-                    edge.winding_count = e->winding_count;
+                if (e->bound->winding_delta * bnd.winding_delta < 0) {
+                    bnd.winding_count = e->bound->winding_count;
                 } else {
                     // otherwise continue to 'decrease' WC ...
-                    edge.winding_count = e->winding_count + edge.winding_delta;
+                    bnd.winding_count = e->bound->winding_count + bnd.winding_delta;
                 }
             } else {
                 // now outside all polys of same polytype so set own WC ...
-                edge.winding_count = (edge.winding_delta == 0 ? 1 : edge.winding_delta);
+                bnd.winding_count = (bnd.winding_delta == 0 ? 1 : bnd.winding_delta);
             }
         } else {
             // prev edge is 'increasing' WindCount (WC) away from zero
             // so we're inside the previous polygon ...
-            if (edge.winding_delta == 0) {
-                edge.winding_count =
-                    (e->winding_count < 0 ? e->winding_count - 1 : e->winding_count + 1);
-            } else if (e->winding_delta * edge.winding_delta < 0) {
+            if (bnd.winding_delta == 0) {
+                bnd.winding_count = (e->bound->winding_count < 0 ? e->bound->winding_count - 1
+                                                                 : e->bound->winding_count + 1);
+            } else if (e->bound->winding_delta * bnd.winding_delta < 0) {
                 // if wind direction is reversing prev then use same WC
-                edge.winding_count = e->winding_count;
+                bnd.winding_count = e->bound->winding_count;
             } else {
                 // otherwise add to WC ...
-                edge.winding_count = e->winding_count + edge.winding_delta;
+                bnd.winding_count = e->bound->winding_count + bnd.winding_delta;
             }
         }
-        edge.winding_count2 = e->winding_count2;
+        bnd.winding_count2 = e->bound->winding_count2;
     }
 
     // update winding_count2 ...
     auto e_foward = e.base();
-    if (is_even_odd_alt_fill_type(edge, subject_fill_type, clip_fill_type)) {
+    if (is_even_odd_alt_fill_type(bnd, subject_fill_type, clip_fill_type)) {
         // EvenOdd filling ...
         while (e_forward != edge_itr) {
-            if (e_forward->winding_delta != 0) {
-                edge.winding_count2 = (edge.winding_count2 == 0 ? 1 : 0);
+            if (e_forward->bound->winding_delta != 0) {
+                bnd.winding_count2 = (bnd.winding_count2 == 0 ? 1 : 0);
             }
             ++e_forward;
         }
     } else {
         // nonZero, Positive or Negative filling ...
         while (e_forward != edge_itr) {
-            edge.winding_count2 += e_forward->winding_delta;
+            bnd.winding_count2 += e_forward->bound->winding_delta;
             ++e_forward;
         }
     }
 }
 
 template <typename T>
-bool is_contributing(edge<T> const& edge,
+bool is_contributing(bound<T> const& bnd,
                      clip_type cliptype,
                      fill_type subject_fill_type,
                      fill_type clip_fill_type) {
     fill_type pft = subject_fill_type;
     fill_type pft2 = clip_fill_type;
-    if (edge.poly_type != polygon_type_subject) {
+    if (bnd.poly_type != polygon_type_subject) {
         pft = clip_fill_type;
         pft2 = subject_fill_type;
     }
@@ -282,23 +201,23 @@ bool is_contributing(edge<T> const& edge,
     case fill_type_even_odd:
         // return false if a subj line has been flagged as inside a subj
         // polygon
-        if (edge.winding_delta == 0 && edge.winding_count != 1) {
+        if (bnd.winding_delta == 0 && bnd.winding_count != 1) {
             return false;
         }
         break;
     case fill_type_non_zero:
-        if (std::abs(edge.winding_count) != 1) {
+        if (std::abs(bnd.winding_count) != 1) {
             return false;
         }
         break;
     case fill_type_positive:
-        if (edge.winding_count != 1) {
+        if (bnd.winding_count != 1) {
             return false;
         }
         break;
     case fill_type_negative:
     default:
-        if (edge.winding_count != -1) {
+        if (bnd.winding_count != -1) {
             return false;
         }
     }
@@ -308,63 +227,63 @@ bool is_contributing(edge<T> const& edge,
         switch (pft2) {
         case fill_type_even_odd:
         case fill_type_non_zero:
-            return (edge.winding_count2 != 0);
+            return (bnd.winding_count2 != 0);
         case fill_type_positive:
-            return (edge.winding_count2 > 0);
+            return (bnd.winding_count2 > 0);
         case fill_type_negative:
         default:
-            return (edge.winding_count2 < 0);
+            return (bnd.winding_count2 < 0);
         }
         break;
     case clip_type_union:
         switch (pft2) {
         case fill_type_even_odd:
         case fill_type_non_zero:
-            return (edge.winding_count2 == 0);
+            return (bnd.winding_count2 == 0);
         case fill_type_positive:
-            return (edge.winding_count2 <= 0);
+            return (bnd.winding_count2 <= 0);
         case fill_type_negative:
         default:
-            return (edge.winding_count2 >= 0);
+            return (bnd.winding_count2 >= 0);
         }
         break;
     case clip_type_difference:
-        if (edge.poly_type == polygon_type_subject) {
+        if (bnd.poly_type == polygon_type_subject) {
             switch (pft2) {
             case fill_type_even_odd:
             case fill_type_non_zero:
-                return (edge.winding_count2 == 0);
+                return (bnd.winding_count2 == 0);
             case fill_type_positive:
-                return (edge.winding_count2 <= 0);
+                return (bnd.winding_count2 <= 0);
             case fill_type_negative:
             default:
-                return (edge.winding_count2 >= 0);
+                return (bnd.winding_count2 >= 0);
             }
         } else {
             switch (pft2) {
             case fill_type_even_odd:
             case fill_type_non_zero:
-                return (edge.winding_count2 != 0);
+                return (bnd.winding_count2 != 0);
             case fill_type_positive:
-                return (edge.winding_count2 > 0);
+                return (bnd.winding_count2 > 0);
             case fill_type_negative:
             default:
-                return (edge.winding_count2 < 0);
+                return (bnd.winding_count2 < 0);
             }
         }
         break;
     case clip_type_x_or:
-        if (edge.winding_delta == 0) {
+        if (bnd.winding_delta == 0) {
             // XOr always contributing unless open
             switch (pft2) {
             case fill_type_even_odd:
             case fill_type_non_zero:
-                return (edge.winding_count2 == 0);
+                return (bnd.winding_count2 == 0);
             case fill_type_positive:
-                return (edge.winding_count2 <= 0);
+                return (bnd.winding_count2 <= 0);
             case fill_type_negative:
             default:
-                return (edge.winding_count2 >= 0);
+                return (bnd.winding_count2 >= 0);
             }
         } else {
             return true;

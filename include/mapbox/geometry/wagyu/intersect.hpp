@@ -2,7 +2,7 @@
 
 #include <mapbox/geometry/point.hpp>
 
-#include <mapbox/geometry/wagyu/edge.hpp>
+#include <mapbox/geometry/wagyu/sorted_edge_list.hpp>
 
 #ifdef DEBUG
 #include <iostream>
@@ -11,23 +11,16 @@
 namespace mapbox {
 namespace geometry {
 namespace wagyu {
-template <typename T>
-struct intersect_node;
-
-template <typename T>
-using intersect_node_ptr = intersect_node<T>*;
-
-template <typename T>
-using const_intersect_node_ptr = intersect_node<T>* const;
 
 template <typename T>
 struct intersect_node {
-    edge_ptr<T> edge1;
-    edge_ptr<T> edge2;
+
+    sorting_edge_list_itr<T> edge1;
+    sorting_edge_list_itr<T> edge2;
     mapbox::geometry::point<T> pt;
 
-    intersect_node(const_edge_ptr<T> edge1_,
-                   const_edge_ptr<T> edge2_,
+    intersect_node(sorting_edge_list_itr<T> const& edge1_,
+                   sorting_edge_list_itr<T> const& edge2_,
                    mapbox::geometry::point<T> pt_)
         : edge1(edge1_), edge2(edge2_), pt(pt_) {
     }

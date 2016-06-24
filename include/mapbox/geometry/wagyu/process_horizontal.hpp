@@ -122,7 +122,7 @@ void process_horizontal(edge_ptr<T> horz_edge,
                         ++max_reverse_iter;
                     }
                 }
-            };
+            }
 
             if ((dir == left_to_right && e->curr.x > right) ||
                 (dir == right_to_left && e->curr.x < left)) {

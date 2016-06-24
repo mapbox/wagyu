@@ -31,7 +31,7 @@ void promote_children_of_removed_ring(ring_ptr<T> ring, ring_list<T>& rings) {
     }
 }
 
-void set_hole_state(edge_list_itr<T> e, edge_list<T> & active_edge_list, ring_ptr<T> ring) {
+void set_hole_state(edge_list_itr<T> e, edge_list<T>& active_edge_list) {
     auto e2 = edge_list_rev_itr<T>(e);
     edge_ptr<T> eTmp = nullptr;
     while (e2 != active_edge_list.rend()) {
@@ -55,7 +55,7 @@ void set_hole_state(edge_list_itr<T> e, edge_list<T> & active_edge_list, ring_pt
 }
 
 template <typename T>
-void set_hole_state(edge_list_rev_itr<T> e, edge_list<T> & active_edge_list, ring_ptr<T> ring) {
+void set_hole_state(edge_list_rev_itr<T> e, edge_list<T>& active_edge_list) {
     auto e2 = e - 1;
     edge_ptr<T> eTmp = nullptr;
     while (e2 != active_edge_list.rend()) {
@@ -78,9 +78,12 @@ void set_hole_state(edge_list_rev_itr<T> e, edge_list<T> & active_edge_list, rin
     }
 }
 
-template <typename T, template <typename ...> class itr_type>
-point_ptr<T> add_first_point(itr_type<T> e, edge_list<T> & active_edge_list, mapbox::geometry::point<T> const& pt, ring_list<T>& rings) {
-    ring_ptr<T> & ring = e->ring;
+template <typename T, template <typename...> class itr_type>
+point_ptr<T> add_first_point(itr_type<T> e,
+                             edge_list<T>& active_edge_list,
+                             mapbox::geometry::point<T> const& pt,
+                             ring_list<T>& rings) {
+    ring_ptr<T>& ring = e->ring;
     assert(!ring);
     // no ring currently set!
     rings.emplace_back();
@@ -89,16 +92,16 @@ point_ptr<T> add_first_point(itr_type<T> e, edge_list<T> & active_edge_list, map
     point_ptr<T> new_point = new point<T>(ring, pt);
     ring->points = new_point;
     if (!ring->is_open) {
-        set_hole_state(e, active_edge_list, ring);
+        set_hole_state(e, active_edge_list);
     }
     return new_point;
 }
 
-template <typename T, template <typename ...> class itr_type>
+template <typename T, template <typename...> class itr_type>
 point_ptr<T> add_point_to_ring(itr_type<T> e, mapbox::geometry::point<T> const& pt) {
-    
+
     assert(e->ring);
-    ring_ptr<T> & ring = e->ring;
+    ring_ptr<T>& ring = e->ring;
     // ring->points is the 'Left-most' point & ring->points->prev is the
     // 'Right-most'
     point_ptr<T> op = ring->points;
@@ -116,8 +119,11 @@ point_ptr<T> add_point_to_ring(itr_type<T> e, mapbox::geometry::point<T> const& 
     return new_point;
 }
 
-template <typename T, template <typename ...> class itr_type>
-point_ptr<T> add_point(itr_type<T> e, edge_list<T> & active_edge_list, mapbox::geometry::point<T> const& pt, ring_list<T>& rings) {
+template <typename T, template <typename...> class itr_type>
+point_ptr<T> add_point(itr_type<T> e,
+                       edge_list<T>& active_edge_list,
+                       mapbox::geometry::point<T> const& pt,
+                       ring_list<T>& rings) {
     if (e->ring) {
         return add_first_point(e, active_edge_list, pt, rings);
     } else {
@@ -126,9 +132,9 @@ point_ptr<T> add_point(itr_type<T> e, edge_list<T> & active_edge_list, mapbox::g
 }
 
 template <typename T>
-point_ptr<T> add_local_minimum_point(edge_list_itr<T> & e1,
-                                     edge_list_itr<T> & e2,
-                                     edge_list<T> & active_edge_list,
+point_ptr<T> add_local_minimum_point(edge_list_itr<T>& e1,
+                                     edge_list_itr<T>& e2,
+                                     edge_list<T>& active_edge_list,
                                      mapbox::geometry::point<T> const& pt,
                                      ring_list<T>& rings,
                                      join_list<T>& joins) {
@@ -297,13 +303,10 @@ bool ring1_right_of_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2) {
 }
 
 template <typename T>
-void append_ring(edge_ptr<T> e1,
-                 edge_ptr<T> e2,
-                 ring_list<T>& rings,
-                 const_edge_ptr<T> active_edge_list) {
+void append_ring(edge_list_itr<T>& e1, edge_list_itr<T>& e2, edge_list<T>& active_edge_list) {
     // get the start and ends of both output polygons ...
-    ring_ptr<T> outRec1 = rings[e1->index];
-    ring_ptr<T> outRec2 = rings[e2->index];
+    ring_ptr<T> outRec1 = e1->ring;
+    ring_ptr<T> outRec2 = e2->ring;
 
     ring_ptr<T> holeStateRec;
     if (ring1_right_of_ring2(outRec1, outRec2)) {
@@ -371,43 +374,41 @@ void append_ring(edge_ptr<T> e1,
     outRec2->bottom_point = nullptr;
     outRec2->first_left = outRec1;
 
-    int OKindex = e1->index;
-    int Obsoleteindex = e2->index;
+    ring_ptr<T> OkRing = e1->ring;
+    ring_ptr<T> ObsoleteRing = e2->ring;
 
     // nb: safe because we only get here via AddLocalMaxPoly
-    e1->index = EDGE_UNASSIGNED;
-    e2->index = EDGE_UNASSIGNED;
+    e1->ring = nullptr;
+    e2->ring = nullptr;
 
-    edge_ptr<T> e = active_edge_list;
-    while (e) {
-        if (e->index == Obsoleteindex) {
-            e->index = OKindex;
-            e->side = e1->side;
-            break;
+    for (auto& e : active_edge_list) {
+        if (e.ring == ObsoleteRing) {
+            e.ring = OkRing;
+            e.side = e1->side;
+            break; // Not sure why there is a break here but was transfered logic from angus
         }
-        e = e->next_in_AEL;
     }
 
-    outRec2->index = outRec1->index;
+    outRec2->ring = outRec1->ring;
 }
 
 template <typename T>
-void add_local_maximum_point(edge_ptr<T> e1,
-                             edge_ptr<T> e2,
+void add_local_maximum_point(edge_list_itr<T>& e1,
+                             edge_list_itr<T>& e2,
                              mapbox::geometry::point<T> const& pt,
                              ring_list<T>& rings,
-                             const_edge_ptr<T> active_edge_list) {
-    add_point(e1, pt, rings);
+                             edge_list<T>& active_edge_list) {
+    add_point(e1, active_edge_list, pt, rings);
     if (e2->winding_delta == 0) {
-        add_point(e2, pt, rings);
+        add_point(e2, active_edge_list, pt, rings);
     }
-    if (e1->index == e2->index) {
-        e1->index = EDGE_UNASSIGNED;
-        e2->index = EDGE_UNASSIGNED;
+    if (e1->ring == e2->ring) {
+        e1->ring = nullptr;
+        e2->ring = nullptr;
     } else if (e1->index < e2->index) {
-        append_ring(e1, e2, rings, active_edge_list);
+        append_ring(e1, e2, active_edge_list);
     } else {
-        append_ring(e2, e1, rings, active_edge_list);
+        append_ring(e2, e1, active_edge_list);
     }
 }
 

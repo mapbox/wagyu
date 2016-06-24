@@ -3,6 +3,7 @@
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/edge.hpp>
 #include <mapbox/geometry/wagyu/exceptions.hpp>
+#include <mapbox/geometry/wagyu/ring.hpp>
 #include <mapbox/geometry/wagyu/util.hpp>
 
 namespace mapbox {
@@ -10,10 +11,10 @@ namespace geometry {
 namespace wagyu {
 
 template <typename T>
-inline void swap_ring_indexes(edge<T>& e1, edge<T>& e2) {
-    std::size_t index = e1.index;
-    e1.index = e2.index;
-    e2.index = index;
+inline void swap_rings(edge<T>& e1, edge<T>& e2) {
+    ring_ptr<T> ring = e1.ring;
+    e1.ring = e2.ring;
+    e2.ring = ring;
 }
 
 template <typename T>

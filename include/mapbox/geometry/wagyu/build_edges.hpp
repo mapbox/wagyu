@@ -35,7 +35,7 @@ bool build_edge_list(mapbox::geometry::line_string<T> const& path_geometry,
         if (is_flat && itr_next->y != itr->y) {
             is_flat = false;
         }
-        edges.emplace_back(*itr, *itr_next, polygon_type_subject);
+        edges.emplace_back(*itr, *itr_next);
         itr = itr_next;
         ++itr_next;
     }
@@ -48,9 +48,7 @@ bool build_edge_list(mapbox::geometry::line_string<T> const& path_geometry,
 }
 
 template <typename T>
-bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry,
-                     edge_list<T>& edges,
-                     polygon_type p_type) {
+bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry, edge_list<T>& edges) {
     using value_type = T;
 
     if (path_geometry.size() < 3) {
@@ -123,7 +121,7 @@ bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry,
             continue;
         }
 
-        edges.emplace_back(pt2, pt3, p_type);
+        edges.emplace_back(pt2, pt3);
         if (itr == itr_last) {
             break;
         }
@@ -145,8 +143,6 @@ bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry,
     }
     return true;
 }
-
 }
 }
 }
-

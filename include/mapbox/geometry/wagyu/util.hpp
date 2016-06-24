@@ -287,10 +287,10 @@ inline bool is_horizontal(edge<T> const& e) {
 }
 
 template <typename T>
-bool is_even_odd_fill_type(edge<T> const& edge,
+bool is_even_odd_fill_type(bound<T> const& bound,
                            fill_type subject_fill_type,
                            fill_type clip_fill_type) {
-    if (edge.poly_type == polygon_type_subject) {
+    if (bound.poly_type == polygon_type_subject) {
         return subject_fill_type == fill_type_even_odd;
     } else {
         return clip_fill_type == fill_type_even_odd;

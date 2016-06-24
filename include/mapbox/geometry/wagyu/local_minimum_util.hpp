@@ -10,35 +10,6 @@ namespace mapbox {
 namespace geometry {
 namespace wagyu {
 
-template <typename T>
-struct local_minimum_sorter {
-    inline bool operator()(local_minimum<T> const& locMin1, local_minimum<T> const& locMin2) {
-        return locMin2.y < locMin1.y;
-    }
-};
-
-template <typename T>
-void sort_local_minima(local_minum_list<T> & minima_list) {
-    std::stable_sort(minima_list.begin(), minima_list.end(), local_minimum_sorter<value_type>());
-}
-
-template <typename T>
-bool pop_local_minima(T Y,
-                      local_minimum_itr<T>& current_local_minimum,
-                      local_minimum_list<T>& minima_list) {
-    if (current_local_minimum == minima_list.end() || (*current_local_minimum).y != Y) {
-        return false;
-    }
-    ++current_local_minimum;
-    return true;
-}
-
-template <typename T>
-bool local_minima_pending(local_minimum_itr<T>& current_local_minimum,
-                          local_minimum_list<T>& minima_list) {
-    return (current_local_minimum != minima_list.end());
-}
-
 // Make a list start on a local maximum by
 // shifting all the points not on a local maximum to the
 template <typename T>
@@ -48,7 +19,7 @@ void start_list_on_local_maximum(edge_list<T>& edges) {
     }
     // Find the first local maximum going forward in the list
     auto prev_edge = edges.end();
-    --prev_edge; 
+    --prev_edge;
     bool prev_edge_is_horizontal = is_horizontal(*prev_edge);
     auto edge = edges.begin();
     bool edge_is_horizontal;
@@ -82,14 +53,14 @@ void start_list_on_local_maximum(edge_list<T>& edges) {
 }
 
 template <typename T>
-edge_list<T> create_bound_towards_minimum(edge_list<T>& edges) {
+bound<T> create_bound_towards_minimum(edge_list<T>& edges) {
     if (edges.size() == 1) {
         if (is_horizontal(edges.front())) {
             reverse_horizontal(edges.front());
         }
-        edge_list<T> bound;
-        bound.splice(bound.end(), edges, edges.begin(), edges.end());
-        return bound;
+        bound<T> bnd;
+        bnd.edges.splice(bnd.edges.end(), edges, edges.begin(), edges.end());
+        return bnd;
     }
 
     auto next_edge = edges.begin();
@@ -124,18 +95,18 @@ edge_list<T> create_bound_towards_minimum(edge_list<T>& edges) {
         }
         ++next_edge;
     }
-    edge_list<T> bound;
-    bound.splice(bound.end(), edges, edges.begin(), next_edge);
-    std::reverse(bound.begin(), bound.end());
-    return bound;
+    bound<T> bnd;
+    bnd.edges.splice(bnd.edges.end(), edges, edges.begin(), next_edge);
+    std::reverse(bnd.edges.begin(), bnd.edges.end());
+    return bnd;
 }
 
 template <typename T>
-edge_list<T> create_bound_towards_maximum(edge_list<T>& edges) {
+bound<T> create_bound_towards_maximum(edge_list<T>& edges) {
     if (edges.size() == 1) {
-        edge_list<T> bound;
-        bound.splice(bound.end(), edges, edges.begin(), edges.end());
-        return bound;
+        bound<T> bnd;
+        bnd.edges.splice(bnd.edges.end(), edges, edges.begin(), edges.end());
+        return bnd;
     }
     auto next_edge = edges.begin();
     auto edge = next_edge;
@@ -163,18 +134,36 @@ edge_list<T> create_bound_towards_maximum(edge_list<T>& edges) {
         edge = next_edge;
         ++next_edge;
     }
-    edge_list<T> bound;
-    bound.splice(bound.end(), edges, edges.begin(), next_edge);
-    return bound;
+    edge_list<T> bnd;
+    bnd.edges.splice(bnd.edges.end(), edges, edges.begin(), next_edge);
+    return bnd;
 }
 
 template <typename T>
-void set_edge_data(edge_list<T>& edges, std::int8_t winding_value, edge_side side) {
+void set_edge_data(edge_list<T>& edges, bound_ptr<T> bound) {
     for (auto& e : edges) {
-        e.side = side;
+        e.bound = bound;
         e.curr = e.bot;
-        e.winding_delta = winding_value;
     }
+}
+
+template <typename T>
+void move_horizontals_on_left_to_right(bound<T>& left_bound, bound<T>& right_bound) {
+    // We want all the horizontal segments that are at the same Y as the minimum to be on the right
+    // bound
+    for (auto edge_itr = left_bound.edges.begin(); edge_itr != left_bound.edges.end(); ++edge_itr) {
+        if (!is_horizontal(*edge_itr)) {
+            break;
+        } else {
+            reverse_horizontal(*edge_itr);
+        }
+    }
+    if (edge_itr == left_bound.edges.begin()) {
+        return;
+    }
+    auto original_first = right_bound.edges.begin();
+    right_bound.edges.splice(original_first, left_bound.edges, left_bound.edges.begin(), edge_itr);
+    std::reverse(right_bound.edges.begin(), original_first);
 }
 
 template <typename T>
@@ -187,29 +176,58 @@ void add_line_to_local_minima_list(edge_list<T>& edges, local_minimum_list<T>& m
     // Adjust the order of the ring so we start on a local maximum
     // therefore we start right away on a bound.
     start_list_on_local_maximum(edges);
-
+    edge_ptr<T> last_maximum = nullptr;
     while (!edges.empty()) {
         auto to_minimum = create_bound_towards_minimum(edges);
-        assert(!to_minimum.empty());
+        assert(!to_minimum.edges.empty());
+        auto const& min_front = to_minimum.edges.front();
+        to_minimum.poly_type = polygon_type_subject;
+        set_edge_data(to_minimum.edges, &to_minimum);
+        to_minimum.maximum_edge_pair = last_maximum;
+        to_minimum.winding_delta = 0;
         if (edges.empty()) {
-            value_type y = to_minimum_begin->bot.y;
-            minima_list.emplace_back(y, edge_list<value_type>(), std::move(to_minimum));
+            if (min_font.dx < 0.0) {
+                to_minimum.side = edge_left;
+                bound<T> right_bound;
+                right_bound.winding_delta = 0;
+                right_bound.side = edge_right;
+                right_bound.poly_type = polygon_type_subject;
+                move_horizontals_on_left_to_right(to_minimum, right_bound);
+                if (!right_bound.empty()) {
+                    set_edge_data(right_bound.edges, &right_bound);
+                }
+                minima_list.emplace_back(std::move(to_minimum), std::move(right_bound),
+                                         min_front.y);
+            } else {
+                to_minimum.side = edge_right;
+                minima_list.emplace_back(bound<T>(), std::move(to_minimum), min_front.y);
+            }
+            break;
         }
         auto to_maximum = create_bound_towards_maximum(edges);
-        assert(!to_maximum.empty());
-        auto to_minimum_begin = to_minimum.begin();
-        auto to_maximum_begin = to_minimum.begin();
-        value_type y = to_minimum_begin->bot.y;
-        if (to_minimum_begin->dx < to_maximum_begin->dx) {
-            minima_list.emplace_back(y, std::move(to_maximum), std::move(to_minimum));
+        assert(!to_maximum.edges.empty());
+        auto const& max_front = to_maximum.edges.front();
+        to_maximum.maximum_edge_pair = edges.empty() ? nullptr : &(edges.front());
+        last_maximum = &(to_maximum.edges.back());
+        to_maximum.poly_type = polygon_type_subject;
+        to_maximum.winding_delta = 0;
+        set_edge_data(to_maximum.edges, &to_maximum);
+        if (max_front.dx < min_front.dx) {
+            to_minimum.side = edge_right;
+            to_maximum.side = edge_left;
+            minima_list.emplace_back(std::move(to_maximum), std::move(to_minimum), min_front.bot.y);
         } else {
-            minima_list.emplace_back(y, std::move(to_minimum), std::move(to_maximum));
+            to_minimum.side = edge_left;
+            to_maximum.side = edge_right;
+            minima_list.emplace_back(std::move(to_minimum), std::move(to_maximum), min_front.bot.y);
         }
     }
 }
 
 template <typename T>
-void add_ring_to_local_minima_list(edge_list<T>& edges, local_minimum_list<T>& minima_list) {
+void add_ring_to_local_minima_list(edge_list<T>& edges,
+                                   local_minimum_list<T>& minima_list,
+                                   polygon_type poly_type) {
     using value_type = T;
 
     if (edges.empty()) {
@@ -219,27 +237,43 @@ void add_ring_to_local_minima_list(edge_list<T>& edges, local_minimum_list<T>& m
     // therefore we start right away on a bound.
     start_list_on_local_maximum(edges);
 
+    edge_ptr<T> first_maximum = &(edges.front());
+    edge_ptr<T> last_maximum = first_maximum;
     while (!edges.empty()) {
         auto to_minimum = create_bound_towards_minimum(edges);
         assert(!edges.empty());
         auto to_maximum = create_bound_towards_maximum(edges);
-        assert(!to_minimum.empty());
-        assert(!to_maximum.empty());
-        auto to_minimum_begin = to_minimum.begin();
-        auto to_maximum_begin = to_minimum.begin();
-        value_type y = to_minimum_begin->bot.y;
-        if (to_minimum_begin->dx < to_maximum_begin->dx) {
-            set_edge_data(to_minimum, 1, edge_right);
-            set_edge_data(to_maximum, -1, edge_left);
-            minima_list.emplace_back(y, std::move(to_maximum), std::move(to_minimum));
+        if (to_maximum.edges.front().dx < to_minimum.edges.front().dx) {
+            move_horizontals_on_left_to_right(to_maximum, to_minimum);
         } else {
-            set_edge_data(to_minimum, 1, edge_left);
-            set_edge_data(to_maximum, -1, edge_right);
-            minima_list.emplace_back(y, std::move(to_minimum), std::move(to_maximum));
+            move_horizontals_on_left_to_right(to_minimum, to_maximum);
+        }
+        assert(!to_minimum.edges.empty());
+        assert(!to_maximum.edges.empty());
+        auto const& min_front = to_minimum.edges.front();
+        auto const& max_front = to_maximum.edges.front();
+        to_minimum.maximum_edge_pair = last_maximum;
+        to_maximum.maximum_edge_pair = edges.empty() ? first_maximum : &(edges.front());
+        last_maximum = &(to_maximum.edges.back());
+        to_minimum.poly_type = poly_type;
+        to_maximum.poly_type = poly_type;
+        set_edge_data(to_minimum.edges, &to_minimum);
+        set_edge_data(to_maximum.edges, &to_maximum);
+        if (max_front.dx < min_front.dx) {
+            to_minimum.side = edge_right;
+            to_maximum.side = edge_left;
+            to_minimum.winding_delta = 1;
+            to_maximum.winding_delta = -1;
+            minima_list.emplace_back(std::move(to_maximum), std::move(to_minimum), min_front.bot.y);
+        } else {
+            to_minimum.side = edge_left;
+            to_maximum.side = edge_right;
+            to_minimum.winding_delta = -1;
+            to_maximum.winding_delta = 1;
+            minima_list.emplace_back(std::move(to_minimum), std::move(to_maximum), min_front.bot.y);
         }
     }
 }
-
 }
 }
 }
