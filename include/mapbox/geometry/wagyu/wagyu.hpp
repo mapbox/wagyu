@@ -155,7 +155,7 @@ public:
             if (!r->points || r->ring_index > 0) {
                 continue;
             }
-            std::size_t cnt = count(r->points);
+            std::size_t cnt = point_count(r->points);
             if ((r->is_open && cnt < 2) || (!r->is_open && cnt < 3)) {
                 continue;
             }

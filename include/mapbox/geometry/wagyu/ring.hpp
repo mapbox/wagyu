@@ -85,7 +85,7 @@ void init(const_point_ptr<T>& node) {
 }
 
 template <typename T>
-std::size_t count(const const_point_ptr<T>& orig_node) {
+std::size_t point_count(const const_point_ptr<T>& orig_node) {
     std::size_t size = 0;
     point_ptr<T> n = orig_node;
     do {

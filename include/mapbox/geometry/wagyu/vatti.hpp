@@ -1375,7 +1375,7 @@ void do_simple_polygons(ring_list<T>& rings) {
                             op3->next = op2;
 
                             ring_ptr<T> ring2 = create_new_ring(rings);
-                            if (count(op) > count(op2)) {
+                            if (point_count(op) > point_count(op2)) {
                                 ring->points = op;
                                 ring2->points = op2;
                             } else {
