@@ -1226,10 +1226,11 @@ bool fix_intersects(std::unordered_multimap<size_t, point_ptr_pair<T>>& dupe_rin
         ring_itr->index = ring_origin->index;
         if (ring_origin->is_hole) {
             ring_itr->first_left = parse_first_left(ring_origin->first_left);
+            ring_itr->is_hole = ring_origin->is_hole;
         } else {
             ring_itr->first_left = ring_origin;
+            ring_itr->is_hole = !ring_origin->is_hole;
         }
-        ring_itr->is_hole = ring_origin->is_hole;
         fixup_first_lefts3(ring_itr, ring_origin, rings);
     }
     if (ring_origin->is_hole) {

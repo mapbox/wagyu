@@ -13,7 +13,7 @@ namespace wagyu {
 template <typename T>
 void fixup_hole_state_of_children(ring_ptr<T> ring, ring_list<T>& rings) {
     for (auto& r : rings) {
-        if (r->points && ring == parse_first_left(r->first_left) && ring->is_hole == r->is_hole) {
+        if (r->points && ring == r->first_left && ring->is_hole == r->is_hole) {
             r->is_hole = !ring->is_hole;
             fixup_hole_state_of_children(r, rings);
         }
@@ -23,8 +23,8 @@ void fixup_hole_state_of_children(ring_ptr<T> ring, ring_list<T>& rings) {
 template <typename T>
 void promote_children_of_removed_ring(ring_ptr<T> ring, ring_list<T>& rings) {
     for (auto& r : rings) {
-        if (r->points && ring == parse_first_left(r->first_left)) {
-            r->is_hole = !ring->is_hole;
+        if (r->points && (ring == parse_first_left(r->first_left) || ring == r->first_left)) {
+            r->is_hole = ring->is_hole;
             r->first_left = ring->first_left;
             fixup_hole_state_of_children(r, rings);
         }
@@ -322,9 +322,7 @@ void append_ring(edge_ptr<T> e1,
         }
         if (outRec1->is_hole != outRec2->is_hole) {
             outRec1->is_hole = outRec2->is_hole;
-            fixup_hole_state_of_children(outRec1, rings);
-        } else {
-            outRec1->is_hole = outRec2->is_hole;
+            //fixup_hole_state_of_children(outRec1, rings);
         }
     }
     outRec2->points = nullptr;
