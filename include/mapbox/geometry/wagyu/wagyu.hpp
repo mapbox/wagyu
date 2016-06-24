@@ -152,7 +152,7 @@ public:
 
         // loop through constructing polygons
         for (auto& r : rings) {
-            if (!r->points || r->ring_index) {
+            if (!r->points || r->ring_index > 0) {
                 continue;
             }
             std::size_t cnt = count(r->points);
@@ -185,28 +185,6 @@ public:
         } while (ptIt != firstPt);
         lr.push_back({ firstPt->x, firstPt->y }); // close the ring
         poly.push_back(lr);
-    }
-
-    void fix_hole_linkage(ring_ptr<value_type> r) {
-        // skip rings that...
-        auto fl = parse_first_left(r->first_left);
-        if (
-            // are an outermost polygon, or
-            !fl ||
-            // already has correct owner/child linkage
-            (r->is_hole != fl->is_hole && fl->points)) {
-            return;
-        }
-
-        ring_ptr<T> rfl = r->first_left;
-
-        // Cycle up the `first_left` chain until we hit a ring that doesn't
-        // have the same `is_hole` value...
-        while (rfl && ((rfl->is_hole == r->is_hole) || !rfl->points)) {
-            rfl = rfl->first_left;
-        }
-        // ... that ring is the parent of this one.
-        r->first_left = rfl;
     }
 };
 }

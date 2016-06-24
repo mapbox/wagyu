@@ -11,6 +11,27 @@ namespace geometry {
 namespace wagyu {
 
 template <typename T>
+void fixup_hole_state_of_children(ring_ptr<T> ring, ring_list<T>& rings) {
+    for (auto& r : rings) {
+        if (r->points && ring == parse_first_left(r->first_left) && ring->is_hole == r->is_hole) {
+            r->is_hole = !ring->is_hole;
+            fixup_hole_state_of_children(r, rings);
+        }
+    }
+}
+
+template <typename T>
+void promote_children_of_removed_ring(ring_ptr<T> ring, ring_list<T>& rings) {
+    for (auto& r : rings) {
+        if (r->points && ring == parse_first_left(r->first_left)) {
+            r->is_hole = !ring->is_hole;
+            r->first_left = ring->first_left;
+            fixup_hole_state_of_children(r, rings);
+        }
+    }
+}
+
+template <typename T>
 void set_hole_state(edge_ptr<T> e, ring_ptr<T> ring, ring_list<T>& rings) {
     edge_ptr<T> e2 = e->prev_in_AEL;
     edge_ptr<T> eTmp = nullptr;
@@ -236,7 +257,7 @@ bool ring1_right_of_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2) {
 template <typename T>
 void append_ring(edge_ptr<T> e1,
                  edge_ptr<T> e2,
-                 ring_list<T> const& rings,
+                 ring_list<T>& rings,
                  const_edge_ptr<T> active_edge_list) {
     // get the start and ends of both output polygons ...
     ring_ptr<T> outRec1 = rings[e1->index];
@@ -299,7 +320,12 @@ void append_ring(edge_ptr<T> e1,
         if (outRec2->first_left != outRec1) {
             outRec1->first_left = outRec2->first_left;
         }
-        outRec1->is_hole = outRec2->is_hole;
+        if (outRec1->is_hole != outRec2->is_hole) {
+            outRec1->is_hole = outRec2->is_hole;
+            fixup_hole_state_of_children(outRec1, rings);
+        } else {
+            outRec1->is_hole = outRec2->is_hole;
+        }
     }
     outRec2->points = nullptr;
     outRec2->bottom_point = nullptr;
@@ -357,21 +383,6 @@ bool poly2_contains_poly1(point_ptr<T> outpt1, point_ptr<T> outpt2) {
         op = op->next;
     } while (op != outpt1);
     return true;
-}
-
-template <typename T>
-void reverse_polygon_point_links(point_ptr<T> pp) {
-    if (!pp) {
-        return;
-    }
-    point_ptr<T> pp1, pp2;
-    pp1 = pp;
-    do {
-        pp2 = pp1->next;
-        pp1->next = pp1->prev;
-        pp1->prev = pp2;
-        pp1 = pp2;
-    } while (pp1 != pp);
 }
 
 template <typename T>

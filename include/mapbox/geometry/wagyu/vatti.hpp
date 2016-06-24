@@ -414,22 +414,6 @@ ring_ptr<T> get_ring(ring_list<T>& rings, int index) {
 }
 
 template <typename T>
-int point_count(point_ptr<T> points) {
-    if (!points) {
-        return 0;
-    }
-
-    int n = 0;
-    point_ptr<T> p = points;
-    do {
-        n++;
-        p = p->next;
-    } while (p != points);
-
-    return n;
-}
-
-template <typename T>
 point_ptr<T> duplicate_point(point_ptr<T> pt, bool insert_after) {
     point_ptr<T> result = new point<T>(pt->x, pt->y);
     result->index = pt->index;
@@ -786,24 +770,16 @@ void update_point_indices(ring<T>& ring) {
 }
 
 template <typename T>
-ring_ptr<T> parse_first_left(ring_ptr<T> first_left) {
-    while (first_left && !first_left->points) {
-        first_left = first_left->first_left;
-    }
-    return first_left;
-}
-
-template <typename T>
 void fixup_first_lefts1(ring_ptr<T> old_ring, ring_ptr<T> new_ring, ring_list<T>& rings) {
     // tests if new_ring contains the polygon before reassigning first_left
-    for (size_t i = 0; i < rings.size(); ++i) {
-        ring_ptr<T> ring = rings[i];
+    for (auto& ring : rings) {
         ring_ptr<T> first_left = parse_first_left(ring->first_left);
         if (ring->points && first_left == old_ring) {
             if (poly2_contains_poly1(ring->points, new_ring->points)) {
                 if (ring->is_hole == new_ring->is_hole) {
                     ring->is_hole = !ring->is_hole;
-                    reverse_polygon_point_links(ring->points);
+                    reverse_ring(ring->points);
+                    fixup_hole_state_of_children(ring, rings);
                 }
                 ring->first_left = new_ring;
             }
@@ -817,8 +793,7 @@ void fixup_first_lefts2(ring_ptr<T> inner_ring, ring_ptr<T> outer_ring, ring_lis
     // It's possible that these polygons now wrap around other polygons, so check
     // every polygon that's also contained by outer_ring's first_left container
     //(including 0) to see if they've become inner to the new inner polygon ...
-    for (size_t i = 0; i < rings.size(); ++i) {
-        ring_ptr<T> ring = rings[i];
+    for (auto& ring : rings) {
 
         if (!ring->points || ring == outer_ring || ring == inner_ring) {
             continue;
@@ -830,22 +805,27 @@ void fixup_first_lefts2(ring_ptr<T> inner_ring, ring_ptr<T> outer_ring, ring_lis
         if (poly2_contains_poly1(ring->points, inner_ring->points)) {
             if (ring->is_hole == inner_ring->is_hole) {
                 ring->is_hole = !ring->is_hole;
-                reverse_polygon_point_links(ring->points);
+                reverse_ring(ring->points);
+                fixup_hole_state_of_children(ring, rings);
             }
             ring->first_left = inner_ring;
         } else {
             if (ring->is_hole == outer_ring->is_hole) {
-                if (Poly2ContainsPoly1(ring->points, outer_ring->points)) {
+                if (poly2_contains_poly1(ring->points, outer_ring->points)) {
                     ring->first_left = outer_ring;
+                    ring->is_hole = !ring->is_hole;
+                    // reverse_ring(ring->points);
+                    fixup_hole_state_of_children(ring, rings);
                 } else {
                     ring->first_left = parse_first_left(outer_ring->first_left);
                 }
             } else {
-                if (std::abs(area(ring->points)) < std::numeric_limits<double>::epsilon() &&
-                    !Poly2ContainsPoly1(ring->points, outer_ring->points)) {
+                if (std::fabs(area(ring->points)) <= 0.0 &&
+                    !poly2_contains_poly1(ring->points, outer_ring->points)) {
                     ring->is_hole = !ring->is_hole;
                     ring->first_left = parse_first_left(outer_ring->first_left);
-                    reverse_polygon_point_links(ring->points);
+                    reverse_ring(ring->points);
+                    fixup_hole_state_of_children(ring, rings);
                 } else {
                     ring->first_left = outer_ring;
                 }
@@ -857,12 +837,15 @@ void fixup_first_lefts2(ring_ptr<T> inner_ring, ring_ptr<T> outer_ring, ring_lis
 template <typename T>
 void fixup_first_lefts3(ring_ptr<T> old_ring, ring_ptr<T> new_ring, ring_list<T>& rings) {
     // reassigns first_left WITHOUT testing if new_ring contains the polygon
-    for (size_t i = 0; i < rings.size(); ++i) {
-        ring_ptr<T> ring = rings[i];
-        // unused variable `firstLeft`: is this a bug? (dane)
-        // ring* firstLeft = parse_first_left(ring->first_left);
-        if (ring->points && ring->first_left == old_ring)
+    for (auto& ring : rings) {
+        if (ring->points && parse_first_left(ring->first_left) == old_ring) {
             ring->first_left = new_ring;
+            if (ring->is_hole == new_ring->is_hole) {
+                ring->is_hole = !ring->is_hole;
+                reverse_ring(ring->points);
+                fixup_hole_state_of_children(ring, rings);
+            }
+        }
     }
 }
 
@@ -905,31 +888,37 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
 
             ring1->bottom_point = nullptr;
             ring2 = create_new_ring(rings);
-
-            if (point_count(join->point1) > point_count(join->point2)) {
+            std::size_t p1_count;
+            std::size_t p2_count;
+            double p1_area;
+            double p2_area;
+            double ring1_area;
+            double ring2_area;
+            area_and_count(join->point1, p1_count, p1_area);
+            area_and_count(join->point2, p2_count, p2_area);
+            if (p1_count > p2_count) {
                 ring1->points = join->point1;
+                ring1_area = p1_area;
                 ring2->points = join->point2;
+                ring2_area = p2_area;
             } else {
                 ring1->points = join->point2;
+                ring1_area = p2_area;
                 ring2->points = join->point1;
+                ring2_area = p1_area;
             }
 
             update_point_indices(*ring2);
 
             if (poly2_contains_poly1(ring2->points, ring1->points)) {
-                // ring 1 contains ring 2
-
-                ring2->is_hole = !ring1->is_hole;
-                ring2->first_left = ring1;
 
                 // ring1 contains ring2 ...
                 ring2->is_hole = !ring1->is_hole;
                 ring2->first_left = ring1;
 
                 fixup_first_lefts2(ring2, ring1, rings);
-
-                if (ring2->is_hole == (area(*ring2) > 0)) {
-                    reverse_polygon_point_links(ring2->points);
+                if (ring2->is_hole == (ring2_area > 0.0)) {
+                    reverse_ring(ring2->points);
                 }
             } else if (poly2_contains_poly1(ring1->points, ring2->points)) {
                 // ring2 contains ring1 ...
@@ -939,9 +928,8 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
                 ring1->first_left = ring2;
 
                 fixup_first_lefts2(ring1, ring2, rings);
-
-                if (ring1->is_hole == (area(*ring1) > 0)) {
-                    reverse_polygon_point_links(ring1->points);
+                if (ring1->is_hole == (ring1_area > 0.0)) {
+                    reverse_ring(ring1->points);
                 }
             } else {
                 // the 2 polygons are completely separate ...
@@ -951,9 +939,9 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
                 // fixup first_left pointers that may need reassigning to ring2
                 fixup_first_lefts1(ring1, ring2, rings);
             }
+
         } else {
             // joined 2 polygons together ...
-
             ring2->points = nullptr;
             ring2->bottom_point = nullptr;
             ring2->index = ring1->index;
@@ -963,7 +951,6 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
                 ring1->first_left = ring2->first_left;
             }
             ring2->first_left = ring1;
-
             fixup_first_lefts3(ring2, ring1, rings);
         }
     }
@@ -994,7 +981,7 @@ void fixup_out_polyline(ring<T>& ring) {
 }
 
 template <typename T>
-void fixup_out_polygon(ring<T>& ring, bool simple) {
+void fixup_out_polygon(ring<T>& ring, ring_list<T>& rings, bool simple) {
     // FixupOutPolygon() - removes duplicate points and simplifies consecutive
     // parallel edges by removing the middle vertex.
     point_ptr<T> lastOK = nullptr;
@@ -1003,6 +990,9 @@ void fixup_out_polygon(ring<T>& ring, bool simple) {
 
     for (;;) {
         if (pp->prev == pp || pp->prev == pp->next) {
+            // We now need to make sure any children rings to this are promoted and their hole
+            // status is changed
+            promote_children_of_removed_ring(&ring, rings);
             dispose_out_points(pp);
             ring.points = nullptr;
             return;
@@ -1215,7 +1205,7 @@ bool fix_intersects(std::unordered_multimap<size_t, point_ptr_pair<T>>& dupe_rin
 
     ring_ptr<T> ring_new = create_new_ring(rings);
     ring_new->is_hole = false;
-    if (ring_origin->is_hole && ((area(op_origin_1) < 0))) {
+    if (ring_origin->is_hole && ((area(op_origin_1) < 0.0))) {
         ring_origin->points = op_origin_1;
         ring_new->points = op_origin_2;
     } else {
@@ -1240,21 +1230,14 @@ bool fix_intersects(std::unordered_multimap<size_t, point_ptr_pair<T>>& dupe_rin
             ring_itr->first_left = ring_origin;
         }
         ring_itr->is_hole = ring_origin->is_hole;
-        if (true) {
-            fixup_first_lefts3(ring_itr, ring_origin, rings);
-        }
+        fixup_first_lefts3(ring_itr, ring_origin, rings);
     }
     if (ring_origin->is_hole) {
         ring_new->first_left = ring_origin;
+        fixup_first_lefts2(ring_new, ring_origin, rings);
     } else {
         ring_new->first_left = ring_origin->first_left;
-    }
-    if (true) {
-        if (ring_origin->is_hole) {
-            fixup_first_lefts2(ring_new, ring_origin, rings);
-        } else {
-            fixup_first_lefts1(ring_origin, ring_new, rings);
-        }
+        fixup_first_lefts1(ring_origin, ring_new, rings);
     }
     for (auto iRing : iList) {
         auto range_itr = dupe_ring.equal_range(iRing.first);
@@ -1391,12 +1374,24 @@ void do_simple_polygons(ring_list<T>& rings) {
                             op3->next = op2;
 
                             ring_ptr<T> ring2 = create_new_ring(rings);
-                            if (point_count(op) > point_count(op2)) {
+                            std::size_t p1_count;
+                            std::size_t p2_count;
+                            double p1_area;
+                            double p2_area;
+                            double ring1_area;
+                            double ring2_area;
+                            area_and_count(op, p1_count, p1_area);
+                            area_and_count(op2, p2_count, p2_area);
+                            if (p1_count > p2_count) {
                                 ring->points = op;
+                                ring1_area = p1_area;
                                 ring2->points = op2;
+                                ring2_area = p2_area;
                             } else {
                                 ring->points = op2;
+                                ring1_area = p2_area;
                                 ring2->points = op;
+                                ring2_area = p1_area;
                             }
                             update_point_indices(*ring);
                             update_point_indices(*ring2);
@@ -1446,7 +1441,7 @@ void do_simple_polygons(ring_list<T>& rings) {
                                     dupe_ring.emplace(ring->index, intPt1);
                                     dupe_ring.emplace(ring2->index, intPt2);
                                 }
-                            } else if (Poly2ContainsPoly1(ring->points, ring2->points)) {
+                            } else if (poly2_contains_poly1(ring->points, ring2->points)) {
                                 // Out_ring1 is contained by Out_ring2 ...
                                 ring2->is_hole = ring->is_hole;
                                 ring->is_hole = !ring2->is_hole;
@@ -1608,7 +1603,6 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
             continue;
         }
 
-        // left out m_ReverseOutput
         if (ring->is_hole == (area(*ring) > 0)) {
             reverse_ring(ring->points);
         }
@@ -1627,20 +1621,21 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         if (ring->is_open) {
             fixup_out_polyline(*ring);
         } else {
-            fixup_out_polygon(*ring, true);
+            fixup_out_polygon(*ring, rings, false);
         }
     }
 
     do_simple_polygons(rings);
 
-    for (size_t i = 0; i < rings.size(); ++i) {
-        ring_ptr<T> ring = rings[i];
+    for (auto& ring : rings) {
         if (!ring->points || ring->is_open) {
             continue;
         }
-        fixup_out_polygon(*ring, false);
+        fixup_out_polygon(*ring, rings, true);
+        if (ring->is_hole == (area(*ring) > 0)) {
+            reverse_ring(ring->points);
+        }
     }
-
     return true;
 }
 }

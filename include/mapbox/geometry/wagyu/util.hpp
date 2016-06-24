@@ -32,25 +32,6 @@ double area(mapbox::geometry::linear_ring<T> const& poly) {
 }
 
 template <typename T>
-double area(point_ptr<T> op) {
-    point_ptr<T> startOp = op;
-    if (!op) {
-        return 0.0;
-    }
-    double a = 0.0;
-    do {
-        a += static_cast<double>(op->prev->x + op->x) * static_cast<double>(op->prev->y - op->y);
-        op = op->next;
-    } while (op != startOp);
-    return a * 0.5;
-}
-
-template <typename T>
-double area(ring<T> const& polygon_ring) {
-    return area(polygon_ring.points);
-}
-
-template <typename T>
 bool orientation(mapbox::geometry::linear_ring<T> const& poly) {
     return area(poly) >= 0;
 }
@@ -263,25 +244,6 @@ point_in_polygon_result point_in_polygon(point<T> const& pt, point_ptr<T> op) {
         op = op->next;
     } while (startOp != op);
     return result;
-}
-
-template <typename T>
-bool Poly2ContainsPoly1(point_ptr<T> OutPt1, point_ptr<T> OutPt2) {
-    point_ptr<T> op = OutPt1;
-    do {
-        // nb: point_in_polygon returns 0 if false, +1 if true, -1 if pt on
-        // polygon
-        point_in_polygon_result res = point_in_polygon(*op, OutPt2);
-        if (res != point_on_polygon) {
-            if (res == point_inside_polygon) {
-                return true;
-            } else {
-                return false;
-            }
-        }
-        op = op->next;
-    } while (op != OutPt1);
-    return true;
 }
 
 template <typename T>

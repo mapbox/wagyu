@@ -40,6 +40,25 @@ struct ring {
 };
 
 template <typename T>
+using ring_list = std::vector<ring_ptr<T>>;
+
+template <typename T>
+ring_ptr<T> create_new_ring(ring_list<T>& rings) {
+    ring_ptr<T> result = new ring<T>();
+    rings.push_back(result);
+    result->index = rings.size() - 1;
+    return result;
+}
+
+template <typename T>
+ring_ptr<T> parse_first_left(ring_ptr<T> first_left) {
+    while (first_left && !first_left->points) {
+        first_left = first_left->first_left;
+    }
+    return first_left;
+}
+
+template <typename T>
 void set_next(const_point_ptr<T>& node, const const_point_ptr<T>& next_node) {
     node->next = next_node;
 }
@@ -111,24 +130,6 @@ void transfer_point(point_ptr<T>& p, point_ptr<T>& b, point_ptr<T>& e) {
     }
 }
 
-/*
-template <typename T>
-void reverse_ring(point_ptr<T>& p) {
-    point_ptr<T> f = get_next(p);
-    point_ptr<T> i = get_next(f);
-    point_ptr<T> e = p;
-
-    while (i != e) {
-        point_ptr<T> n = i;
-        i = get_next(i);
-        transfer_point(f, n, i);
-        f = n;
-    }
-}
-*/
-
-// Another version of reversing rings
-// evaluate later!!!
 template <typename T>
 void reverse_ring(point_ptr<T> pp) {
     if (!pp) {
@@ -146,14 +147,40 @@ void reverse_ring(point_ptr<T> pp) {
 }
 
 template <typename T>
-using ring_list = std::vector<ring_ptr<T>>;
+double area(point_ptr<T> op) {
+    point_ptr<T> startOp = op;
+    if (!op) {
+        return 0.0;
+    }
+    double a = 0.0;
+    do {
+        a += static_cast<double>(op->prev->x + op->x) * static_cast<double>(op->prev->y - op->y);
+        op = op->next;
+    } while (op != startOp);
+    return a * 0.5;
+}
 
 template <typename T>
-ring_ptr<T> create_new_ring(ring_list<T>& rings) {
-    ring_ptr<T> result = new ring<T>();
-    rings.push_back(result);
-    result->index = rings.size() - 1;
-    return result;
+double area(ring<T> const& polygon_ring) {
+    return area(polygon_ring.points);
+}
+
+template <typename T>
+void area_and_count(point_ptr<T> op, std::size_t& count, double& area) {
+    point_ptr<T> startOp = op;
+    count = 0;
+    if (!op) {
+        area = 0.0;
+        return;
+    }
+    area = 0.0;
+    do {
+        ++count;
+        area += static_cast<double>(op->prev->x + op->x) * static_cast<double>(op->prev->y - op->y);
+        op = op->next;
+    } while (op != startOp);
+    area = area * 0.5;
+    return;
 }
 
 #ifdef DEBUG
@@ -161,18 +188,30 @@ ring_ptr<T> create_new_ring(ring_list<T>& rings) {
 template <class charT, class traits, typename T>
 inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
                                                      const ring<T>& r) {
-    out << " ring: " << std::endl;
     out << "  index: " << r.index << std::endl;
-    out << "  points: " << std::endl;
+    auto fl = parse_first_left(r.first_left);
+    if (!fl) {
+        out << "  parent_index: none" << std::endl;
+    } else {
+        out << "  parent_index: " << fl->index << std::endl;
+    }
+    if (r.is_hole) {
+        out << "  is_hole: true" << std::endl;
+    } else {
+        out << "  is_hole: false" << std::endl;
+    }
     auto first_point = r.points;
     auto pt_itr = r.points;
     if (first_point) {
+        out << "  area: " << area(r.points) << std::endl;
+        out << "  points:" << std::endl;
         do {
             out << "    x: " << pt_itr->x << " y: " << pt_itr->y << std::endl;
             pt_itr = pt_itr->next;
         } while (pt_itr != first_point);
     } else {
-        out << "    NONE" << std::endl;
+        out << "  area: NONE" << std::endl;
+        out << "  points: NONE" << std::endl;
     }
     return out;
 }
@@ -181,7 +220,9 @@ template <class charT, class traits, typename T>
 inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
                                                      const ring_list<T>& rings) {
     out << "START RING LIST" << std::endl;
+    std::size_t c = 0;
     for (auto& r : rings) {
+        out << " ring: " << c++ << std::endl;
         out << *r;
     }
     out << "END RING LIST" << std::endl;
