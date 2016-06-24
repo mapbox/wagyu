@@ -1375,24 +1375,12 @@ void do_simple_polygons(ring_list<T>& rings) {
                             op3->next = op2;
 
                             ring_ptr<T> ring2 = create_new_ring(rings);
-                            std::size_t p1_count;
-                            std::size_t p2_count;
-                            double p1_area;
-                            double p2_area;
-                            double ring1_area;
-                            double ring2_area;
-                            area_and_count(op, p1_count, p1_area);
-                            area_and_count(op2, p2_count, p2_area);
-                            if (p1_count > p2_count) {
+                            if (count(op) > count(op2)) {
                                 ring->points = op;
-                                ring1_area = p1_area;
                                 ring2->points = op2;
-                                ring2_area = p2_area;
                             } else {
                                 ring->points = op2;
-                                ring1_area = p2_area;
                                 ring2->points = op;
-                                ring2_area = p1_area;
                             }
                             update_point_indices(*ring);
                             update_point_indices(*ring2);
