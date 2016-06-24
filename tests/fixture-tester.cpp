@@ -6,7 +6,7 @@
 #include <rapidjson/document.h>
 #include <rapidjson/filereadstream.h>
 #include <rapidjson/filewritestream.h>
-#include <stdio.h>
+#include <cstdio>
 
 using namespace rapidjson;
 using namespace mapbox::geometry::wagyu;

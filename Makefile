@@ -24,6 +24,9 @@ build-debug: tests/* include/mapbox/geometry/* mason_packages/.link/include/mapb
 build-fixture-tester:
 	$(CXX) $(DEBUG_FLAGS) tests/fixture-tester.cpp $(WARNING_FLAGS) $(CXXFLAGS)  -o fixture-tester
 
+build-fuzzer:
+	$(CXX) $(DEBUG_FLAGS) tests/fuzzer.cpp $(WARNING_FLAGS) $(CXXFLAGS) -o fuzzer
+
 test: build-test build-fixture-tester
 	./test
 	./tests/run-geometry-tests.sh ./fixture-tester
@@ -31,6 +34,9 @@ test: build-test build-fixture-tester
 debug: build-debug build-fixture-tester
 	./test
 	./tests/run-geometry-tests.sh ./fixture-tester
+
+fuzzer: build-fuzzer
+	./fuzzer
 
 clean:
 	rm -f test

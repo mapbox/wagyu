@@ -13,7 +13,7 @@ namespace wagyu {
 template <typename T>
 void fixup_hole_state_of_children(ring_ptr<T> ring, ring_list<T>& rings) {
     for (auto& r : rings) {
-        if (r->points && ring == r->first_left && ring->is_hole == r->is_hole) {
+        if (r != ring && r->points && ring == r->first_left && ring->is_hole == r->is_hole) {
             r->is_hole = !ring->is_hole;
             fixup_hole_state_of_children(r, rings);
         }
