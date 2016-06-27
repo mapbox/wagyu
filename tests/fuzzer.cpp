@@ -1,5 +1,6 @@
 #include <mapbox/geometry/polygon.hpp>
 #include <mapbox/geometry/wagyu/wagyu.hpp>
+#include "util/boost_geometry_adapters.hpp"
 
 #include <vector>
 #include <iostream>
@@ -41,6 +42,14 @@ int main() {
             clipper.add_polygon(polygon, mapbox::geometry::wagyu::polygon_type_subject);
             std::vector<mapbox::geometry::polygon<std::int64_t>> solution;
             clipper.execute(mapbox::geometry::wagyu::clip_type_union, solution, fill_type, mapbox::geometry::wagyu::fill_type_even_odd);
+
+            for (auto const & p : solution) {
+                std::string message;
+                if (!boost::geometry::is_valid(p, message))
+                {
+                    std::clog << message << std::endl;
+                }
+            }
         }
     }
 }
