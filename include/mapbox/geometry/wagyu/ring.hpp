@@ -35,7 +35,7 @@ struct ring {
 
 template <typename T>
 using ring_list = std::vector<ring_ptr<T>>;
-//using ring_list = std::list<ring_ptr<T>>;
+// using ring_list = std::list<ring_ptr<T>>;
 
 template <typename T>
 ring_ptr<T> create_new_ring(ring_list<T>& rings) {
@@ -225,7 +225,6 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
 }
 
 #endif
-
 }
 }
 }

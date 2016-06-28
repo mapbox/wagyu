@@ -104,14 +104,16 @@ inline T nearest_along_x_dimension(T const edge_bot_x,
 }
 
 template <typename T>
-void intersection_point(edge<T> const& Edge1,
-                        edge<T> const& Edge2,
+void intersection_point(bound<T> const& Bound1,
+                        bound<T> const& Bound2,
                         mapbox::geometry::point<T>& ip) {
     // This method finds the FIRST intersecting point in integer space between
     // two edges that is closest to the bot point of the edges.
     using value_type = T;
+    edge<T> const& Edge1 = *Bound1.current_edge;
+    edge<T> const& Edge2 = *Bound2.current_edge;
     if (std::fabs(Edge1.dx - Edge2.dx) < std::numeric_limits<double>::epsilon()) {
-        ip.y = Edge1.curr.y;
+        ip.y = Bound1.curr.y;
         ip.x = get_current_x(Edge1, ip.y);
         return;
     } else if (std::fabs(Edge1.dx) < std::numeric_limits<double>::epsilon()) {
@@ -206,8 +208,8 @@ void intersection_point(edge<T> const& Edge1,
         }
     }
     // finally, don't allow 'ip' to be BELOW curr.y (ie bottom of scanbeam) ...
-    if (ip.y > Edge1.curr.y) {
-        ip.y = Edge1.curr.y;
+    if (ip.y > Bound1.curr.y) {
+        ip.y = Bound1.curr.y;
         // use the more vertical edge to derive X ...
         if (std::fabs(Edge1.dx) > std::fabs(Edge2.dx)) {
             ip.x = get_current_x(Edge2, ip.y);

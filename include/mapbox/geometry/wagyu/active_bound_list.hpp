@@ -1,0 +1,526 @@
+#pragma once
+
+#include <mapbox/geometry/wagyu/bound.hpp>
+#include <mapbox/geometry/wagyu/config.hpp>
+#include <mapbox/geometry/wagyu/edge.hpp>
+#include <mapbox/geometry/wagyu/exceptions.hpp>
+#include <mapbox/geometry/wagyu/local_minimum.hpp>
+#include <mapbox/geometry/wagyu/ring.hpp>
+#include <mapbox/geometry/wagyu/scanbeam.hpp>
+#include <mapbox/geometry/wagyu/util.hpp>
+
+namespace mapbox {
+namespace geometry {
+namespace wagyu {
+
+template <typename T>
+using active_bound_list = std::list<bound_ptr<T>>;
+
+template <typename T>
+using active_bound_list_itr = typename active_bound_list<T>::iterator;
+
+template <typename T>
+using active_bound_list_rev_itr = typename active_bound_list<T>::reverse_iterator;
+
+template <typename T>
+inline bool bound2_inserts_before_bound1(bound<T> const& bound1, bound<T> const& bound2) {
+    if (bound2.curr.x == bound1.curr.x) {
+        if (bound2.current_edge->top.y > bound1.current_edge->top.y) {
+            return bound2.current_edge->top.x <
+                   get_current_x(*(bound1.current_edge), bound2.current_edge->top.y);
+        } else {
+            return bound1.current_edge->top.x >
+                   get_current_x(*(bound2.current_edge), bound1.current_edge->top.y);
+        }
+    } else {
+        return bound2.curr.x < bound1.curr.x;
+    }
+}
+
+template <typename T>
+active_bound_list_itr<T> insert_bound_into_ABL(bound<T> const& bnd,
+                                               active_bound_list<T>& active_bounds) {
+    auto itr = active_bounds.begin();
+    while (itr != active_bounds.end() && !bound2_inserts_before_bound1(*(*itr), bnd)) {
+        ++itr;
+    }
+    return active_bounds.insert(itr, &bnd);
+}
+
+template <typename T>
+inline bool is_maxima(active_bound_list_itr<T>& bnd, T y) {
+    return ((*bnd)->current_edge + 1) == (*bnd)->edges.end() && (*bnd)->current_edge->top.y == y;
+}
+
+template <typename T>
+inline bool is_intermediate(active_bound_list_itr<T>& bnd, T y) {
+    return ((*bnd)->current_edge + 1) != (*bnd)->edges.end() && (*bnd)->current_edge->top.y == y;
+}
+
+template <typename T>
+inline bool current_edge_is_horizontal(active_bound_list_itr<T>& bnd) {
+    return is_horizontal(*((*bnd)->current_edge));
+}
+
+template <typename T>
+inline bool next_edge_is_horizontal(active_bound_list_itr<T>& bnd) {
+    return is_horizontal(*((*bnd)->current_edge + 1));
+}
+
+template <typename T>
+void next_edge_in_bound(active_bound_list_itr<T>& bnd, scanbeam_list<T>& scanbeam) {
+    ++(*bnd)->current_edge;
+    if (!current_is_horizontal(bnd)) {
+        scanbeam.push((*bnd)->current_edge->top.y);
+    }
+}
+
+template <typename T>
+active_bound_list_itr<T> get_maxima_pair(active_bound_list_itr<T> bnd,
+                                         active_bound_list<T>& active_bounds) {
+    if ((*bnd)->maximum_bound == nullptr) {
+        return active_bounds.end();
+    }
+    for (auto bnd_itr = active_bounds.begin(); bnd_itr != active_bounds.end(); ++bnd_itr) {
+        if (*bnd_itr == (*bnd)->maximum_bound) {
+            break;
+        }
+    }
+    return bnd_itr;
+}
+
+template <typename T>
+active_bound_list_itr<T> insert_bound_into_ABL(bound<T> const& bnd,
+                                               active_bound_list_itr<T> itr,
+                                               active_bound_list<T>& active_bounds) {
+    while (itr != active_bounds.end() && !bound2_inserts_before_bound1(*(*itr), bnd)) {
+        ++itr;
+    }
+    return active_bounds.insert(itr, &bnd);
+}
+
+template <typename T>
+void update_edge_into_AEL(edge_ptr<T>& e, edge_ptr<T>& active_edges, scanbeam_list<T>& scanbeam) {
+    if (!e->next_in_LML) {
+        throw clipper_exception("UpdateEdgeIntoAEL: invalid call");
+    }
+
+    e->next_in_LML->index = e->index;
+    edge_ptr<T> Aelprev = e->prev_in_AEL;
+    edge_ptr<T> Aelnext = e->next_in_AEL;
+    if (Aelprev) {
+        Aelprev->next_in_AEL = e->next_in_LML;
+    } else {
+        active_edges = e->next_in_LML;
+    }
+    if (Aelnext) {
+        Aelnext->prev_in_AEL = e->next_in_LML;
+    }
+    e->next_in_LML->side = e->side;
+    e->next_in_LML->winding_delta = e->winding_delta;
+    e->next_in_LML->winding_count = e->winding_count;
+    e->next_in_LML->winding_count2 = e->winding_count2;
+    e = e->next_in_LML;
+    e->curr = e->bot;
+    e->prev_in_AEL = Aelprev;
+    e->next_in_AEL = Aelnext;
+    if (!is_horizontal(*e)) {
+        scanbeam.push(e->top.y);
+    }
+}
+
+template <typename T>
+void set_winding_count(active_bound_list_itr<T>& bnd_itr,
+                       active_bound_list<T>& active_bounds,
+                       clip_type cliptype,
+                       fill_type subject_fill_type,
+                       fill_type clip_fill_type) {
+
+    auto rev_bnd_itr = active_bound_list_rev_itr<T>(bnd_itr);
+    if (rev_bnd_itr == active_bounds.rend()) {
+        if ((*bnd_itr)->winding_delta == 0) {
+            fill_type pft = ((*bnd_itr)->poly_type == polygon_type_subject) ? subject_fill_type
+                                                                            : clip_fill_type;
+            (*bnd_itr)->winding_count = (pft == fill_type_negative ? -1 : 1);
+        } else {
+            (*bnd_itr)->winding_count = (*bnd_itr)->winding_delta;
+        }
+        (*bnd_itr)->winding_count2 = 0;
+        return;
+    }
+
+    // find the edge of the same polytype that immediately preceeds 'edge' in
+    // AEL
+    while (rev_bnd_itr != active_bounds.rend() &&
+           ((*rev_bnd_itr)->poly_type != (*bnd_itr)->poly_type ||
+            (*rev_bnd_itr)->winding_delta == 0)) {
+        ++rev_bnd_itr;
+    }
+    if (rev_bnd_itr == active_bounds.rend()) {
+        if ((*bnd_itr)->winding_delta == 0) {
+            fill_type pft = ((*bnd_itr)->poly_type == polygon_type_subject) ? subject_fill_type
+                                                                            : clip_fill_type;
+            (*bnd_itr)->winding_count = (pft == fill_type_negative ? -1 : 1);
+        } else {
+            (*bnd_itr)->winding_count = (*bnd_itr)->winding_delta;
+        }
+        (*bnd_itr)->winding_count2 = 0;
+    } else if ((*bnd_itr)->winding_delta == 0 && cliptype != clip_type_union) {
+        (*bnd_itr)->winding_count = 1;
+        (*bnd_itr)->winding_count2 = (*rev_bnd_itr)->winding_count2;
+    } else if (is_even_odd_fill_type(*(*bnd_itr), subject_fill_type, clip_fill_type)) {
+        // EvenOdd filling ...
+        if ((*bnd_itr)->winding_delta == 0) {
+            // are we inside a subj polygon ...
+            bool inside = true;
+            auto rev2 = rev_bnd_itr;
+            while (rev2 != active_bounds.rend()) {
+                if ((*rev2)->poly_type == (*rev2)->poly_type && (*rev2)->winding_delta != 0) {
+                    inside = !inside;
+                }
+                ++rev2;
+            }
+            (*bnd_itr)->winding_count = (inside ? 0 : 1);
+        } else {
+            (*bnd_itr)->winding_count = (*bnd_itr)->winding_delta;
+        }
+        (*bnd_itr)->winding_count2 = (*rev_bnd_itr)->winding_count2;
+    } else {
+        // nonZero, Positive or Negative filling ...
+        if ((*rev_bnd_itr)->winding_count * (*rev_bnd_itr)->winding_delta < 0) {
+            // prev edge is 'decreasing' WindCount (WC) toward zero
+            // so we're outside the previous polygon ...
+            if (std::abs((*rev_bnd_itr)->winding_count) > 1) {
+                // outside prev poly but still inside another.
+                // when reversing direction of prev poly use the same WC
+                if ((*rev_bnd_itr)->winding_delta * (*bnd_itr)->winding_delta < 0) {
+                    (*bnd_itr)->winding_count = (*rev_bnd_itr)->winding_count;
+                } else {
+                    // otherwise continue to 'decrease' WC ...
+                    (*bnd_itr)->winding_count =
+                        (*rev_bnd_itr)->winding_count + (*bnd_itr)->winding_delta;
+                }
+            } else {
+                // now outside all polys of same polytype so set own WC ...
+                (*bnd_itr)->winding_count =
+                    ((*bnd_itr)->winding_delta == 0 ? 1 : (*bnd_itr)->winding_delta);
+            }
+        } else {
+            // prev edge is 'increasing' WindCount (WC) away from zero
+            // so we're inside the previous polygon ...
+            if ((*bnd_itr)->winding_delta == 0) {
+                (*bnd_itr)->winding_count =
+                    ((*rev_bnd_itr)->winding_count < 0 ? (*rev_bnd_itr)->winding_count - 1
+                                                       : (*rev_bnd_itr)->winding_count + 1);
+            } else if ((*rev_bnd_itr)->winding_delta * (*bnd_itr)->winding_delta < 0) {
+                // if wind direction is reversing prev then use same WC
+                (*bnd_itr)->winding_count = (*rev_bnd_itr)->winding_count;
+            } else {
+                // otherwise add to WC ...
+                (*bnd_itr)->winding_count =
+                    (*rev_bnd_itr)->winding_count + (*bnd_itr)->winding_delta;
+            }
+        }
+        (*bnd_itr)->winding_count2 = (*rev_bnd_itr)->winding_count2;
+    }
+
+    // update winding_count2 ...
+    auto bnd_itr_foward = rev_bnd_itr.base();
+    if (is_even_odd_alt_fill_type(*(*bnd_itr), subject_fill_type, clip_fill_type)) {
+        // EvenOdd filling ...
+        while (bnd_itr_forward != bnd_itr) {
+            if ((*bnd_itr_forward)->winding_delta != 0) {
+                (*bnd_itr)->winding_count2 = ((*bnd_itr)->winding_count2 == 0 ? 1 : 0);
+            }
+            ++bnd_itr_forward;
+        }
+    } else {
+        // nonZero, Positive or Negative filling ...
+        while (bnd_itr_forward != bnd_itr) {
+            (*bnd_itr)->winding_count2 += (*bnd_itr_forward)->winding_delta;
+            ++bnd_itr_forward;
+        }
+    }
+}
+
+template <typename T>
+bool is_contributing(bound<T> const& bnd,
+                     clip_type cliptype,
+                     fill_type subject_fill_type,
+                     fill_type clip_fill_type) {
+    fill_type pft = subject_fill_type;
+    fill_type pft2 = clip_fill_type;
+    if (bnd.poly_type != polygon_type_subject) {
+        pft = clip_fill_type;
+        pft2 = subject_fill_type;
+    }
+
+    switch (pft) {
+    case fill_type_even_odd:
+        // return false if a subj line has been flagged as inside a subj
+        // polygon
+        if (bnd.winding_delta == 0 && bnd.winding_count != 1) {
+            return false;
+        }
+        break;
+    case fill_type_non_zero:
+        if (std::abs(bnd.winding_count) != 1) {
+            return false;
+        }
+        break;
+    case fill_type_positive:
+        if (bnd.winding_count != 1) {
+            return false;
+        }
+        break;
+    case fill_type_negative:
+    default:
+        if (bnd.winding_count != -1) {
+            return false;
+        }
+    }
+
+    switch (cliptype) {
+    case clip_type_intersection:
+        switch (pft2) {
+        case fill_type_even_odd:
+        case fill_type_non_zero:
+            return (bnd.winding_count2 != 0);
+        case fill_type_positive:
+            return (bnd.winding_count2 > 0);
+        case fill_type_negative:
+        default:
+            return (bnd.winding_count2 < 0);
+        }
+        break;
+    case clip_type_union:
+        switch (pft2) {
+        case fill_type_even_odd:
+        case fill_type_non_zero:
+            return (bnd.winding_count2 == 0);
+        case fill_type_positive:
+            return (bnd.winding_count2 <= 0);
+        case fill_type_negative:
+        default:
+            return (bnd.winding_count2 >= 0);
+        }
+        break;
+    case clip_type_difference:
+        if (bnd.poly_type == polygon_type_subject) {
+            switch (pft2) {
+            case fill_type_even_odd:
+            case fill_type_non_zero:
+                return (bnd.winding_count2 == 0);
+            case fill_type_positive:
+                return (bnd.winding_count2 <= 0);
+            case fill_type_negative:
+            default:
+                return (bnd.winding_count2 >= 0);
+            }
+        } else {
+            switch (pft2) {
+            case fill_type_even_odd:
+            case fill_type_non_zero:
+                return (bnd.winding_count2 != 0);
+            case fill_type_positive:
+                return (bnd.winding_count2 > 0);
+            case fill_type_negative:
+            default:
+                return (bnd.winding_count2 < 0);
+            }
+        }
+        break;
+    case clip_type_x_or:
+        if (bnd.winding_delta == 0) {
+            // XOr always contributing unless open
+            switch (pft2) {
+            case fill_type_even_odd:
+            case fill_type_non_zero:
+                return (bnd.winding_count2 == 0);
+            case fill_type_positive:
+                return (bnd.winding_count2 <= 0);
+            case fill_type_negative:
+            default:
+                return (bnd.winding_count2 >= 0);
+            }
+        } else {
+            return true;
+        }
+        break;
+    default:
+        return true;
+    }
+}
+
+template <typename T>
+edge_ptr<T> get_next_in_AEL(edge_ptr<T> e, horizontal_direction dir) {
+    return dir == left_to_right ? e->next_in_AEL : e->prev_in_AEL;
+}
+
+template <typename T>
+void insert_lm_only_one_bound(bound<T>& bnd,
+                              active_bound_list<T>& active_bounds,
+                              ring_list<T>& rings,
+                              scanbeam_list<T>& scanbeam,
+                              clip_type cliptype,
+                              fill_type subject_fill_type,
+                              fill_type clip_fill_type) {
+    auto abl_itr = insert_bound_into_ABL(bnd, active_bounds);
+    set_winding_count(abl_itr, active_bounds, cliptype, subject_fill_type, clip_fill_type);
+    if (is_contributing(bnd, cliptype, subject_fill_type, clip_fill_type)) {
+        add_first_point(abl_itr, active_bounds, (*abl_itr)->curr, rings);
+        if ((*abl_itr)->winding_delta != 0) {
+            auto bnd_prev = active_bounds_list_rev_itr<T>(abl_itr);
+            if (bnd_prev != active_bounds.rend() && (*bnd_prev)->ring &&
+                (*bnd_prev)->curr.x == (*edge_itr)->curr.x && (*bnd_prev)->winding_delta != 0) {
+                add_point_to_ring(bnd_prev, (*abl_itr)->curr);
+            }
+            auto bnd_next = abl_itr + 1;
+            if (bnd_next != active_bounds.end() && (*bnd_next)->ring &&
+                (*bnd_next)->curr.x == (*abl_itr)->curr.x && (*bnd_next)->winding_delta != 0) {
+                add_point_to_ring(bnd_next, (*edge_itr)->curr);
+            }
+        }
+    }
+    scanbeam.push((*abl_itr)->current_edge->top.y);
+}
+
+template <typename T>
+void insert_lm_left_and_right_bound(bound<T>& left_bound,
+                                    bound<T>& right_bound,
+                                    active_bound_list<T>& active_bounds,
+                                    ring_list<T>& rings,
+                                    join_list<T>& joins,
+                                    scanbeam_list<T>& scanbeam,
+                                    clip_type cliptype,
+                                    fill_type subject_fill_type,
+                                    fill_type clip_fill_type) {
+
+    // Both left and right bound
+    auto lb_abl_itr = insert_bound_into_ABL(left_bound, active_bounds);
+    auto rb_abl_itr = insert_bound_into_ABL(right_bound, lb_able_itr, active_bounds);
+    set_winding_count(lb_abl_itr, active_bounds, cliptype, subject_fill_type, clip_fill_type);
+    (*rb_abl_itr)->winding_count = (*lb_abl_itr)->winding_count;
+    (*rb_abl_itr)->winding_count2 = (*lb_abl_itr)->winding_count2;
+    if (is_contributing(left_bound, cliptype, subject_fill_type, clip_fill_type)) {
+        point_ptr<T> p1 =
+            add_local_minimum_point(lb_abl_itr, rb_abl_itr, (*lb_abl_itr)->curr, rings, joins);
+        if ((*lb_abl_itr)->winding_delta != 0) {
+            // If left bound winding delta is zero we know that right bound winding delta is also
+            // not zero
+            auto bnd_prev = active_bounds_list_rev_itr<T>(lb_abl_itr);
+            if (bnd_prev != active_bounds.rend() && (*bnd_prev)->ring &&
+                (*bnd_prev)->curr.x == (*lb_edge_itr)->curr.x && (*bnd_prev)->winding_delta != 0) {
+                point_ptr<T> p2 = add_point_to_ring(bnd_prev, (*lb_edge_itr)->curr);
+                if (slopes_equal((*bnd_prev)->current_edge->bot, (*bnd_prev)->current_edge->top,
+                                 (*lb_abl_itr)->curr, (*lb_abl_itr)->current_edge->top)) {
+                    // Note: this logic mimics that of the angus clipper
+                    // but it doesn't seem to make sense, why the join's point is
+                    // at the top point, and why does it check that slopes are equal?
+                    joins.emplace_back(p1, p2, (*lb_abl_itr)->top);
+                }
+            }
+            auto bnd_next = rb_abl_itr + 1;
+            if (bnd_next != active_bounds.end() && (*bnd_next)->ring &&
+                (*bnd_next)->curr.x == (*rb_edge_itr)->curr.x && (*bnd_next)->winding_delta != 0) {
+                point_ptr<T> p2 = add_point_to_ring(bnd_next, (*rb_edge_itr)->curr);
+                if (slopes_equal((*bnd_prev)->current_edge->bot, (*bnd_prev)->current_edge->top,
+                                 (*lb_abl_itr)->curr, (*lb_abl_itr)->current_edge->top)) {
+                    // The same note as above -- additionally the angus clipper
+                    // would check that the left bound next in AEL was not the right bound
+                    // before this call for the right bound, however, that doesn't make complete
+                    // sense, so I simply just made it always do this check just like the left
+                    // bound would do above
+                    joins.emplace_back(p1, p2, (*lb_abl_itr)->top);
+                }
+            }
+        }
+    }
+
+    // Add top of edges to scanbeam
+    scanbeam.push((*lb_abl_itr)->current_edge->top.y);
+    scanbeam.push((*rb_abl_itr)->current_edge->top.y);
+
+    auto abl_itr = lb_abl_itr;
+    ++abl_itr;
+    while (abl_itr != rb_abl_itr) {
+        // We call intersect_bounds here, but we do not swap positions in the ABL
+        // this is the logic that was copied from angus, but it might be correct
+        // to swap the positions in the ABL following this or at least move
+        // lb and rb to be next to each other in the ABL.
+        intersect_bounds(rb_abl_itr, abl_itr, (*lb_abl_itr)->curr, cliptype, subject_fill_type,
+                         clip_fill_type, rings, joins, active_bounds);
+        ++abl_itr;
+    }
+}
+
+template <typename T>
+void insert_local_minima_into_ABL(T const bot_y,
+                                  local_minimum_ptr_list<T> const& minima_sorted,
+                                  local_minimum_ptr_list_itr<T>& current_lm,
+                                  active_bound_list<T>& active_bounds,
+                                  ring_list<T>& rings,
+                                  join_list<T>& joins,
+                                  scanbeam_list<T>& scanbeam,
+                                  clip_type cliptype,
+                                  fill_type subject_fill_type,
+                                  fill_type clip_fill_type) {
+    while (current_lm != minima_sorted.end() && top_y == (*current_lm)->y) {
+        initialize_lm(*current_lm);
+        auto& left_bound = (*current_lm)->left_bound;
+        auto& right_bound = (*current_lm)->right_bound;
+        if (left_bound.edges.empty() && !right_bound.edges.empty()) {
+            insert_lm_only_one_bound(right_bound, active_bounds, rings, scanbeam, cliptype,
+                                     subject_fill_type, clip_fill_type);
+        } else if (right_bound.edges.empty() && !left_bound.edges.empty()) {
+            insert_lm_only_one_bound(left_bound, active_bounds, rings, scanbeam, cliptype,
+                                     subject_fill_type, clip_fill_type);
+        } else {
+            insert_lm_left_and_right_bound(left_bound, right_bound, active_bounds, rings, joins,
+                                           scanbeam, cliptype, subject_fill_type, clip_fill_type);
+        }
+        ++current_lm;
+    }
+}
+
+template <typename T>
+void insert_horizontal_local_minima_into_ABL(T const top_y,
+                                             local_minimum_ptr_list<T> const& minima_sorted,
+                                             local_minimum_ptr_list_itr<T>& current_lm,
+                                             active_bound_list<T>& active_bounds,
+                                             ring_list<T>& rings,
+                                             join_list<T>& joins,
+                                             scanbeam_list<T>& scanbeam,
+                                             clip_type cliptype,
+                                             fill_type subject_fill_type,
+                                             fill_type clip_fill_type,
+                                             maxima_list<T>& maxima) {
+    while (current_lm != minima_sorted.end() && top_y == (*current_lm)->y &&
+           (*current_lm)->minimum_has_horizontal) {
+        initialize_lm(*current_lm);
+        auto& left_bound = (*current_lm)->left_bound;
+        auto& right_bound = (*current_lm)->right_bound;
+        if (left_bound.edges.empty() && !right_bound.edges.empty()) {
+            insert_lm_only_one_bound(right_bound, active_bounds, rings, scanbeam, cliptype,
+                                     subject_fill_type, clip_fill_type);
+            if (right_bound.ring) {
+                maxima.push_back(right_bound.current_edge->bot.x);
+                maxima.push_back(right_bound.current_edge->top.x);
+            }
+        } else if (right_bound.edges.empty() && !left_bound.edges.empty()) {
+            throw clipper_exception(
+                "There should only be horizontal local minimum on right bounds!");
+        } else {
+            insert_lm_left_and_right_bound(left_bound, right_bound, active_bounds, rings, joins,
+                                           scanbeam, cliptype, subject_fill_type, clip_fill_type);
+            if (right_bound.ring) {
+                maxima.push_back(right_bound.current_edge->bot.x);
+                maxima.push_back(right_bound.current_edge->top.x);
+            }
+        }
+        ++current_lm;
+    }
+}
+}
+}
+}
