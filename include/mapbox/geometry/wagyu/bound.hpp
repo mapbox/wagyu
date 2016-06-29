@@ -38,10 +38,10 @@ struct bound {
           winding_count(0),
           winding_count2(0),
           winding_delta(0),
-          poly_type(type),
+          poly_type(polygon_type_subject),
           side(edge_left) {
     }
-}
+};
 
 #ifdef DEBUG
 

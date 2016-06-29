@@ -41,7 +41,6 @@ template <typename T>
 ring_ptr<T> create_new_ring(ring_list<T>& rings) {
     ring_ptr<T> result = new ring<T>();
     rings.push_back(result);
-    result->index = rings.size() - 1;
     return result;
 }
 

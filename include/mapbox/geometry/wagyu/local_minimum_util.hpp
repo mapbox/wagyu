@@ -1,7 +1,5 @@
 #pragma once
 
-#include <sort>
-
 #include <mapbox/geometry/wagyu/edge.hpp>
 #include <mapbox/geometry/wagyu/edge_util.hpp>
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
@@ -138,7 +136,7 @@ bound<T> create_bound_towards_maximum(edge_list<T>& edges) {
         edge = next_edge;
         ++next_edge;
     }
-    edge_list<T> bnd;
+    bound<T> bnd;
     bnd.edges.splice(bnd.edges.end(), edges, edges.begin(), next_edge);
     return bnd;
 }
@@ -147,7 +145,6 @@ template <typename T>
 void set_edge_data(edge_list<T>& edges, bound_ptr<T> bound) {
     for (auto& e : edges) {
         e.bound = bound;
-        e.curr = e.bot;
     }
 }
 
@@ -155,12 +152,13 @@ template <typename T>
 void move_horizontals_on_left_to_right(bound<T>& left_bound, bound<T>& right_bound) {
     // We want all the horizontal segments that are at the same Y as the minimum to be on the right
     // bound
-    for (auto edge_itr = left_bound.edges.begin(); edge_itr != left_bound.edges.end(); ++edge_itr) {
+    auto edge_itr = left_bound.edges.begin();
+    while (edge_itr != left_bound.edges.end()) {
         if (!is_horizontal(*edge_itr)) {
             break;
-        } else {
-            reverse_horizontal(*edge_itr);
         }
+        reverse_horizontal(*edge_itr);
+        ++edge_itr;
     }
     if (edge_itr == left_bound.edges.begin()) {
         return;
@@ -184,11 +182,10 @@ void add_line_to_local_minima_list(edge_list<T>& edges, local_minimum_list<T>& m
         bool lm_minimum_has_horizontal = false;
         auto to_minimum = create_bound_towards_minimum(edges);
         assert(!to_minimum.edges.empty());
-        auto const& min_front = to_minimum.edges.front();
         to_minimum.poly_type = polygon_type_subject;
         to_minimum.maximum_bound = last_maximum;
         to_minimum.winding_delta = 0;
-        auto to_min_first_non_horizontal = to_mimimum.edges.begin();
+        auto to_min_first_non_horizontal = to_minimum.edges.begin();
         while (to_min_first_non_horizontal != to_minimum.edges.end() &&
                is_horizontal(*to_min_first_non_horizontal)) {
             lm_minimum_has_horizontal = true;
@@ -204,6 +201,7 @@ void add_line_to_local_minima_list(edge_list<T>& edges, local_minimum_list<T>& m
                 right_bound.poly_type = polygon_type_subject;
                 move_horizontals_on_left_to_right(to_minimum, right_bound);
                 set_edge_data(to_minimum.edges, &to_minimum);
+                auto const& min_front = to_minimum.edges.front();
                 if (!right_bound.empty()) {
                     set_edge_data(right_bound.edges, &right_bound);
                 }
@@ -219,6 +217,7 @@ void add_line_to_local_minima_list(edge_list<T>& edges, local_minimum_list<T>& m
                 left_bound.winding_delta = 0;
                 left_bound.side = edge_left;
                 left_bound.poly_type = polygon_type_subject;
+                auto const& min_front = to_minimum.edges.front();
                 minima_list.emplace_back(std::move(left_bound), std::move(to_minimum), min_front.y);
                 if (last_maximum) {
                     last_maximum->maximum_bound = &(minima_list.back().right_bound);
@@ -230,7 +229,7 @@ void add_line_to_local_minima_list(edge_list<T>& edges, local_minimum_list<T>& m
         bool minimum_is_left = true;
         auto to_maximum = create_bound_towards_maximum(edges);
         assert(!to_maximum.edges.empty());
-        auto to_max_first_non_horizontal = to_mimimum.edges.begin();
+        auto to_max_first_non_horizontal = to_minimum.edges.begin();
         while (to_max_first_non_horizontal != to_maximum.edges.end() &&
                is_horizontal(*to_max_first_non_horizontal)) {
             lm_minimum_has_horizontal = true;
@@ -292,7 +291,7 @@ void add_ring_to_local_minima_list(edge_list<T>& edges,
         assert(!edges.empty());
         auto to_maximum = create_bound_towards_maximum(edges);
         auto to_max_first_non_horizontal = to_maximum.edges.begin();
-        auto to_min_first_non_horizontal = to_mimimum.edges.begin();
+        auto to_min_first_non_horizontal = to_minimum.edges.begin();
         bool minimum_is_left = true;
         while (to_max_first_non_horizontal != to_maximum.edges.end() &&
                is_horizontal(*to_max_first_non_horizontal)) {
@@ -362,20 +361,20 @@ void add_ring_to_local_minima_list(edge_list<T>& edges,
 }
 
 template <typename T>
-void initialize_lm(const_local_minimum_ptr<T> lm) {
-    if (!lm->left_bound.edges.empty()) {
-        lm->left_bound.current_edge = lm->left_bound.edges.begin();
-        lm->left_bound.curr = lm->left_bound.current_edge->bot;
-        lm->left_bound.winding_count = 0;
-        lm->left_bound.winding_count2 = 0;
-        lm->left_bound.ring = nullptr;
+void initialize_lm(local_minimum_ptr_list_itr<T>& lm) {
+    if (!(*lm)->left_bound.edges.empty()) {
+        (*lm)->left_bound.current_edge = (*lm)->left_bound.edges.begin();
+        (*lm)->left_bound.curr = (*lm)->left_bound.current_edge->bot;
+        (*lm)->left_bound.winding_count = 0;
+        (*lm)->left_bound.winding_count2 = 0;
+        (*lm)->left_bound.ring = nullptr;
     }
-    if (!lm->right_bound.edges.empty()) {
-        lm->right_bound.current_edge = lm->right_bound.edges.begin();
-        lm->right_bound.curr = lm->right_bound.current_edge->bot;
-        lm->right_bound.winding_count = 0;
-        lm->right_bound.winding_count2 = 0;
-        lm->right_bound.ring = nullptr;
+    if (!(*lm)->right_bound.edges.empty()) {
+        (*lm)->right_bound.current_edge = (*lm)->right_bound.edges.begin();
+        (*lm)->right_bound.curr = (*lm)->right_bound.current_edge->bot;
+        (*lm)->right_bound.winding_count = 0;
+        (*lm)->right_bound.winding_count2 = 0;
+        (*lm)->right_bound.ring = nullptr;
     }
 }
 }

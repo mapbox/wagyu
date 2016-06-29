@@ -54,16 +54,7 @@ template <typename T>
 using edge_list = std::list<edge<T>>;
 
 template <typename T>
-using edge_list_itr_list = std::list<edge_list_itr<T>>;
-
-template <typename T>
-using edge_ptr_list = std::list<edge_ptr<T>>;
-
-template <typename T>
-using edge_ptr_list_itr = typename edge_ptr_list<T>::iterator;
-
-template <typename T>
-using edge_ptr_list_rev_itr = typename edge_ptr_list<T>::reverse_iterator;
+using edge_list_itr = typename edge_list<T>::iterator;
 
 #ifdef DEBUG
 

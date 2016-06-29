@@ -1,6 +1,6 @@
 #pragma once
 
-#include <mapbox/geometry/wagy/active_bound_list.hpp>
+#include <mapbox/geometry/wagyu/active_bound_list.hpp>
 #include <mapbox/geometry/wagyu/bound.hpp>
 
 namespace mapbox {
@@ -16,7 +16,7 @@ struct sorting_bound {
     sorting_bound(active_bound_list_itr<T> bound_, std::size_t index_)
         : bound(bound_), index(index_) {
     }
-}
+};
 
 template <typename T>
 using sorting_bound_list = std::list<sorting_bound<T>>;

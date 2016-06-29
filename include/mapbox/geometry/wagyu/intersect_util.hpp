@@ -29,6 +29,20 @@ struct intersect_list_sorter {
 };
 
 template <typename T>
+inline void swap_rings(bound<T>& b1, bound<T>& b2) {
+    ring_ptr<T> ring = b1.ring;
+    b1.ring = b2.ring;
+    b2.ring = ring;
+}
+
+template <typename T>
+inline void swap_sides(bound<T>& b1, bound<T>& b2) {
+    edge_side side = b1.side;
+    b1.side = b2.side;
+    b2.side = side;
+}
+
+template <typename T>
 void build_intersect_list(T top_y,
                           sorting_bound_list<T>& sorted_bound_list,
                           intersect_list<T>& intersects) {
@@ -37,18 +51,18 @@ void build_intersect_list(T top_y,
     do {
         isModified = false;
         auto bnd = sorted_bound_list.begin();
-        auto bnd_next = bnd + 1;
+        auto bnd_next = std::next(bnd);
         while (bnd_next != sorted_bound_list.end()) {
             mapbox::geometry::point<T> pt;
             if ((*(bnd->bound))->curr.x > (*(bnd_next->bound))->curr.x) {
                 intersection_point(*(*(bnd->bound)), *(*(bnd_next->bound)), pt);
                 if (pt.y < top_y) {
                     pt = mapbox::geometry::point<T>(
-                        get_current_x(*(*(bnd->bound)->current_edge), top_y), top_y);
+                        get_current_x(*((*(bnd->bound))->current_edge), top_y), top_y);
                 }
                 intersects.emplace_back(bnd, bnd_next, pt);
                 sorted_bound_list.splice(bnd, sorted_bound_list, bnd_next);
-                bnd_next = bnd + 1;
+                bnd_next = std::next(bnd);
                 isModified = true;
             } else {
                 bnd = bnd_next;
@@ -60,7 +74,7 @@ void build_intersect_list(T top_y,
 
 template <typename T>
 bool bounds_adjacent(intersect_node<T> const& inode) {
-    return ((inode.bound1 + 1) == inode.bound2) || ((inode.bound2 + 1) == inode.bound1);
+    return (std::next(inode.bound1) == inode.bound2) || (std::next(inode.bound2) == inode.bound1);
 }
 
 template <typename T>
@@ -71,7 +85,7 @@ void fixup_intersection_order(sorting_bound_list<T>& sorted_bound_list,
     // so reorder the intersections to ensure this if necessary.
 
     // resort sorted bound list to the same as the active bound list
-    std::sort(sorted_bound_list.begin(), sorted_bound_list.end(), sorting_bound_sorter<T>());
+    sorted_bound_list.sort(sorting_bound_sorter<T>());
 
     // Sort the intersection list
     std::stable_sort(intersects.begin(), intersects.end(), intersect_list_sorter<T>());
@@ -145,7 +159,7 @@ void intersect_bounds(active_bound_list_itr<T>& b1,
                        (cliptype != clip_type_union || (*b1)->winding_count2 == 0)) {
                 add_point(b2, active_bounds, pt, rings);
                 if (b2Contributing) {
-                    (*b2)->ring == nullptr;
+                    (*b2)->ring = nullptr;
                 }
             }
         }
@@ -155,7 +169,7 @@ void intersect_bounds(active_bound_list_itr<T>& b1,
     // update winding counts...
     // assumes that b1 will be to the Right of b2 ABOVE the intersection
     if ((*b1)->poly_type == (*b2)->poly_type) {
-        if (is_even_odd_fill_type(*((*b1)->bound), subject_fill_type, clip_fill_type)) {
+        if (is_even_odd_fill_type(*(*b1), subject_fill_type, clip_fill_type)) {
             std::int32_t oldE1winding_count = (*b1)->winding_count;
             (*b1)->winding_count = (*b2)->winding_count;
             (*b2)->winding_count = oldE1winding_count;
@@ -172,12 +186,12 @@ void intersect_bounds(active_bound_list_itr<T>& b1,
             }
         }
     } else {
-        if (!is_even_odd_fill_type(*b2, subject_fill_type, clip_fill_type)) {
+        if (!is_even_odd_fill_type(*(*b2), subject_fill_type, clip_fill_type)) {
             (*b1)->winding_count2 += (*b2)->winding_delta;
         } else {
             (*b1)->winding_count2 = ((*b1)->winding_count2 == 0) ? 1 : 0;
         }
-        if (!is_even_odd_fill_type(*b1, subject_fill_type, clip_fill_type)) {
+        if (!is_even_odd_fill_type(*(*b1), subject_fill_type, clip_fill_type)) {
             (*b2)->winding_count2 -= (*b1)->winding_delta;
         } else {
             (*b2)->winding_count2 = ((*b2)->winding_count2 == 0) ? 1 : 0;
@@ -233,20 +247,20 @@ void intersect_bounds(active_bound_list_itr<T>& b1,
         } else {
             add_point(b1, active_bounds, pt, rings);
             add_point(b2, active_bounds, pt, rings);
-            swap_sides(*b1, *b2);
-            swap_rings(*b1, *b2);
+            swap_sides(*(*b1), *(*b2));
+            swap_rings(*(*b1), *(*b2));
         }
     } else if (b1Contributing) {
         if (b2Wc == 0 || b2Wc == 1) {
             add_point(b1, active_bounds, pt, rings);
-            swap_sides(*b1, *b2);
-            swap_rings(*b1, *b2);
+            swap_sides(*(*b1), *(*b2));
+            swap_rings(*(*b1), *(*b2));
         }
     } else if (b2Contributing) {
         if (b1Wc == 0 || b1Wc == 1) {
             add_point(b2, active_bounds, pt, rings);
-            swap_sides(*b1, *b2);
-            swap_rings(*b1, *b2);
+            swap_sides(*(*b1), *(*b2));
+            swap_rings(*(*b1), *(*b2));
         }
     } else if ((b1Wc == 0 || b1Wc == 1) && (b2Wc == 0 || b2Wc == 1)) {
         // neither bound is currently contributing ...
@@ -302,7 +316,7 @@ void intersect_bounds(active_bound_list_itr<T>& b1,
                 add_local_minimum_point(b1, b2, active_bounds, pt, rings, joins);
             }
         } else {
-            swap_sides(*b1, *b2);
+            swap_sides(*(*b1), *(*b2));
         }
     }
 }
@@ -316,9 +330,9 @@ void process_intersect_list(intersect_list<T>& intersects,
                             join_list<T>& joins,
                             active_bound_list<T>& active_bounds) {
     for (auto& node : intersects) {
-        intersect_bounds(node.edge1, node.edge2, node.pt, cliptype, subject_fill_type,
+        intersect_bounds(node.bound1->bound, node.bound2->bound, node.pt, cliptype, subject_fill_type,
                          clip_fill_type, rings, joins, active_bounds);
-        active_bounds.splice(node.edge1->bound, active_bounds, node.edge2->bound);
+        active_bounds.splice(node.bound1->bound, active_bounds, node.bound2->bound);
     }
 }
 
@@ -330,7 +344,7 @@ void process_intersections(T top_y,
                            fill_type clip_fill_type,
                            ring_list<T>& rings,
                            join_list<T>& joins) {
-    if (!active_edge_list.empty()) {
+    if (!active_bounds.empty()) {
         return;
     }
     sorting_bound_list<T> sorted_bound_list;
@@ -338,7 +352,7 @@ void process_intersections(T top_y,
     // create sorted edge list from AEL
     for (auto bnd_itr = active_bounds.begin(); bnd_itr != active_bounds.end(); ++bnd_itr) {
         (*bnd_itr)->curr.x = get_current_x(*((*bnd_itr)->current_edge), top_y);
-        sorted_edge_list.emplace_back(bnd_itr, index);
+        sorted_bound_list.emplace_back(bnd_itr, index);
         ++index;
     }
 
@@ -348,7 +362,7 @@ void process_intersections(T top_y,
     if (intersects.empty()) {
         return;
     }
-    if (intersests.size() > 1) {
+    if (intersects.size() > 1) {
         fixup_intersection_order(sorted_bound_list, intersects);
     }
     process_intersect_list(intersects, cliptype, subject_fill_type, clip_fill_type, rings, joins,

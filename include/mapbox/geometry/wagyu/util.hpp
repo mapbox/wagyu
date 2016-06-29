@@ -298,10 +298,10 @@ bool is_even_odd_fill_type(bound<T> const& bound,
 }
 
 template <typename T>
-bool is_even_odd_alt_fill_type(edge<T> const& edge,
-                               fill_type subject_fill_type,
-                               fill_type clip_fill_type) {
-    if (edge.poly_type == polygon_type_subject) {
+bool is_even_odd_alt_fill_type(bound<T> const& bound,
+                           fill_type subject_fill_type,
+                           fill_type clip_fill_type) {
+    if (bound.poly_type == polygon_type_subject) {
         return clip_fill_type == fill_type_even_odd;
     } else {
         return subject_fill_type == fill_type_even_odd;
@@ -385,18 +385,6 @@ bool point_2_is_between_point_1_and_point_3(mapbox::geometry::wagyu::point<T> pt
     }
 }
 
-template <typename T>
-bool horizontal_segments_overlap(T seg1a, T seg1b, T seg2a, T seg2b) {
-    // Note: the use of swap here is rather confusing, perhaps
-    // we should change the logic?
-    if (seg1a > seg1b) {
-        std::swap(seg1a, seg1b);
-    }
-    if (seg2a > seg2b) {
-        std::swap(seg2a, seg2b);
-    }
-    return (seg1a < seg2b) && (seg2a < seg1b);
-}
 }
 }
 }

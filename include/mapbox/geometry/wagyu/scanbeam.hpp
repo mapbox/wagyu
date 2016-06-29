@@ -13,16 +13,15 @@ template <typename T>
 using scanbeam_list = std::priority_queue<T>;
 
 template <typename T>
-bool pop_scanbeam(scanbeam_list<T>& scanbeam, T& Y) {
+bool pop_from_scanbeam(T& Y, scanbeam_list<T>& scanbeam) {
     if (scanbeam.empty()) {
         return false;
     }
     Y = scanbeam.top();
     scanbeam.pop();
     while (!scanbeam.empty() && Y == scanbeam.top()) {
-        // Pop duplicates.
         scanbeam.pop();
-    }
+    } // Pop duplicates.
     return true;
 }
 

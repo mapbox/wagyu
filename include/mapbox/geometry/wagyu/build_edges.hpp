@@ -74,7 +74,8 @@ bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry, edge
     ++itr;
     mapbox::geometry::point<value_type> pt3 = *itr;
     auto itr_last = itr_rev.base();
-
+    mapbox::geometry::point<value_type> front_pt;
+    mapbox::geometry::point<value_type> back_pt;
     while (true) {
         if (pt3 == pt2) {
             // Duplicate point advance itr, but do not
@@ -87,7 +88,7 @@ bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry, edge
                 if (edges.empty()) {
                     break;
                 }
-                pt3 = edges.front().curr;
+                pt3 = front_pt;
             } else {
                 pt3 = *itr;
             }
@@ -105,7 +106,11 @@ bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry, edge
                 edges.pop_back(); // remove previous edge (pt1)
             }
             if (!edges.empty()) {
-                pt1 = edges.back().curr;
+                if (back_pt == edges.back().top) {
+                    pt1 = edges.back().bot;
+                } else {
+                    pt1 = edges.back().top;
+                }
             } else {
                 // If this occurs we must look to the back of the
                 // ring for new points.
@@ -121,7 +126,11 @@ bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry, edge
             continue;
         }
 
+        if (edges.empty()) {
+            front_pt = pt2;
+        }
         edges.emplace_back(pt2, pt3);
+        back_pt = pt2;
         if (itr == itr_last) {
             break;
         }
@@ -132,7 +141,7 @@ bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry, edge
             if (edges.empty()) {
                 break;
             }
-            pt3 = edges.front().curr;
+            pt3 = front_pt;
         } else {
             pt3 = *itr;
         }

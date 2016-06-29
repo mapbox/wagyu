@@ -30,18 +30,18 @@ template <typename T>
 using local_minimum_itr = typename local_minimum_list<T>::iterator;
 
 template <typename T>
-using const_local_minimum_ptr = local_minimum<T>* const;
+using local_minimum_ptr = local_minimum<T>*;
 
 template <typename T>
-using local_minimum_ptr_list = std::vector<const_local_minimum_ptr<T>>;
+using local_minimum_ptr_list = std::vector<local_minimum_ptr<T>>;
 
 template <typename T>
-using local_minimum_itr = typename local_minimum_ptr_list<T>::iterator;
+using local_minimum_ptr_list_itr = typename local_minimum_ptr_list<T>::iterator;
 
 template <typename T>
 struct local_minimum_sorter {
-    inline bool operator()(const_local_minimum_ptr<T> const& locMin1,
-                           const_local_minimum_ptr<T> const& locMin2) {
+    inline bool operator()(local_minimum_ptr<T> const& locMin1,
+                           local_minimum_ptr<T> const& locMin2) {
         if (locMin2->y == locMin1->y) {
             return locMin2->minimum_has_horizontal != locMin1->minimum_has_horizontal &&
                    locMin2->minimum_has_horizontal;
