@@ -1,5 +1,11 @@
 #pragma once
 
+#ifdef DEBUG
+#include <execinfo.h>
+#include <stdio.h>
+#include <iostream>
+#endif
+
 #include <queue>
 
 #include <mapbox/geometry/wagyu/config.hpp>

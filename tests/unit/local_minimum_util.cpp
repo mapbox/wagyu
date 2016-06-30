@@ -42,7 +42,7 @@ TEST_CASE("edge adding ring - square closed") {
     REQUIRE(minima_list.size() == 1);
     auto& lm = minima_list.front();
     auto& edges = lm.left_bound.edges;
-    REQUIRE(edges.size() == 2);
+    REQUIRE(edges.size() == 1);
     auto itr = edges.begin();
     CHECK(itr->top.x == 0);
     CHECK(itr->top.y == 0);
@@ -50,31 +50,31 @@ TEST_CASE("edge adding ring - square closed") {
     CHECK(itr->bot.y == 5);
     CHECK(itr->dx == Approx(0.0));
     ++itr;
+    CHECK(itr == edges.end());
+    edges = lm.right_bound.edges;
+    REQUIRE(edges.size() == 3);
+    itr = edges.begin();
     CHECK(itr->top.x == 5);
     CHECK(itr->top.y == 5);
     CHECK(itr->bot.x == 0);
     CHECK(itr->bot.y == 5);
     CHECK(std::isinf(itr->dx));
     ++itr;
-    CHECK(itr == edges.end());
-    edges = lm.right_bound.edges;
-    REQUIRE(edges.size() == 2);
-    itr = edges.begin();
     CHECK(itr->top.x == 5);
     CHECK(itr->top.y == 0);
     CHECK(itr->bot.x == 5);
     CHECK(itr->bot.y == 5);
     CHECK(itr->dx == Approx(0.0));
     ++itr;
-    CHECK(itr->top.x == 5);
+    CHECK(itr->top.x == 0);
     CHECK(itr->top.y == 0);
-    CHECK(itr->bot.x == 0);
+    CHECK(itr->bot.x == 5);
     CHECK(itr->bot.y == 0);
     CHECK(std::isinf(itr->dx));
     ++itr;
     CHECK(itr == edges.end());
 }
-/*
+
 TEST_CASE("edge adding ring - square not closed") {
     mapbox::geometry::linear_ring<T> ring;
     ring.push_back({ 0, 0 });
@@ -82,45 +82,42 @@ TEST_CASE("edge adding ring - square not closed") {
     ring.push_back({ 5, 5 });
     ring.push_back({ 5, 0 });
 
-    std::vector<edge_list<T>> all_edges;
     local_minimum_list<T> minima_list;
     polygon_type p_type = polygon_type_subject;
 
-    CHECK(add_linear_ring(ring, all_edges, minima_list, p_type));
+    CHECK(add_linear_ring(ring, minima_list, p_type));
 
-    auto& edges = all_edges.back();
-    REQUIRE(edges.size() == 4);
+    REQUIRE(minima_list.size() == 1);
+    auto& lm = minima_list.front();
+    auto& edges = lm.left_bound.edges;
+    REQUIRE(edges.size() == 1);
     auto itr = edges.begin();
     CHECK(itr->top.x == 0);
     CHECK(itr->top.y == 0);
     CHECK(itr->bot.x == 0);
     CHECK(itr->bot.y == 5);
-    CHECK(itr->curr.x == 0);
-    CHECK(itr->curr.y == 0);
     CHECK(itr->dx == Approx(0.0));
     ++itr;
+    CHECK(itr == edges.end());
+    edges = lm.right_bound.edges;
+    REQUIRE(edges.size() == 3);
+    itr = edges.begin();
     CHECK(itr->top.x == 5);
     CHECK(itr->top.y == 5);
     CHECK(itr->bot.x == 0);
     CHECK(itr->bot.y == 5);
-    CHECK(itr->curr.x == 0);
-    CHECK(itr->curr.y == 5);
     CHECK(std::isinf(itr->dx));
     ++itr;
     CHECK(itr->top.x == 5);
     CHECK(itr->top.y == 0);
     CHECK(itr->bot.x == 5);
     CHECK(itr->bot.y == 5);
-    CHECK(itr->curr.x == 5);
-    CHECK(itr->curr.y == 5);
     CHECK(itr->dx == Approx(0.0));
     ++itr;
-    CHECK(itr->top.x == 5);
+    CHECK(itr->top.x == 0);
     CHECK(itr->top.y == 0);
-    CHECK(itr->bot.x == 0);
+    CHECK(itr->bot.x == 5);
     CHECK(itr->bot.y == 0);
-    CHECK(itr->curr.x == 5);
-    CHECK(itr->curr.y == 0);
     CHECK(std::isinf(itr->dx));
     ++itr;
     CHECK(itr == edges.end());
@@ -133,42 +130,41 @@ TEST_CASE("edge adding ring - triangle closed") {
     ring.push_back({ 5, 10 });
     ring.push_back({ 0, 0 });
 
-    std::vector<edge_list<T>> all_edges;
     local_minimum_list<T> minima_list;
     polygon_type p_type = polygon_type_subject;
 
-    CHECK(add_linear_ring(ring, all_edges, minima_list, p_type));
+    CHECK(add_linear_ring(ring, minima_list, p_type));
 
-    auto& edges = all_edges.back();
-    REQUIRE(edges.size() == 3);
+    REQUIRE(minima_list.size() == 1);
+    auto& lm = minima_list.front();
+    auto& edges = lm.right_bound.edges;
+    REQUIRE(edges.size() == 2);
     auto itr = edges.begin();
-    CHECK(itr->top.x == 0);
-    CHECK(itr->top.y == 0);
-    CHECK(itr->bot.x == 10);
-    CHECK(itr->bot.y == 5);
-    CHECK(itr->curr.x == 0);
-    CHECK(itr->curr.y == 0);
-    CHECK(itr->dx == Approx(2.0));
-    ++itr;
     CHECK(itr->top.x == 10);
     CHECK(itr->top.y == 5);
     CHECK(itr->bot.x == 5);
     CHECK(itr->bot.y == 10);
-    CHECK(itr->curr.x == 10);
-    CHECK(itr->curr.y == 5);
     CHECK(itr->dx == Approx(-1.0));
     ++itr;
     CHECK(itr->top.x == 0);
     CHECK(itr->top.y == 0);
+    CHECK(itr->bot.x == 10);
+    CHECK(itr->bot.y == 5);
+    CHECK(itr->dx == Approx(2.0));
+    ++itr;
+    CHECK(itr == edges.end());
+    edges = lm.left_bound.edges;
+    REQUIRE(edges.size() == 1);
+    itr = edges.begin();
+    CHECK(itr->top.x == 0);
+    CHECK(itr->top.y == 0);
     CHECK(itr->bot.x == 5);
     CHECK(itr->bot.y == 10);
-    CHECK(itr->curr.x == 5);
-    CHECK(itr->curr.y == 10);
     CHECK(itr->dx == Approx(0.5));
     ++itr;
     CHECK(itr == edges.end());
 }
-
+/*
 TEST_CASE("edge adding ring - triangle not closed") {
     mapbox::geometry::linear_ring<T> ring;
     ring.push_back({ 0, 0 });

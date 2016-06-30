@@ -343,7 +343,7 @@ void process_intersections(T top_y,
                            fill_type clip_fill_type,
                            ring_list<T>& rings,
                            join_list<T>& joins) {
-    if (!active_bounds.empty()) {
+    if (active_bounds.empty()) {
         return;
     }
     sorting_bound_list<T> sorted_bound_list;

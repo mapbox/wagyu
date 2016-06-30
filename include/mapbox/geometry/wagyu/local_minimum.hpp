@@ -1,5 +1,8 @@
 #pragma once
 
+#ifdef DEBUG
+#include <iostream>
+#endif
 #include <queue>
 
 #include <mapbox/geometry/wagyu/bound.hpp>
@@ -44,11 +47,43 @@ struct local_minimum_sorter {
                            local_minimum_ptr<T> const& locMin2) {
         if (locMin2->y == locMin1->y) {
             return locMin2->minimum_has_horizontal != locMin1->minimum_has_horizontal &&
-                   locMin2->minimum_has_horizontal;
+                   locMin1->minimum_has_horizontal;
         }
         return locMin2->y < locMin1->y;
     }
 };
+
+#ifdef DEBUG
+
+template <class charT, class traits, typename T>
+inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
+                                                     const local_minimum<T>& lm) {
+    out << " Local Minimum:" << std::endl;
+    out << "    y: " << lm.y << std::endl;
+    if (lm.minimum_has_horizontal) {
+        out << "    minimum_has_horizontal: true" << std::endl;
+    } else {
+        out << "    minimum_has_horizontal: false" << std::endl;
+    }
+    /*out << "   left_bound: " << std::endl;
+    out << lm.left_bound << std::endl;
+    out << "   right_bound: " << std::endl;
+    out << lm.right_bound << std::endl;
+    */
+    return out;
+}
+
+template <class charT, class traits, typename T>
+inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
+                                                     const local_minimum_ptr_list<T>& lms) {
+    for (auto const& lm : lms) {
+        out << *lm;
+    }
+    return out;
+}
+
+#endif
+
 }
 }
 }

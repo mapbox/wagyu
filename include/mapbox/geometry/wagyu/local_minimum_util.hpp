@@ -200,7 +200,7 @@ void add_line_to_local_minima_list(edge_list<T>& edges, local_minimum_list<T>& m
         }
         if (edges.empty()) {
             if (to_min_first_non_horizontal != to_minimum.edges.end() &&
-                to_min_first_non_horizontal->dx < 0.0) {
+                to_min_first_non_horizontal->dx > 0.0) {
                 to_minimum.side = edge_left;
                 bound<T> right_bound;
                 right_bound.winding_delta = 0;
@@ -244,7 +244,7 @@ void add_line_to_local_minima_list(edge_list<T>& edges, local_minimum_list<T>& m
         }
         if (to_max_first_non_horizontal != to_maximum.edges.end() &&
             (to_min_first_non_horizontal == to_minimum.edges.end() ||
-             to_max_first_non_horizontal->dx < to_min_first_non_horizontal->dx)) {
+             to_max_first_non_horizontal->dx > to_min_first_non_horizontal->dx)) {
             minimum_is_left = false;
             move_horizontals_on_left_to_right(to_maximum, to_minimum);
         } else {
@@ -318,7 +318,7 @@ void add_ring_to_local_minima_list(edge_list<T>& edges,
 #endif
         if (to_max_first_non_horizontal != to_maximum.edges.end() &&
             (to_min_first_non_horizontal == to_minimum.edges.end() ||
-             to_max_first_non_horizontal->dx < to_min_first_non_horizontal->dx)) {
+             to_max_first_non_horizontal->dx > to_min_first_non_horizontal->dx)) {
             minimum_is_left = false;
             move_horizontals_on_left_to_right(to_maximum, to_minimum);
         } else {
@@ -374,6 +374,7 @@ void initialize_lm(local_minimum_ptr_list_itr<T>& lm) {
         (*lm)->left_bound.curr = (*lm)->left_bound.current_edge->bot;
         (*lm)->left_bound.winding_count = 0;
         (*lm)->left_bound.winding_count2 = 0;
+        (*lm)->left_bound.side = edge_left;
         (*lm)->left_bound.ring = nullptr;
     }
     if (!(*lm)->right_bound.edges.empty()) {
@@ -381,6 +382,7 @@ void initialize_lm(local_minimum_ptr_list_itr<T>& lm) {
         (*lm)->right_bound.curr = (*lm)->right_bound.current_edge->bot;
         (*lm)->right_bound.winding_count = 0;
         (*lm)->right_bound.winding_count2 = 0;
+        (*lm)->left_bound.side = edge_right;
         (*lm)->right_bound.ring = nullptr;
     }
 }

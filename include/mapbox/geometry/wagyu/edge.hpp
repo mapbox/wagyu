@@ -61,10 +61,9 @@ using edge_list_itr = typename edge_list<T>::iterator;
 template <class charT, class traits, typename T>
 inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
                                                      const edge<T>& e) {
-    out << "Edge: " << std::endl;
-    out << " bot x: " << e.bot.x << " y: " << e.bot.y << std::endl;
-    out << " top x: " << e.top.x << " y: " << e.top.y << std::endl;
-    out << " curr x: " << e.curr.x << " y: " << e.curr.y << std::endl;
+    out << "    Edge: " << std::endl;
+    out << "        bot x: " << e.bot.x << " y: " << e.bot.y << std::endl;
+    out << "        top x: " << e.top.x << " y: " << e.top.y << std::endl;
     return out;
 }
 
