@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unordered_map>
+
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/join.hpp>
 #include <mapbox/geometry/wagyu/join_util.hpp>

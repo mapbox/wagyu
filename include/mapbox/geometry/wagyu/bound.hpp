@@ -6,6 +6,7 @@
 
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/edge.hpp>
+#include <mapbox/geometry/wagyu/ring.hpp>
 
 #ifdef DEBUG
 #include <iostream>

@@ -2,13 +2,11 @@
 
 #include <algorithm>
 #include <set>
-#include <unordered_map>
 
 #include <mapbox/geometry/wagyu/active_bound_list.hpp>
 #include <mapbox/geometry/wagyu/build_edges.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/edge.hpp>
-#include <mapbox/geometry/wagyu/edge_util.hpp>
 #include <mapbox/geometry/wagyu/exceptions.hpp>
 #include <mapbox/geometry/wagyu/intersect_util.hpp>
 #include <mapbox/geometry/wagyu/join.hpp>
@@ -27,13 +25,10 @@ namespace wagyu {
 
 template <typename T>
 bool add_line_string(mapbox::geometry::line_string<T> const& path_geometry,
-                     std::vector<edge_list<T>>& edges,
                      local_minimum_list<T>& minima_list) {
     bool is_flat = true;
-    edges.emplace_back();
-    auto& new_edges = edges.back();
+    edge_list<T> new_edges;
     if (!build_edge_list(path_geometry, new_edges, is_flat) || new_edges.empty()) {
-        edges.pop_back();
         return false;
     }
     add_line_to_local_minima_list(new_edges, minima_list, polygon_type_subject);
@@ -42,13 +37,10 @@ bool add_line_string(mapbox::geometry::line_string<T> const& path_geometry,
 
 template <typename T>
 bool add_linear_ring(mapbox::geometry::linear_ring<T> const& path_geometry,
-                     std::vector<edge_list<T>>& edges,
                      local_minimum_list<T>& minima_list,
                      polygon_type p_type) {
-    edges.emplace_back();
-    auto& new_edges = edges.back();
+    edge_list<T> new_edges;
     if (!build_edge_list(path_geometry, new_edges) || new_edges.empty()) {
-        edges.pop_back();
         return false;
     }
     add_ring_to_local_minima_list(new_edges, minima_list, p_type);

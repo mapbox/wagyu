@@ -2,7 +2,6 @@
 
 #include <mapbox/geometry/wagyu/active_bound_list.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
-#include <mapbox/geometry/wagyu/edge_util.hpp>
 #include <mapbox/geometry/wagyu/intersect.hpp>
 #include <mapbox/geometry/wagyu/intersect_point.hpp>
 #include <mapbox/geometry/wagyu/join.hpp>

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <mapbox/geometry/wagyu/edge.hpp>
-#include <mapbox/geometry/wagyu/edge_util.hpp>
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
 
 #ifdef DEBUG
@@ -11,6 +10,14 @@
 namespace mapbox {
 namespace geometry {
 namespace wagyu {
+
+template <typename T>
+inline void reverse_horizontal(edge<T>& e) {
+    // swap horizontal edges' top and bottom x's so they follow the natural
+    // progression of the bounds - ie so their xbots will align with the
+    // adjoining lower edge. [Helpful in the process_horizontal() method.]
+    std::swap(e.top.x, e.bot.x);
+}
 
 // Make a list start on a local maximum by
 // shifting all the points not on a local maximum to the
@@ -48,7 +55,7 @@ void start_list_on_local_maximum(edge_list<T>& edges) {
     }
     if (edge != edges.end() && edge != edges.begin()) {
         edges.splice(edges.end(), edges, edges.begin(), edge);
-    } else if (edges.begin()->top.y > prev_edge->bot.y) {
+    } else if (edges.begin()->top.y < prev_edge->bot.y) {
         // This should only happen in lines not in rings
         std::reverse(edges.begin(), edges.end());
     }
