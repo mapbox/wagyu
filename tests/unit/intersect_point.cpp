@@ -29,7 +29,10 @@ TEST_CASE("test intersection of points") {
     // Initialization would be as such
     b1.curr = e1.top;
     b2.curr = e2.bot;
-    b3.curr = e3.bot;
+    b3.curr = e3.top;
+    b1.current_edge = b1.edges.begin();
+    b2.current_edge = b2.edges.begin();
+    b3.current_edge = b3.edges.begin();
 
     CHECK(e1.bot.x == 9);
     CHECK(e1.bot.y == 5);
@@ -126,6 +129,9 @@ TEST_CASE("test intersection of points - switch axis values") {
     b1.curr = e1.top;
     b2.curr = e2.bot;
     b3.curr = e3.top;
+    b1.current_edge = b1.edges.begin();
+    b2.current_edge = b2.edges.begin();
+    b3.current_edge = b3.edges.begin();
 
     CHECK(e1.bot.x == 5);
     CHECK(e1.bot.y == 9);
