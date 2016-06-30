@@ -10,7 +10,7 @@ namespace wagyu {
 
 template <typename T>
 ring_ptr<T> get_ring(ring_ptr<T> r) {
-    while (!r->replacement_ring) {
+    while (r != r->replacement_ring) {
         r = r->replacement_ring;
     }
     return r;

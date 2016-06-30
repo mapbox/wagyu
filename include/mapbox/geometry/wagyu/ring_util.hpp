@@ -165,7 +165,7 @@ point_ptr<T> add_point(active_bound_list_itr<T>& bnd,
                        active_bound_list<T>& active_bounds,
                        mapbox::geometry::point<T> const& pt,
                        ring_list<T>& rings) {
-    if ((*bnd)->ring) {
+    if (!(*bnd)->ring) {
         return add_first_point(bnd, active_bounds, pt, rings);
     } else {
         return add_point_to_ring(bnd, pt);
@@ -177,7 +177,7 @@ point_ptr<T> add_point(active_bound_list_rev_itr<T>& bnd,
                        active_bound_list<T>& active_bounds,
                        mapbox::geometry::point<T> const& pt,
                        ring_list<T>& rings) {
-    if ((*bnd)->ring) {
+    if (!(*bnd)->ring) {
         return add_first_point(bnd, active_bounds, pt, rings);
     } else {
         return add_point_to_ring(bnd, pt);

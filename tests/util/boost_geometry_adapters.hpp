@@ -10,6 +10,7 @@
 #ifdef __clang__
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #endif
+#pragma GCC diagnostic ignored "-Wfloat-equal"
 #pragma GCC diagnostic ignored "-Wpragmas"
 #pragma GCC diagnostic ignored "-Wdeprecated-register"
 #pragma GCC diagnostic ignored "-Wshorten-64-to-32"

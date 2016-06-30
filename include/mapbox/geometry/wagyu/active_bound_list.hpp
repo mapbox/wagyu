@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef DEBUG
+#include <iostream>
+#endif
+
 #include <mapbox/geometry/wagyu/bound.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/edge.hpp>
@@ -24,6 +28,21 @@ using active_bound_list_itr = typename active_bound_list<T>::iterator;
 template <typename T>
 using active_bound_list_rev_itr = typename active_bound_list<T>::reverse_iterator;
 
+#ifdef DEBUG
+
+template <class charT, class traits, typename T>
+inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
+                                                     const active_bound_list<T>& bnds) {
+    std::size_t c = 0;
+    for (auto const& bnd : bnds) {
+        out << "Index: " << c++ << std::endl;
+        out << *bnd;
+    }
+    return out;
+}
+
+#endif
+
 template <typename T>
 inline bool bound2_inserts_before_bound1(bound<T> const& bound1, bound<T> const& bound2) {
     if (bound2.curr.x == bound1.curr.x) {
@@ -46,8 +65,25 @@ active_bound_list_itr<T> insert_bound_into_ABL(bound<T> & bnd,
     while (itr != active_bounds.end() && !bound2_inserts_before_bound1(*(*itr), bnd)) {
         ++itr;
     }
+    if (itr != active_bounds.end()) {
+        ++itr;
+    }
     return active_bounds.insert(itr, &bnd);
 }
+
+template <typename T>
+active_bound_list_itr<T> insert_bound_into_ABL(bound<T> & bnd,
+                                               active_bound_list_itr<T> itr,
+                                               active_bound_list<T>& active_bounds) {
+    while (itr != active_bounds.end() && !bound2_inserts_before_bound1(*(*itr), bnd)) {
+        ++itr;
+    }
+    if (itr != active_bounds.end()) {
+        ++itr;
+    }
+    return active_bounds.insert(itr, &bnd);
+}
+
 
 template <typename T>
 inline bool is_maxima(active_bound_list_itr<T>& bnd, T y) {
@@ -92,16 +128,6 @@ active_bound_list_itr<T> get_maxima_pair(active_bound_list_itr<T> bnd,
         ++bnd_itr;
     }
     return bnd_itr;
-}
-
-template <typename T>
-active_bound_list_itr<T> insert_bound_into_ABL(bound<T> & bnd,
-                                               active_bound_list_itr<T> itr,
-                                               active_bound_list<T>& active_bounds) {
-    while (itr != active_bounds.end() && !bound2_inserts_before_bound1(*(*itr), bnd)) {
-        ++itr;
-    }
-    return active_bounds.insert(itr, &bnd);
 }
 
 template <typename T>
@@ -410,9 +436,8 @@ void insert_lm_left_and_right_bound(bound<T>& left_bound,
     // Add top of edges to scanbeam
     scanbeam.push((*lb_abl_itr)->current_edge->top.y);
     scanbeam.push((*rb_abl_itr)->current_edge->top.y);
-
-    auto abl_itr = lb_abl_itr;
-    ++abl_itr;
+    
+    auto abl_itr = std::next(lb_abl_itr);
     while (abl_itr != rb_abl_itr) {
         // We call intersect_bounds here, but we do not swap positions in the ABL
         // this is the logic that was copied from angus, but it might be correct

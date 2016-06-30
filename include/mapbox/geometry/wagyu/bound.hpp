@@ -50,9 +50,15 @@ template <class charT, class traits, typename T>
 inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
                                                      const bound<T>& bnd) {
     out << "Bound: " << std::endl;
+    out << " curr: " << bnd.curr.x << ", " << bnd.curr.y << std::endl;
     out << " winding count: " << bnd.winding_count << std::endl;
     out << " winding_count2: " << bnd.winding_count2 << std::endl;
-    out << " winding_delta: " << bnd.winding_delta << std::endl;
+    out << " winding_delta: " << static_cast<int>(bnd.winding_delta) << std::endl;
+    if (bnd.side == edge_left) {
+        out << " side: left" << std::endl;
+    } else {
+        out << " side: right" << std::endl;
+    }
     return out;
 }
 

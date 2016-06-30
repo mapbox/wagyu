@@ -182,12 +182,16 @@ void area_and_count(point_ptr<T> op, std::size_t& count, double& area) {
 template <class charT, class traits, typename T>
 inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
                                                      const ring<T>& r) {
-    out << "  index: " << r.index << std::endl;
+    if (r.replacement_ring != &r) {
+        out << "  replacement_ring ptr: " << r.replacement_ring << std::endl;
+    } else {
+        out << "  replacement_ring ptr: this - " << r.replacement_ring << std::endl;
+    }
     auto fl = parse_first_left(r.first_left);
     if (!fl) {
-        out << "  parent_index: none" << std::endl;
+        out << "  parent_ring ptr: nullptr" << std::endl;
     } else {
-        out << "  parent_index: " << fl->index << std::endl;
+        out << "  parent_ring ptr: " << fl->replacement_ring << std::endl;
     }
     if (r.is_hole) {
         out << "  is_hole: true" << std::endl;
