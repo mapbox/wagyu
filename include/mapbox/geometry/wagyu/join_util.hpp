@@ -566,8 +566,6 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
         }
     }
 }
-
-
 }
 }
 }

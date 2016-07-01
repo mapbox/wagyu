@@ -6,10 +6,10 @@
 #include <mapbox/geometry/line_string.hpp>
 #include <mapbox/geometry/polygon.hpp>
 
+#include <mapbox/geometry/wagyu/build_result.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
 #include <mapbox/geometry/wagyu/vatti.hpp>
-#include <mapbox/geometry/wagyu/build_result.hpp>
 
 namespace mapbox {
 namespace geometry {
@@ -24,9 +24,7 @@ private:
     bool has_open_paths;
 
 public:
-    clipper()
-        : minima_list(),
-          has_open_paths(false) {
+    clipper() : minima_list(), has_open_paths(false) {
     }
 
     ~clipper() {
@@ -63,10 +61,10 @@ public:
     }
 
     mapbox::geometry::box<value_type> get_bounds() {
-        mapbox::geometry::point<value_type> min = {0,0};
-        mapbox::geometry::point<value_type> max = {0,0};
+        mapbox::geometry::point<value_type> min = { 0, 0 };
+        mapbox::geometry::point<value_type> max = { 0, 0 };
         if (minima_list.empty()) {
-            return mapbox::geometry::box<value_type>(min,max);
+            return mapbox::geometry::box<value_type>(min, max);
         }
         bool first_set = false;
         for (auto const& lm : minima_list) {
@@ -103,7 +101,7 @@ public:
                 }
             }
         }
-        return mapbox::geometry::box<value_type>(min,max);
+        return mapbox::geometry::box<value_type>(min, max);
     }
 
     bool execute(clip_type cliptype,
@@ -124,7 +122,6 @@ public:
 
         return worked;
     }
-
 };
 }
 }

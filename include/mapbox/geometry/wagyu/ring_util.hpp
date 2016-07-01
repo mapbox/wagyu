@@ -2,8 +2,8 @@
 
 #ifdef DEBUG
 #include <execinfo.h>
-#include <stdio.h>
 #include <iostream>
+#include <stdio.h>
 #endif
 
 #include <queue>
@@ -124,7 +124,8 @@ point_ptr<T> add_first_point(active_bound_list_rev_itr<T>& bnd,
 }
 
 template <typename T>
-point_ptr<T> add_point_to_ring(active_bound_list_itr<T>& bnd, mapbox::geometry::point<T> const& pt) {
+point_ptr<T> add_point_to_ring(active_bound_list_itr<T>& bnd,
+                               mapbox::geometry::point<T> const& pt) {
 
     assert((*bnd)->ring);
     ring_ptr<T>& ring = (*bnd)->ring;
@@ -146,7 +147,8 @@ point_ptr<T> add_point_to_ring(active_bound_list_itr<T>& bnd, mapbox::geometry::
 }
 
 template <typename T>
-point_ptr<T> add_point_to_ring(active_bound_list_rev_itr<T>& bnd, mapbox::geometry::point<T> const& pt) {
+point_ptr<T> add_point_to_ring(active_bound_list_rev_itr<T>& bnd,
+                               mapbox::geometry::point<T> const& pt) {
 
     assert((*bnd)->ring);
     ring_ptr<T>& ring = (*bnd)->ring;
@@ -191,8 +193,8 @@ point_ptr<T> add_point(active_bound_list_rev_itr<T>& bnd,
 }
 
 template <typename T>
-point_ptr<T> add_local_minimum_point(active_bound_list_itr<T>& b1,
-                                     active_bound_list_itr<T>& b2,
+point_ptr<T> add_local_minimum_point(active_bound_list_itr<T> b1,
+                                     active_bound_list_itr<T> b2,
                                      active_bound_list<T>& active_bounds,
                                      mapbox::geometry::point<T> const& pt,
                                      ring_list<T>& rings,
@@ -202,7 +204,8 @@ point_ptr<T> add_local_minimum_point(active_bound_list_itr<T>& b1,
     active_bound_list_rev_itr<T> prev_bound;
     active_bound_list_rev_itr<T> prev_b1(b1);
     active_bound_list_rev_itr<T> prev_b2(b2);
-    if (is_horizontal(*((*b2)->current_edge)) || ((*b1)->current_edge->dx > (*b2)->current_edge->dx)) {
+    if (is_horizontal(*((*b2)->current_edge)) ||
+        ((*b1)->current_edge->dx > (*b2)->current_edge->dx)) {
         result = add_point(b1, active_bounds, pt, rings);
         (*b2)->ring = (*b1)->ring;
         (*b1)->side = edge_left;
@@ -464,9 +467,9 @@ void add_local_maximum_point(active_bound_list_itr<T>& b1,
     if ((*b1)->ring == (*b2)->ring) {
         (*b1)->ring = nullptr;
         (*b2)->ring = nullptr;
-    // I am not certain that order is important here?
-    //} else if ((*b1)->index < (*b2)->index) {
-    //    append_ring(b1, b2, active_bounds);
+        // I am not certain that order is important here?
+        //} else if ((*b1)->index < (*b2)->index) {
+        //    append_ring(b1, b2, active_bounds);
     } else {
         append_ring(b1, b2, active_bounds);
     }

@@ -59,8 +59,7 @@ inline bool bound2_inserts_before_bound1(bound<T> const& bound1, bound<T> const&
 }
 
 template <typename T>
-active_bound_list_itr<T> insert_bound_into_ABL(bound<T> & bnd,
-                                               active_bound_list<T>& active_bounds) {
+active_bound_list_itr<T> insert_bound_into_ABL(bound<T>& bnd, active_bound_list<T>& active_bounds) {
     auto itr = active_bounds.begin();
     while (itr != active_bounds.end() && !bound2_inserts_before_bound1(*(*itr), bnd)) {
         ++itr;
@@ -72,7 +71,7 @@ active_bound_list_itr<T> insert_bound_into_ABL(bound<T> & bnd,
 }
 
 template <typename T>
-active_bound_list_itr<T> insert_bound_into_ABL(bound<T> & bnd,
+active_bound_list_itr<T> insert_bound_into_ABL(bound<T>& bnd,
                                                active_bound_list_itr<T> itr,
                                                active_bound_list<T>& active_bounds) {
     while (itr != active_bounds.end() && !bound2_inserts_before_bound1(*(*itr), bnd)) {
@@ -84,15 +83,16 @@ active_bound_list_itr<T> insert_bound_into_ABL(bound<T> & bnd,
     return active_bounds.insert(itr, &bnd);
 }
 
-
 template <typename T>
 inline bool is_maxima(active_bound_list_itr<T>& bnd, T y) {
-    return std::next((*bnd)->current_edge) == (*bnd)->edges.end() && (*bnd)->current_edge->top.y == y;
+    return std::next((*bnd)->current_edge) == (*bnd)->edges.end() &&
+           (*bnd)->current_edge->top.y == y;
 }
 
 template <typename T>
 inline bool is_intermediate(active_bound_list_itr<T>& bnd, T y) {
-    return std::next((*bnd)->current_edge) != (*bnd)->edges.end() && (*bnd)->current_edge->top.y == y;
+    return std::next((*bnd)->current_edge) != (*bnd)->edges.end() &&
+           (*bnd)->current_edge->top.y == y;
 }
 
 template <typename T>
@@ -103,6 +103,22 @@ inline bool current_edge_is_horizontal(active_bound_list_itr<T>& bnd) {
 template <typename T>
 inline bool next_edge_is_horizontal(active_bound_list_itr<T>& bnd) {
     return is_horizontal(*std::next((*bnd)->current_edge));
+}
+
+template <typename T>
+inline void swap_positions_in_ABL(active_bound_list_itr<T>& bnd1,
+                                  active_bound_list_itr<T>& bnd2,
+                                  active_bound_list<T>& active_bounds) {
+    if (std::next(bnd2) == bnd1) {
+        active_bounds.splice(bnd2, active_bounds, bnd1);
+    } else if (std::next(bnd1) == bnd2) {
+        active_bounds.splice(bnd1, active_bounds, bnd2);
+    } else {
+        auto next_bnd1 = std::next(bnd1);
+        auto next_bnd2 = std::next(bnd2);
+        active_bounds.splice(next_bnd1, active_bounds, bnd2);
+        active_bounds.splice(next_bnd2, active_bounds, bnd1);
+    }
 }
 
 template <typename T>
@@ -399,8 +415,8 @@ void insert_lm_left_and_right_bound(bound<T>& left_bound,
     (*rb_abl_itr)->winding_count = (*lb_abl_itr)->winding_count;
     (*rb_abl_itr)->winding_count2 = (*lb_abl_itr)->winding_count2;
     if (is_contributing(left_bound, cliptype, subject_fill_type, clip_fill_type)) {
-        point_ptr<T> p1 =
-            add_local_minimum_point(lb_abl_itr, rb_abl_itr, active_bounds, (*lb_abl_itr)->curr, rings, joins);
+        point_ptr<T> p1 = add_local_minimum_point(lb_abl_itr, rb_abl_itr, active_bounds,
+                                                  (*lb_abl_itr)->curr, rings, joins);
         if ((*lb_abl_itr)->winding_delta != 0) {
             // If left bound winding delta is zero we know that right bound winding delta is also
             // not zero
@@ -436,7 +452,7 @@ void insert_lm_left_and_right_bound(bound<T>& left_bound,
     // Add top of edges to scanbeam
     scanbeam.push((*lb_abl_itr)->current_edge->top.y);
     scanbeam.push((*rb_abl_itr)->current_edge->top.y);
-    
+
     auto abl_itr = std::next(lb_abl_itr);
     while (abl_itr != rb_abl_itr) {
         // We call intersect_bounds here, but we do not swap positions in the ABL

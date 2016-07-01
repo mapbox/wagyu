@@ -7,8 +7,7 @@ namespace geometry {
 namespace wagyu {
 
 template <typename T>
-void build_result(std::vector<mapbox::geometry::polygon<T>>& solution,
-                  ring_list<T>& rings) {
+void build_result(std::vector<mapbox::geometry::polygon<T>>& solution, ring_list<T>& rings) {
 
     // loop through constructing polygons
     for (auto& r : rings) {
@@ -47,7 +46,6 @@ void push_ring_to_polygon(mapbox::geometry::polygon<T>& poly, ring_ptr<T>& r) {
     lr.push_back({ firstPt->x, firstPt->y }); // close the ring
     poly.push_back(lr);
 }
-
 }
 }
 }

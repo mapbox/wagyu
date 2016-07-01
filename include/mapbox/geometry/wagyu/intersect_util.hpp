@@ -60,7 +60,7 @@ void build_intersect_list(T top_y,
                         get_current_x(*((*(bnd->bound))->current_edge), top_y), top_y);
                 }
                 intersects.emplace_back(bnd, bnd_next, pt);
-                sorted_bound_list.splice(bnd, sorted_bound_list, bnd_next);
+                swap_positions_in_SBL(bnd, bnd_next, sorted_bound_list);
                 bnd_next = std::next(bnd);
                 isModified = true;
             } else {
@@ -102,7 +102,7 @@ void fixup_intersection_order(sorting_bound_list<T>& sorted_bound_list,
             }
             std::swap(intersects[i], intersects[j]);
         }
-        sorted_bound_list.splice(intersects[i].bound1, sorted_bound_list, intersects[i].bound2);
+        swap_positions_in_SBL(intersects[i].bound1, intersects[i].bound2, sorted_bound_list);
     }
     return;
 }
@@ -329,9 +329,9 @@ void process_intersect_list(intersect_list<T>& intersects,
                             join_list<T>& joins,
                             active_bound_list<T>& active_bounds) {
     for (auto& node : intersects) {
-        intersect_bounds(node.bound1->bound, node.bound2->bound, node.pt, cliptype, subject_fill_type,
-                         clip_fill_type, rings, joins, active_bounds);
-        active_bounds.splice(node.bound1->bound, active_bounds, node.bound2->bound);
+        intersect_bounds(node.bound1->bound, node.bound2->bound, node.pt, cliptype,
+                         subject_fill_type, clip_fill_type, rings, joins, active_bounds);
+        swap_positions_in_ABL(node.bound1->bound, node.bound2->bound, active_bounds);
     }
 }
 
@@ -357,7 +357,6 @@ void process_intersections(T top_y,
 
     intersect_list<T> intersects;
     build_intersect_list(top_y, sorted_bound_list, intersects);
-
     if (intersects.empty()) {
         return;
     }

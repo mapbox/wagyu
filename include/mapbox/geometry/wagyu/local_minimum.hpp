@@ -83,7 +83,6 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
 }
 
 #endif
-
 }
 }
 }

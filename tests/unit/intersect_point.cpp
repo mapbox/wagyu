@@ -18,13 +18,13 @@ TEST_CASE("test intersection of points") {
 
     bound<T> b1;
     b1.edges.emplace_back(p1, p2);
-    edge<T> & e1 = b1.edges.back();
+    edge<T>& e1 = b1.edges.back();
     bound<T> b2;
     b2.edges.emplace_back(p2, p3);
-    edge<T> & e2 = b2.edges.back();
+    edge<T>& e2 = b2.edges.back();
     bound<T> b3;
     b3.edges.emplace_back(p3, p4);
-    edge<T> & e3 = b3.edges.back();
+    edge<T>& e3 = b3.edges.back();
 
     // Initialization would be as such
     b1.curr = e1.top;
@@ -117,13 +117,13 @@ TEST_CASE("test intersection of points - switch axis values") {
 
     bound<T> b1;
     b1.edges.emplace_back(p1, p2);
-    edge<T> & e1 = b1.edges.back();
+    edge<T>& e1 = b1.edges.back();
     bound<T> b2;
     b2.edges.emplace_back(p2, p3);
-    edge<T> & e2 = b2.edges.back();
+    edge<T>& e2 = b2.edges.back();
     bound<T> b3;
     b3.edges.emplace_back(p3, p4);
-    edge<T> & e3 = b3.edges.back();
+    edge<T>& e3 = b3.edges.back();
 
     // Initialization would be as such
     b1.curr = e1.top;

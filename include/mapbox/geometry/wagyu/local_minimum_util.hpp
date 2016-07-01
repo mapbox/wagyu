@@ -338,8 +338,8 @@ void add_ring_to_local_minima_list(edge_list<T>& edges,
         if (!minimum_is_left) {
             to_minimum.side = edge_right;
             to_maximum.side = edge_left;
-            to_minimum.winding_delta = 1;
-            to_maximum.winding_delta = -1;
+            to_minimum.winding_delta = -1;
+            to_maximum.winding_delta = 1;
             minima_list.emplace_back(std::move(to_maximum), std::move(to_minimum), min_front.bot.y,
                                      lm_minimum_has_horizontal);
             if (!last_maximum) {
@@ -382,7 +382,7 @@ void initialize_lm(local_minimum_ptr_list_itr<T>& lm) {
         (*lm)->right_bound.curr = (*lm)->right_bound.current_edge->bot;
         (*lm)->right_bound.winding_count = 0;
         (*lm)->right_bound.winding_count2 = 0;
-        (*lm)->left_bound.side = edge_right;
+        (*lm)->right_bound.side = edge_right;
         (*lm)->right_bound.ring = nullptr;
     }
 }

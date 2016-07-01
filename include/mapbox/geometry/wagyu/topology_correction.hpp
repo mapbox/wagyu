@@ -138,8 +138,8 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
             ring_ptr<T> it_ring = get_ring(it->second.op2->ring);
             if (it_ring != ring_search && *op_origin_2 != *it->second.op2 &&
                 (ring_parent == it_ring || ring_parent == parse_first_left(it_ring->first_left)) &&
-                find_intersect_loop(dupe_ring, iList, ring_parent, ring_origin,
-                                    it_ring, visited, op_origin_2, it->second.op2, rings)) {
+                find_intersect_loop(dupe_ring, iList, ring_parent, ring_origin, it_ring, visited,
+                                    op_origin_2, it->second.op2, rings)) {
                 found = true;
                 iList.emplace_front(ring_search, it->second);
                 break;
@@ -531,7 +531,6 @@ void do_simple_polygons(ring_list<T>& rings) {
         }
     }
 }
-
 }
 }
 }

@@ -21,7 +21,7 @@ int main() {
             mapbox::geometry::polygon<std::int64_t> polygon;
 
             std::size_t num_rings = 1;
-            //num_rings += std::rand() % 5;
+            // num_rings += std::rand() % 5;
             // std::clog << "rings: " << num_rings << std::endl;
             // std::clog << "len: " << len << std::endl;
             while (num_rings > 0) {

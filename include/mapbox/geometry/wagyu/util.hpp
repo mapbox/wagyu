@@ -5,6 +5,7 @@
 #include <mapbox/geometry/point.hpp>
 #include <mapbox/geometry/polygon.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
+#include <mapbox/geometry/wagyu/edge.hpp>
 #include <mapbox/geometry/wagyu/ring.hpp>
 
 namespace mapbox {
@@ -299,8 +300,8 @@ bool is_even_odd_fill_type(bound<T> const& bound,
 
 template <typename T>
 bool is_even_odd_alt_fill_type(bound<T> const& bound,
-                           fill_type subject_fill_type,
-                           fill_type clip_fill_type) {
+                               fill_type subject_fill_type,
+                               fill_type clip_fill_type) {
     if (bound.poly_type == polygon_type_subject) {
         return clip_fill_type == fill_type_even_odd;
     } else {
@@ -384,7 +385,6 @@ bool point_2_is_between_point_1_and_point_3(mapbox::geometry::wagyu::point<T> pt
         return (pt2.y > pt1.y) == (pt2.y < pt3.y);
     }
 }
-
 }
 }
 }
