@@ -42,7 +42,7 @@ point_ptr<T> get_last_point(active_bound_list_itr<T>& bnd) {
 }
 
 template <typename T>
-void process_horizontal_left_to_right(T scanline_y,
+active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
                                       active_bound_list_itr<T> horz_bound,
                                       maxima_list<T>& maxima,
                                       active_bound_list<T>& active_bounds,
@@ -52,6 +52,7 @@ void process_horizontal_left_to_right(T scanline_y,
                                       clip_type cliptype,
                                       fill_type subject_fill_type,
                                       fill_type clip_fill_type) {
+    auto horizontal_itr_behind = horz_bound;
     bool is_open = (*horz_bound)->winding_delta == 0;
     bool is_maxima_edge = is_maxima(horz_bound, scanline_y);
     auto bound_max_pair = active_bounds.end();
@@ -114,9 +115,13 @@ void process_horizontal_left_to_right(T scanline_y,
                 add_local_maximum_point(horz_bound, bound_max_pair,
                                         (*horz_bound)->current_edge->top, rings, active_bounds);
             }
-            active_bounds.erase(horz_bound);
             active_bounds.erase(bound_max_pair);
-            return;
+            auto after_horz = active_bounds.erase(horz_bound);
+            if (horizontal_itr_behind != horz_bound) {
+                return horizontal_itr_behind;
+            } else {
+                return after_horz;
+            }
         }
 
         intersect_bounds(horz_bound, bnd,
@@ -124,6 +129,9 @@ void process_horizontal_left_to_right(T scanline_y,
                          cliptype, subject_fill_type, clip_fill_type, rings, joins, active_bounds);
         auto next_bnd = std::next(bnd);
         swap_positions_in_ABL(horz_bound, bnd, active_bounds);
+        if (current_edge_is_horizontal<T>(bnd) && horizontal_itr_behind == horz_bound) {
+            horizontal_itr_behind = bnd;
+        }
         bnd = next_bnd;
     } // end while (bnd != active_bounds.end())
 
@@ -161,7 +169,11 @@ void process_horizontal_left_to_right(T scanline_y,
             next_edge_in_bound(horz_bound, scanbeam);
 
             if ((*horz_bound)->winding_delta == 0) {
-                return;
+                if (horizontal_itr_behind != horz_bound) {
+                    return horizontal_itr_behind;
+                } else {
+                    return std::next(horz_bound);
+                }
             }
 
             // horz_bound is no longer horizontal here!!! the edge
@@ -187,16 +199,26 @@ void process_horizontal_left_to_right(T scanline_y,
         } else {
             next_edge_in_bound(horz_bound, scanbeam);
         }
+        if (horizontal_itr_behind != horz_bound) {
+            return horizontal_itr_behind;
+        } else {
+            return std::next(horz_bound);
+        }
     } else {
         if ((*horz_bound)->ring) {
             add_point_to_ring(horz_bound, (*horz_bound)->current_edge->top);
         }
-        active_bounds.erase(horz_bound);
+        auto after_horz = active_bounds.erase(horz_bound);
+        if (horizontal_itr_behind != horz_bound) {
+            return horizontal_itr_behind;
+        } else {
+            return after_horz;
+        }
     }
 }
 
 template <typename T>
-void process_horizontal_right_to_left(T scanline_y,
+active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
                                       active_bound_list_itr<T> horz_bound,
                                       maxima_list<T>& maxima,
                                       active_bound_list<T>& active_bounds,
@@ -269,9 +291,8 @@ void process_horizontal_right_to_left(T scanline_y,
                 add_local_maximum_point(horz_bound, bound_max_pair,
                                         (*horz_bound)->current_edge->top, rings, active_bounds);
             }
-            active_bounds.erase(horz_bound);
             active_bounds.erase(bound_max_pair);
-            return;
+            return active_bounds.erase(horz_bound);
         }
 
         intersect_bounds(bnd_forward, horz_bound,
@@ -316,7 +337,7 @@ void process_horizontal_right_to_left(T scanline_y,
             next_edge_in_bound(horz_bound, scanbeam);
 
             if ((*horz_bound)->winding_delta == 0) {
-                return;
+                return std::next(horz_bound);
             }
 
             // horz_bound is no longer horizontal here!!! the edge
@@ -342,16 +363,17 @@ void process_horizontal_right_to_left(T scanline_y,
         } else {
             next_edge_in_bound(horz_bound, scanbeam);
         }
+        return std::next(horz_bound);
     } else {
         if ((*horz_bound)->ring) {
             add_point_to_ring(horz_bound, (*horz_bound)->current_edge->top);
         }
-        active_bounds.erase(horz_bound);
+        return active_bounds.erase(horz_bound);
     }
 }
 
 template <typename T>
-void process_horizontal(T scanline_y,
+active_bound_list_itr<T> process_horizontal(T scanline_y,
                         active_bound_list_itr<T> horz_bound,
                         maxima_list<T>& maxima,
                         active_bound_list<T>& active_bounds,
@@ -362,11 +384,11 @@ void process_horizontal(T scanline_y,
                         fill_type subject_fill_type,
                         fill_type clip_fill_type) {
     if ((*horz_bound)->current_edge->bot.x < (*horz_bound)->current_edge->top.x) {
-        process_horizontal_left_to_right(scanline_y, horz_bound, maxima, active_bounds, joins,
+        return process_horizontal_left_to_right(scanline_y, horz_bound, maxima, active_bounds, joins,
                                          rings, scanbeam, cliptype, subject_fill_type,
                                          clip_fill_type);
     } else {
-        process_horizontal_right_to_left(scanline_y, horz_bound, maxima, active_bounds, joins,
+        return process_horizontal_right_to_left(scanline_y, horz_bound, maxima, active_bounds, joins,
                                          rings, scanbeam, cliptype, subject_fill_type,
                                          clip_fill_type);
     }
@@ -383,10 +405,12 @@ void process_horizontals(T scanline_y,
                          fill_type subject_fill_type,
                          fill_type clip_fill_type) {
     maxima.sort();
-    for (auto bnd_itr = active_bounds.begin(); bnd_itr != active_bounds.end(); ++bnd_itr) {
+    for (auto bnd_itr = active_bounds.begin(); bnd_itr != active_bounds.end();) {
         if (current_edge_is_horizontal<T>(bnd_itr)) {
-            process_horizontal(scanline_y, bnd_itr, maxima, active_bounds, joins, rings, scanbeam,
+            bnd_itr = process_horizontal(scanline_y, bnd_itr, maxima, active_bounds, joins, rings, scanbeam,
                                cliptype, subject_fill_type, clip_fill_type);
+        } else {
+            ++bnd_itr;
         }
     }
     maxima.clear();

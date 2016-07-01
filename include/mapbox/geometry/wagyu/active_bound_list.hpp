@@ -97,6 +97,9 @@ inline bool is_intermediate(active_bound_list_itr<T>& bnd, T y) {
 
 template <typename T>
 inline bool current_edge_is_horizontal(active_bound_list_itr<T>& bnd) {
+    if ((*bnd)->current_edge == (*bnd)->edges.end()) {
+        std::clog << "BLARGH" << std::endl;
+    }
     return is_horizontal(*((*bnd)->current_edge));
 }
 
