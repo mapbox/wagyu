@@ -1,5 +1,6 @@
 #pragma once
 
+#include <mapbox/geometry/wagyu/active_bound_list.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/join.hpp>
 #include <mapbox/geometry/wagyu/ring.hpp>
@@ -391,7 +392,6 @@ void fixup_first_lefts1(ring_ptr<T> old_ring, ring_ptr<T> new_ring, ring_list<T>
                 if (ring->is_hole == new_ring->is_hole) {
                     ring->is_hole = !ring->is_hole;
                     reverse_ring(ring->points);
-                    fixup_hole_state_of_children(ring, rings);
                 }
                 ring->first_left = new_ring;
             }
@@ -418,16 +418,12 @@ void fixup_first_lefts2(ring_ptr<T> inner_ring, ring_ptr<T> outer_ring, ring_lis
             if (ring->is_hole == inner_ring->is_hole) {
                 ring->is_hole = !ring->is_hole;
                 reverse_ring(ring->points);
-                fixup_hole_state_of_children(ring, rings);
             }
             ring->first_left = inner_ring;
         } else {
             if (ring->is_hole == outer_ring->is_hole) {
                 if (poly2_contains_poly1(ring->points, outer_ring->points)) {
                     ring->first_left = outer_ring;
-                    ring->is_hole = !ring->is_hole;
-                    // reverse_ring(ring->points);
-                    fixup_hole_state_of_children(ring, rings);
                 } else {
                     ring->first_left = parse_first_left(outer_ring->first_left);
                 }
@@ -437,7 +433,6 @@ void fixup_first_lefts2(ring_ptr<T> inner_ring, ring_ptr<T> outer_ring, ring_lis
                     ring->is_hole = !ring->is_hole;
                     ring->first_left = parse_first_left(outer_ring->first_left);
                     reverse_ring(ring->points);
-                    fixup_hole_state_of_children(ring, rings);
                 } else {
                     ring->first_left = outer_ring;
                 }
@@ -452,14 +447,10 @@ void fixup_first_lefts3(ring_ptr<T> old_ring, ring_ptr<T> new_ring, ring_list<T>
     for (auto& ring : rings) {
         if (ring->points && parse_first_left(ring->first_left) == old_ring) {
             ring->first_left = new_ring;
-            if (ring->is_hole == new_ring->is_hole) {
-                ring->is_hole = !ring->is_hole;
-                reverse_ring(ring->points);
-                fixup_hole_state_of_children(ring, rings);
-            }
         }
     }
 }
+
 template <typename T>
 void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
     for (size_t i = 0; i < joins.size(); i++) {
@@ -492,7 +483,6 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
         if (!join_points(join, ring1, ring2)) {
             continue;
         }
-
         if (ring1 == ring2) {
             // Instead of joining two polygons, we have created a new one
             // by splitting one polygon into two.
@@ -522,7 +512,6 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
             update_points_ring(ring2);
 
             if (poly2_contains_poly1(ring2->points, ring1->points)) {
-
                 // ring1 contains ring2 ...
                 ring2->is_hole = !ring1->is_hole;
                 ring2->first_left = ring1;

@@ -1,9 +1,18 @@
 #pragma once
 
 #ifdef DEBUG
-#include <execinfo.h>
 #include <iostream>
+// Example debug print for backtrace - only works on IOS
+#include <execinfo.h>
 #include <stdio.h>
+//
+// void* callstack[128];
+// int i, frames = backtrace(callstack, 128);
+// char** strs = backtrace_symbols(callstack, frames);
+// for (i = 0; i < frames; ++i) {
+//     printf("%s\n", strs[i]);
+// }
+// free(strs);
 #endif
 
 #include <queue>
@@ -17,24 +26,23 @@ namespace geometry {
 namespace wagyu {
 
 template <typename T>
-void fixup_hole_state_of_children(ring_ptr<T> ring, ring_list<T>& rings) {
-    for (auto& r : rings) {
-        if (r != ring && r->points && ring == r->first_left && ring->is_hole == r->is_hole) {
-            r->is_hole = !ring->is_hole;
-            fixup_hole_state_of_children(r, rings);
-        }
+void fix_hole_linkage(ring_ptr<T> r)
+{
+    //skip OutRecs that (a) contain outermost polygons or
+    //(b) already have the correct owner/child linkage ...
+    if (!r->first_left ||
+      (r->is_hole != r->first_left->is_hole &&
+      r->first_left->points))
+    {
+        return;
     }
-}
 
-template <typename T>
-void promote_children_of_removed_ring(ring_ptr<T> ring, ring_list<T>& rings) {
-    for (auto& r : rings) {
-        if (r->points && (ring == parse_first_left(r->first_left) || ring == r->first_left)) {
-            r->is_hole = ring->is_hole;
-            r->first_left = ring->first_left;
-            fixup_hole_state_of_children(r, rings);
-        }
+    ring_ptr<T> orfl = r->first_left;
+    while (orfl && ((orfl->is_hole == r->is_hole) || !orfl->points))
+    {
+        orfl = orfl->first_left;
     }
+    r->first_left = orfl;
 }
 
 template <typename T>
@@ -94,6 +102,7 @@ point_ptr<T> add_first_point(active_bound_list_itr<T>& bnd,
                              ring_list<T>& rings) {
     ring_ptr<T> r = new ring<T>();
     // no ring currently set!
+    r->ring_index = rings.size();
     rings.emplace_back(r);
     (*bnd)->ring = r;
     r->is_open = ((*bnd)->winding_delta == 0);
@@ -126,8 +135,17 @@ point_ptr<T> add_first_point(active_bound_list_rev_itr<T>& bnd,
 template <typename T>
 point_ptr<T> add_point_to_ring(active_bound_list_itr<T>& bnd,
                                mapbox::geometry::point<T> const& pt) {
-
     assert((*bnd)->ring);
+    /*
+    if (pt.x == 1721 && pt.y == 2417) {
+        void* callstack[128];
+        int i, frames = backtrace(callstack, 128);
+        char** strs = backtrace_symbols(callstack, frames);
+        for (i = 0; i < frames; ++i) {
+            printf("%s\n", strs[i]);
+        }
+        free(strs);
+    }*/
     ring_ptr<T>& ring = (*bnd)->ring;
     // ring->points is the 'Left-most' point & ring->points->prev is the
     // 'Right-most'
@@ -204,6 +222,21 @@ point_ptr<T> add_local_minimum_point(active_bound_list_itr<T> b1,
     active_bound_list_rev_itr<T> prev_bound;
     active_bound_list_rev_itr<T> prev_b1(b1);
     active_bound_list_rev_itr<T> prev_b2(b2);
+    /*
+    if (((*b1)->edges.back().bot.x == 3352 && (*b1)->edges.back().bot.y == 1434) ||
+        ((*b2)->edges.back().bot.x == 3352 && (*b2)->edges.back().bot.y == 1434)) {
+        std::clog << "foo" << std::endl;
+        std::clog << " point x: " << pt.x << " y: " << pt.y << std::endl;
+        std::clog << "foo" << std::endl;
+        void* callstack[128];
+        int i, frames = backtrace(callstack, 128);
+        char** strs = backtrace_symbols(callstack, frames);
+        for (i = 0; i < frames; ++i) {
+            printf("%s\n", strs[i]);
+        }
+        free(strs);
+    }
+    */
     if (is_horizontal(*((*b2)->current_edge)) ||
         ((*b1)->current_edge->dx > (*b2)->current_edge->dx)) {
         result = add_point(b1, active_bounds, pt, rings);
@@ -370,7 +403,7 @@ void append_ring(active_bound_list_itr<T>& b1,
     // get the start and ends of both output polygons ...
     ring_ptr<T> outRec1 = (*b1)->ring;
     ring_ptr<T> outRec2 = (*b2)->ring;
-
+    
     ring_ptr<T> holeStateRec;
     if (ring1_right_of_ring2(outRec1, outRec2)) {
         holeStateRec = outRec2;
@@ -428,10 +461,7 @@ void append_ring(active_bound_list_itr<T>& b1,
         if (outRec2->first_left != outRec1) {
             outRec1->first_left = outRec2->first_left;
         }
-        if (outRec1->is_hole != outRec2->is_hole) {
-            outRec1->is_hole = outRec2->is_hole;
-            // fixup_hole_state_of_children(outRec1, rings);
-        }
+        outRec1->is_hole = outRec2->is_hole;
     }
     outRec2->points = nullptr;
     outRec2->bottom_point = nullptr;
@@ -468,21 +498,94 @@ void add_local_maximum_point(active_bound_list_itr<T>& b1,
         (*b1)->ring = nullptr;
         (*b2)->ring = nullptr;
         // I am not certain that order is important here?
-        //} else if ((*b1)->index < (*b2)->index) {
-        //    append_ring(b1, b2, active_bounds);
-    } else {
+    } else if ((*b1)->ring->ring_index < (*b2)->ring->ring_index) {
         append_ring(b1, b2, active_bounds);
+    } else {
+        append_ring(b2, b1, active_bounds);
     }
 }
+
+enum point_in_polygon_result : std::int8_t {
+    point_on_polygon = -1,
+    point_inside_polygon = 0,
+    point_outside_polygon = 1
+};
+
+template <typename T>
+point_in_polygon_result point_in_polygon(point<T> const& pt, point_ptr<T> op) {
+    // returns 0 if false, +1 if true, -1 if pt ON polygon boundary
+    point_in_polygon_result result = point_outside_polygon;
+    point_ptr<T> startOp = op;
+    do {
+        if (op->next->y == pt.y) {
+            if ((op->next->x == pt.x) ||
+                (op->y == pt.y && ((op->next->x > pt.x) == (op->x < pt.x)))) {
+                return point_on_polygon;
+            }
+        }
+        if ((op->y < pt.y) != (op->next->y < pt.y)) {
+            if (op->x >= pt.x) {
+                if (op->next->x > pt.x) {
+                    // Switch between point outside polygon and point inside
+                    // polygon
+                    if (result == point_outside_polygon) {
+                        result = point_inside_polygon;
+                    } else {
+                        result = point_outside_polygon;
+                    }
+                } else {
+                    double d =
+                        static_cast<double>(op->x - pt.x) *
+                            static_cast<double>(op->next->y - pt.y) -
+                        static_cast<double>(op->next->x - pt.x) * static_cast<double>(op->y - pt.y);
+                    if (std::fabs(d) <= 0) {
+                        return point_on_polygon;
+                    }
+                    if ((d > 0) == (op->next->y > op->y)) {
+                        // Switch between point outside polygon and point inside
+                        // polygon
+                        if (result == point_outside_polygon) {
+                            result = point_inside_polygon;
+                        } else {
+                            result = point_outside_polygon;
+                        }
+                    }
+                }
+            } else {
+                if (op->next->x > pt.x) {
+                    double d =
+                        static_cast<double>(op->x - pt.x) *
+                            static_cast<double>(op->next->y - pt.y) -
+                        static_cast<double>(op->next->x - pt.x) * static_cast<double>(op->y - pt.y);
+                    if (std::fabs(d) <= 0) {
+                        return point_on_polygon;
+                    }
+                    if ((d > 0) == (op->next->y > op->y)) {
+                        // Switch between point outside polygon and point inside
+                        // polygon
+                        if (result == point_outside_polygon) {
+                            result = point_inside_polygon;
+                        } else {
+                            result = point_outside_polygon;
+                        }
+                    }
+                }
+            }
+        }
+        op = op->next;
+    } while (startOp != op);
+    return result;
+}
+
 
 template <typename T>
 bool poly2_contains_poly1(point_ptr<T> outpt1, point_ptr<T> outpt2) {
     point_ptr<T> op = outpt1;
     do {
         // nb: PointInPolygon returns 0 if false, +1 if true, -1 if pt on polygon
-        int res = point_in_polygon(*op, outpt2);
-        if (res >= 0) {
-            return res > 0;
+        point_in_polygon_result res = point_in_polygon(*op, outpt2);
+        if (res != point_on_polygon) {
+            return res == point_inside_polygon;
         }
         op = op->next;
     } while (op != outpt1);

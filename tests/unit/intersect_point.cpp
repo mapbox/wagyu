@@ -102,8 +102,8 @@ TEST_CASE("test intersection of points") {
     CHECK(b3.curr.x > b1.curr.x);       // Intersection!
     intersection_point(b1, b3, r1);
 
-    CHECK(r1.x == 7);
-    CHECK(r1.y == 3);
+    CHECK(r1.x == 5);
+    CHECK(r1.y == 2);
 }
 
 TEST_CASE("test intersection of points - switch axis values") {
@@ -202,5 +202,5 @@ TEST_CASE("test intersection of points - switch axis values") {
     intersection_point(b1, b3, r1);
 
     CHECK(r1.x == 3);
-    CHECK(r1.y == 7);
+    CHECK(r1.y == 5);
 }

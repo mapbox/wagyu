@@ -2,6 +2,8 @@
 
 #ifdef DEBUG
 #include <iostream>
+//#include <execinfo.h>
+//#include <stdio.h>
 #endif
 
 #include <mapbox/geometry/wagyu/bound.hpp>
@@ -64,9 +66,6 @@ active_bound_list_itr<T> insert_bound_into_ABL(bound<T>& bnd, active_bound_list<
     while (itr != active_bounds.end() && !bound2_inserts_before_bound1(*(*itr), bnd)) {
         ++itr;
     }
-    if (itr != active_bounds.end()) {
-        ++itr;
-    }
     return active_bounds.insert(itr, &bnd);
 }
 
@@ -75,9 +74,6 @@ active_bound_list_itr<T> insert_bound_into_ABL(bound<T>& bnd,
                                                active_bound_list_itr<T> itr,
                                                active_bound_list<T>& active_bounds) {
     while (itr != active_bounds.end() && !bound2_inserts_before_bound1(*(*itr), bnd)) {
-        ++itr;
-    }
-    if (itr != active_bounds.end()) {
         ++itr;
     }
     return active_bounds.insert(itr, &bnd);
@@ -109,6 +105,19 @@ template <typename T>
 inline void swap_positions_in_ABL(active_bound_list_itr<T>& bnd1,
                                   active_bound_list_itr<T>& bnd2,
                                   active_bound_list<T>& active_bounds) {
+    /*
+    if (((*bnd1)->current_edge->bot.x == 3352 && (*bnd1)->current_edge->bot.y == 1434) ||
+        ((*bnd2)->current_edge->bot.x == 3352 && (*bnd2)->current_edge->bot.y == 1434)
+        ) {
+        void* callstack[128];
+        int i, frames = backtrace(callstack, 128);
+        char** strs = backtrace_symbols(callstack, frames);
+        for (i = 0; i < frames; ++i) {
+            printf("%s\n", strs[i]);
+        }
+        free(strs);
+    }
+    */
     if (std::next(bnd2) == bnd1) {
         active_bounds.splice(bnd2, active_bounds, bnd1);
     } else if (std::next(bnd1) == bnd2) {
@@ -394,7 +403,9 @@ void insert_lm_only_one_bound(bound<T>& bnd,
             }
         }
     }
-    scanbeam.push((*abl_itr)->current_edge->top.y);
+    if (!current_edge_is_horizontal<T>(abl_itr)) {
+        scanbeam.push((*abl_itr)->current_edge->top.y);
+    }
 }
 
 template <typename T>
@@ -451,10 +462,12 @@ void insert_lm_left_and_right_bound(bound<T>& left_bound,
 
     // Add top of edges to scanbeam
     scanbeam.push((*lb_abl_itr)->current_edge->top.y);
-    scanbeam.push((*rb_abl_itr)->current_edge->top.y);
 
+    if (!current_edge_is_horizontal<T>(rb_abl_itr)) {
+        scanbeam.push((*rb_abl_itr)->current_edge->top.y);
+    }
     auto abl_itr = std::next(lb_abl_itr);
-    while (abl_itr != rb_abl_itr) {
+    while (abl_itr != rb_abl_itr && abl_itr != active_bounds.end()) {
         // We call intersect_bounds here, but we do not swap positions in the ABL
         // this is the logic that was copied from angus, but it might be correct
         // to swap the positions in the ABL following this or at least move

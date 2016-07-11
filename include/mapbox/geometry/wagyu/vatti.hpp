@@ -62,7 +62,6 @@ active_bound_list_itr<T> do_maxima(active_bound_list_itr<T> bnd,
         }
         return active_bounds.erase(bnd);
     }
-
     auto bnd_prev = active_bound_list_rev_itr<T>(bnd);
     if (bnd_prev != active_bounds.rend() && (*bnd_prev)->curr.x == (*bnd)->current_edge->top.x &&
         (*bnd_prev)->current_edge->top != (*bnd)->current_edge->top && (*bnd_prev)->ring &&
@@ -99,6 +98,7 @@ active_bound_list_itr<T> do_maxima(active_bound_list_itr<T> bnd,
         active_bounds.erase(bndMaxPair);
         return active_bounds.erase(bnd);
     } else {
+        //std::clog << active_bounds << std::endl;
         throw clipper_exception("DoMaxima error");
     }
 }
@@ -117,7 +117,7 @@ void process_edges_at_top_of_scanbeam(T top_y,
     if (active_bounds.empty()) {
         return;
     }
-
+    
     maxima_list<T> maxima;
     for (auto bnd = active_bounds.begin(); bnd != active_bounds.end();) {
         // 1. Process maxima, treating them as if they are "bent" horizontal edges,
@@ -246,7 +246,7 @@ void fixup_out_polyline(ring<T>& ring) {
 }
 
 template <typename T>
-void fixup_out_polygon(ring<T>& ring, ring_list<T>& rings, bool simple) {
+void fixup_out_polygon(ring<T>& ring, bool simple) {
     // FixupOutPolygon() - removes duplicate points and simplifies consecutive
     // parallel edges by removing the middle vertex.
     point_ptr<T> lastOK = nullptr;
@@ -257,7 +257,7 @@ void fixup_out_polygon(ring<T>& ring, ring_list<T>& rings, bool simple) {
         if (pp->prev == pp || pp->prev == pp->next) {
             // We now need to make sure any children rings to this are promoted and their hole
             // status is changed
-            promote_children_of_removed_ring(&ring, rings);
+            //promote_children_of_removed_ring(&ring, rings);
             dispose_out_points(pp);
             ring.points = nullptr;
             return;
@@ -273,9 +273,9 @@ void fixup_out_polygon(ring<T>& ring, ring_list<T>& rings, bool simple) {
             pp->next->prev = pp->prev;
             pp = pp->prev;
             delete tmp;
-        } else if (pp == lastOK)
+        } else if (pp == lastOK) {
             break;
-        else {
+        } else {
             if (!lastOK) {
                 lastOK = pp;
             }
@@ -333,43 +333,36 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
                                          clip_fill_type);
         }
     }
-
-    for (auto& ring : rings) {
-        if (!ring->points || ring->is_open) {
-            continue;
-        }
-
-        if (ring->is_hole == (area(*ring) > 0)) {
-            reverse_ring(ring->points);
-        }
-    }
-
+    
     if (!joins.empty()) {
         join_common_edges(joins, rings);
     }
 
     // unfortunately FixupOutPolygon() must be done after JoinCommonEdges()
     for (size_t i = 0; i < rings.size(); ++i) {
-        ring_ptr<T> ring = rings[i];
-        if (!ring->points) {
+        ring_ptr<T> r = rings[i];
+        if (!r->points) {
             continue;
         }
-        if (ring->is_open) {
-            fixup_out_polyline(*ring);
+        if (r->is_open) {
+            fixup_out_polyline(*r);
         } else {
-            fixup_out_polygon(*ring, rings, false);
+            fix_hole_linkage(r);
+            fixup_out_polygon(*r, false);
         }
     }
 
     do_simple_polygons(rings);
-
-    for (auto& ring : rings) {
-        if (!ring->points || ring->is_open) {
+    
+    for (auto& r : rings) {
+        if (!r->points || r->is_open) {
             continue;
         }
-        fixup_out_polygon(*ring, rings, true);
-        if (ring->is_hole == (area(*ring) > 0)) {
-            reverse_ring(ring->points);
+        fixup_out_polygon(*r, true);
+        std::size_t depth = ring_depth(r);
+        bool is_hole = !is_odd(depth);
+        if (is_hole == (area(*r) > 0)) {
+            reverse_ring(r->points);
         }
     }
     return true;

@@ -9,6 +9,9 @@ namespace wagyu {
 template <typename T>
 void build_result(std::vector<mapbox::geometry::polygon<T>>& solution, ring_list<T>& rings) {
 
+    for (auto& r : rings) {
+        r->ring_index = 0;
+    }
     // loop through constructing polygons
     for (auto& r : rings) {
         if (!r->points || r->ring_index > 0) {
@@ -18,7 +21,11 @@ void build_result(std::vector<mapbox::geometry::polygon<T>>& solution, ring_list
         if ((r->is_open && cnt < 2) || (!r->is_open && cnt < 3)) {
             continue;
         }
-        if (r->is_hole) {
+        std::size_t depth = ring_depth(r);
+        if (is_odd(depth)) {
+            solution.emplace_back();
+            push_ring_to_polygon(solution.back(), r);
+        } else {
             // create the parent ring polygon first
             auto fl = parse_first_left(r->first_left);
             if (!fl->ring_index) {
@@ -27,9 +34,6 @@ void build_result(std::vector<mapbox::geometry::polygon<T>>& solution, ring_list
                 push_ring_to_polygon(solution.back(), fl);
             }
             push_ring_to_polygon(solution[fl->ring_index - 1], r);
-        } else {
-            solution.emplace_back();
-            push_ring_to_polygon(solution.back(), r);
         }
     }
 }

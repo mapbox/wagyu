@@ -220,7 +220,7 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
     out << "START RING LIST" << std::endl;
     std::size_t c = 0;
     for (auto& r : rings) {
-        out << " ring: " << c++ << std::endl;
+        out << " ring: " << c++ << " - " << r << std::endl;
         out << *r;
     }
     out << "END RING LIST" << std::endl;

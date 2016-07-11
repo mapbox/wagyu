@@ -55,12 +55,16 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
     out << "        winding count: " << bnd.winding_count << std::endl;
     out << "        winding_count2: " << bnd.winding_count2 << std::endl;
     out << "        winding_delta: " << static_cast<int>(bnd.winding_delta) << std::endl;
+    out << "        maximum_bound: " << bnd.maximum_bound << std::endl;
     if (bnd.side == edge_left) {
         out << "        side: left" << std::endl;
     } else {
         out << "        side: right" << std::endl;
     }
     out << "        ring: " << bnd.ring << std::endl;
+    /*if (bnd.ring) {
+        out << *(bnd.ring) << std::endl;
+    }*/
     return out;
 }
 

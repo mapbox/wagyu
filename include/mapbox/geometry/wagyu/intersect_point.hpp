@@ -19,22 +19,9 @@ inline T nearest_along_y_dimension(T const edge_bot_x,
                                    double const edge_dx) {
     using value_type = T;
     value_type result = ip_y;
-    if (edge_bot_x > ip_x) {
-        if (edge_bot_y >= ip_y) {
-            result = static_cast<value_type>(
-                std::floor(((static_cast<double>(ip_x) + 0.5) / edge_dx + by) + 0.5));
-        } else {
-            result = static_cast<value_type>(
-                std::ceil(((static_cast<double>(ip_x) + 0.5) / edge_dx + by) - 0.5));
-        }
-    } else if (edge_bot_x < ip_x) {
-        if (edge_bot_y >= ip_y) {
-            result = static_cast<value_type>(
-                std::floor(((static_cast<double>(ip_x) - 0.5) / edge_dx + by) + 0.5));
-        } else {
-            result = static_cast<value_type>(
-                std::ceil(((static_cast<double>(ip_x) - 0.5) / edge_dx + by) - 0.5));
-        }
+    if (edge_bot_x != ip_x) {
+        result = static_cast<value_type>(
+            std::floor(((static_cast<double>(ip_x) - 0.5) / edge_dx + by) + 0.5));
     } else if (edge_bot_y > ip_y) {
         if (edge_2_bot_y >= edge_bot_y) {
             result = edge_bot_y;
@@ -66,22 +53,9 @@ inline T nearest_along_x_dimension(T const edge_bot_x,
                                    double const edge_dx) {
     using value_type = T;
     value_type result = ip_x;
-    if (edge_bot_y > ip_y) {
-        if (edge_bot_x >= ip_x) {
-            result = static_cast<value_type>(
-                std::floor(((static_cast<double>(ip_y) + 0.5) * edge_dx + bx) + 0.5));
-        } else {
-            result = static_cast<value_type>(
-                std::ceil(((static_cast<double>(ip_y) + 0.5) * edge_dx + bx) - 0.5));
-        }
-    } else if (edge_bot_y < ip_y) {
-        if (edge_bot_x >= ip_x) {
-            result = static_cast<value_type>(
-                std::floor(((static_cast<double>(ip_y) - 0.5) * edge_dx + bx) + 0.5));
-        } else {
-            result = static_cast<value_type>(
-                std::ceil(((static_cast<double>(ip_y) - 0.5) * edge_dx + bx) - 0.5));
-        }
+    if (edge_bot_y != ip_y) {
+        result = static_cast<value_type>(
+            std::floor(((static_cast<double>(ip_y) + 0.5) * edge_dx + bx) + 0.5));
     } else if (edge_bot_x > ip_x) {
         if (edge_2_bot_x >= edge_bot_x) {
             result = edge_bot_x;
@@ -163,13 +137,12 @@ void intersection_point(bound<T> const& Bound1,
         // the idea is simply to looking closer
         // towards the origins of the lines (Edge1.bot and Edge2.bot)
         // until we do not find pixels that both lines travel through
-        bool keep_searching = false;
+        bool keep_searching = true;
         double by1 = Edge1.bot.y - (Edge1.bot.x / Edge1.dx);
         double by2 = Edge2.bot.y - (Edge2.bot.x / Edge2.dx);
         double bx1 = Edge1.bot.x - (Edge1.bot.y * Edge1.dx);
         double bx2 = Edge2.bot.x - (Edge2.bot.y * Edge2.dx);
-        do {
-            keep_searching = false;
+        while (keep_searching) {
             value_type y1 = nearest_along_y_dimension(Edge1.bot.x, Edge1.bot.y, Edge2.bot.y, ip.x,
                                                       ip.y, by1, Edge1.dx);
             value_type y2 = nearest_along_y_dimension(Edge2.bot.x, Edge2.bot.y, Edge1.bot.y, ip.x,
@@ -178,35 +151,21 @@ void intersection_point(bound<T> const& Bound1,
                                                       ip.y, bx1, Edge1.dx);
             value_type x2 = nearest_along_x_dimension(Edge2.bot.x, Edge2.bot.y, Edge1.bot.x, ip.x,
                                                       ip.y, bx2, Edge2.dx);
-            if (y1 > ip.y && y2 > ip.y) {
-                ip.y = std::min(y1, y2);
-                keep_searching = true;
-            } else if (y1 < ip.y && y2 < ip.y) {
+            if (y1 < ip.y && y2 < ip.y) {
                 ip.y = std::max(y1, y2);
-                keep_searching = true;
-            }
-            if (x1 > ip.x && x2 > ip.x) {
-                ip.x = std::min(x1, x2);
-                keep_searching = true;
+                if (x1 > ip.x && x2 > ip.x) {
+                    ip.x = std::min(x1, x2);
+                } else if (x1 < ip.x && x2 < ip.x) {
+                    ip.x = std::max(x1, x2);
+                }
             } else if (x1 < ip.x && x2 < ip.x) {
                 ip.x = std::max(x1, x2);
-                keep_searching = true;
+            } else {
+                keep_searching = false;
             }
         } while (keep_searching);
     }
-
-    if (ip.y < Edge1.top.y || ip.y < Edge2.top.y) {
-        if (Edge1.top.y > Edge2.top.y) {
-            ip.y = Edge1.top.y;
-        } else {
-            ip.y = Edge2.top.y;
-        }
-        if (std::fabs(Edge1.dx) < std::fabs(Edge2.dx)) {
-            ip.x = get_current_x(Edge1, ip.y);
-        } else {
-            ip.x = get_current_x(Edge2, ip.y);
-        }
-    }
+    
     // finally, don't allow 'ip' to be BELOW curr.y (ie bottom of scanbeam) ...
     if (ip.y > Bound1.curr.y) {
         ip.y = Bound1.curr.y;

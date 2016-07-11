@@ -46,6 +46,29 @@ int main() {
                 std::string message;
                 if (!boost::geometry::is_valid(p, message)) {
                     std::clog << message << std::endl;
+                    bool first = true;
+                    std::clog << "[";
+                    for (auto const& r : p) {
+                        if (first) { 
+                            std::clog << "[";
+                            first = false;
+                        } else {
+                            std::clog << ",[";
+                        }
+                        bool first2 = true;
+                        for (auto const& pt : r) {
+                            if (first2) {
+                                std::clog << "[";
+                                first2 = false;
+                            } else {
+                                std::clog << ",[";
+                            }
+                            std::clog << pt.x << "," << pt.y << "]";
+                        }
+                        std::clog << "]";
+                    }
+                    std::clog << "]" << std::endl;
+                    return -1;
                 }
             }
         }

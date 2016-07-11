@@ -1,6 +1,7 @@
 #pragma once
 
 #include <mapbox/geometry/wagyu/active_bound_list.hpp>
+#include <mapbox/geometry/wagyu/bound.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/intersect.hpp>
 #include <mapbox/geometry/wagyu/intersect_point.hpp>
@@ -119,7 +120,6 @@ void intersect_bounds(active_bound_list_itr<T>& b1,
                       active_bound_list<T>& active_bounds) {
     bool b1Contributing = ((*b1)->ring != nullptr);
     bool b2Contributing = ((*b2)->ring != nullptr);
-
     // if either bound is on an OPEN path ...
     if ((*b1)->winding_delta == 0 || (*b2)->winding_delta == 0) {
         // ignore subject-subject open path intersections UNLESS they
@@ -238,7 +238,7 @@ void intersect_bounds(active_bound_list_itr<T>& b1,
     default:
         b2Wc = std::abs((*b2)->winding_count);
     }
-
+    
     if (b1Contributing && b2Contributing) {
         if ((b1Wc != 0 && b1Wc != 1) || (b2Wc != 0 && b2Wc != 1) ||
             ((*b1)->poly_type != (*b2)->poly_type && cliptype != clip_type_x_or)) {
@@ -329,9 +329,25 @@ void process_intersect_list(intersect_list<T>& intersects,
                             join_list<T>& joins,
                             active_bound_list<T>& active_bounds) {
     for (auto& node : intersects) {
+        /*
+        if (((*node.bound1->bound)->current_edge->bot.x == 3352 && (*node.bound1->bound)->current_edge->bot.y == 1434) ||
+            ((*node.bound2->bound)->current_edge->bot.x == 3352 && (*node.bound2->bound)->current_edge->bot.y == 1434)) {
+            std::clog << std::endl;
+            std::clog << "scanline at: " << top_y << std::endl;
+            std::clog << active_bounds << std::endl;
+            std::clog << "Intersection point is:" << std::endl;
+            std::clog << "  x: " << node.pt.x << " y: " << node.pt.y << std::endl;
+        }
+        */
         intersect_bounds(node.bound1->bound, node.bound2->bound, node.pt, cliptype,
                          subject_fill_type, clip_fill_type, rings, joins, active_bounds);
         swap_positions_in_ABL(node.bound1->bound, node.bound2->bound, active_bounds);
+        /*
+        if (((*node.bound1->bound)->current_edge->bot.x == 3352 && (*node.bound1->bound)->current_edge->bot.y == 1434) ||
+            ((*node.bound2->bound)->current_edge->bot.x == 3352 && (*node.bound2->bound)->current_edge->bot.y == 1434)) {
+            std::clog << active_bounds << std::endl;
+        }
+        */
     }
 }
 
