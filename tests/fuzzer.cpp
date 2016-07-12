@@ -3,6 +3,7 @@
 #include <mapbox/geometry/wagyu/wagyu.hpp>
 
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
 #include <limits>
 #include <time.h>
@@ -80,10 +81,45 @@ void check_cross_ring(std::vector<mapbox::geometry::polygon<std::int64_t>>& solu
     }
 }
 
-int main() {
-    srand(time(0));
+void create_test(mapbox::geometry::polygon<std::int64_t> const& polygon,
+                 unsigned seed,
+                 size_t iteration) {
+    std::string fname = "tests/geometry-test-data/input-polyjson/fuzzer-" + std::to_string(seed) +
+                        "-" + std::to_string(iteration) + ".json";
+    std::clog << "Creating " << fname << "\n";
+    std::ofstream out;
+    out.open(fname);
 
-    while (1) {
+    out << "[";
+
+    for (size_t i = 0; i < polygon.size(); i++) {
+        if (i != 0) {
+            out << ",";
+        }
+
+        out << "[";
+
+        for (size_t j = 0; j < polygon[i].size(); j++) {
+            if (j != 0) {
+                out << ",";
+            }
+
+            out << "[" << polygon[i][j].x << "," << polygon[i][j].y << "]";
+        }
+
+        out << "]";
+    }
+
+    out << "]";
+
+    out.close();
+}
+
+int main() {
+    unsigned seed = time(0);
+    srand(seed);
+
+    for (size_t iteration = 0;; iteration++) {
         std::size_t len = std::rand() % 50 + 3;
 
         for (auto fill_type : { mapbox::geometry::wagyu::fill_type_even_odd,
@@ -121,6 +157,7 @@ int main() {
                 if (!boost::geometry::is_valid(p, message)) {
                     std::clog << message << std::endl;
                     log_ring(p);
+                    create_test(polygon, seed, iteration);
                     return -1;
                 }
             }
