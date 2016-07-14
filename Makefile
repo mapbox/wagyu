@@ -11,15 +11,21 @@ default: test
 $(MASON):
 	git submodule update --init
 
+mason_packages/.link/include/boost: $(MASON)
+	$(MASON) install boost 1.61.0 && $(MASON) link boost 1.61.0
+
+mason_packages/.link/include/rapidjson: $(MASON)
+	$(MASON) install rapidjson 1.0.2 && $(MASON) link rapidjson 1.0.2
+
 mason_packages/.link/include/mapbox/geometry.hpp: $(MASON)
 	$(MASON) install geometry 0.7.0 && $(MASON) link geometry 0.7.0
-	$(MASON) install rapidjson 1.0.2 && $(MASON) link rapidjson 1.0.2
-	$(MASON) install boost 1.59.0 && $(MASON) link boost 1.59.0
 
-build-test: tests/* include/mapbox/geometry/* mason_packages/.link/include/mapbox/geometry.hpp Makefile
+deps: mason_packages/.link/include/rapidjson mason_packages/.link/include/mapbox/geometry.hpp mason_packages/.link/include/boost
+
+build-test: tests/* include/mapbox/geometry/* deps Makefile
 	$(CXX) $(RELEASE_FLAGS) tests/test.cpp tests/unit/*.cpp $(WARNING_FLAGS) $(CXXFLAGS) -I./tests -o test
 
-build-debug: tests/* include/mapbox/geometry/* mason_packages/.link/include/mapbox/geometry.hpp Makefile
+build-debug: tests/* include/mapbox/geometry/* deps Makefile
 	$(CXX) $(DEBUG_FLAGS) tests/test.cpp tests/unit/*.cpp $(WARNING_FLAGS) $(CXXFLAGS) -I./tests -o test
 
 build-fixture-tester:
