@@ -1,6 +1,6 @@
 CC := $(CC)
 CXX := $(CXX)
-CXXFLAGS := $(CXXFLAGS) -Iinclude -Imason_packages/.link/include -I/usr/local/include -std=c++11
+CXXFLAGS := $(CXXFLAGS) -Iinclude -Imason_packages/.link/include -std=c++11
 RELEASE_FLAGS := -O3 -DNDEBUG
 WARNING_FLAGS := -Wall -Wextra -Werror -Wsign-compare -Wfloat-equal -Wfloat-conversion -Wshadow -Wno-unsequenced
 DEBUG_FLAGS := -g -O0 -DDEBUG -fno-inline-functions -fno-omit-frame-pointer
