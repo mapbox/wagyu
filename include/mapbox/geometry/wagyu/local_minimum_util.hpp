@@ -156,6 +156,26 @@ void set_edge_data(edge_list<T>& edges, bound_ptr<T> bound) {
 }
 
 template <typename T>
+void fix_horizontals(bound<T> & bnd) {
+    
+    auto edge_itr = bnd.edges.begin();
+    auto next_itr = std::next(edge_itr);
+    if (next_itr == bnd.edges.end()) {
+        return;
+    }
+    if (is_horizontal(*edge_itr) && next_itr->bot != edge_itr->top) {
+        reverse_horizontal(*edge_itr);
+    }
+    auto prev_itr = edge_itr++;
+    while (edge_itr != bnd.edges.end()) {
+        if (is_horizontal(*edge_itr) && prev_itr->top != edge_itr->bot) {
+            reverse_horizontal(*edge_itr);
+        }
+        ++edge_itr;
+    }
+}
+
+template <typename T>
 void move_horizontals_on_left_to_right(bound<T>& left_bound, bound<T>& right_bound) {
     // We want all the horizontal segments that are at the same Y as the minimum to be on the right
     // bound
@@ -189,6 +209,7 @@ void add_line_to_local_minima_list(edge_list<T>& edges, local_minimum_list<T>& m
         bool lm_minimum_has_horizontal = false;
         auto to_minimum = create_bound_towards_minimum(edges);
         assert(!to_minimum.edges.empty());
+        fix_horizontals(to_minimum);
         to_minimum.poly_type = polygon_type_subject;
         to_minimum.maximum_bound = last_maximum;
         to_minimum.winding_delta = 0;
@@ -236,6 +257,7 @@ void add_line_to_local_minima_list(edge_list<T>& edges, local_minimum_list<T>& m
         bool minimum_is_left = true;
         auto to_maximum = create_bound_towards_maximum(edges);
         assert(!to_maximum.edges.empty());
+        fix_horizontals(to_maximum);
         auto to_max_first_non_horizontal = to_minimum.edges.begin();
         while (to_max_first_non_horizontal != to_maximum.edges.end() &&
                is_horizontal(*to_max_first_non_horizontal)) {
@@ -297,6 +319,8 @@ void add_ring_to_local_minima_list(edge_list<T>& edges,
         auto to_minimum = create_bound_towards_minimum(edges);
         assert(!edges.empty());
         auto to_maximum = create_bound_towards_maximum(edges);
+        fix_horizontals(to_minimum);
+        fix_horizontals(to_maximum);
         auto to_max_first_non_horizontal = to_maximum.edges.begin();
         auto to_min_first_non_horizontal = to_minimum.edges.begin();
         bool minimum_is_left = true;
@@ -316,9 +340,7 @@ void add_ring_to_local_minima_list(edge_list<T>& edges,
             throw clipper_exception("should not have a horizontal only bound for a ring");
         }
 #endif
-        if (to_max_first_non_horizontal != to_maximum.edges.end() &&
-            (to_min_first_non_horizontal == to_minimum.edges.end() ||
-             to_max_first_non_horizontal->dx > to_min_first_non_horizontal->dx)) {
+        if (to_max_first_non_horizontal->dx > to_min_first_non_horizontal->dx) {
             minimum_is_left = false;
             move_horizontals_on_left_to_right(to_maximum, to_minimum);
         } else {

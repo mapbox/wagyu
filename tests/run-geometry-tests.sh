@@ -29,7 +29,8 @@ do
         if [ "$?" -eq "0" ]; then
             PASSES=$((PASSES + 1))
         else
-            echo $type $filename
+            echo --- Test failure: $type $filename
+            echo $TESTER -t $type ./tests/fixtures/clip-clockwise-square.json ./tests/geometry-test-data/input-polyjson/$filename
             FAILS=$((FAILS + 1))
         fi
     done

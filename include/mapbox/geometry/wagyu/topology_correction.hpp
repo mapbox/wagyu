@@ -157,6 +157,7 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
     if (iList.empty()) {
         return false;
     }
+   
     if (ring_origin->is_hole) {
         for (auto& iRing : iList) {
             ring_ptr<T> ring_itr = get_ring(iRing.first);
@@ -218,16 +219,16 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
         ring_itr->replacement_ring = ring_origin;
         if (ring_origin->is_hole) {
             ring_itr->first_left = parse_first_left(ring_origin->first_left);
-            ring_itr->is_hole = ring_origin->is_hole;
         } else {
             ring_itr->first_left = ring_origin;
-            ring_itr->is_hole = !ring_origin->is_hole;
         }
+        ring_itr->is_hole = ring_origin->is_hole;
         fixup_first_lefts3(ring_itr, ring_origin, rings);
     }
     if (ring_origin->is_hole) {
         ring_new->first_left = ring_origin;
         fixup_first_lefts2(ring_new, ring_origin, rings);
+        fixup_first_lefts1(ring_parent, ring_new, rings);
     } else {
         ring_new->first_left = ring_origin->first_left;
         fixup_first_lefts1(ring_origin, ring_new, rings);

@@ -105,19 +105,6 @@ template <typename T>
 inline void swap_positions_in_ABL(active_bound_list_itr<T>& bnd1,
                                   active_bound_list_itr<T>& bnd2,
                                   active_bound_list<T>& active_bounds) {
-    /*
-    if (((*bnd1)->current_edge->bot.x == 3352 && (*bnd1)->current_edge->bot.y == 1434) ||
-        ((*bnd2)->current_edge->bot.x == 3352 && (*bnd2)->current_edge->bot.y == 1434)
-        ) {
-        void* callstack[128];
-        int i, frames = backtrace(callstack, 128);
-        char** strs = backtrace_symbols(callstack, frames);
-        for (i = 0; i < frames; ++i) {
-            printf("%s\n", strs[i]);
-        }
-        free(strs);
-    }
-    */
     if (std::next(bnd2) == bnd1) {
         active_bounds.splice(bnd2, active_bounds, bnd1);
     } else if (std::next(bnd1) == bnd2) {
@@ -199,9 +186,9 @@ void set_winding_count(active_bound_list_itr<T>& bnd_itr,
         if ((*bnd_itr)->winding_delta == 0) {
             // are we inside a subj polygon ...
             bool inside = true;
-            auto rev2 = rev_bnd_itr;
+            auto rev2 = std::next(rev_bnd_itr);
             while (rev2 != active_bounds.rend()) {
-                if ((*rev2)->poly_type == (*rev2)->poly_type && (*rev2)->winding_delta != 0) {
+                if ((*rev2)->poly_type == (*rev_bnd_itr)->poly_type && (*rev2)->winding_delta != 0) {
                     inside = !inside;
                 }
                 ++rev2;

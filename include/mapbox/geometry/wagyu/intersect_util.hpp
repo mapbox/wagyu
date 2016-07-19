@@ -197,20 +197,20 @@ void intersect_bounds(active_bound_list_itr<T>& b1,
         }
     }
 
-    fill_type b1FillType, b2FillType, b1FillTypb2, b2FillTypb2;
+    fill_type b1FillType, b2FillType, b1FillType2, b2FillType2;
     if ((*b1)->poly_type == polygon_type_subject) {
         b1FillType = subject_fill_type;
-        b1FillTypb2 = clip_fill_type;
+        b1FillType2 = clip_fill_type;
     } else {
         b1FillType = clip_fill_type;
-        b1FillTypb2 = subject_fill_type;
+        b1FillType2 = subject_fill_type;
     }
     if ((*b2)->poly_type == polygon_type_subject) {
         b2FillType = subject_fill_type;
-        b2FillTypb2 = clip_fill_type;
+        b2FillType2 = clip_fill_type;
     } else {
         b2FillType = clip_fill_type;
-        b2FillTypb2 = subject_fill_type;
+        b2FillType2 = subject_fill_type;
     }
 
     std::int32_t b1Wc, b2Wc;
@@ -238,7 +238,6 @@ void intersect_bounds(active_bound_list_itr<T>& b1,
     default:
         b2Wc = std::abs((*b2)->winding_count);
     }
-    
     if (b1Contributing && b2Contributing) {
         if ((b1Wc != 0 && b1Wc != 1) || (b2Wc != 0 && b2Wc != 1) ||
             ((*b1)->poly_type != (*b2)->poly_type && cliptype != clip_type_x_or)) {
@@ -265,7 +264,7 @@ void intersect_bounds(active_bound_list_itr<T>& b1,
         // neither bound is currently contributing ...
 
         std::int32_t b1Wc2, b2Wc2;
-        switch (b1FillTypb2) {
+        switch (b1FillType2) {
         case fill_type_positive:
             b1Wc2 = (*b1)->winding_count2;
             break;
@@ -277,7 +276,7 @@ void intersect_bounds(active_bound_list_itr<T>& b1,
         default:
             b1Wc2 = std::abs((*b1)->winding_count2);
         }
-        switch (b2FillTypb2) {
+        switch (b2FillType2) {
         case fill_type_positive:
             b2Wc2 = (*b2)->winding_count2;
             break;
@@ -329,25 +328,9 @@ void process_intersect_list(intersect_list<T>& intersects,
                             join_list<T>& joins,
                             active_bound_list<T>& active_bounds) {
     for (auto& node : intersects) {
-        /*
-        if (((*node.bound1->bound)->current_edge->bot.x == 3352 && (*node.bound1->bound)->current_edge->bot.y == 1434) ||
-            ((*node.bound2->bound)->current_edge->bot.x == 3352 && (*node.bound2->bound)->current_edge->bot.y == 1434)) {
-            std::clog << std::endl;
-            std::clog << "scanline at: " << top_y << std::endl;
-            std::clog << active_bounds << std::endl;
-            std::clog << "Intersection point is:" << std::endl;
-            std::clog << "  x: " << node.pt.x << " y: " << node.pt.y << std::endl;
-        }
-        */
         intersect_bounds(node.bound1->bound, node.bound2->bound, node.pt, cliptype,
                          subject_fill_type, clip_fill_type, rings, joins, active_bounds);
         swap_positions_in_ABL(node.bound1->bound, node.bound2->bound, active_bounds);
-        /*
-        if (((*node.bound1->bound)->current_edge->bot.x == 3352 && (*node.bound1->bound)->current_edge->bot.y == 1434) ||
-            ((*node.bound2->bound)->current_edge->bot.x == 3352 && (*node.bound2->bound)->current_edge->bot.y == 1434)) {
-            std::clog << active_bounds << std::endl;
-        }
-        */
     }
 }
 

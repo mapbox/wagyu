@@ -98,7 +98,6 @@ active_bound_list_itr<T> do_maxima(active_bound_list_itr<T> bnd,
         active_bounds.erase(bndMaxPair);
         return active_bounds.erase(bnd);
     } else {
-        //std::clog << active_bounds << std::endl;
         throw clipper_exception("DoMaxima error");
     }
 }
@@ -114,9 +113,6 @@ void process_edges_at_top_of_scanbeam(T top_y,
                                       clip_type cliptype,
                                       fill_type subject_fill_type,
                                       fill_type clip_fill_type) {
-    if (active_bounds.empty()) {
-        return;
-    }
     
     maxima_list<T> maxima;
     for (auto bnd = active_bounds.begin(); bnd != active_bounds.end();) {
@@ -128,8 +124,9 @@ void process_edges_at_top_of_scanbeam(T top_y,
         active_bound_list_itr<T> bnd_max_pair;
         if (is_maxima_edge) {
             bnd_max_pair = get_maxima_pair(bnd, active_bounds);
-            is_maxima_edge = (bnd_max_pair == active_bounds.end() ||
-                              !current_edge_is_horizontal<T>(bnd_max_pair));
+            is_maxima_edge = ((bnd_max_pair == active_bounds.end() ||
+                              !current_edge_is_horizontal<T>(bnd_max_pair)) &&
+                              is_maxima(bnd_max_pair, top_y));
         }
 
         if (is_maxima_edge) {
@@ -333,6 +330,18 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
                                          clip_fill_type);
         }
     }
+
+    //fix orientations ...
+    for (size_t i = 0; i < rings.size(); ++i) {
+        ring_ptr<T> r = rings[i];
+        if (!r->points || r->is_open) {
+            continue;
+        }
+        if (r->is_hole == (area(*r) > 0))
+        {   
+            reverse_ring(r->points);
+        }
+    }
     
     if (!joins.empty()) {
         join_common_edges(joins, rings);
@@ -348,7 +357,7 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
             fixup_out_polyline(*r);
         } else {
             fix_hole_linkage(r);
-            fixup_out_polygon(*r, false);
+            fixup_out_polygon(*r, true);
         }
     }
 
@@ -358,7 +367,7 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         if (!r->points || r->is_open) {
             continue;
         }
-        fixup_out_polygon(*r, true);
+        fixup_out_polygon(*r, false);
         std::size_t depth = ring_depth(r);
         bool is_hole = !is_odd(depth);
         if (is_hole == (area(*r) > 0)) {

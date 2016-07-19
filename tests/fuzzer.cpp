@@ -149,12 +149,20 @@ int main() {
             std::clog << ".";
             clipper.add_polygon(polygon, mapbox::geometry::wagyu::polygon_type_subject);
             std::vector<mapbox::geometry::polygon<std::int64_t>> solution;
-            clipper.execute(mapbox::geometry::wagyu::clip_type_union, solution, fill_type,
-                            mapbox::geometry::wagyu::fill_type_even_odd);
+            try {
+                clipper.execute(mapbox::geometry::wagyu::clip_type_union, solution, fill_type,
+                                mapbox::geometry::wagyu::fill_type_even_odd);
+            } catch (std::exception const& ex) {
+                create_test(polygon, seed, iteration);
+                std::clog << std::endl;
+                std::clog << ex.what() << std::endl;
+                return -1;
+            }
 
             for (auto const& p : solution) {
                 std::string message;
                 if (!boost::geometry::is_valid(p, message)) {
+                    std::clog << std::endl;
                     std::clog << message << std::endl;
                     log_ring(p);
                     create_test(polygon, seed, iteration);

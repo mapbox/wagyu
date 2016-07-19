@@ -60,7 +60,6 @@ void set_hole_state(active_bound_list_itr<T>& bnd, active_bound_list<T>& active_
         }
         ++bnd2;
     }
-
     if (!bndTmp) {
         (*bnd)->ring->first_left = nullptr;
         (*bnd)->ring->is_hole = false;
@@ -137,7 +136,7 @@ point_ptr<T> add_point_to_ring(active_bound_list_itr<T>& bnd,
                                mapbox::geometry::point<T> const& pt) {
     assert((*bnd)->ring);
     /*
-    if (pt.x == 1721 && pt.y == 2417) {
+    if (pt.x == 2500 && pt.y == -544) {
         void* callstack[128];
         int i, frames = backtrace(callstack, 128);
         char** strs = backtrace_symbols(callstack, frames);
@@ -145,7 +144,8 @@ point_ptr<T> add_point_to_ring(active_bound_list_itr<T>& bnd,
             printf("%s\n", strs[i]);
         }
         free(strs);
-    }*/
+    }
+    */
     ring_ptr<T>& ring = (*bnd)->ring;
     // ring->points is the 'Left-most' point & ring->points->prev is the
     // 'Right-most'
@@ -222,21 +222,6 @@ point_ptr<T> add_local_minimum_point(active_bound_list_itr<T> b1,
     active_bound_list_rev_itr<T> prev_bound;
     active_bound_list_rev_itr<T> prev_b1(b1);
     active_bound_list_rev_itr<T> prev_b2(b2);
-    /*
-    if (((*b1)->edges.back().bot.x == 3352 && (*b1)->edges.back().bot.y == 1434) ||
-        ((*b2)->edges.back().bot.x == 3352 && (*b2)->edges.back().bot.y == 1434)) {
-        std::clog << "foo" << std::endl;
-        std::clog << " point x: " << pt.x << " y: " << pt.y << std::endl;
-        std::clog << "foo" << std::endl;
-        void* callstack[128];
-        int i, frames = backtrace(callstack, 128);
-        char** strs = backtrace_symbols(callstack, frames);
-        for (i = 0; i < frames; ++i) {
-            printf("%s\n", strs[i]);
-        }
-        free(strs);
-    }
-    */
     if (is_horizontal(*((*b2)->current_edge)) ||
         ((*b1)->current_edge->dx > (*b2)->current_edge->dx)) {
         result = add_point(b1, active_bounds, pt, rings);
