@@ -135,6 +135,14 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
         bnd = next_bnd;
     } // end while (bnd != active_bounds.end())
 
+    if ((*horz_bound)->ring && !is_open) {
+        while (max_iter != maxima.end() && *max_iter < (*horz_bound)->current_edge->top.x) {
+            add_point_to_ring(horz_bound, mapbox::geometry::point<T>(
+                                              *max_iter, (*horz_bound)->current_edge->bot.y));
+            ++max_iter;
+        }
+    }
+
     if ((*horz_bound)->ring && !p1) {
         p1 = get_last_point<T>(horz_bound);
         for (auto bnd_itr = active_bounds.begin(); bnd_itr != active_bounds.end(); ++bnd_itr) {
@@ -302,6 +310,14 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
         swap_positions_in_ABL(horz_bound, bnd_forward, active_bounds);
         bnd = next_bnd;
     } // end while (bnd != active_bounds.rend())
+
+    if ((*horz_bound)->ring && !is_open) {
+        while (max_iter != maxima.rend() && *max_iter > (*horz_bound)->current_edge->top.x) {
+            add_point_to_ring(horz_bound, mapbox::geometry::point<T>(
+                                              *max_iter, (*horz_bound)->current_edge->bot.y));
+            ++max_iter;
+        }
+    }
 
     if ((*horz_bound)->ring && !p1) {
         p1 = get_last_point<T>(horz_bound);

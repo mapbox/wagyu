@@ -367,6 +367,7 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         if (!r->points || r->is_open) {
             continue;
         }
+        fix_hole_linkage(r);
         fixup_out_polygon(*r, false);
         std::size_t depth = ring_depth(r);
         bool is_hole = !is_odd(depth);
