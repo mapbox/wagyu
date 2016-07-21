@@ -156,8 +156,8 @@ void set_edge_data(edge_list<T>& edges, bound_ptr<T> bound) {
 }
 
 template <typename T>
-void fix_horizontals(bound<T> & bnd) {
-    
+void fix_horizontals(bound<T>& bnd) {
+
     auto edge_itr = bnd.edges.begin();
     auto next_itr = std::next(edge_itr);
     if (next_itr == bnd.edges.end()) {

@@ -163,9 +163,11 @@ void intersection_point(bound<T> const& Bound1,
             } else {
                 keep_searching = false;
             }
-        } while (keep_searching);
+        }
+        while (keep_searching)
+            ;
     }
-    
+
     // finally, don't allow 'ip' to be BELOW curr.y (ie bottom of scanbeam) ...
     if (ip.y > Bound1.curr.y) {
         ip.y = Bound1.curr.y;

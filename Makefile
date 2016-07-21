@@ -51,4 +51,4 @@ clean:
 	rm -rf ./mason_packages
 
 indent:
-	clang-format -i $(filter-out ./tests/catch.hpp, $(shell find . '(' -name '*.hpp' -o -name '*.cpp' ')' -type f -print))
+	clang-format -i $(filter-out ./tests/catch.hpp, $(shell find . -path ./mason_packages -prune -o '(' -name '*.hpp' -o -name '*.cpp' ')' -type f -print))

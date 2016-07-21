@@ -113,7 +113,7 @@ void process_edges_at_top_of_scanbeam(T top_y,
                                       clip_type cliptype,
                                       fill_type subject_fill_type,
                                       fill_type clip_fill_type) {
-    
+
     maxima_list<T> maxima;
     for (auto bnd = active_bounds.begin(); bnd != active_bounds.end();) {
         // 1. Process maxima, treating them as if they are "bent" horizontal edges,
@@ -125,7 +125,7 @@ void process_edges_at_top_of_scanbeam(T top_y,
         if (is_maxima_edge) {
             bnd_max_pair = get_maxima_pair(bnd, active_bounds);
             is_maxima_edge = ((bnd_max_pair == active_bounds.end() ||
-                              !current_edge_is_horizontal<T>(bnd_max_pair)) &&
+                               !current_edge_is_horizontal<T>(bnd_max_pair)) &&
                               is_maxima(bnd_max_pair, top_y));
         }
 
@@ -254,7 +254,7 @@ void fixup_out_polygon(ring<T>& ring, bool simple) {
         if (pp->prev == pp || pp->prev == pp->next) {
             // We now need to make sure any children rings to this are promoted and their hole
             // status is changed
-            //promote_children_of_removed_ring(&ring, rings);
+            // promote_children_of_removed_ring(&ring, rings);
             dispose_out_points(pp);
             ring.points = nullptr;
             return;
@@ -331,18 +331,17 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         }
     }
 
-    //fix orientations ...
+    // fix orientations ...
     for (size_t i = 0; i < rings.size(); ++i) {
         ring_ptr<T> r = rings[i];
         if (!r->points || r->is_open) {
             continue;
         }
-        if (r->is_hole == (area(*r) > 0))
-        {   
+        if (r->is_hole == (area(*r) > 0)) {
             reverse_ring(r->points);
         }
     }
-    
+
     if (!joins.empty()) {
         join_common_edges(joins, rings);
     }
@@ -362,7 +361,7 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
     }
 
     do_simple_polygons(rings);
-    
+
     for (auto& r : rings) {
         if (!r->points || r->is_open) {
             continue;

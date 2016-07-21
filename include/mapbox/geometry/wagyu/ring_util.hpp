@@ -26,20 +26,15 @@ namespace geometry {
 namespace wagyu {
 
 template <typename T>
-void fix_hole_linkage(ring_ptr<T> r)
-{
-    //skip OutRecs that (a) contain outermost polygons or
+void fix_hole_linkage(ring_ptr<T> r) {
+    // skip OutRecs that (a) contain outermost polygons or
     //(b) already have the correct owner/child linkage ...
-    if (!r->first_left ||
-      (r->is_hole != r->first_left->is_hole &&
-      r->first_left->points))
-    {
+    if (!r->first_left || (r->is_hole != r->first_left->is_hole && r->first_left->points)) {
         return;
     }
 
     ring_ptr<T> orfl = r->first_left;
-    while (orfl && ((orfl->is_hole == r->is_hole) || !orfl->points))
-    {
+    while (orfl && ((orfl->is_hole == r->is_hole) || !orfl->points)) {
         orfl = orfl->first_left;
     }
     r->first_left = orfl;
@@ -388,7 +383,7 @@ void append_ring(active_bound_list_itr<T>& b1,
     // get the start and ends of both output polygons ...
     ring_ptr<T> outRec1 = (*b1)->ring;
     ring_ptr<T> outRec2 = (*b2)->ring;
-    
+
     ring_ptr<T> holeStateRec;
     if (ring1_right_of_ring2(outRec1, outRec2)) {
         holeStateRec = outRec2;
@@ -561,7 +556,6 @@ point_in_polygon_result point_in_polygon(point<T> const& pt, point_ptr<T> op) {
     } while (startOp != op);
     return result;
 }
-
 
 template <typename T>
 bool poly2_contains_poly1(point_ptr<T> outpt1, point_ptr<T> outpt2) {

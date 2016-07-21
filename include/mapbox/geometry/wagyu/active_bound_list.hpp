@@ -188,7 +188,8 @@ void set_winding_count(active_bound_list_itr<T>& bnd_itr,
             bool inside = true;
             auto rev2 = std::next(rev_bnd_itr);
             while (rev2 != active_bounds.rend()) {
-                if ((*rev2)->poly_type == (*rev_bnd_itr)->poly_type && (*rev2)->winding_delta != 0) {
+                if ((*rev2)->poly_type == (*rev_bnd_itr)->poly_type &&
+                    (*rev2)->winding_delta != 0) {
                     inside = !inside;
                 }
                 ++rev2;

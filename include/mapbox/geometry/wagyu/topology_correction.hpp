@@ -157,7 +157,7 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
     if (iList.empty()) {
         return false;
     }
-   
+
     if (ring_origin->is_hole) {
         for (auto& iRing : iList) {
             ring_ptr<T> ring_itr = get_ring(iRing.first);

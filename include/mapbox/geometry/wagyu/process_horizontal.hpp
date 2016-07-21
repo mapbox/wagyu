@@ -43,15 +43,15 @@ point_ptr<T> get_last_point(active_bound_list_itr<T>& bnd) {
 
 template <typename T>
 active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
-                                      active_bound_list_itr<T> horz_bound,
-                                      maxima_list<T>& maxima,
-                                      active_bound_list<T>& active_bounds,
-                                      join_list<T>& joins,
-                                      ring_list<T>& rings,
-                                      scanbeam_list<T>& scanbeam,
-                                      clip_type cliptype,
-                                      fill_type subject_fill_type,
-                                      fill_type clip_fill_type) {
+                                                          active_bound_list_itr<T> horz_bound,
+                                                          maxima_list<T>& maxima,
+                                                          active_bound_list<T>& active_bounds,
+                                                          join_list<T>& joins,
+                                                          ring_list<T>& rings,
+                                                          scanbeam_list<T>& scanbeam,
+                                                          clip_type cliptype,
+                                                          fill_type subject_fill_type,
+                                                          fill_type clip_fill_type) {
     auto horizontal_itr_behind = horz_bound;
     bool is_open = (*horz_bound)->winding_delta == 0;
     bool is_maxima_edge = is_maxima(horz_bound, scanline_y);
@@ -227,15 +227,15 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
 
 template <typename T>
 active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
-                                      active_bound_list_itr<T> horz_bound,
-                                      maxima_list<T>& maxima,
-                                      active_bound_list<T>& active_bounds,
-                                      join_list<T>& joins,
-                                      ring_list<T>& rings,
-                                      scanbeam_list<T>& scanbeam,
-                                      clip_type cliptype,
-                                      fill_type subject_fill_type,
-                                      fill_type clip_fill_type) {
+                                                          active_bound_list_itr<T> horz_bound,
+                                                          maxima_list<T>& maxima,
+                                                          active_bound_list<T>& active_bounds,
+                                                          join_list<T>& joins,
+                                                          ring_list<T>& rings,
+                                                          scanbeam_list<T>& scanbeam,
+                                                          clip_type cliptype,
+                                                          fill_type subject_fill_type,
+                                                          fill_type clip_fill_type) {
     bool is_open = (*horz_bound)->winding_delta == 0;
     bool is_maxima_edge = is_maxima(horz_bound, scanline_y);
     auto bound_max_pair = active_bounds.end();
@@ -390,23 +390,23 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
 
 template <typename T>
 active_bound_list_itr<T> process_horizontal(T scanline_y,
-                        active_bound_list_itr<T> horz_bound,
-                        maxima_list<T>& maxima,
-                        active_bound_list<T>& active_bounds,
-                        join_list<T>& joins,
-                        ring_list<T>& rings,
-                        scanbeam_list<T>& scanbeam,
-                        clip_type cliptype,
-                        fill_type subject_fill_type,
-                        fill_type clip_fill_type) {
+                                            active_bound_list_itr<T> horz_bound,
+                                            maxima_list<T>& maxima,
+                                            active_bound_list<T>& active_bounds,
+                                            join_list<T>& joins,
+                                            ring_list<T>& rings,
+                                            scanbeam_list<T>& scanbeam,
+                                            clip_type cliptype,
+                                            fill_type subject_fill_type,
+                                            fill_type clip_fill_type) {
     if ((*horz_bound)->current_edge->bot.x < (*horz_bound)->current_edge->top.x) {
-        return process_horizontal_left_to_right(scanline_y, horz_bound, maxima, active_bounds, joins,
-                                         rings, scanbeam, cliptype, subject_fill_type,
-                                         clip_fill_type);
+        return process_horizontal_left_to_right(scanline_y, horz_bound, maxima, active_bounds,
+                                                joins, rings, scanbeam, cliptype, subject_fill_type,
+                                                clip_fill_type);
     } else {
-        return process_horizontal_right_to_left(scanline_y, horz_bound, maxima, active_bounds, joins,
-                                         rings, scanbeam, cliptype, subject_fill_type,
-                                         clip_fill_type);
+        return process_horizontal_right_to_left(scanline_y, horz_bound, maxima, active_bounds,
+                                                joins, rings, scanbeam, cliptype, subject_fill_type,
+                                                clip_fill_type);
     }
 }
 
@@ -423,8 +423,8 @@ void process_horizontals(T scanline_y,
     maxima.sort();
     for (auto bnd_itr = active_bounds.begin(); bnd_itr != active_bounds.end();) {
         if (current_edge_is_horizontal<T>(bnd_itr)) {
-            bnd_itr = process_horizontal(scanline_y, bnd_itr, maxima, active_bounds, joins, rings, scanbeam,
-                               cliptype, subject_fill_type, clip_fill_type);
+            bnd_itr = process_horizontal(scanline_y, bnd_itr, maxima, active_bounds, joins, rings,
+                                         scanbeam, cliptype, subject_fill_type, clip_fill_type);
         } else {
             ++bnd_itr;
         }
