@@ -1,6 +1,10 @@
 #pragma once
 
+#include <algorithm>
+#include <list>
+#include <set>
 #include <unordered_map>
+#include <utility>
 
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/join.hpp>

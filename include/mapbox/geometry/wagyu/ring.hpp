@@ -2,6 +2,8 @@
 
 #include <mapbox/geometry/wagyu/point.hpp>
 
+#include <vector>
+
 #ifdef DEBUG
 #include <iostream>
 #endif
