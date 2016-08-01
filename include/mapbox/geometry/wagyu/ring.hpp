@@ -42,6 +42,7 @@ using ring_list = std::vector<ring_ptr<T>>;
 template <typename T>
 ring_ptr<T> create_new_ring(ring_list<T>& rings) {
     ring_ptr<T> result = new ring<T>();
+    result->ring_index = rings.size();
     rings.push_back(result);
     return result;
 }
@@ -51,6 +52,18 @@ ring_ptr<T> parse_first_left(ring_ptr<T> first_left) {
     while (first_left && !first_left->points) {
         first_left = first_left->first_left;
     }
+    return first_left;
+}
+
+template <typename T>
+ring_ptr<T> parse_parent(ring_ptr<T> r) {
+    ring_ptr<T> first_left = r;
+    do {
+        first_left = first_left->first_left;
+        while (first_left && !first_left->points) {
+            first_left = first_left->first_left;
+        }
+    } while (first_left && first_left->is_hole == r->is_hole);
     return first_left;
 }
 
@@ -195,20 +208,23 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
     } else {
         out << "  parent_ring ptr: " << fl->replacement_ring << std::endl;
     }
+    out << "  ring_index: " << r.ring_index << std::endl;
     if (r.is_hole) {
         out << "  is_hole: true" << std::endl;
     } else {
         out << "  is_hole: false" << std::endl;
     }
-    auto first_point = r.points;
     auto pt_itr = r.points;
-    if (first_point) {
+    if (pt_itr) {
         out << "  area: " << area(r.points) << std::endl;
         out << "  points:" << std::endl;
-        do {
-            out << "    x: " << pt_itr->x << " y: " << pt_itr->y << std::endl;
+        out << "      [[[" << pt_itr->x << "," << pt_itr->y << "],";
+        pt_itr = pt_itr->next;
+        while (pt_itr != r.points) {
+            out << "[" << pt_itr->x << "," << pt_itr->y << "],";
             pt_itr = pt_itr->next;
-        } while (pt_itr != first_point);
+        }
+        out << "[" << pt_itr->x << "," << pt_itr->y << "]]]" << std::endl;
     } else {
         out << "  area: NONE" << std::endl;
         out << "  points: NONE" << std::endl;

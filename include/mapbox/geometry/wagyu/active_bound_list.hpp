@@ -43,11 +43,29 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
     return out;
 }
 
+template <typename T>
+std::string output_edges(active_bound_list<T> const& bnds) {
+    std::ostringstream out;
+    out << "[";
+    bool first = true;
+    for (auto const& bnd : bnds) {
+        if (first) {
+            first = false;
+        } else {
+            out << ",";
+        }
+        out << "[[" << bnd->current_edge->bot.x << "," << bnd->current_edge->bot.y << "],[";
+        out << bnd->current_edge->top.x << "," << bnd->current_edge->top.y << "]]";
+    }
+    out << "]";
+    return out.str();
+}
+
 #endif
 
 template <typename T>
 inline bool bound2_inserts_before_bound1(bound<T> const& bound1, bound<T> const& bound2) {
-    if (bound2.curr.x == bound1.curr.x) {
+    if (std::fabs(bound2.curr.x - bound1.curr.x) <= 0.0) {
         if (bound2.current_edge->top.y > bound1.current_edge->top.y) {
             return bound2.current_edge->top.x <
                    get_current_x(*(bound1.current_edge), bound2.current_edge->top.y);
@@ -120,7 +138,8 @@ inline void swap_positions_in_ABL(active_bound_list_itr<T>& bnd1,
 template <typename T>
 void next_edge_in_bound(active_bound_list_itr<T>& bnd, scanbeam_list<T>& scanbeam) {
     ++((*bnd)->current_edge);
-    (*bnd)->curr = (*bnd)->current_edge->bot;
+    (*bnd)->curr.x = static_cast<double>((*bnd)->current_edge->bot.x);
+    (*bnd)->curr.y = static_cast<double>((*bnd)->current_edge->bot.y);
     if (!current_edge_is_horizontal<T>(bnd)) {
         scanbeam.push((*bnd)->current_edge->top.y);
     }
@@ -377,17 +396,17 @@ void insert_lm_only_one_bound(bound<T>& bnd,
     auto abl_itr = insert_bound_into_ABL(bnd, active_bounds);
     set_winding_count(abl_itr, active_bounds, cliptype, subject_fill_type, clip_fill_type);
     if (is_contributing(bnd, cliptype, subject_fill_type, clip_fill_type)) {
-        add_first_point(abl_itr, active_bounds, (*abl_itr)->curr, rings);
+        add_first_point(abl_itr, active_bounds, (*abl_itr)->current_edge->bot, rings);
         if ((*abl_itr)->winding_delta != 0) {
             auto bnd_prev = active_bound_list_rev_itr<T>(abl_itr);
             if (bnd_prev != active_bounds.rend() && (*bnd_prev)->ring &&
-                (*bnd_prev)->curr.x == (*abl_itr)->curr.x && (*bnd_prev)->winding_delta != 0) {
-                add_point_to_ring(bnd_prev, (*abl_itr)->curr);
+                std::llround((*bnd_prev)->curr.x) == (*abl_itr)->current_edge->bot.x && (*bnd_prev)->winding_delta != 0) {
+                add_point_to_ring(bnd_prev, (*abl_itr)->current_edge->bot);
             }
             auto bnd_next = std::next(abl_itr);
             if (bnd_next != active_bounds.end() && (*bnd_next)->ring &&
-                (*bnd_next)->curr.x == (*abl_itr)->curr.x && (*bnd_next)->winding_delta != 0) {
-                add_point_to_ring(bnd_next, (*abl_itr)->curr);
+                std::llround((*bnd_next)->curr.x) == (*abl_itr)->current_edge->bot.x && (*bnd_next)->winding_delta != 0) {
+                add_point_to_ring(bnd_next, (*abl_itr)->current_edge->bot);
             }
         }
     }
@@ -415,16 +434,16 @@ void insert_lm_left_and_right_bound(bound<T>& left_bound,
     (*rb_abl_itr)->winding_count2 = (*lb_abl_itr)->winding_count2;
     if (is_contributing(left_bound, cliptype, subject_fill_type, clip_fill_type)) {
         point_ptr<T> p1 = add_local_minimum_point(lb_abl_itr, rb_abl_itr, active_bounds,
-                                                  (*lb_abl_itr)->curr, rings, joins);
+                                                  (*lb_abl_itr)->current_edge->bot, rings, joins);
         if ((*lb_abl_itr)->winding_delta != 0) {
             // If left bound winding delta is zero we know that right bound winding delta is also
             // not zero
             auto bnd_prev = active_bound_list_rev_itr<T>(lb_abl_itr);
             if (bnd_prev != active_bounds.rend() && (*bnd_prev)->ring &&
-                (*bnd_prev)->curr.x == (*lb_abl_itr)->curr.x && (*bnd_prev)->winding_delta != 0) {
-                point_ptr<T> p2 = add_point_to_ring(bnd_prev, (*lb_abl_itr)->curr);
+                std::llround((*bnd_prev)->curr.x) == (*lb_abl_itr)->current_edge->bot.x && (*bnd_prev)->winding_delta != 0) {
+                point_ptr<T> p2 = add_point_to_ring(bnd_prev, (*lb_abl_itr)->current_edge->bot);
                 if (slopes_equal((*bnd_prev)->current_edge->bot, (*bnd_prev)->current_edge->top,
-                                 (*lb_abl_itr)->curr, (*lb_abl_itr)->current_edge->top)) {
+                                 (*lb_abl_itr)->current_edge->bot, (*lb_abl_itr)->current_edge->top)) {
                     // Note: this logic mimics that of the angus clipper
                     // but it doesn't seem to make sense, why the join's point is
                     // at the top point, and why does it check that slopes are equal?
@@ -433,10 +452,10 @@ void insert_lm_left_and_right_bound(bound<T>& left_bound,
             }
             auto bnd_next = std::next(rb_abl_itr);
             if (bnd_next != active_bounds.end() && (*bnd_next)->ring &&
-                (*bnd_next)->curr.x == (*rb_abl_itr)->curr.x && (*bnd_next)->winding_delta != 0) {
-                point_ptr<T> p2 = add_point_to_ring(bnd_next, (*rb_abl_itr)->curr);
+                std::llround((*bnd_next)->curr.x) == (*rb_abl_itr)->current_edge->bot.x && (*bnd_next)->winding_delta != 0) {
+                point_ptr<T> p2 = add_point_to_ring(bnd_next, (*rb_abl_itr)->current_edge->bot);
                 if (slopes_equal((*bnd_prev)->current_edge->bot, (*bnd_prev)->current_edge->top,
-                                 (*lb_abl_itr)->curr, (*lb_abl_itr)->current_edge->top)) {
+                                 (*lb_abl_itr)->current_edge->bot, (*lb_abl_itr)->current_edge->top)) {
                     // The same note as above -- additionally the angus clipper
                     // would check that the left bound next in AEL was not the right bound
                     // before this call for the right bound, however, that doesn't make complete
@@ -460,7 +479,7 @@ void insert_lm_left_and_right_bound(bound<T>& left_bound,
         // this is the logic that was copied from angus, but it might be correct
         // to swap the positions in the ABL following this or at least move
         // lb and rb to be next to each other in the ABL.
-        intersect_bounds(rb_abl_itr, abl_itr, (*lb_abl_itr)->curr, cliptype, subject_fill_type,
+        intersect_bounds(rb_abl_itr, abl_itr, (*lb_abl_itr)->current_edge->bot, cliptype, subject_fill_type,
                          clip_fill_type, rings, joins, active_bounds);
         ++abl_itr;
     }

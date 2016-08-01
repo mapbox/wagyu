@@ -42,7 +42,7 @@ bool find_intersect_loop(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>
             continue;
         }
         if (it_ring2 == ring_origin &&
-            (ring_parent == it_ring2 || ring_parent == parse_first_left(it_ring2->first_left)) &&
+            (ring_parent == it_ring2 || ring_parent == parse_parent(it_ring2)) &&
             *prev_pt != *it->second.op2 && *orig_pt != *it->second.op2) {
             iList.emplace_front(ring_search, it->second);
             return true;
@@ -56,7 +56,7 @@ bool find_intersect_loop(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>
          it != range.second && it != dupe_ring.end() && it->first == ring_search; ++it) {
         ring_ptr<T> it_ring = get_ring(it->second.op2->ring);
         if (visited.count(it_ring) > 0 ||
-            (ring_parent != it_ring && ring_parent != parse_first_left(it_ring->first_left)) ||
+            (ring_parent != it_ring && ring_parent != parse_parent(it_ring)) ||
             *prev_pt == *it->second.op2) {
             continue;
         }
@@ -102,12 +102,12 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
     {
         // Order doesn't matter
         ring_origin = ring_j;
-        ring_parent = parse_first_left(ring_origin->first_left);
+        ring_parent = parse_parent(ring_origin);
         ring_search = ring_k;
         op_origin_1 = op_j;
         op_origin_2 = op_k;
     }
-    if (ring_parent != parse_first_left(ring_search->first_left)) {
+    if (ring_parent != parse_parent(ring_search)) {
         // The two holes do not have the same parent, do not add them
         // simply return!
         return false;
@@ -141,7 +141,7 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
              it != range.second && it != dupe_ring.end() && it->first == ring_search; ++it) {
             ring_ptr<T> it_ring = get_ring(it->second.op2->ring);
             if (it_ring != ring_search && *op_origin_2 != *it->second.op2 &&
-                (ring_parent == it_ring || ring_parent == parse_first_left(it_ring->first_left)) &&
+                (ring_parent == it_ring || ring_parent == parse_parent(it_ring)) &&
                 find_intersect_loop(dupe_ring, iList, ring_parent, ring_origin, it_ring, visited,
                                     op_origin_2, it->second.op2, rings)) {
                 found = true;
@@ -222,7 +222,7 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
         ring_itr->bottom_point = nullptr;
         ring_itr->replacement_ring = ring_origin;
         if (ring_origin->is_hole) {
-            ring_itr->first_left = parse_first_left(ring_origin->first_left);
+            ring_itr->first_left = parse_parent(ring_origin);
         } else {
             ring_itr->first_left = ring_origin;
         }
@@ -249,12 +249,12 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
                 ring_ptr<T> fl_ring;
                 ring_ptr<T> fl_ring2;
                 if (it_ring->is_hole) {
-                    fl_ring = parse_first_left(it_ring->first_left);
+                    fl_ring = parse_parent(it_ring);
                 } else {
                     fl_ring = it_ring;
                 }
                 if (it_ring2->is_hole) {
-                    fl_ring2 = parse_first_left(it_ring2->first_left);
+                    fl_ring2 = parse_parent(it_ring2);
                 } else {
                     fl_ring2 = it_ring2;
                 }
@@ -276,12 +276,12 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
         ring_ptr<T> fl_ring;
         ring_ptr<T> fl_ring2;
         if (it_ring->is_hole) {
-            fl_ring = parse_first_left(it_ring->first_left);
+            fl_ring = parse_parent(it_ring);
         } else {
             fl_ring = it_ring;
         }
         if (it_ring2->is_hole) {
-            fl_ring2 = parse_first_left(it_ring2->first_left);
+            fl_ring2 = parse_parent(it_ring2);
         } else {
             fl_ring2 = it_ring2;
         }
@@ -394,12 +394,12 @@ void do_simple_polygons(ring_list<T>& rings) {
                                     ring_ptr<T> fl_ring;
                                     ring_ptr<T> fl_ring2;
                                     if (it_ring->is_hole) {
-                                        fl_ring = parse_first_left(it_ring->first_left);
+                                        fl_ring = parse_parent(it_ring);
                                     } else {
                                         fl_ring = it_ring;
                                     }
                                     if (it_ring2->is_hole) {
-                                        fl_ring2 = parse_first_left(it_ring2->first_left);
+                                        fl_ring2 = parse_parent(it_ring2);
                                     } else {
                                         fl_ring2 = it_ring2;
                                     }
@@ -442,12 +442,12 @@ void do_simple_polygons(ring_list<T>& rings) {
                                     ring_ptr<T> fl_ring;
                                     ring_ptr<T> fl_ring2;
                                     if (it_ring->is_hole) {
-                                        fl_ring = parse_first_left(it_ring->first_left);
+                                        fl_ring = parse_parent(it_ring);
                                     } else {
                                         fl_ring = it_ring;
                                     }
                                     if (it_ring2->is_hole) {
-                                        fl_ring2 = parse_first_left(it_ring2->first_left);
+                                        fl_ring2 = parse_parent(it_ring2);
                                     } else {
                                         fl_ring2 = it_ring2;
                                     }
@@ -488,12 +488,12 @@ void do_simple_polygons(ring_list<T>& rings) {
                                     ring_ptr<T> fl_ring;
                                     ring_ptr<T> fl_ring2;
                                     if (it_ring->is_hole) {
-                                        fl_ring = parse_first_left(it_ring->first_left);
+                                        fl_ring = parse_parent(it_ring);
                                     } else {
                                         fl_ring = it_ring;
                                     }
                                     if (it_ring2->is_hole) {
-                                        fl_ring2 = parse_first_left(it_ring2->first_left);
+                                        fl_ring2 = parse_parent(it_ring2);
                                     } else {
                                         fl_ring2 = it_ring2;
                                     }

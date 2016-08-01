@@ -1,5 +1,7 @@
 #pragma once
 
+#include <set>
+
 #include <mapbox/geometry/point.hpp>
 
 #include <mapbox/geometry/wagyu/sorted_bound_list.hpp>
@@ -17,17 +19,31 @@ struct intersect_node {
 
     sorting_bound_list_itr<T> bound1;
     sorting_bound_list_itr<T> bound2;
-    mapbox::geometry::point<T> pt;
+    mapbox::geometry::point<double> pt;
 
     intersect_node(sorting_bound_list_itr<T> const& bound1_,
                    sorting_bound_list_itr<T> const& bound2_,
-                   mapbox::geometry::point<T> pt_)
+                   mapbox::geometry::point<double> pt_)
         : bound1(bound1_), bound2(bound2_), pt(pt_) {
     }
 };
 
 template <typename T>
 using intersect_list = std::vector<intersect_node<T>>;
+
+template <typename T>
+struct intersect_point_comparer {
+    bool operator() (mapbox::geometry::point<T> const& lhs, mapbox::geometry::point<T> const& rhs) const {
+        if (lhs.y == rhs.y) {
+            return lhs.x < rhs.x;
+        } else {
+            return lhs.y < rhs.y;
+        }
+    }
+};
+
+template <typename T>
+using hot_pixel_set = std::set<mapbox::geometry::point<T>, intersect_point_comparer<T>>;
 
 #ifdef DEBUG
 

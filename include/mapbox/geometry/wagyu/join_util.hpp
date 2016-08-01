@@ -41,7 +41,7 @@ bool join_horizontal(point_ptr<T> op1,
                      point_ptr<T> op1b,
                      point_ptr<T> op2,
                      point_ptr<T> op2b,
-                     const point<T> pt,
+                     mapbox::geometry::point<T> const& pt,
                      bool discard_left) {
     horizontal_direction dir1 = (op1->x > op1b->x ? horizontal_direction::right_to_left
                                                   : horizontal_direction::left_to_right);
@@ -67,7 +67,8 @@ bool join_horizontal(point_ptr<T> op1,
         op1b = duplicate_point(op1, !discard_left);
         if (*op1b != pt) {
             op1 = op1b;
-            *op1 = pt;
+            op1->x = pt.x;
+            op1->y = pt.y;
             op1b = duplicate_point(op1, !discard_left);
         }
     } else {
@@ -80,7 +81,8 @@ bool join_horizontal(point_ptr<T> op1,
         op1b = duplicate_point(op1, discard_left);
         if (*op1b != pt) {
             op1 = op1b;
-            *op1 = pt;
+            op1->x = pt.x;
+            op1->y = pt.y;
             op1b = duplicate_point(op1, discard_left);
         }
     }
@@ -95,7 +97,8 @@ bool join_horizontal(point_ptr<T> op1,
         op2b = duplicate_point(op2, !discard_left);
         if (*op2b != pt) {
             op2 = op2b;
-            *op2 = pt;
+            op2->x = pt.x;
+            op2->y = pt.y;
             op2b = duplicate_point(op2, !discard_left);
         };
     } else {
@@ -108,7 +111,8 @@ bool join_horizontal(point_ptr<T> op1,
         op2b = duplicate_point(op2, discard_left);
         if (*op2b != pt) {
             op2 = op2b;
-            *op2 = pt;
+            op2->x = pt.x;
+            op2->y = pt.y;
             op2b = duplicate_point(op2, discard_left);
         };
     };
@@ -213,7 +217,6 @@ bool join_points(join_ptr<T> j, ring_ptr<T> ring1, ring_ptr<T> ring2) {
                 op1b_next->prev = op2b_prev;
                 return true;
             }
-
             return false;
         }
 
@@ -291,19 +294,23 @@ bool join_points(join_ptr<T> j, ring_ptr<T> ring1, ring_ptr<T> ring2) {
         // DiscardleftSide: when overlapping edges are joined, a spike will created
         // which needs to be cleaned up. However, we don't want Op1 or Op2 caught up
         // on the discard Side as either may still be needed for other joins ...
-        point<T> pt(0, 0);
+        mapbox::geometry::point<T> pt(0, 0);
         bool discard_left_side;
         if (op1->x >= left && op1->x <= right) {
-            pt = *op1;
+            pt.x = op1->x;
+            pt.y = op1->y;
             discard_left_side = (op1->x > op1b->x);
         } else if (op2->x >= left && op2->x <= right) {
-            pt = *op2;
+            pt.x = op2->x;
+            pt.y = op2->y;
             discard_left_side = (op2->x > op2b->x);
         } else if (op1b->x >= left && op1b->x <= right) {
-            pt = *op1b;
+            pt.x = op1b->x;
+            pt.y = op1b->y;
             discard_left_side = op1b->x > op1->x;
         } else {
-            pt = *op2b;
+            pt.x = op2b->x;
+            pt.y = op2b->y;
             discard_left_side = (op2b->x > op2->x);
         }
         j->point1 = op1;
@@ -483,12 +490,14 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
         if (!join_points(join, ring1, ring2)) {
             continue;
         }
+        
         if (ring1 == ring2) {
             // Instead of joining two polygons, we have created a new one
             // by splitting one polygon into two.
 
             ring1->bottom_point = nullptr;
             ring2 = create_new_ring(rings);
+            
             std::size_t p1_count;
             std::size_t p2_count;
             double p1_area;
@@ -510,7 +519,7 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
             }
 
             update_points_ring(ring2);
-
+            
             if (poly2_contains_poly1(ring2->points, ring1->points)) {
                 // ring1 contains ring2 ...
                 ring2->is_hole = !ring1->is_hole;
@@ -539,7 +548,6 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
                 // fixup first_left pointers that may need reassigning to ring2
                 fixup_first_lefts1(ring1, ring2, rings);
             }
-
         } else {
             // joined 2 polygons together ...
             ring2->points = nullptr;

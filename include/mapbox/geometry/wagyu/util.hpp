@@ -118,12 +118,11 @@ bool is_even_odd_alt_fill_type(bound<T> const& bound,
 }
 
 template <typename T>
-inline T get_current_x(edge<T> const& edge, const T current_y) {
+inline double get_current_x(edge<T> const& edge, const T current_y) {
     if (current_y == edge.top.y) {
-        return edge.top.x;
+        return static_cast<double>(edge.top.x);
     } else {
-        return edge.bot.x +
-               static_cast<T>(std::round(edge.dx * static_cast<double>(current_y - edge.bot.y)));
+        return static_cast<double>(edge.bot.x) + edge.dx * static_cast<double>(current_y - edge.bot.y);
     }
 }
 

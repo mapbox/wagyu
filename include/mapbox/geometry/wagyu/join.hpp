@@ -4,6 +4,10 @@
 
 #include <mapbox/geometry/wagyu/point.hpp>
 
+#ifdef DEBUG
+#include <iostream>
+#endif
+
 namespace mapbox {
 namespace geometry {
 namespace wagyu {
@@ -31,6 +35,21 @@ struct join {
 
 template <typename T>
 using join_list = std::vector<join<T>>;
+
+#ifdef DEBUG
+
+template <class charT, class traits, typename T>
+inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
+                                                     const join<T>& j) {
+    out << " Join: " << &j << std::endl;
+    out << "     point 1: " << j.point1->x << "," << j.point1->y << std::endl;
+    out << "     point 2: " << j.point2->x << "," << j.point2->y << std::endl;
+    out << "     off_point: " << j.off_point.x << "," << j.off_point.y << std::endl;
+    return out;
+}
+
+#endif
+
 }
 }
 }

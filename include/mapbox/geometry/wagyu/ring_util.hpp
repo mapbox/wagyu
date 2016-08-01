@@ -131,7 +131,9 @@ point_ptr<T> add_point_to_ring(active_bound_list_itr<T>& bnd,
                                mapbox::geometry::point<T> const& pt) {
     assert((*bnd)->ring);
     /*
-    if (pt.x == 2500 && pt.y == -544) {
+    if ((pt.x == 16) && pt.y == 19) {
+        std::clog << pt.x << "," << pt.y << std::endl;
+        //std::clog << *(*bnd) << std::endl;
         void* callstack[128];
         int i, frames = backtrace(callstack, 128);
         char** strs = backtrace_symbols(callstack, frames);
@@ -243,8 +245,8 @@ point_ptr<T> add_local_minimum_point(active_bound_list_itr<T> b1,
     }
 
     if (prev_bound != active_bounds.rend() && (*prev_bound)->ring) {
-        T x_prev = get_current_x(*((*prev_bound)->current_edge), pt.y);
-        T x_bound = get_current_x(*((*b)->current_edge), pt.y);
+        T x_prev = std::llround(get_current_x(*((*prev_bound)->current_edge), pt.y));
+        T x_bound = std::llround(get_current_x(*((*b)->current_edge), pt.y));
         if (x_prev == x_bound && (*b)->winding_delta != 0 && (*prev_bound)->winding_delta != 0 &&
             slopes_equal(mapbox::geometry::point<T>(x_prev, pt.y), (*prev_bound)->current_edge->top,
                          mapbox::geometry::point<T>(x_bound, pt.y), (*b)->current_edge->top)) {
@@ -446,10 +448,11 @@ void append_ring(active_bound_list_itr<T>& b1,
     outRec2->points = nullptr;
     outRec2->bottom_point = nullptr;
     outRec2->first_left = outRec1;
-
     ring_ptr<T> OkRing = (*b1)->ring;
     ring_ptr<T> ObsoleteRing = (*b2)->ring;
 
+    update_points_ring(outRec1);
+    
     // nb: safe because we only get here via AddLocalMaxPoly
     (*b1)->ring = nullptr;
     (*b2)->ring = nullptr;
