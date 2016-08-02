@@ -394,7 +394,7 @@ void fixup_first_lefts1(ring_ptr<T> old_ring, ring_ptr<T> new_ring, ring_list<T>
     // tests if new_ring contains the polygon before reassigning first_left
     for (auto& ring : rings) {
         ring_ptr<T> first_left = parse_first_left(ring->first_left);
-        if (ring->points && first_left == old_ring) {
+        if (ring->points && first_left == old_ring && ring != new_ring) {
             if (poly2_contains_poly1(ring->points, new_ring->points)) {
                 if (ring->is_hole == new_ring->is_hole) {
                     ring->is_hole = !ring->is_hole;

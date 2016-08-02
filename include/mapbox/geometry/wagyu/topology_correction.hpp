@@ -76,6 +76,9 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
                     ring_ptr<T> ring_j,
                     ring_ptr<T> ring_k,
                     ring_list<T>& rings) {
+    if (ring_j == ring_k) {
+        return true;
+    }
     if (!ring_j->is_hole && !ring_k->is_hole) {
         // Both are not holes, return nothing to do.
         return false;
@@ -125,7 +128,7 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
         }
         if (it_ring2 == ring_origin) {
             found = true;
-            if (*op_origin_1 != *it->second.op2) {
+            if (*op_origin_1 != *(it->second.op2)) {
                 iList.emplace_back(ring_search, it->second);
                 break;
             }
@@ -323,219 +326,207 @@ struct point_ptr_cmp {
 };
 
 template <typename T>
-void do_simple_polygons(ring_list<T>& rings) {
-    std::vector<point_ptr<T>> out_points;
-    {
-        std::size_t i = 0;
-        while (i < rings.size()) {
-            ring_ptr<T> ring = rings[i++];
-            point_ptr<T> op = ring->points;
-            if (!op || ring->is_open)
-                continue;
-            do {
-                out_points.push_back(op);
-                op = op->next;
-            } while (op != ring->points);
+void update_duplicate_point_entries(ring_ptr<T> ring,
+                                    std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>> & dupe_ring) {
+    auto range = dupe_ring.equal_range(ring);
+    std::list<std::pair<ring_ptr<T>, point_ptr_pair<T>>> move_list;
+    for (auto it = range.first; it != range.second;) {
+        ring_ptr<T> it_ring = get_ring(it->second.op1->ring);
+        ring_ptr<T> it_ring_2 = get_ring(it->second.op2->ring);
+        ring_ptr<T> fl_ring;
+        ring_ptr<T> fl_ring_2;
+        if (it_ring->is_hole) {
+            fl_ring = parse_parent(it_ring);
+        } else {
+            fl_ring = it_ring;
+        }
+        if (it_ring_2->is_hole) {
+            fl_ring_2 = parse_parent(it_ring_2);
+        } else {
+            fl_ring_2 = it_ring_2;
+        }
+        if (it_ring != ring) {
+            if ((it_ring->is_hole || it_ring_2->is_hole) &&
+                (fl_ring == fl_ring_2)) {
+                move_list.emplace_back(it_ring, it->second);
+            }
+            it = dupe_ring.erase(it);
+        } else {
+            if ((it_ring->is_hole || it_ring_2->is_hole) &&
+                (fl_ring == fl_ring_2)) {
+                ++it;
+            } else {
+                it = dupe_ring.erase(it);
+            }
         }
     }
-    std::stable_sort(out_points.begin(), out_points.end(), point_ptr_cmp<T>());
-    std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>> dupe_ring;
-    dupe_ring.reserve(rings.size());
-    std::size_t count = 0;
-    for (std::size_t i = 1; i < out_points.size(); ++i) {
-        if (*out_points[i] == *out_points[i - 1]) {
-            ++count;
+    if (!move_list.empty()) {
+        dupe_ring.insert(move_list.begin(), move_list.end());
+    }
+}
+
+template <typename T>
+void handle_self_intersections(point_ptr<T> op, 
+                              point_ptr<T> op2,
+                              ring_ptr<T> ring,
+                              ring_ptr<T> ring2,
+                              std::vector<point_ptr<T>> & points_to_delete,
+                              std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>> & dupe_ring,
+                              ring_list<T>& rings) {
+    // Check that are same ring
+    if (ring != ring2) {
+        return;
+    }
+
+    assert(op != op2);
+    // Check that not repeated points
+    if (op2->next == op) {
+        op2->prev->next = op;
+        op->prev = op2->prev;
+        op2->ring = nullptr;
+        op2->next = nullptr;
+        op2->prev = nullptr;
+        points_to_delete.push_back(op2);
+        return;
+    } else if (op2->prev == op) {
+        op2->next->prev = op;
+        op->next = op2->next;
+        op2->ring = nullptr;
+        op2->next = nullptr;
+        op2->prev = nullptr;
+        points_to_delete.push_back(op2);
+        return;
+    }
+    
+    // split the polygon into two ...
+    point_ptr<T> op3 = op->prev;
+    point_ptr<T> op4 = op2->prev;
+    op->prev = op4;
+    op4->next = op;
+    op2->prev = op3;
+    op3->next = op2;
+
+    ring_ptr<T> new_ring = create_new_ring(rings);
+
+    // We are select where op is assigned because it provides
+    // a performance increase in poly2_contains_poly1 below.
+    if (point_count(op) > point_count(op2)) {
+        ring->points = op;
+        new_ring->points = op2;
+    } else {
+        ring->points = op2;
+        new_ring->points = op;
+    }
+
+    update_points_ring(ring);
+    update_points_ring(new_ring);
+
+    if (poly2_contains_poly1(new_ring->points, ring->points)) {
+        // Out_new_ring is contained by Out_ring1 ...
+        new_ring->is_hole = !ring->is_hole;
+        new_ring->first_left = ring;
+        fixup_first_lefts2(new_ring, ring, rings);
+    } else if (poly2_contains_poly1(ring->points, new_ring->points)) {
+        // Out_ring1 is contained by Out_new_ring ...
+        new_ring->is_hole = ring->is_hole;
+        ring->is_hole = !new_ring->is_hole;
+        new_ring->first_left = ring->first_left;
+        ring->first_left = new_ring;
+        fixup_first_lefts2(ring, new_ring, rings);
+    } else {
+        // the 2 polygons are separate ...
+        new_ring->is_hole = ring->is_hole;
+        new_ring->first_left = ring->first_left;
+        fixup_first_lefts1(ring, new_ring, rings);
+    }
+
+    update_duplicate_point_entries(ring, dupe_ring);
+}
+
+template <typename T>
+void process_repeated_points(std::size_t repeated_point_count,
+                             std::size_t last_index,
+                             std::vector<point_ptr<T>> & sorted_points,
+                             std::vector<point_ptr<T>> & points_to_delete,
+                             std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>> & dupe_ring,
+                             ring_list<T>& rings) {
+    for (std::size_t j = (last_index - repeated_point_count - 1); j < last_index; ++j) {
+        point_ptr<T> op_j = sorted_points[j];
+        if (!op_j->ring) {
             continue;
         }
-        if (count > 0) {
-            for (std::size_t j = (i - count - 1); j < i; ++j) {
-                if (!out_points[j]->ring) {
-                    continue;
-                }
-                ring_ptr<T> ring_j = get_ring(out_points[j]->ring);
-                for (std::size_t k = j + 1; k < i; ++k) {
-                    if (!out_points[k]->ring) {
-                        continue;
-                    }
-                    ring_ptr<T> ring_k = get_ring(out_points[k]->ring);
-                    if (ring_k == ring_j) {
-                        point_ptr<T> op = out_points[j];
-                        point_ptr<T> op2 = out_points[k];
-                        ring_ptr<T> ring = ring_j;
-                        if (op != op2 && op2->next != op && op2->prev != op) {
-                            // split the polygon into two ...
-                            point_ptr<T> op3 = op->prev;
-                            point_ptr<T> op4 = op2->prev;
-                            op->prev = op4;
-                            op4->next = op;
-                            op2->prev = op3;
-                            op3->next = op2;
-
-                            ring_ptr<T> ring2 = create_new_ring(rings);
-                            if (point_count(op) > point_count(op2)) {
-                                ring->points = op;
-                                ring2->points = op2;
-                            } else {
-                                ring->points = op2;
-                                ring2->points = op;
-                            }
-                            update_points_ring(ring);
-                            update_points_ring(ring2);
-                            if (poly2_contains_poly1(ring2->points, ring->points)) {
-                                // Out_ring2 is contained by Out_ring1 ...
-                                ring2->is_hole = !ring->is_hole;
-                                ring2->first_left = ring;
-                                fixup_first_lefts2(ring2, ring, rings);
-                                auto range = dupe_ring.equal_range(ring_j);
-                                std::list<std::pair<ring_ptr<T>, point_ptr_pair<T>>> move_list;
-                                for (auto it = range.first; it != range.second;) {
-                                    ring_ptr<T> it_ring = get_ring(it->second.op1->ring);
-                                    ring_ptr<T> it_ring2 = get_ring(it->second.op2->ring);
-                                    ring_ptr<T> fl_ring;
-                                    ring_ptr<T> fl_ring2;
-                                    if (it_ring->is_hole) {
-                                        fl_ring = parse_parent(it_ring);
-                                    } else {
-                                        fl_ring = it_ring;
-                                    }
-                                    if (it_ring2->is_hole) {
-                                        fl_ring2 = parse_parent(it_ring2);
-                                    } else {
-                                        fl_ring2 = it_ring2;
-                                    }
-                                    if (it_ring != ring_j) {
-                                        if ((it_ring->is_hole || it_ring2->is_hole) &&
-                                            (fl_ring == fl_ring2)) {
-                                            move_list.emplace_back(it_ring, it->second);
-                                        }
-                                        it = dupe_ring.erase(it);
-                                    } else {
-                                        if ((it_ring->is_hole || it_ring2->is_hole) &&
-                                            (fl_ring == fl_ring2)) {
-                                            ++it;
-                                        } else {
-                                            it = dupe_ring.erase(it);
-                                        }
-                                    }
-                                }
-                                if (!move_list.empty()) {
-                                    dupe_ring.insert(move_list.begin(), move_list.end());
-                                }
-                                if (!ring->is_hole) {
-                                    point_ptr_pair<T> intPt1 = { ring->points, ring2->points };
-                                    point_ptr_pair<T> intPt2 = { ring2->points, ring->points };
-                                    dupe_ring.emplace(ring, intPt1);
-                                    dupe_ring.emplace(ring2, intPt2);
-                                }
-                            } else if (poly2_contains_poly1(ring->points, ring2->points)) {
-                                // Out_ring1 is contained by Out_ring2 ...
-                                ring2->is_hole = ring->is_hole;
-                                ring->is_hole = !ring2->is_hole;
-                                ring2->first_left = ring->first_left;
-                                ring->first_left = ring2;
-                                fixup_first_lefts2(ring, ring2, rings);
-                                auto range = dupe_ring.equal_range(ring_j);
-                                std::list<std::pair<ring_ptr<T>, point_ptr_pair<T>>> move_list;
-                                for (auto it = range.first; it != range.second;) {
-                                    ring_ptr<T> it_ring = get_ring(it->second.op1->ring);
-                                    ring_ptr<T> it_ring2 = get_ring(it->second.op2->ring);
-                                    ring_ptr<T> fl_ring;
-                                    ring_ptr<T> fl_ring2;
-                                    if (it_ring->is_hole) {
-                                        fl_ring = parse_parent(it_ring);
-                                    } else {
-                                        fl_ring = it_ring;
-                                    }
-                                    if (it_ring2->is_hole) {
-                                        fl_ring2 = parse_parent(it_ring2);
-                                    } else {
-                                        fl_ring2 = it_ring2;
-                                    }
-                                    if (it_ring != ring_j) {
-                                        if ((it_ring->is_hole || it_ring2->is_hole) &&
-                                            (fl_ring == fl_ring2)) {
-                                            move_list.emplace_back(it_ring, it->second);
-                                        }
-                                        it = dupe_ring.erase(it);
-                                    } else {
-                                        if ((it_ring->is_hole || it_ring2->is_hole) &&
-                                            (fl_ring == fl_ring2)) {
-                                            ++it;
-                                        } else {
-                                            it = dupe_ring.erase(it);
-                                        }
-                                    }
-                                }
-                                if (!move_list.empty()) {
-                                    dupe_ring.insert(move_list.begin(), move_list.end());
-                                }
-                                if (!ring2->is_hole) {
-                                    point_ptr_pair<T> intPt1 = { ring->points, ring2->points };
-                                    point_ptr_pair<T> intPt2 = { ring2->points, ring->points };
-                                    dupe_ring.emplace(ring, intPt1);
-                                    dupe_ring.emplace(ring2, intPt2);
-                                }
-                            } else {
-                                // the 2 polygons are separate ...
-                                ring2->is_hole = ring->is_hole;
-                                ring2->first_left = ring->first_left;
-                                fixup_first_lefts1(ring, ring2, rings);
-                                auto range = dupe_ring.equal_range(ring_j);
-                                std::list<std::pair<ring_ptr<T>, point_ptr_pair<T>>> move_list;
-                                for (auto it = range.first; it != range.second;) {
-                                    ring_ptr<T> it_ring = get_ring(it->second.op1->ring);
-                                    ring_ptr<T> it_ring2 = get_ring(it->second.op2->ring);
-                                    ring_ptr<T> fl_ring;
-                                    ring_ptr<T> fl_ring2;
-                                    if (it_ring->is_hole) {
-                                        fl_ring = parse_parent(it_ring);
-                                    } else {
-                                        fl_ring = it_ring;
-                                    }
-                                    if (it_ring2->is_hole) {
-                                        fl_ring2 = parse_parent(it_ring2);
-                                    } else {
-                                        fl_ring2 = it_ring2;
-                                    }
-                                    if (it_ring != ring_j) {
-                                        if ((it_ring->is_hole || it_ring2->is_hole) &&
-                                            (fl_ring == fl_ring2)) {
-                                            move_list.emplace_back(it_ring, it->second);
-                                        }
-                                        it = dupe_ring.erase(it);
-                                    } else {
-                                        if ((it_ring->is_hole || it_ring2->is_hole) &&
-                                            (fl_ring == fl_ring2)) {
-                                            ++it;
-                                        } else {
-                                            it = dupe_ring.erase(it);
-                                        }
-                                    }
-                                }
-                                if (!move_list.empty()) {
-                                    dupe_ring.insert(move_list.begin(), move_list.end());
-                                }
-                                if (ring2->is_hole) {
-                                    point_ptr_pair<T> intPt1 = { ring->points, ring2->points };
-                                    point_ptr_pair<T> intPt2 = { ring2->points, ring->points };
-                                    dupe_ring.emplace(ring, intPt1);
-                                    dupe_ring.emplace(ring2, intPt2);
-                                }
-                            }
-                            ring_j = get_ring(out_points[j]->ring);
-                        }
-                        continue;
-                    }
-                    if (fix_intersects(dupe_ring, out_points[j], out_points[k], ring_j, ring_k,
-                                       rings)) {
-                        ring_j = get_ring(out_points[j]->ring);
-                    }
-                }
+        for (std::size_t k = j + 1; k < last_index; ++k) {
+            point_ptr<T> op_k = sorted_points[k];
+            if (!op_k->ring) {
+                continue;
             }
-            count = 0;
+            ring_ptr<T> ring_j = get_ring(op_j->ring);
+            ring_ptr<T> ring_k = get_ring(op_k->ring);
+            handle_self_intersections(op_j, op_k, ring_j, ring_k, points_to_delete, dupe_ring, rings); 
+        }
+    }
+
+    for (std::size_t j = (last_index - repeated_point_count - 1); j < last_index; ++j) {
+        point_ptr<T> op_j = sorted_points[j];
+        if (!op_j->ring) {
+            continue;
+        }
+        for (std::size_t k = j + 1; k < last_index; ++k) {
+            point_ptr<T> op_k = sorted_points[k];
+            if (!op_k->ring) {
+                continue;
+            }
+            ring_ptr<T> ring_j = get_ring(op_j->ring);
+            ring_ptr<T> ring_k = get_ring(op_k->ring);
+            fix_intersects(dupe_ring, op_j, op_k, ring_j, ring_k, rings);
         }
     }
 }
+
+template <typename T>
+std::vector<point_ptr<T>> create_sorted_points_vector(ring_list<T> const& rings) {
+    std::vector<point_ptr<T>> sorted_points;
+    std::size_t i = 0;
+    while (i < rings.size()) {
+        ring_ptr<T> ring = rings[i++];
+        point_ptr<T> op = ring->points;
+        if (!op || ring->is_open)
+            continue;
+        do {
+            sorted_points.push_back(op);
+            op = op->next;
+        } while (op != ring->points);
+    }
+    std::stable_sort(sorted_points.begin(), sorted_points.end(), point_ptr_cmp<T>());
+    return sorted_points;
+}
+
+template <typename T>
+void do_simple_polygons(ring_list<T>& rings) {
+
+    std::vector<point_ptr<T>> sorted_points = create_sorted_points_vector(rings);
+    std::vector<point_ptr<T>> points_to_delete;
+    std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>> dupe_ring;
+    dupe_ring.reserve(rings.size());
+
+    // Find sets of repeated points and process them
+    std::size_t count = 0;
+    for (std::size_t i = 1; i < sorted_points.size(); ++i) {
+        if (*sorted_points[i] == *sorted_points[i - 1]) {
+            ++count;
+            continue;
+        }
+        if (count == 0) {
+            continue;
+        }
+        process_repeated_points(count, i, sorted_points, points_to_delete, dupe_ring, rings);
+        count = 0;
+    }
+    for (auto pt : points_to_delete) {
+        delete pt;
+    }
+}
+
 }
 }
 }
