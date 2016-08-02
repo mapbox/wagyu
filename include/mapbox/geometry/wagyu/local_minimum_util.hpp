@@ -171,6 +171,7 @@ void fix_horizontals(bound<T>& bnd) {
         if (is_horizontal(*edge_itr) && prev_itr->top != edge_itr->bot) {
             reverse_horizontal(*edge_itr);
         }
+        prev_itr = edge_itr;
         ++edge_itr;
     }
 }

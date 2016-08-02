@@ -45,8 +45,7 @@ inline void swap_sides(bound<T>& b1, bound<T>& b2) {
 template <typename T1, typename T2>
 void get_edge_intersection(edge<T1> const& e1,
                            edge<T1> const& e2,
-                           mapbox::geometry::point<T2> & pt)
-{
+                           mapbox::geometry::point<T2>& pt) {
     T2 p0_x = static_cast<T2>(e1.bot.x);
     T2 p0_y = static_cast<T2>(e1.bot.y);
     T2 p1_x = static_cast<T2>(e1.top.x);
@@ -56,23 +55,23 @@ void get_edge_intersection(edge<T1> const& e1,
     T2 p3_x = static_cast<T2>(e2.top.x);
     T2 p3_y = static_cast<T2>(e2.top.y);
     T2 s1_x, s1_y, s2_x, s2_y;
-    s1_x = p1_x - p0_x;     s1_y = p1_y - p0_y;
-    s2_x = p3_x - p2_x;     s2_y = p3_y - p2_y;
+    s1_x = p1_x - p0_x;
+    s1_y = p1_y - p0_y;
+    s2_x = p3_x - p2_x;
+    s2_y = p3_y - p2_y;
 
     T2 s, t;
     s = (-s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) / (-s2_x * s1_y + s1_x * s2_y);
-    t = ( s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / (-s2_x * s1_y + s1_x * s2_y);
+    t = (s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / (-s2_x * s1_y + s1_x * s2_y);
 
-    if (s >= 0.0 && s <= 1.0 && t >= 0.0 && t <= 1.0)
-    {
+    if (s >= 0.0 && s <= 1.0 && t >= 0.0 && t <= 1.0) {
         pt.x = p0_x + (t * s1_x);
         pt.y = p0_y + (t * s1_y);
     }
 }
 
 template <typename T>
-void build_intersect_list(sorting_bound_list<T>& sorted_bound_list,
-                          intersect_list<T>& intersects) {
+void build_intersect_list(sorting_bound_list<T>& sorted_bound_list, intersect_list<T>& intersects) {
     // bubblesort ...
     bool isModified;
     do {
@@ -82,7 +81,8 @@ void build_intersect_list(sorting_bound_list<T>& sorted_bound_list,
         while (bnd_next != sorted_bound_list.end()) {
             if ((*(bnd->bound))->curr.x > (*(bnd_next->bound))->curr.x) {
                 mapbox::geometry::point<double> pt;
-                get_edge_intersection<T, double>(*((*(bnd->bound))->current_edge), *((*(bnd_next->bound))->current_edge), pt);
+                get_edge_intersection<T, double>(*((*(bnd->bound))->current_edge),
+                                                 *((*(bnd_next->bound))->current_edge), pt);
                 intersects.emplace_back(bnd, bnd_next, pt);
                 swap_positions_in_SBL(bnd, bnd_next, sorted_bound_list);
                 bnd_next = std::next(bnd);
@@ -141,16 +141,6 @@ void intersect_bounds(active_bound_list_itr<T>& b1,
                       ring_list<T>& rings,
                       join_list<T>& joins,
                       active_bound_list<T>& active_bounds) {
-    /*
-    if (pt.x == 16 && (pt.y == 19 || pt.y == 20)) {
-        std::clog << "--- " << pt.x << "," << pt.y << std::endl;
-        std::clog << *(*b1) << std::endl;
-        std::clog << *(*b2) << std::endl;
-        std::clog << "---------------" << std::endl;
-        //std::clog << output_edges(active_bounds) << std::endl;
-        //std::clog << "-------------------" << std::endl;
-    }
-    */
     bool b1Contributing = ((*b1)->ring != nullptr);
     bool b2Contributing = ((*b2)->ring != nullptr);
     // if either bound is on an OPEN path ...
@@ -282,13 +272,13 @@ void intersect_bounds(active_bound_list_itr<T>& b1,
             swap_rings(*(*b1), *(*b2));
         }
         auto bnd_prev = active_bound_list_rev_itr<T>(b1);
-        if (bnd_prev != active_bounds.rend() && 
+        if (bnd_prev != active_bounds.rend() &&
             std::llround(get_current_x(*(*bnd_prev)->current_edge, pt.y)) == pt.x &&
             (*bnd_prev)->ring && (*bnd_prev)->winding_delta != 0 && (*b1)->winding_delta != 0) {
             add_point_to_ring(bnd_prev, pt);
         }
         auto bnd_next = std::next(b2);
-        if (bnd_next != active_bounds.end() && 
+        if (bnd_next != active_bounds.end() &&
             std::llround(get_current_x(*(*bnd_next)->current_edge, pt.y)) == pt.x &&
             (*bnd_next)->ring && (*bnd_next)->winding_delta != 0 && (*b2)->winding_delta != 0) {
             add_point_to_ring(bnd_next, pt);
@@ -374,20 +364,17 @@ void process_intersect_list(T top_y,
                             join_list<T>& joins,
                             active_bound_list<T>& active_bounds) {
     hot_pixel_set<T> hot_pixels;
-    //std::clog << "scanline y: " << top_y << std::endl;
-    /*if (top_y == 18) {
-        std::clog << active_bounds << std::endl;
-    }*/
     for (auto& node : intersects) {
         mapbox::geometry::point<T> pt;
         intersection_point(*(*(node.bound1->bound)), *(*(node.bound2->bound)), pt, hot_pixels);
         if (pt.y < top_y) {
             pt = mapbox::geometry::point<T>(
-                std::llround(get_current_x(*((*(node.bound1->bound))->current_edge), top_y)), top_y);
+                std::llround(get_current_x(*((*(node.bound1->bound))->current_edge), top_y)),
+                top_y);
         }
         hot_pixels.insert(pt);
-        intersect_bounds(node.bound1->bound, node.bound2->bound, pt, cliptype,
-                         subject_fill_type, clip_fill_type, rings, joins, active_bounds);
+        intersect_bounds(node.bound1->bound, node.bound2->bound, pt, cliptype, subject_fill_type,
+                         clip_fill_type, rings, joins, active_bounds);
         swap_positions_in_ABL(node.bound1->bound, node.bound2->bound, active_bounds);
     }
 }
@@ -419,8 +406,8 @@ void process_intersections(T top_y,
     if (intersects.size() > 1) {
         fixup_intersection_order(sorted_bound_list, intersects);
     }
-    process_intersect_list(top_y, intersects, cliptype, subject_fill_type, clip_fill_type, rings, joins,
-                           active_bounds);
+    process_intersect_list(top_y, intersects, cliptype, subject_fill_type, clip_fill_type, rings,
+                           joins, active_bounds);
     return;
 }
 }

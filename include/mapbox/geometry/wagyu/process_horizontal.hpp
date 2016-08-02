@@ -95,7 +95,9 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
 
         // note: may be done multiple times
         if ((*horz_bound)->ring && !is_open) {
-            p1 = add_point_to_ring(horz_bound, mapbox::geometry::point<T>(std::llround((*bnd)->curr.x), std::llround((*bnd)->curr.y)));
+            p1 = add_point_to_ring(horz_bound,
+                                   mapbox::geometry::point<T>(std::llround((*bnd)->curr.x),
+                                                              std::llround((*bnd)->curr.y)));
             for (auto bnd_itr = active_bounds.begin(); bnd_itr != active_bounds.end(); ++bnd_itr) {
                 if (bnd_itr != horz_bound && (*bnd_itr)->ring &&
                     current_edge_is_horizontal<T>(bnd_itr) &&
@@ -125,7 +127,8 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
         }
 
         intersect_bounds(horz_bound, bnd,
-                         mapbox::geometry::point<T>(std::llround((*bnd)->curr.x), std::llround((*horz_bound)->curr.y)),
+                         mapbox::geometry::point<T>(std::llround((*bnd)->curr.x),
+                                                    std::llround((*horz_bound)->curr.y)),
                          cliptype, subject_fill_type, clip_fill_type, rings, joins, active_bounds);
         auto next_bnd = std::next(bnd);
         swap_positions_in_ABL(horz_bound, bnd, active_bounds);
@@ -136,7 +139,8 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
     } // end while (bnd != active_bounds.end())
 
     if ((*horz_bound)->ring && !is_open) {
-        while (max_iter != maxima.end() && *max_iter < std::llround((*horz_bound)->current_edge->top.x)) {
+        while (max_iter != maxima.end() &&
+               *max_iter < std::llround((*horz_bound)->current_edge->top.x)) {
             add_point_to_ring(horz_bound, mapbox::geometry::point<T>(
                                               *max_iter, (*horz_bound)->current_edge->bot.y));
             ++max_iter;
@@ -246,7 +250,8 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
     }
 
     auto max_iter = maxima.rbegin();
-    while (max_iter != maxima.rend() && *max_iter > std::llround((*horz_bound)->current_edge->bot.x)) {
+    while (max_iter != maxima.rend() &&
+           *max_iter > std::llround((*horz_bound)->current_edge->bot.x)) {
         ++max_iter;
     }
 
@@ -280,7 +285,9 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
 
         // note: may be done multiple times
         if ((*horz_bound)->ring && !is_open) {
-            p1 = add_point_to_ring(horz_bound, mapbox::geometry::point<T>(std::llround((*bnd)->curr.x), std::llround((*bnd)->curr.y)));
+            p1 = add_point_to_ring(horz_bound,
+                                   mapbox::geometry::point<T>(std::llround((*bnd)->curr.x),
+                                                              std::llround((*bnd)->curr.y)));
             for (auto bnd_itr = active_bounds.begin(); bnd_itr != active_bounds.end(); ++bnd_itr) {
                 if (bnd_itr != horz_bound && (*bnd_itr)->ring &&
                     current_edge_is_horizontal<T>(bnd_itr) &&
@@ -306,7 +313,8 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
         }
 
         intersect_bounds(bnd_forward, horz_bound,
-                         mapbox::geometry::point<T>(std::llround((*bnd)->curr.x), std::llround((*horz_bound)->curr.y)),
+                         mapbox::geometry::point<T>(std::llround((*bnd)->curr.x),
+                                                    std::llround((*horz_bound)->curr.y)),
                          cliptype, subject_fill_type, clip_fill_type, rings, joins, active_bounds);
         auto next_bnd = std::next(bnd);
         swap_positions_in_ABL(horz_bound, bnd_forward, active_bounds);

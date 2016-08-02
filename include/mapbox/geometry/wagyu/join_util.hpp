@@ -490,14 +490,14 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
         if (!join_points(join, ring1, ring2)) {
             continue;
         }
-        
+
         if (ring1 == ring2) {
             // Instead of joining two polygons, we have created a new one
             // by splitting one polygon into two.
 
             ring1->bottom_point = nullptr;
             ring2 = create_new_ring(rings);
-            
+
             std::size_t p1_count;
             std::size_t p2_count;
             double p1_area;
@@ -519,7 +519,7 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
             }
 
             update_points_ring(ring2);
-            
+
             if (poly2_contains_poly1(ring2->points, ring1->points)) {
                 // ring1 contains ring2 ...
                 ring2->is_hole = !ring1->is_hole;

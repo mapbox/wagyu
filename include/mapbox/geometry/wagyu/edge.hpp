@@ -69,7 +69,7 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
 
 template <class charT, class traits, typename T>
 inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
-                                                     const edge_list<T>& edges) {
+                                                     edge_list<T> const& edges) {
     std::size_t c = 0;
     for (auto const& e : edges) {
         out << "Index: " << c++ << std::endl;

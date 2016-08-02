@@ -130,19 +130,6 @@ template <typename T>
 point_ptr<T> add_point_to_ring(active_bound_list_itr<T>& bnd,
                                mapbox::geometry::point<T> const& pt) {
     assert((*bnd)->ring);
-    /*
-    if ((pt.x == 16) && pt.y == 19) {
-        std::clog << pt.x << "," << pt.y << std::endl;
-        //std::clog << *(*bnd) << std::endl;
-        void* callstack[128];
-        int i, frames = backtrace(callstack, 128);
-        char** strs = backtrace_symbols(callstack, frames);
-        for (i = 0; i < frames; ++i) {
-            printf("%s\n", strs[i]);
-        }
-        free(strs);
-    }
-    */
     ring_ptr<T>& ring = (*bnd)->ring;
     // ring->points is the 'Left-most' point & ring->points->prev is the
     // 'Right-most'
@@ -452,7 +439,7 @@ void append_ring(active_bound_list_itr<T>& b1,
     ring_ptr<T> ObsoleteRing = (*b2)->ring;
 
     update_points_ring(outRec1);
-    
+
     // nb: safe because we only get here via AddLocalMaxPoly
     (*b1)->ring = nullptr;
     (*b2)->ring = nullptr;

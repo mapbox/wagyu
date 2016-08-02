@@ -326,8 +326,8 @@ struct point_ptr_cmp {
 };
 
 template <typename T>
-void update_duplicate_point_entries(ring_ptr<T> ring,
-                                    std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>> & dupe_ring) {
+void update_duplicate_point_entries(
+    ring_ptr<T> ring, std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring) {
     auto range = dupe_ring.equal_range(ring);
     std::list<std::pair<ring_ptr<T>, point_ptr_pair<T>>> move_list;
     for (auto it = range.first; it != range.second;) {
@@ -346,14 +346,12 @@ void update_duplicate_point_entries(ring_ptr<T> ring,
             fl_ring_2 = it_ring_2;
         }
         if (it_ring != ring) {
-            if ((it_ring->is_hole || it_ring_2->is_hole) &&
-                (fl_ring == fl_ring_2)) {
+            if ((it_ring->is_hole || it_ring_2->is_hole) && (fl_ring == fl_ring_2)) {
                 move_list.emplace_back(it_ring, it->second);
             }
             it = dupe_ring.erase(it);
         } else {
-            if ((it_ring->is_hole || it_ring_2->is_hole) &&
-                (fl_ring == fl_ring_2)) {
+            if ((it_ring->is_hole || it_ring_2->is_hole) && (fl_ring == fl_ring_2)) {
                 ++it;
             } else {
                 it = dupe_ring.erase(it);
@@ -366,13 +364,13 @@ void update_duplicate_point_entries(ring_ptr<T> ring,
 }
 
 template <typename T>
-void handle_self_intersections(point_ptr<T> op, 
-                              point_ptr<T> op2,
-                              ring_ptr<T> ring,
-                              ring_ptr<T> ring2,
-                              std::vector<point_ptr<T>> & points_to_delete,
-                              std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>> & dupe_ring,
-                              ring_list<T>& rings) {
+void handle_self_intersections(point_ptr<T> op,
+                               point_ptr<T> op2,
+                               ring_ptr<T> ring,
+                               ring_ptr<T> ring2,
+                               std::vector<point_ptr<T>>& points_to_delete,
+                               std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring,
+                               ring_list<T>& rings) {
     // Check that are same ring
     if (ring != ring2) {
         return;
@@ -397,7 +395,7 @@ void handle_self_intersections(point_ptr<T> op,
         points_to_delete.push_back(op2);
         return;
     }
-    
+
     // split the polygon into two ...
     point_ptr<T> op3 = op->prev;
     point_ptr<T> op4 = op2->prev;
@@ -446,9 +444,9 @@ void handle_self_intersections(point_ptr<T> op,
 template <typename T>
 void process_repeated_points(std::size_t repeated_point_count,
                              std::size_t last_index,
-                             std::vector<point_ptr<T>> & sorted_points,
-                             std::vector<point_ptr<T>> & points_to_delete,
-                             std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>> & dupe_ring,
+                             std::vector<point_ptr<T>>& sorted_points,
+                             std::vector<point_ptr<T>>& points_to_delete,
+                             std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring,
                              ring_list<T>& rings) {
     for (std::size_t j = (last_index - repeated_point_count - 1); j < last_index; ++j) {
         point_ptr<T> op_j = sorted_points[j];
@@ -462,7 +460,8 @@ void process_repeated_points(std::size_t repeated_point_count,
             }
             ring_ptr<T> ring_j = get_ring(op_j->ring);
             ring_ptr<T> ring_k = get_ring(op_k->ring);
-            handle_self_intersections(op_j, op_k, ring_j, ring_k, points_to_delete, dupe_ring, rings); 
+            handle_self_intersections(op_j, op_k, ring_j, ring_k, points_to_delete, dupe_ring,
+                                      rings);
         }
     }
 
@@ -526,7 +525,6 @@ void do_simple_polygons(ring_list<T>& rings) {
         delete pt;
     }
 }
-
 }
 }
 }

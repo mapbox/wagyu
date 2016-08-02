@@ -33,7 +33,8 @@ using intersect_list = std::vector<intersect_node<T>>;
 
 template <typename T>
 struct intersect_point_comparer {
-    bool operator() (mapbox::geometry::point<T> const& lhs, mapbox::geometry::point<T> const& rhs) const {
+    bool operator()(mapbox::geometry::point<T> const& lhs,
+                    mapbox::geometry::point<T> const& rhs) const {
         if (lhs.y == rhs.y) {
             return lhs.x < rhs.x;
         } else {

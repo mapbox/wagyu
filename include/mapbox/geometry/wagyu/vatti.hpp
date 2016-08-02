@@ -63,7 +63,8 @@ active_bound_list_itr<T> do_maxima(active_bound_list_itr<T> bnd,
         return active_bounds.erase(bnd);
     }
     auto bnd_prev = active_bound_list_rev_itr<T>(bnd);
-    if (bnd_prev != active_bounds.rend() && std::llround((*bnd_prev)->curr.x) == (*bnd)->current_edge->top.x &&
+    if (bnd_prev != active_bounds.rend() &&
+        std::llround((*bnd_prev)->curr.x) == (*bnd)->current_edge->top.x &&
         (*bnd_prev)->current_edge->top != (*bnd)->current_edge->top && (*bnd_prev)->ring &&
         (*bnd_prev)->winding_delta != 0 && (*bnd)->ring && (*bnd)->winding_delta != 0) {
         add_point_to_ring(bnd_prev, (*bnd)->current_edge->top);
@@ -76,7 +77,8 @@ active_bound_list_itr<T> do_maxima(active_bound_list_itr<T> bnd,
         bnd_next = std::next(bnd);
     }
     bnd_next = std::next(bndMaxPair);
-    if (bnd_next != active_bounds.end() && std::llround((*bnd_next)->curr.x) == (*bnd)->current_edge->top.x &&
+    if (bnd_next != active_bounds.end() &&
+        std::llround((*bnd_next)->curr.x) == (*bnd)->current_edge->top.x &&
         (*bnd_next)->current_edge->top != (*bnd)->current_edge->top && (*bnd_next)->ring &&
         (*bnd_next)->winding_delta != 0 && (*bnd)->ring && (*bnd)->winding_delta != 0) {
         add_point_to_ring(bnd_next, (*bnd)->current_edge->top);
@@ -134,7 +136,7 @@ void process_edges_at_top_of_scanbeam(T top_y,
             bnd = do_maxima(bnd, bnd_max_pair, cliptype, subject_fill_type, clip_fill_type, rings,
                             joins, active_bounds);
         } else {
-            // 2. Promote horizontal edges. 
+            // 2. Promote horizontal edges.
 
             if (is_intermediate(bnd, top_y) && next_edge_is_horizontal<T>(bnd)) {
                 next_edge_in_bound(bnd, scanbeam);
@@ -151,11 +153,13 @@ void process_edges_at_top_of_scanbeam(T top_y,
             // When E is being touched by another edge, make sure both edges have a vertex here.
             if ((*bnd)->ring && (*bnd)->winding_delta != 0) {
                 auto bnd_prev = active_bound_list_rev_itr<T>(bnd);
-                while (bnd_prev != active_bounds.rend() && std::llround((*bnd_prev)->curr.x) == std::llround((*bnd)->curr.x)) {
+                while (bnd_prev != active_bounds.rend() &&
+                       std::llround((*bnd_prev)->curr.x) == std::llround((*bnd)->curr.x)) {
                     if ((*bnd_prev)->ring && (*bnd_prev)->winding_delta != 0 &&
                         !((*bnd)->current_edge->bot == (*bnd_prev)->current_edge->bot &&
                           (*bnd)->current_edge->top == (*bnd_prev)->current_edge->top)) {
-                        mapbox::geometry::point<T> pt(std::llround((*bnd)->curr.x), std::llround((*bnd)->curr.y));
+                        mapbox::geometry::point<T> pt(std::llround((*bnd)->curr.x),
+                                                      std::llround((*bnd)->curr.y));
                         point_ptr<T> op = add_point_to_ring(bnd_prev, pt);
                         point_ptr<T> op2 = add_point_to_ring(bnd, pt);
                         joins.emplace_back(op, op2, pt); // strictly simple type 3 join
@@ -362,9 +366,9 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         }
     }
 
-    //std::clog << rings << std::endl;
+    // std::clog << rings << std::endl;
     do_simple_polygons(rings);
-    //std::clog << rings << std::endl;
+    // std::clog << rings << std::endl;
 
     for (auto& r : rings) {
         if (!r->points || r->is_open) {

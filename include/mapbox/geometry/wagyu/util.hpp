@@ -122,7 +122,8 @@ inline double get_current_x(edge<T> const& edge, const T current_y) {
     if (current_y == edge.top.y) {
         return static_cast<double>(edge.top.x);
     } else {
-        return static_cast<double>(edge.bot.x) + edge.dx * static_cast<double>(current_y - edge.bot.y);
+        return static_cast<double>(edge.bot.x) +
+               edge.dx * static_cast<double>(current_y - edge.bot.y);
     }
 }
 

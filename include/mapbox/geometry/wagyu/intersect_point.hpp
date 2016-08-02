@@ -4,8 +4,8 @@
 #include <limits>
 
 #include <mapbox/geometry/wagyu/edge.hpp>
-#include <mapbox/geometry/wagyu/util.hpp>
 #include <mapbox/geometry/wagyu/intersect.hpp>
+#include <mapbox/geometry/wagyu/util.hpp>
 
 namespace mapbox {
 namespace geometry {
@@ -16,22 +16,22 @@ inline T get_current_min_x(edge<T> const& edge, const T current_y) {
     if (is_horizontal(edge)) {
         if (edge.bot.x < edge.top.x) {
             return edge.bot.x;
-        } else  {
+        } else {
             return edge.top.x;
         }
     } else if (edge.dx > 0.0) {
         if (current_y == edge.top.y) {
             return edge.top.x;
         } else {
-            return edge.bot.x + 
-                   static_cast<T>(std::round(edge.dx * (static_cast<double>(current_y - edge.bot.y) - 0.5)));
+            return edge.bot.x + static_cast<T>(std::round(
+                                    edge.dx * (static_cast<double>(current_y - edge.bot.y) - 0.5)));
         }
     } else {
         if (current_y == edge.bot.y) {
             return edge.bot.x;
         } else {
-            return edge.bot.x +
-                   static_cast<T>(std::round(edge.dx * (static_cast<double>(current_y - edge.bot.y) + 0.5)));
+            return edge.bot.x + static_cast<T>(std::round(
+                                    edge.dx * (static_cast<double>(current_y - edge.bot.y) + 0.5)));
         }
     }
 }
@@ -41,29 +41,32 @@ inline T get_current_max_x(edge<T> const& edge, const T current_y) {
     if (is_horizontal(edge)) {
         if (edge.bot.x > edge.top.x) {
             return edge.bot.x;
-        } else  {
+        } else {
             return edge.top.x;
         }
     } else if (edge.dx < 0.0) {
         if (current_y == edge.top.y) {
             return edge.top.x;
         } else {
-            return edge.bot.x +
-                   static_cast<T>(std::round(edge.dx * (static_cast<double>(current_y - edge.bot.y) - 0.5)));
+            return edge.bot.x + static_cast<T>(std::round(
+                                    edge.dx * (static_cast<double>(current_y - edge.bot.y) - 0.5)));
         }
     } else {
         if (current_y == edge.bot.y) {
             return edge.bot.x;
         } else {
-            return edge.bot.x +
-                   static_cast<T>(std::round(edge.dx * (static_cast<double>(current_y - edge.bot.y) + 0.5)));
+            return edge.bot.x + static_cast<T>(std::round(
+                                    edge.dx * (static_cast<double>(current_y - edge.bot.y) + 0.5)));
         }
     }
 }
 
 template <typename T>
-void find_nearest_shared_point_left(edge<T> const& e1, edge<T> const& e2, 
-                                    mapbox::geometry::point<T> & pt, hot_pixel_set<T> & hot_pixels, T bottom_y) {
+void find_nearest_shared_point_left(edge<T> const& e1,
+                                    edge<T> const& e2,
+                                    mapbox::geometry::point<T>& pt,
+                                    hot_pixel_set<T>& hot_pixels,
+                                    T bottom_y) {
     double b1 = e1.bot.x - e1.bot.y * e1.dx;
     double b2 = e2.bot.x - e2.bot.y * e2.dx;
     double q = (b2 - b1) / (e1.dx - e2.dx);
@@ -74,10 +77,12 @@ void find_nearest_shared_point_left(edge<T> const& e1, edge<T> const& e2,
         pt.x = static_cast<T>(std::round(e2.dx * q + b2));
     }
     T current_y = pt.y;
-    auto pixel_at_least = [current_y](mapbox::geometry::point<T> const& p) { return p.y < current_y; };
+    auto pixel_at_least = [current_y](mapbox::geometry::point<T> const& p) {
+        return p.y < current_y;
+    };
     auto hot_pixel_itr = hot_pixels.begin();
-    // The first time that the two pixel paths diverge we must end 
-    // our search, otherwise we are entering unknown territory. If 
+    // The first time that the two pixel paths diverge we must end
+    // our search, otherwise we are entering unknown territory. If
     // the previous set of min/max where pixels align does not touch
     // contain any of the same values of the previous min/max then we
     // must abort the search upwards. This is why we are tracking
@@ -111,8 +116,7 @@ void find_nearest_shared_point_left(edge<T> const& e1, edge<T> const& e2,
         pt.x = min;
         pt.y = current_y;
         bool hot_pixel_found = false;
-        while (hot_pixel_itr != hot_pixels.end() && 
-               hot_pixel_itr->y == current_y) {
+        while (hot_pixel_itr != hot_pixels.end() && hot_pixel_itr->y == current_y) {
             if (hot_pixel_itr->x >= min && hot_pixel_itr->x <= max) {
                 pt.x = hot_pixel_itr->x;
                 hot_pixel_found = true;
@@ -127,7 +131,11 @@ void find_nearest_shared_point_left(edge<T> const& e1, edge<T> const& e2,
 }
 
 template <typename T>
-void find_nearest_shared_point_right(edge<T> const& e1, edge<T> const& e2, mapbox::geometry::point<T> & pt, hot_pixel_set<T> & hot_pixels, T bottom_y) {
+void find_nearest_shared_point_right(edge<T> const& e1,
+                                     edge<T> const& e2,
+                                     mapbox::geometry::point<T>& pt,
+                                     hot_pixel_set<T>& hot_pixels,
+                                     T bottom_y) {
     double b1 = e1.bot.x - e1.bot.y * e1.dx;
     double b2 = e2.bot.x - e2.bot.y * e2.dx;
     double q = (b2 - b1) / (e1.dx - e2.dx);
@@ -138,10 +146,12 @@ void find_nearest_shared_point_right(edge<T> const& e1, edge<T> const& e2, mapbo
         pt.x = static_cast<T>(std::round(e2.dx * q + b2));
     }
     T current_y = pt.y;
-    auto pixel_at_least = [current_y](mapbox::geometry::point<T> const& p) { return p.y < current_y; };
+    auto pixel_at_least = [current_y](mapbox::geometry::point<T> const& p) {
+        return p.y < current_y;
+    };
     auto hot_pixel_itr = hot_pixels.begin();
-    // The first time that the two pixel paths diverge we must end 
-    // our search, otherwise we are entering unknown territory. If 
+    // The first time that the two pixel paths diverge we must end
+    // our search, otherwise we are entering unknown territory. If
     // the previous set of min/max where pixels align does not touch
     // contain any of the same values of the previous min/max then we
     // must abort the search upwards. This is why we are tracking
@@ -174,8 +184,7 @@ void find_nearest_shared_point_right(edge<T> const& e1, edge<T> const& e2, mapbo
         pt.x = max;
         pt.y = current_y;
         bool hot_pixel_found = false;
-        while (hot_pixel_itr != hot_pixels.end() && 
-               hot_pixel_itr->y == current_y) {
+        while (hot_pixel_itr != hot_pixels.end() && hot_pixel_itr->y == current_y) {
             if (hot_pixel_itr->x >= min && hot_pixel_itr->x <= max) {
                 pt.x = hot_pixel_itr->x;
                 hot_pixel_found = true;
@@ -191,7 +200,11 @@ void find_nearest_shared_point_right(edge<T> const& e1, edge<T> const& e2, mapbo
 }
 
 template <typename T>
-void find_nearest_shared_point_center(edge<T> const& e1, edge<T> const& e2, mapbox::geometry::point<T> & pt, hot_pixel_set<T> & hot_pixels, T bottom_y) {
+void find_nearest_shared_point_center(edge<T> const& e1,
+                                      edge<T> const& e2,
+                                      mapbox::geometry::point<T>& pt,
+                                      hot_pixel_set<T>& hot_pixels,
+                                      T bottom_y) {
     double b1 = e1.bot.x - e1.bot.y * e1.dx;
     double b2 = e2.bot.x - e2.bot.y * e2.dx;
     double q = (b2 - b1) / (e1.dx - e2.dx);
@@ -202,10 +215,12 @@ void find_nearest_shared_point_center(edge<T> const& e1, edge<T> const& e2, mapb
         pt.x = static_cast<T>(std::round(e2.dx * q + b2));
     }
     T current_y = pt.y;
-    auto pixel_at_least = [current_y](mapbox::geometry::point<T> const& p) { return p.y < current_y; };
+    auto pixel_at_least = [current_y](mapbox::geometry::point<T> const& p) {
+        return p.y < current_y;
+    };
     auto hot_pixel_itr = hot_pixels.begin();
-    // The first time that the two pixel paths diverge we must end 
-    // our search, otherwise we are entering unknown territory. If 
+    // The first time that the two pixel paths diverge we must end
+    // our search, otherwise we are entering unknown territory. If
     // the previous set of min/max where pixels align does not touch
     // contain any of the same values of the previous min/max then we
     // must abort the search upwards. This is why we are tracking
@@ -231,7 +246,8 @@ void find_nearest_shared_point_center(edge<T> const& e1, edge<T> const& e2, mapb
             break;
         }
         T max = std::min(e1_max, e2_max);
-        if (!((previous_min >= min && previous_min <= max) || (previous_max >= min && previous_max <= max)))  {
+        if (!((previous_min >= min && previous_min <= max) ||
+              (previous_max >= min && previous_max <= max))) {
             break;
         }
         previous_max = max;
@@ -239,8 +255,7 @@ void find_nearest_shared_point_center(edge<T> const& e1, edge<T> const& e2, mapb
         pt.x = min + (max - min) / 2;
         pt.y = current_y;
         bool hot_pixel_found = false;
-        while (hot_pixel_itr != hot_pixels.end() && 
-               hot_pixel_itr->y == current_y) {
+        while (hot_pixel_itr != hot_pixels.end() && hot_pixel_itr->y == current_y) {
             if (hot_pixel_itr->x >= min && hot_pixel_itr->x <= max) {
                 if (hot_pixel_found) {
                     // Is this pixel closer to the middle then previous
@@ -269,7 +284,7 @@ template <typename T>
 void intersection_point(bound<T> const& Bound1,
                         bound<T> const& Bound2,
                         mapbox::geometry::point<T>& ip,
-                        hot_pixel_set<T> & hot_pixels) {
+                        hot_pixel_set<T>& hot_pixels) {
     // This method finds the FIRST intersecting point in integer space between
     // two edges that is closest to the bot point of the edges.
     edge<T> const& Edge1 = *Bound1.current_edge;

@@ -400,12 +400,14 @@ void insert_lm_only_one_bound(bound<T>& bnd,
         if ((*abl_itr)->winding_delta != 0) {
             auto bnd_prev = active_bound_list_rev_itr<T>(abl_itr);
             if (bnd_prev != active_bounds.rend() && (*bnd_prev)->ring &&
-                std::llround((*bnd_prev)->curr.x) == (*abl_itr)->current_edge->bot.x && (*bnd_prev)->winding_delta != 0) {
+                std::llround((*bnd_prev)->curr.x) == (*abl_itr)->current_edge->bot.x &&
+                (*bnd_prev)->winding_delta != 0) {
                 add_point_to_ring(bnd_prev, (*abl_itr)->current_edge->bot);
             }
             auto bnd_next = std::next(abl_itr);
             if (bnd_next != active_bounds.end() && (*bnd_next)->ring &&
-                std::llround((*bnd_next)->curr.x) == (*abl_itr)->current_edge->bot.x && (*bnd_next)->winding_delta != 0) {
+                std::llround((*bnd_next)->curr.x) == (*abl_itr)->current_edge->bot.x &&
+                (*bnd_next)->winding_delta != 0) {
                 add_point_to_ring(bnd_next, (*abl_itr)->current_edge->bot);
             }
         }
@@ -440,10 +442,12 @@ void insert_lm_left_and_right_bound(bound<T>& left_bound,
             // not zero
             auto bnd_prev = active_bound_list_rev_itr<T>(lb_abl_itr);
             if (bnd_prev != active_bounds.rend() && (*bnd_prev)->ring &&
-                std::llround((*bnd_prev)->curr.x) == (*lb_abl_itr)->current_edge->bot.x && (*bnd_prev)->winding_delta != 0) {
+                std::llround((*bnd_prev)->curr.x) == (*lb_abl_itr)->current_edge->bot.x &&
+                (*bnd_prev)->winding_delta != 0) {
                 point_ptr<T> p2 = add_point_to_ring(bnd_prev, (*lb_abl_itr)->current_edge->bot);
                 if (slopes_equal((*bnd_prev)->current_edge->bot, (*bnd_prev)->current_edge->top,
-                                 (*lb_abl_itr)->current_edge->bot, (*lb_abl_itr)->current_edge->top)) {
+                                 (*lb_abl_itr)->current_edge->bot,
+                                 (*lb_abl_itr)->current_edge->top)) {
                     // Note: this logic mimics that of the angus clipper
                     // but it doesn't seem to make sense, why the join's point is
                     // at the top point, and why does it check that slopes are equal?
@@ -452,10 +456,12 @@ void insert_lm_left_and_right_bound(bound<T>& left_bound,
             }
             auto bnd_next = std::next(rb_abl_itr);
             if (bnd_next != active_bounds.end() && (*bnd_next)->ring &&
-                std::llround((*bnd_next)->curr.x) == (*rb_abl_itr)->current_edge->bot.x && (*bnd_next)->winding_delta != 0) {
+                std::llround((*bnd_next)->curr.x) == (*rb_abl_itr)->current_edge->bot.x &&
+                (*bnd_next)->winding_delta != 0) {
                 point_ptr<T> p2 = add_point_to_ring(bnd_next, (*rb_abl_itr)->current_edge->bot);
                 if (slopes_equal((*bnd_prev)->current_edge->bot, (*bnd_prev)->current_edge->top,
-                                 (*lb_abl_itr)->current_edge->bot, (*lb_abl_itr)->current_edge->top)) {
+                                 (*lb_abl_itr)->current_edge->bot,
+                                 (*lb_abl_itr)->current_edge->top)) {
                     // The same note as above -- additionally the angus clipper
                     // would check that the left bound next in AEL was not the right bound
                     // before this call for the right bound, however, that doesn't make complete
@@ -479,8 +485,8 @@ void insert_lm_left_and_right_bound(bound<T>& left_bound,
         // this is the logic that was copied from angus, but it might be correct
         // to swap the positions in the ABL following this or at least move
         // lb and rb to be next to each other in the ABL.
-        intersect_bounds(rb_abl_itr, abl_itr, (*lb_abl_itr)->current_edge->bot, cliptype, subject_fill_type,
-                         clip_fill_type, rings, joins, active_bounds);
+        intersect_bounds(rb_abl_itr, abl_itr, (*lb_abl_itr)->current_edge->bot, cliptype,
+                         subject_fill_type, clip_fill_type, rings, joins, active_bounds);
         ++abl_itr;
     }
 }
