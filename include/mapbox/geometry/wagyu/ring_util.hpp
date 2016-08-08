@@ -548,6 +548,111 @@ point_in_polygon_result point_in_polygon(point<T> const& pt, point_ptr<T> op) {
 }
 
 template <typename T>
+point_in_polygon_result point_in_polygon(mapbox::geometry::point<double> const& pt, point_ptr<T> op) {
+    // returns 0 if false, +1 if true, -1 if pt ON polygon boundary
+    point_in_polygon_result result = point_outside_polygon;
+    point_ptr<T> startOp = op;
+    do {
+        if (std::fabs(op->next->y - pt.y) <= 0.0) {
+            if (std::fabs(op->next->x - pt.x) <= 0.0 ||
+                (std::fabs(op->y - pt.y) <= 0.0 && ((op->next->x > pt.x) == (op->x < pt.x)))) {
+                return point_on_polygon;
+            }
+        }
+        if ((op->y < pt.y) != (op->next->y < pt.y)) {
+            if (op->x >= pt.x) {
+                if (op->next->x > pt.x) {
+                    // Switch between point outside polygon and point inside
+                    // polygon
+                    if (result == point_outside_polygon) {
+                        result = point_inside_polygon;
+                    } else {
+                        result = point_outside_polygon;
+                    }
+                } else {
+                    double d =
+                        static_cast<double>(op->x - pt.x) *
+                            static_cast<double>(op->next->y - pt.y) -
+                        static_cast<double>(op->next->x - pt.x) * static_cast<double>(op->y - pt.y);
+                    if (std::fabs(d) <= 0) {
+                        return point_on_polygon;
+                    }
+                    if ((d > 0) == (op->next->y > op->y)) {
+                        // Switch between point outside polygon and point inside
+                        // polygon
+                        if (result == point_outside_polygon) {
+                            result = point_inside_polygon;
+                        } else {
+                            result = point_outside_polygon;
+                        }
+                    }
+                }
+            } else {
+                if (op->next->x > pt.x) {
+                    double d =
+                        static_cast<double>(op->x - pt.x) *
+                            static_cast<double>(op->next->y - pt.y) -
+                        static_cast<double>(op->next->x - pt.x) * static_cast<double>(op->y - pt.y);
+                    if (std::fabs(d) <= 0) {
+                        return point_on_polygon;
+                    }
+                    if ((d > 0) == (op->next->y > op->y)) {
+                        // Switch between point outside polygon and point inside
+                        // polygon
+                        if (result == point_outside_polygon) {
+                            result = point_inside_polygon;
+                        } else {
+                            result = point_outside_polygon;
+                        }
+                    }
+                }
+            }
+        }
+        op = op->next;
+    } while (startOp != op);
+    return result;
+}
+
+template <typename T>
+point_in_polygon_result inside_or_outside_special(point_ptr<T> first_pt, point_ptr<T> other_poly) {
+
+    if (std::fabs(area(first_pt)) <= 0.0) {
+        return point_inside_polygon;
+    }
+    if (std::fabs(area(other_poly)) <= 0.0) {
+        return point_outside_polygon;
+    }
+    point_ptr<T> pt = first_pt;
+    do {
+        if (*pt == *(pt->prev) || *pt == *(pt->next) || *(pt->next) == *(pt->prev) ||
+            slopes_equal(*(pt->prev), *pt, *(pt->next))) {
+            pt = pt->next;
+            continue;
+        }
+        double dx = ((pt->prev->x - pt->x) / 3.0) + ((pt->next->x - pt->x) / 3.0);
+        double dy = ((pt->prev->y - pt->y) / 3.0) + ((pt->next->y - pt->y) / 3.0);
+        mapbox::geometry::point<double> offset_pt(pt->x + dx, pt->y + dy);
+        point_in_polygon_result res = point_in_polygon(offset_pt, pt);
+        if (res != point_inside_polygon) {
+            offset_pt.x = pt->x - dx;
+            offset_pt.y = pt->y - dy;
+            res = point_in_polygon(offset_pt, pt);
+            if (res != point_inside_polygon) {
+                pt = pt->next;
+                continue;
+            }
+        }
+        res = point_in_polygon(offset_pt, other_poly);
+        if (res == point_on_polygon) {
+            pt = pt->next;
+            continue;
+        }
+        return res;
+    } while (pt != first_pt);
+    return point_inside_polygon;
+}
+
+template <typename T>
 bool poly2_contains_poly1(point_ptr<T> outpt1, point_ptr<T> outpt2) {
     point_ptr<T> op = outpt1;
     do {
@@ -558,7 +663,8 @@ bool poly2_contains_poly1(point_ptr<T> outpt1, point_ptr<T> outpt2) {
         }
         op = op->next;
     } while (op != outpt1);
-    return true;
+    point_in_polygon_result res = inside_or_outside_special(outpt1, outpt2);
+    return res == point_inside_polygon;
 }
 
 template <typename T>

@@ -361,14 +361,12 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         if (r->is_open) {
             fixup_out_polyline(*r);
         } else {
-            fix_hole_linkage(r);
+            //fix_hole_linkage(r);
             fixup_out_polygon(*r, true);
         }
     }
 
-    // std::clog << rings << std::endl;
     do_simple_polygons(rings);
-    // std::clog << rings << std::endl;
 
     for (auto& r : rings) {
         if (!r->points || r->is_open) {

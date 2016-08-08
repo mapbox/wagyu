@@ -418,7 +418,6 @@ void handle_self_intersections(point_ptr<T> op,
 
     update_points_ring(ring);
     update_points_ring(new_ring);
-
     if (poly2_contains_poly1(new_ring->points, ring->points)) {
         // Out_new_ring is contained by Out_ring1 ...
         new_ring->is_hole = !ring->is_hole;

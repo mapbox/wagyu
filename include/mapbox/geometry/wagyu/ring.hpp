@@ -37,7 +37,6 @@ struct ring {
 
 template <typename T>
 using ring_list = std::vector<ring_ptr<T>>;
-// using ring_list = std::list<ring_ptr<T>>;
 
 template <typename T>
 ring_ptr<T> create_new_ring(ring_list<T>& rings) {
@@ -205,8 +204,10 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
     auto fl = parse_first_left(r.first_left);
     if (!fl) {
         out << "  parent_ring ptr: nullptr" << std::endl;
+        out << "  parent_index: -----" << std::endl;
     } else {
         out << "  parent_ring ptr: " << fl->replacement_ring << std::endl;
+        out << "  parent_ring idx: " << fl->replacement_ring->ring_index << std::endl;
     }
     out << "  ring_index: " << r.ring_index << std::endl;
     if (r.is_hole) {
