@@ -459,15 +459,15 @@ void insert_lm_left_and_right_bound(bound<T>& left_bound,
                 std::llround((*bnd_next)->curr.x) == (*rb_abl_itr)->current_edge->bot.x &&
                 (*bnd_next)->winding_delta != 0) {
                 point_ptr<T> p2 = add_point_to_ring(bnd_next, (*rb_abl_itr)->current_edge->bot);
-                if (slopes_equal((*bnd_prev)->current_edge->bot, (*bnd_prev)->current_edge->top,
-                                 (*lb_abl_itr)->current_edge->bot,
-                                 (*lb_abl_itr)->current_edge->top)) {
+                if (slopes_equal((*bnd_next)->current_edge->bot, (*bnd_next)->current_edge->top,
+                                 (*rb_abl_itr)->current_edge->bot,
+                                 (*rb_abl_itr)->current_edge->top)) {
                     // The same note as above -- additionally the angus clipper
                     // would check that the left bound next in AEL was not the right bound
                     // before this call for the right bound, however, that doesn't make complete
                     // sense, so I simply just made it always do this check just like the left
                     // bound would do above
-                    joins.emplace_back(p1, p2, (*lb_abl_itr)->current_edge->top);
+                    joins.emplace_back(p1, p2, (*rb_abl_itr)->current_edge->top);
                 }
             }
         }
