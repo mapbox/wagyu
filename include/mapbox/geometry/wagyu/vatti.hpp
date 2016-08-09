@@ -367,16 +367,14 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
     }
 
     do_simple_polygons(rings);
-
+    
     for (auto& r : rings) {
         if (!r->points || r->is_open) {
             continue;
         }
         fix_hole_linkage(r);
         fixup_out_polygon(*r, false);
-        std::size_t depth = ring_depth(r);
-        bool is_hole = !is_odd(depth);
-        if (is_hole == (area(*r) > 0)) {
+        if (r->is_hole == (area(*r) > 0)) {
             reverse_ring(r->points);
         }
     }

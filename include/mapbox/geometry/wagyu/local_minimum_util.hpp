@@ -341,12 +341,20 @@ void add_ring_to_local_minima_list(edge_list<T>& edges,
             throw clipper_exception("should not have a horizontal only bound for a ring");
         }
 #endif
-        if (to_max_first_non_horizontal->dx > to_min_first_non_horizontal->dx) {
-            minimum_is_left = false;
-            move_horizontals_on_left_to_right(to_maximum, to_minimum);
+        if (lm_minimum_has_horizontal) {
+            if (to_max_first_non_horizontal->bot.x > to_min_first_non_horizontal->bot.x) {
+                minimum_is_left = true;
+                move_horizontals_on_left_to_right(to_minimum, to_maximum);
+            } else {
+                minimum_is_left = false;
+                move_horizontals_on_left_to_right(to_maximum, to_minimum);
+            }
         } else {
-            minimum_is_left = true;
-            move_horizontals_on_left_to_right(to_minimum, to_maximum);
+            if (to_max_first_non_horizontal->dx > to_min_first_non_horizontal->dx) {
+                minimum_is_left = false;
+            } else {
+                minimum_is_left = true;
+            }
         }
         assert(!to_minimum.edges.empty());
         assert(!to_maximum.edges.empty());
