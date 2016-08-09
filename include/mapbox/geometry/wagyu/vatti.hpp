@@ -367,7 +367,7 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
     }
 
     do_simple_polygons(rings);
-    
+
     for (auto& r : rings) {
         if (!r->points || r->is_open) {
             continue;

@@ -392,6 +392,17 @@ void update_points_ring(ring_ptr<T> ring) {
 template <typename T>
 void fixup_first_lefts1(ring_ptr<T> old_ring, ring_ptr<T> new_ring, ring_list<T>& rings) {
     // tests if new_ring contains the polygon before reassigning first_left
+    ring_ptr<T> old_ring_fl = parse_parent(old_ring);
+    if (old_ring_fl) {
+        if (!poly2_contains_poly1(new_ring->points, old_ring_fl->points)) {
+            new_ring->is_hole = !new_ring->is_hole;
+            reverse_ring(new_ring->points);
+        }
+        if (!poly2_contains_poly1(old_ring->points, old_ring_fl->points)) {
+            old_ring->is_hole = !old_ring->is_hole;
+            reverse_ring(old_ring->points);
+        }
+    }
     for (auto& ring : rings) {
         ring_ptr<T> first_left = parse_first_left(ring->first_left);
         if (ring->points && first_left == old_ring && ring != new_ring) {

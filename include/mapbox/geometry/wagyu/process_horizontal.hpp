@@ -61,7 +61,7 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
     }
 
     auto max_iter = maxima.begin();
-    while (max_iter != maxima.end() && *max_iter <= (*horz_bound)->current_edge->bot.x) {
+    while (max_iter != maxima.end() && *max_iter < (*horz_bound)->current_edge->bot.x) {
         ++max_iter;
     }
 

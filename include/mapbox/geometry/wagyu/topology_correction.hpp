@@ -395,7 +395,7 @@ void handle_self_intersections(point_ptr<T> op,
         points_to_delete.push_back(op2);
         return;
     }
-
+    
     // split the polygon into two ...
     point_ptr<T> op3 = op->prev;
     point_ptr<T> op4 = op2->prev;
