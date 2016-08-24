@@ -72,7 +72,7 @@ void parse_file(const char* file_path, clipper<value_type>& clipper, polygon_typ
     fclose(file);
 }
 
-void polys_to_json(Document& output, std::vector<mapbox::geometry::polygon<value_type>> solution) {
+void polys_to_json(Document& output, std::vector<mapbox::geometry::polygon<value_type>> & solution) {
     output.SetArray();
     Document::AllocatorType& allocator = output.GetAllocator();
     output.Reserve(solution.size(), allocator);

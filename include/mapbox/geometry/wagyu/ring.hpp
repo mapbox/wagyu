@@ -2,68 +2,177 @@
 
 #include <mapbox/geometry/wagyu/point.hpp>
 
+#include <list>
 #include <vector>
 
 #ifdef DEBUG
 #include <iostream>
+#include <execinfo.h>
+#include <stdio.h>
+//
+// void* callstack[128];
+// int i, frames = backtrace(callstack, 128);
+// char** strs = backtrace_symbols(callstack, frames);
+// for (i = 0; i < frames; ++i) {
+//     printf("%s\n", strs[i]);
+// }
+// free(strs);
 #endif
 
 namespace mapbox {
 namespace geometry {
 namespace wagyu {
 
-// NOTE: ring is forward declared in wagyu/point.hpp
+// NOTE: ring and ring_ptr are forward declared in wagyu/point.hpp
+
+template <typename T>
+using ring_vector = std::vector<ring_ptr<T>>;
+
+template <typename T>
+using ring_list = std::list<ring_ptr<T>>;
 
 template <typename T>
 struct ring {
     std::size_t ring_index; // To support unset 0 is undefined and indexes offset by 1
-    ring_ptr<T> replacement_ring;
-    ring_ptr<T> first_left;
+    ring_ptr<T> parent;
+    ring_list<T> children;
     point_ptr<T> points;
     point_ptr<T> bottom_point;
-    bool is_hole;
     bool is_open;
 
     ring()
         : ring_index(0),
-          replacement_ring(this),
-          first_left(nullptr),
+          parent(nullptr),
+          children(),
           points(nullptr),
           bottom_point(nullptr),
-          is_hole(false),
           is_open(false) {
     }
 };
 
 template <typename T>
-using ring_list = std::vector<ring_ptr<T>>;
+struct ring_manager {
+    std::size_t index;
+    ring_vector<T> all_rings;
+    ring_list<T> children;
+    std::vector<point_ptr<T>> all_points;
+    
+    ring_manager():
+        index(0),
+        all_rings(),
+        children(),
+        all_points() {}
+};
 
 template <typename T>
-ring_ptr<T> create_new_ring(ring_list<T>& rings) {
+ring_ptr<T> create_new_ring(ring_manager<T>& rings) {
     ring_ptr<T> result = new ring<T>();
-    result->ring_index = rings.size();
-    rings.push_back(result);
+    result->ring_index = rings.index++;
+    rings.all_rings.push_back(result);
     return result;
 }
 
 template <typename T>
-ring_ptr<T> parse_first_left(ring_ptr<T> first_left) {
-    while (first_left && !first_left->points) {
-        first_left = first_left->first_left;
-    }
-    return first_left;
+point_ptr<T> create_new_point(ring_ptr<T> r, mapbox::geometry::point<T> const& pt, ring_manager<T>& rings) {
+    point_ptr<T> point = new wagyu::point<T>(r, pt);
+    rings.all_points.push_back(point);
+    return point;
 }
 
 template <typename T>
-ring_ptr<T> parse_parent(ring_ptr<T> r) {
-    ring_ptr<T> first_left = r;
-    do {
-        first_left = first_left->first_left;
-        while (first_left && !first_left->points) {
-            first_left = first_left->first_left;
+void ring1_child_of_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2, ring_manager<T> & manager) {
+    assert(ring1 != ring2);
+    if (ring1->parent == ring2) {
+        return;
+    }
+    if (ring1->parent == nullptr) {
+        manager.children.remove(ring1);
+    } else {
+        ring1->parent->children.remove(ring1);
+    }
+    if (ring2 == nullptr) {
+        ring1->parent = nullptr;
+        manager.children.push_back(ring1);
+    } else {
+        ring1->parent = ring2;
+        ring2->children.push_back(ring1);
+    }
+}
+
+template <typename T>
+void ring1_sibling_of_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2, ring_manager<T> & manager) {
+    assert(ring1 != ring2);
+    if (ring1->parent == ring2->parent) {
+        return;
+    }
+    if (ring1->parent == nullptr) {
+        manager.children.remove(ring1);
+    } else {
+        ring1->parent->children.remove(ring1);
+    }
+    ring1->parent = ring2->parent;
+    if (ring1->parent == nullptr) {
+        manager.children.push_back(ring1);
+    } else {
+        ring2->parent->children.push_back(ring1);
+    }
+}
+
+template <typename T>
+void ring1_replaces_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2, ring_manager<T> & manager) {
+    assert(ring1 != ring2);
+    if (ring2->parent == nullptr) {
+        manager.children.remove(ring2);
+    } else {
+        ring2->parent->children.remove(ring2);
+    }
+    for (auto & c : ring2->children) {
+        c->parent = ring1;
+    }
+    if (ring1 == nullptr) {
+        manager.children.merge(ring2->children);
+    } else {
+        ring1->children.merge(ring2->children);
+    }
+    ring2->parent = nullptr;
+}
+
+template <typename T>
+void remove_ring(ring_ptr<T> r, ring_manager<T> & manager) {
+    if (r->parent == nullptr) {
+        manager.children.remove(r);
+        for (auto & c : r->children) {
+            c->parent = nullptr;
         }
-    } while (first_left && first_left->is_hole == r->is_hole);
-    return first_left;
+        manager.children.merge(r->children);
+    } else {
+        r->parent->children.remove(r);
+        for (auto & c : r->children) {
+            c->parent = r->parent;
+        }
+        r->parent->children.merge(r->children);
+        r->parent = nullptr;
+    }
+}
+
+template <typename T>
+bool ring_is_hole(ring_ptr<T> r) {
+    std::size_t depth = 0;
+    while (r->parent) {
+        depth++;
+        r = r->parent;
+    }
+    return depth & 1;
+}
+
+template <typename T>
+point_ptr<T> create_new_point(ring_ptr<T> r, 
+                              mapbox::geometry::point<T> const& pt, 
+                              point_ptr<T> before_this_point,
+                              ring_manager<T>& rings) {
+    point_ptr<T> point = new wagyu::point<T>(r, pt, before_this_point);
+    rings.all_points.push_back(point);
+    return point;
 }
 
 template <typename T>
@@ -196,24 +305,19 @@ void area_and_count(point_ptr<T> op, std::size_t& count, double& area) {
 template <class charT, class traits, typename T>
 inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
                                                      const ring<T>& r) {
-    if (r.replacement_ring != &r) {
-        out << "  replacement_ring ptr: " << r.replacement_ring << std::endl;
-    } else {
-        out << "  replacement_ring ptr: this - " << r.replacement_ring << std::endl;
-    }
-    auto fl = parse_first_left(r.first_left);
-    if (!fl) {
-        out << "  parent_ring ptr: nullptr" << std::endl;
+    out << "  ring_index: " << r.ring_index << std::endl;
+    if (!r.parent) {
+        //out << "  parent_ring ptr: nullptr" << std::endl;
         out << "  parent_index: -----" << std::endl;
     } else {
-        out << "  parent_ring ptr: " << fl->replacement_ring << std::endl;
-        out << "  parent_ring idx: " << fl->replacement_ring->ring_index << std::endl;
+        //out << "  parent_ring ptr: " << r.parent << std::endl;
+        out << "  parent_ring idx: " << r.parent->ring_index << std::endl;
     }
-    out << "  ring_index: " << r.ring_index << std::endl;
-    if (r.is_hole) {
-        out << "  is_hole: true" << std::endl;
+    ring_ptr<T> n = const_cast<ring_ptr<T>>(&r);
+    if (ring_is_hole(n)) {
+        out << "  is_hole: true " << std::endl;
     } else {
-        out << "  is_hole: false" << std::endl;
+        out << "  is_hole: false " << std::endl;
     }
     auto pt_itr = r.points;
     if (pt_itr) {
@@ -233,6 +337,40 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
     return out;
 }
 
+template <typename T>
+std::string output_as_polygon(ring_ptr<T> r) {
+    std::ostringstream out;
+
+    auto pt_itr = r->points;
+    if (pt_itr) {
+        out << "[";
+        out << "[[" << pt_itr->x << "," << pt_itr->y << "],";
+        pt_itr = pt_itr->next;
+        while (pt_itr != r->points) {
+            out << "[" << pt_itr->x << "," << pt_itr->y << "],";
+            pt_itr = pt_itr->next;
+        }
+        out << "[" << pt_itr->x << "," << pt_itr->y << "]]";
+        for (auto const& c : r->children) {
+            pt_itr = c->points;
+            if (pt_itr) {
+                out << ",[[" << pt_itr->x << "," << pt_itr->y << "],";
+                pt_itr = pt_itr->next;
+                while (pt_itr != c->points) {
+                    out << "[" << pt_itr->x << "," << pt_itr->y << "],";
+                    pt_itr = pt_itr->next;
+                }
+                out << "[" << pt_itr->x << "," << pt_itr->y << "]]";
+            }
+        }
+        out << "]" << std::endl;
+    } else {
+        out << "[]" << std::endl;
+    }
+
+    return out.str();
+}
+
 template <class charT, class traits, typename T>
 inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
                                                      const ring_list<T>& rings) {
@@ -243,6 +381,19 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
         out << *r;
     }
     out << "END RING LIST" << std::endl;
+    return out;
+}
+
+template <class charT, class traits, typename T>
+inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
+                                                     const ring_vector<T>& rings) {
+    out << "START RING VECTOR" << std::endl;
+    std::size_t c = 0;
+    for (auto& r : rings) {
+        out << " ring: " << c++ << " - " << r << std::endl;
+        out << *r;
+    }
+    out << "END RING VECTOR" << std::endl;
     return out;
 }
 

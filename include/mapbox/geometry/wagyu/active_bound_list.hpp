@@ -388,7 +388,7 @@ bool is_contributing(bound<T> const& bnd,
 template <typename T>
 void insert_lm_only_one_bound(bound<T>& bnd,
                               active_bound_list<T>& active_bounds,
-                              ring_list<T>& rings,
+                              ring_manager<T>& rings,
                               scanbeam_list<T>& scanbeam,
                               clip_type cliptype,
                               fill_type subject_fill_type,
@@ -402,13 +402,13 @@ void insert_lm_only_one_bound(bound<T>& bnd,
             if (bnd_prev != active_bounds.rend() && (*bnd_prev)->ring &&
                 std::llround((*bnd_prev)->curr.x) == (*abl_itr)->current_edge->bot.x &&
                 (*bnd_prev)->winding_delta != 0) {
-                add_point_to_ring(bnd_prev, (*abl_itr)->current_edge->bot);
+                add_point_to_ring(bnd_prev, (*abl_itr)->current_edge->bot, rings);
             }
             auto bnd_next = std::next(abl_itr);
             if (bnd_next != active_bounds.end() && (*bnd_next)->ring &&
                 std::llround((*bnd_next)->curr.x) == (*abl_itr)->current_edge->bot.x &&
                 (*bnd_next)->winding_delta != 0) {
-                add_point_to_ring(bnd_next, (*abl_itr)->current_edge->bot);
+                add_point_to_ring(bnd_next, (*abl_itr)->current_edge->bot, rings);
             }
         }
     }
@@ -421,7 +421,7 @@ template <typename T>
 void insert_lm_left_and_right_bound(bound<T>& left_bound,
                                     bound<T>& right_bound,
                                     active_bound_list<T>& active_bounds,
-                                    ring_list<T>& rings,
+                                    ring_manager<T>& rings,
                                     join_list<T>& joins,
                                     scanbeam_list<T>& scanbeam,
                                     clip_type cliptype,
@@ -444,7 +444,7 @@ void insert_lm_left_and_right_bound(bound<T>& left_bound,
             if (bnd_prev != active_bounds.rend() && (*bnd_prev)->ring &&
                 std::llround((*bnd_prev)->curr.x) == (*lb_abl_itr)->current_edge->bot.x &&
                 (*bnd_prev)->winding_delta != 0) {
-                point_ptr<T> p2 = add_point_to_ring(bnd_prev, (*lb_abl_itr)->current_edge->bot);
+                point_ptr<T> p2 = add_point_to_ring(bnd_prev, (*lb_abl_itr)->current_edge->bot, rings);
                 if (slopes_equal((*bnd_prev)->current_edge->bot, (*bnd_prev)->current_edge->top,
                                  (*lb_abl_itr)->current_edge->bot,
                                  (*lb_abl_itr)->current_edge->top)) {
@@ -458,7 +458,7 @@ void insert_lm_left_and_right_bound(bound<T>& left_bound,
             if (bnd_next != active_bounds.end() && (*bnd_next)->ring &&
                 std::llround((*bnd_next)->curr.x) == (*rb_abl_itr)->current_edge->bot.x &&
                 (*bnd_next)->winding_delta != 0) {
-                point_ptr<T> p2 = add_point_to_ring(bnd_next, (*rb_abl_itr)->current_edge->bot);
+                point_ptr<T> p2 = add_point_to_ring(bnd_next, (*rb_abl_itr)->current_edge->bot, rings);
                 if (slopes_equal((*bnd_next)->current_edge->bot, (*bnd_next)->current_edge->top,
                                  (*rb_abl_itr)->current_edge->bot,
                                  (*rb_abl_itr)->current_edge->top)) {
@@ -496,7 +496,7 @@ void insert_local_minima_into_ABL(T const bot_y,
                                   local_minimum_ptr_list<T> const& minima_sorted,
                                   local_minimum_ptr_list_itr<T>& current_lm,
                                   active_bound_list<T>& active_bounds,
-                                  ring_list<T>& rings,
+                                  ring_manager<T>& rings,
                                   join_list<T>& joins,
                                   scanbeam_list<T>& scanbeam,
                                   clip_type cliptype,
@@ -525,7 +525,7 @@ void insert_horizontal_local_minima_into_ABL(T const top_y,
                                              local_minimum_ptr_list<T> const& minima_sorted,
                                              local_minimum_ptr_list_itr<T>& current_lm,
                                              active_bound_list<T>& active_bounds,
-                                             ring_list<T>& rings,
+                                             ring_manager<T>& rings,
                                              join_list<T>& joins,
                                              scanbeam_list<T>& scanbeam,
                                              clip_type cliptype,

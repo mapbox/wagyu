@@ -4,6 +4,8 @@
 
 #include <mapbox/geometry/wagyu/point.hpp>
 
+#include <algorithm>
+
 #ifdef DEBUG
 #include <iostream>
 #endif
@@ -35,6 +37,21 @@ struct join {
 
 template <typename T>
 using join_list = std::vector<join<T>>;
+
+template <typename T>
+using join_list_itr = typename join_list<T>::iterator;
+
+template <typename T>
+void update_in_joins(point_ptr<T> pt, point_ptr<T> new_pt, join_list_itr<T> pos, join_list<T> & joins) {
+    for (auto j = pos; j != joins.end(); ++j) {
+        if (j->point1 == pt) {
+            j->point1 = new_pt;
+        }
+        if (j->point2 == pt) {
+            j->point2 = new_pt;
+        }
+    }
+}
 
 #ifdef DEBUG
 

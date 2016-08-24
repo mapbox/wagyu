@@ -3,6 +3,7 @@
 #include <mapbox/geometry/wagyu/bound.hpp>
 #include <mapbox/geometry/wagyu/edge.hpp>
 #include <mapbox/geometry/wagyu/intersect_point.hpp>
+#include <mapbox/geometry/wagyu/intersect_util.hpp>
 
 using namespace mapbox::geometry::wagyu;
 using T = std::int64_t;
@@ -104,7 +105,9 @@ TEST_CASE("test intersection of points") {
     CHECK_FALSE(b1.curr.x > b2.curr.x); // No intersection of points
     CHECK(b3.curr.x > b1.curr.x);       // Intersection!
     hot_pixel_set<T> set;
-    intersection_point(b1, b3, r1, set);
+    mapbox::geometry::point<double> int_pt;
+    get_edge_intersection(*(b1.current_edge), *(b3.current_edge), int_pt);
+    intersection_point(b1, b3, r1, set, int_pt);
 
     CHECK(r1.x == 7);
     CHECK(r1.y == 3);
@@ -207,7 +210,9 @@ TEST_CASE("test intersection of points - switch axis values") {
     CHECK_FALSE(b1.curr.x > b2.curr.x); // No intersection of points
     CHECK(b1.curr.x > b3.curr.x);       // Intersection!
     hot_pixel_set<T> set;
-    intersection_point(b1, b3, r1, set);
+    mapbox::geometry::point<double> int_pt;
+    get_edge_intersection(*(b1.current_edge), *(b3.current_edge), int_pt);
+    intersection_point(b1, b3, r1, set, int_pt);
 
     CHECK(r1.x == 3);
     CHECK(r1.y == 7);

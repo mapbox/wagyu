@@ -9,18 +9,21 @@ namespace mapbox {
 namespace geometry {
 namespace wagyu {
 
+/*
 template <typename T>
 ring_ptr<T> get_ring(ring_ptr<T> r) {
+    assert(r != nullptr);
     while (r != r->replacement_ring) {
         r = r->replacement_ring;
+        assert(r != nullptr);
     }
     return r;
 }
+*/
 
 template <typename T>
-point_ptr<T> duplicate_point(point_ptr<T> pt, bool insert_after) {
-    point_ptr<T> result = new point<T>(pt->x, pt->y);
-    result->ring = pt->ring;
+point_ptr<T> duplicate_point(point_ptr<T> pt, bool insert_after, ring_manager<T> & rings) {
+    point_ptr<T> result = create_new_point(pt->ring, mapbox::geometry::point<T>(pt->x, pt->y), rings);
 
     if (insert_after) {
         result->next = pt->next;
@@ -42,7 +45,8 @@ bool join_horizontal(point_ptr<T> op1,
                      point_ptr<T> op2,
                      point_ptr<T> op2b,
                      mapbox::geometry::point<T> const& pt,
-                     bool discard_left) {
+                     bool discard_left,
+                     ring_manager<T> & rings) {
     horizontal_direction dir1 = (op1->x > op1b->x ? horizontal_direction::right_to_left
                                                   : horizontal_direction::left_to_right);
     horizontal_direction dir2 = (op2->x > op2b->x ? horizontal_direction::right_to_left
@@ -64,12 +68,12 @@ bool join_horizontal(point_ptr<T> op1,
         if (discard_left && (op1->x != pt.x)) {
             op1 = op1->next;
         }
-        op1b = duplicate_point(op1, !discard_left);
+        op1b = duplicate_point(op1, !discard_left, rings);
         if (*op1b != pt) {
             op1 = op1b;
             op1->x = pt.x;
             op1->y = pt.y;
-            op1b = duplicate_point(op1, !discard_left);
+            op1b = duplicate_point(op1, !discard_left, rings);
         }
     } else {
         while (op1->next->x >= pt.x && op1->next->x <= op1->x && op1->next->y == pt.y) {
@@ -78,12 +82,12 @@ bool join_horizontal(point_ptr<T> op1,
         if (!discard_left && (op1->x != pt.x)) {
             op1 = op1->next;
         }
-        op1b = duplicate_point(op1, discard_left);
+        op1b = duplicate_point(op1, discard_left, rings);
         if (*op1b != pt) {
             op1 = op1b;
             op1->x = pt.x;
             op1->y = pt.y;
-            op1b = duplicate_point(op1, discard_left);
+            op1b = duplicate_point(op1, discard_left, rings);
         }
     }
 
@@ -94,12 +98,12 @@ bool join_horizontal(point_ptr<T> op1,
         if (discard_left && (op2->x != pt.x)) {
             op2 = op2->next;
         }
-        op2b = duplicate_point(op2, !discard_left);
+        op2b = duplicate_point(op2, !discard_left, rings);
         if (*op2b != pt) {
             op2 = op2b;
             op2->x = pt.x;
             op2->y = pt.y;
-            op2b = duplicate_point(op2, !discard_left);
+            op2b = duplicate_point(op2, !discard_left, rings);
         };
     } else {
         while (op2->next->x >= pt.x && op2->next->x <= op2->x && op2->next->y == pt.y) {
@@ -108,12 +112,12 @@ bool join_horizontal(point_ptr<T> op1,
         if (!discard_left && (op2->x != pt.x)) {
             op2 = op2->next;
         }
-        op2b = duplicate_point(op2, discard_left);
+        op2b = duplicate_point(op2, discard_left, rings);
         if (*op2b != pt) {
             op2 = op2b;
             op2->x = pt.x;
             op2->y = pt.y;
-            op2b = duplicate_point(op2, discard_left);
+            op2b = duplicate_point(op2, discard_left, rings);
         };
     };
 
@@ -154,7 +158,7 @@ bool get_overlap(const T a1, const T a2, const T b1, const T b2, T& left, T& rig
 }
 
 template <typename T>
-bool join_points(join_ptr<T> j, ring_ptr<T> ring1, ring_ptr<T> ring2) {
+bool join_points(join_list_itr<T> j, ring_ptr<T> ring1, ring_ptr<T> ring2, ring_manager<T> & rings) {
     point_ptr<T> op1 = j->point1, op1b;
     point_ptr<T> op2 = j->point2, op2b;
 
@@ -239,8 +243,8 @@ bool join_points(join_ptr<T> j, ring_ptr<T> ring1, ring_ptr<T> ring2) {
         }
 
         if (reverse1) {
-            op1b = duplicate_point(op1, false);
-            op2b = duplicate_point(op2, true);
+            op1b = duplicate_point(op1, false, rings);
+            op2b = duplicate_point(op2, true, rings);
             op1->prev = op2;
             op2->next = op1;
             op1b->next = op2b;
@@ -249,8 +253,8 @@ bool join_points(join_ptr<T> j, ring_ptr<T> ring1, ring_ptr<T> ring2) {
             j->point2 = op1b;
             return true;
         } else {
-            op1b = duplicate_point(op1, true);
-            op2b = duplicate_point(op2, false);
+            op1b = duplicate_point(op1, true, rings);
+            op2b = duplicate_point(op2, false, rings);
             op1->next = op2;
             op2->prev = op1;
             op1b->prev = op2b;
@@ -315,7 +319,7 @@ bool join_points(join_ptr<T> j, ring_ptr<T> ring1, ring_ptr<T> ring2) {
         }
         j->point1 = op1;
         j->point2 = op2;
-        return join_horizontal(op1, op1b, op2, op2b, pt, discard_left_side);
+        return join_horizontal(op1, op1b, op2, op2b, pt, discard_left_side, rings);
     } else {
         // nb: For non-horizontal joins ...
         //    1. Jr.point1.Pt.Y == Jr.point2.Pt.Y
@@ -357,8 +361,8 @@ bool join_points(join_ptr<T> j, ring_ptr<T> ring1, ring_ptr<T> ring2) {
         }
 
         if (reverse1) {
-            op1b = duplicate_point(op1, false);
-            op2b = duplicate_point(op2, true);
+            op1b = duplicate_point(op1, false, rings);
+            op2b = duplicate_point(op2, true, rings);
             op1->prev = op2;
             op2->next = op1;
             op1b->next = op2b;
@@ -367,8 +371,8 @@ bool join_points(join_ptr<T> j, ring_ptr<T> ring1, ring_ptr<T> ring2) {
             j->point2 = op1b;
             return true;
         } else {
-            op1b = duplicate_point(op1, true);
-            op2b = duplicate_point(op2, false);
+            op1b = duplicate_point(op1, true, rings);
+            op2b = duplicate_point(op2, false, rings);
             op1->next = op2;
             op2->prev = op1;
             op1b->prev = op2b;
@@ -390,93 +394,96 @@ void update_points_ring(ring_ptr<T> ring) {
 }
 
 template <typename T>
-void fixup_first_lefts1(ring_ptr<T> old_ring, ring_ptr<T> new_ring, ring_list<T>& rings) {
-    // tests if new_ring contains the polygon before reassigning first_left
-    ring_ptr<T> old_ring_fl = parse_parent(old_ring);
-    if (old_ring_fl) {
-        if (!poly2_contains_poly1(new_ring->points, old_ring_fl->points)) {
-            new_ring->is_hole = !new_ring->is_hole;
-            reverse_ring(new_ring->points);
-        }
-        if (!poly2_contains_poly1(old_ring->points, old_ring_fl->points)) {
-            old_ring->is_hole = !old_ring->is_hole;
-            reverse_ring(old_ring->points);
-        }
-    }
-    for (auto& ring : rings) {
-        ring_ptr<T> first_left = parse_first_left(ring->first_left);
-        if (ring->points && first_left == old_ring && ring != new_ring) {
-            if (poly2_contains_poly1(ring->points, new_ring->points)) {
-                if (ring->is_hole == new_ring->is_hole) {
-                    ring->is_hole = !ring->is_hole;
-                    reverse_ring(ring->points);
-                }
-                ring->first_left = new_ring;
-            }
-        }
-    }
-}
-
-template <typename T>
-void fixup_first_lefts2(ring_ptr<T> inner_ring, ring_ptr<T> outer_ring, ring_list<T>& rings) {
-    // A polygon has split into two such that one is now the inner of the other.
-    // It's possible that these polygons now wrap around other polygons, so check
-    // every polygon that's also contained by outer_ring's first_left container
-    //(including 0) to see if they've become inner to the new inner polygon ...
-    for (auto& ring : rings) {
-
-        if (!ring->points || ring == outer_ring || ring == inner_ring) {
-            continue;
-        }
-        ring_ptr<T> first_left = parse_first_left(ring->first_left);
-        if (first_left != inner_ring && first_left != outer_ring) {
-            continue;
-        }
-        if (poly2_contains_poly1(ring->points, inner_ring->points)) {
-            if (ring->is_hole == inner_ring->is_hole) {
+void fixup_children(ring_ptr<T> old_ring, ring_ptr<T> new_ring) {
+    // Tests if any of the children from the old ring are now children of the new ring
+    assert(old_ring != new_ring);
+    for (auto r = old_ring->children.begin(); r != old_ring->children.end();) {
+        assert((*r)->points);
+        assert((*r) != old_ring);
+        if ((*r) != new_ring && 
+            !ring1_right_of_ring2(new_ring, (*r)) && 
+            poly2_contains_poly1((*r)->points, new_ring->points)) {
+            /*if (ring->is_hole == new_ring->is_hole) {
                 ring->is_hole = !ring->is_hole;
                 reverse_ring(ring->points);
-            }
-            ring->first_left = inner_ring;
+            }*/
+            (*r)->parent = new_ring;
+            new_ring->children.push_back((*r));
+            r = old_ring->children.erase(r);
         } else {
-            if (ring->is_hole == outer_ring->is_hole) {
-                if (poly2_contains_poly1(ring->points, outer_ring->points)) {
-                    ring->first_left = outer_ring;
-                } else {
-                    ring->first_left = parse_first_left(outer_ring->first_left);
-                }
-            } else {
-                if (std::fabs(area(ring->points)) <= 0.0 &&
-                    !poly2_contains_poly1(ring->points, outer_ring->points)) {
-                    ring->is_hole = !ring->is_hole;
-                    ring->first_left = parse_first_left(outer_ring->first_left);
-                    reverse_ring(ring->points);
-                } else {
-                    ring->first_left = outer_ring;
-                }
-            }
+            ++r;
         }
     }
 }
 
 template <typename T>
-void fixup_first_lefts3(ring_ptr<T> old_ring, ring_ptr<T> new_ring, ring_list<T>& rings) {
-    // reassigns first_left WITHOUT testing if new_ring contains the polygon
-    for (auto& ring : rings) {
-        if (ring->points && parse_first_left(ring->first_left) == old_ring) {
-            ring->first_left = new_ring;
+bool intersections_cross(point_ptr<T> p1, point_ptr<T> p2) {
+    double a1_p1 = std::atan2(static_cast<double>(p1->prev->y - p1->y), static_cast<double>(p1->prev->x - p1->x));
+    double a2_p1 = std::atan2(static_cast<double>(p1->next->y - p1->y), static_cast<double>(p1->next->x - p1->x));
+    double a1_p2 = std::atan2(static_cast<double>(p2->prev->y - p2->y), static_cast<double>(p2->prev->x - p2->x));
+    double a2_p2 = std::atan2(static_cast<double>(p2->next->y - p2->y), static_cast<double>(p2->next->x - p2->x));
+    double min_p1 = std::min(a1_p1, a2_p1);
+    double max_p1 = std::max(a1_p1, a2_p1);
+    double min_p2 = std::min(a1_p2, a2_p2);
+    double max_p2 = std::max(a1_p2, a2_p2);
+    if (min_p1 < max_p2 && min_p1 > min_p2 && max_p1 > max_p2) {
+        return true;
+    } else if (min_p2 < max_p1 && min_p2 > min_p1 && max_p2 > max_p1) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+
+template <typename T>
+void remove_spikes(point_ptr<T> & pt, join_list_itr<T> pos, join_list<T> & joins) {
+    while (true) {
+        if (pt->next == pt) {
+            pt->ring = nullptr;
+            pt = nullptr;
+            break;
+        } else if (*(pt) == *(pt->next)) {
+            update_in_joins(pt->next, pt, pos, joins);
+            point_ptr<T> old_next = pt->next;
+            old_next->next->prev = pt;
+            pt->next = old_next->next;
+            old_next->next = old_next;
+            old_next->prev = old_next;
+            old_next->ring = nullptr;
+        } else if (*(pt) == *(pt->prev)) {
+            update_in_joins(pt->prev, pt, pos, joins);
+            point_ptr<T> old_prev = pt->prev;
+            old_prev->prev->next = pt;
+            pt->prev = old_prev->prev;
+            old_prev->next = old_prev;
+            old_prev->prev = old_prev;
+            old_prev->ring = nullptr;
+        } else if (*(pt->next) == *(pt->prev)) {
+            point_ptr<T> next = pt->next;
+            point_ptr<T> prev = pt->prev;
+            next->prev = prev;
+            prev->next = next;
+            pt->ring = nullptr;
+            pt->next = pt;
+            pt->prev = pt;
+            pt = next;
+        } else {
+            break;
         }
     }
 }
 
 template <typename T>
-void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
-    for (size_t i = 0; i < joins.size(); i++) {
-        join_ptr<T> join = &joins[i];
+void join_common_edges(join_list<T>& joins, ring_manager<T>& rings) {
+    for (auto join = joins.begin(); join != joins.end(); ++join) {
 
-        ring_ptr<T> ring1 = get_ring(join->point1->ring);
-        ring_ptr<T> ring2 = get_ring(join->point2->ring);
+        ring_ptr<T> ring1 = join->point1->ring;
+        ring_ptr<T> ring2 = join->point2->ring;
 
+        if (!ring1 || !ring2) {
+            continue;
+        }
         if (!ring1->points || !ring2->points) {
             continue;
         }
@@ -484,7 +491,7 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
             continue;
         }
 
-        // Get the polygon fragment with the corringt hole state (first_left)
+        // Get the polygon fragment with the corringt hole state
         // before calling join_points().
 
         ring_ptr<T> hole_state_ring;
@@ -497,14 +504,43 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
         } else {
             hole_state_ring = get_lower_most_ring(ring1, ring2);
         }
+    
+#ifdef DEBUG
+        if (*(join->point1) == *(join->point2) && join->off_point == *(join->point1)) {
+            bool crossing = intersections_cross(join->point1, join->point2);
+            assert(!crossing);
+        }
+#endif
+        double original_area;
+        bool original_is_positive;
+        if (ring1 == ring2) {
+            original_area = area(ring1->points);
+            original_is_positive = (original_area > 0.0);
+        }
 
-        if (!join_points(join, ring1, ring2)) {
+        if (!join_points(join, ring1, ring2, rings)) {
             continue;
         }
 
         if (ring1 == ring2) {
             // Instead of joining two polygons, we have created a new one
             // by splitting one polygon into two.
+            point_ptr<T> pt1 = join->point1;
+            point_ptr<T> pt2 = join->point2;
+            remove_spikes(pt1, join, joins);
+            remove_spikes(pt2, join, joins);
+            
+            if (pt1 == nullptr && pt2 == nullptr) {
+                // Both sections were completely removed!
+                remove_ring(ring1, rings);
+                continue;
+            } else if (pt1 == nullptr) {
+                ring1->points = pt2;
+                continue;
+            } else if (pt2 == nullptr) {
+                ring1->points = pt1;
+                continue;
+            }
 
             ring1->bottom_point = nullptr;
             ring2 = create_new_ring(rings);
@@ -515,62 +551,78 @@ void join_common_edges(join_list<T>& joins, ring_list<T>& rings) {
             double p2_area;
             double ring1_area;
             double ring2_area;
-            area_and_count(join->point1, p1_count, p1_area);
-            area_and_count(join->point2, p2_count, p2_area);
+            area_and_count(pt1, p1_count, p1_area);
+            area_and_count(pt2, p2_count, p2_area);
             if (p1_count > p2_count) {
-                ring1->points = join->point1;
+                ring1->points = pt1;
                 ring1_area = p1_area;
-                ring2->points = join->point2;
+                ring2->points = pt2;
                 ring2_area = p2_area;
             } else {
-                ring1->points = join->point2;
+                ring1->points = pt2;
                 ring1_area = p2_area;
-                ring2->points = join->point1;
+                ring2->points = pt1;
                 ring2_area = p1_area;
             }
+            bool area_1_is_positive = (ring1_area > 0.0);
+            bool area_2_is_positive = (ring2_area > 0.0);
+            bool area_1_is_zero = std::fabs(ring1_area) <= 0.0;
+            bool area_2_is_zero = std::fabs(ring2_area) <= 0.0;
 
             update_points_ring(ring2);
-
+            
+            if (area_2_is_zero || (area_1_is_positive != area_2_is_positive && area_1_is_positive == original_is_positive)) {
+                // new_ring is contained by ring ...
+                ring1_child_of_ring2(ring2, ring1, rings);
+                fixup_children(ring2, ring1);
+            } else if (area_1_is_zero || (area_1_is_positive != area_2_is_positive && area_2_is_positive == original_is_positive)) {
+                // ring is contained by ring2 ...
+                ring1_sibling_of_ring2(ring2, ring1, rings);
+                ring1_child_of_ring2(ring1, ring2, rings);
+                fixup_children(ring2, ring1);
+            } else {
+                // the 2 polygons are separate ...
+                ring1_sibling_of_ring2(ring2, ring1, rings);
+                fixup_children(ring2, ring1);
+            }
+            /*
             if (poly2_contains_poly1(ring2->points, ring1->points)) {
                 // ring1 contains ring2 ...
-                ring2->is_hole = !ring1->is_hole;
-                ring2->first_left = ring1;
+                ring1_child_of_ring2(ring2, ring1, rings);
+                fixup_children(ring2, ring1);
 
-                fixup_first_lefts2(ring2, ring1, rings);
-                if (ring2->is_hole == (ring2_area > 0.0)) {
-                    reverse_ring(ring2->points);
-                }
+                //ring2->is_hole = !ring1->is_hole;
+                //if (ring2->is_hole == (ring2_area > 0.0)) {
+                //    reverse_ring(ring2->points);
+                //}
             } else if (poly2_contains_poly1(ring1->points, ring2->points)) {
                 // ring2 contains ring1 ...
-                ring2->is_hole = ring1->is_hole;
-                ring1->is_hole = !ring2->is_hole;
-                ring2->first_left = ring1->first_left;
-                ring1->first_left = ring2;
-
-                fixup_first_lefts2(ring1, ring2, rings);
-                if (ring1->is_hole == (ring1_area > 0.0)) {
-                    reverse_ring(ring1->points);
-                }
+                ring1_sibling_of_ring2(ring2, ring1, rings);
+                ring1_child_of_ring2(ring1, ring2, rings);
+                fixup_children(ring2, ring1);
+                
+                //ring2->is_hole = ring1->is_hole;
+                //ring1->is_hole = !ring2->is_hole;
+                //if (ring1->is_hole == (ring1_area > 0.0)) {
+                //    reverse_ring(ring1->points);
+                //}
             } else {
                 // the 2 polygons are completely separate ...
-                ring2->is_hole = ring1->is_hole;
-                ring2->first_left = ring1->first_left;
-
-                // fixup first_left pointers that may need reassigning to ring2
-                fixup_first_lefts1(ring1, ring2, rings);
+                //ring2->is_hole = ring1->is_hole;
+                ring1_sibling_of_ring2(ring2, ring1, rings);
+                fixup_children(ring2, ring1);
             }
+            */
         } else {
             // joined 2 polygons together ...
             ring2->points = nullptr;
             ring2->bottom_point = nullptr;
-            ring2->replacement_ring = ring1;
 
-            ring1->is_hole = hole_state_ring->is_hole;
             if (hole_state_ring == ring2) {
-                ring1->first_left = ring2->first_left;
+                ring1_sibling_of_ring2(ring1, ring2, rings);
             }
-            ring2->first_left = ring1;
-            fixup_first_lefts3(ring2, ring1, rings);
+            ring1_replaces_ring2(ring1, ring2, rings);
+            update_points_ring(ring1);
         }
     }
 }

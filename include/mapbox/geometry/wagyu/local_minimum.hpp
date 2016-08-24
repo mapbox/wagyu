@@ -88,7 +88,6 @@ std::string output_all_edges(local_minimum_ptr_list<T> const& lms) {
     out << "[";
     bool first = true;
     for (auto const& lm : lms) {
-        out << std::endl << "left bound" << std::endl;
         for (auto const& e : lm->left_bound.edges) {
             if (first) {
                 first = false;
@@ -98,7 +97,6 @@ std::string output_all_edges(local_minimum_ptr_list<T> const& lms) {
             out << "[[" << e.bot.x << "," << e.bot.y << "],[";
             out << e.top.x << "," << e.top.y << "]]";
         }
-        out << std::endl << "right bound" << std::endl;
         for (auto const& e : lm->right_bound.edges) {
             if (first) {
                 first = false;

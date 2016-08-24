@@ -26,22 +26,9 @@ namespace geometry {
 namespace wagyu {
 
 template <typename T>
-void fix_hole_linkage(ring_ptr<T> r) {
-    // skip OutRecs that (a) contain outermost polygons or
-    //(b) already have the correct owner/child linkage ...
-    if (!r->first_left || (r->is_hole != r->first_left->is_hole && r->first_left->points)) {
-        return;
-    }
-
-    ring_ptr<T> orfl = r->first_left;
-    while (orfl && ((orfl->is_hole == r->is_hole) || !orfl->points)) {
-        orfl = orfl->first_left;
-    }
-    r->first_left = orfl;
-}
-
-template <typename T>
-void set_hole_state(active_bound_list_itr<T>& bnd, active_bound_list<T>& active_bounds) {
+void set_hole_state(active_bound_list_itr<T>& bnd, 
+                    active_bound_list<T>& active_bounds,
+                    ring_manager<T> & rings) {
     auto bnd2 = active_bound_list_rev_itr<T>(bnd);
     bound_ptr<T> bndTmp = nullptr;
     // Find first non line ring to the left of current bound.
@@ -56,16 +43,17 @@ void set_hole_state(active_bound_list_itr<T>& bnd, active_bound_list<T>& active_
         ++bnd2;
     }
     if (!bndTmp) {
-        (*bnd)->ring->first_left = nullptr;
-        (*bnd)->ring->is_hole = false;
+        (*bnd)->ring->parent = nullptr;
+        rings.children.push_back((*bnd)->ring);
     } else {
-        (*bnd)->ring->first_left = bndTmp->ring;
-        (*bnd)->ring->is_hole = !bndTmp->ring->is_hole;
+        (*bnd)->ring->parent = bndTmp->ring;
+        bndTmp->ring->children.push_back((*bnd)->ring);
     }
 }
 
 template <typename T>
-void set_hole_state(active_bound_list_rev_itr<T>& bnd, active_bound_list<T>& active_bounds) {
+void set_hole_state(active_bound_list_rev_itr<T>& bnd, active_bound_list<T>& active_bounds,
+                    ring_manager<T> & rings) {
     auto bnd2 = std::next(bnd);
     bound_ptr<T> bndTmp = nullptr;
     // Find first non line ring to the left of current bound.
@@ -81,11 +69,11 @@ void set_hole_state(active_bound_list_rev_itr<T>& bnd, active_bound_list<T>& act
     }
 
     if (!bndTmp) {
-        (*bnd)->ring->first_left = nullptr;
-        (*bnd)->ring->is_hole = false;
+        (*bnd)->ring->parent = nullptr;
+        rings.children.push_back((*bnd)->ring);
     } else {
-        (*bnd)->ring->first_left = bndTmp->ring;
-        (*bnd)->ring->is_hole = !bndTmp->ring->is_hole;
+        (*bnd)->ring->parent = bndTmp->ring;
+        bndTmp->ring->children.push_back((*bnd)->ring);
     }
 }
 
@@ -93,17 +81,15 @@ template <typename T>
 point_ptr<T> add_first_point(active_bound_list_itr<T>& bnd,
                              active_bound_list<T>& active_bounds,
                              mapbox::geometry::point<T> const& pt,
-                             ring_list<T>& rings) {
-    ring_ptr<T> r = new ring<T>();
-    // no ring currently set!
-    r->ring_index = rings.size();
-    rings.emplace_back(r);
+                             ring_manager<T>& rings) {
+
+    ring_ptr<T> r = create_new_ring(rings);
     (*bnd)->ring = r;
     r->is_open = ((*bnd)->winding_delta == 0);
-    point_ptr<T> new_point = new point<T>(r, pt);
+    point_ptr<T> new_point = create_new_point(r, pt, rings);
     r->points = new_point;
     if (!r->is_open) {
-        set_hole_state(bnd, active_bounds);
+        set_hole_state(bnd, active_bounds, rings);
     }
     return new_point;
 }
@@ -112,24 +98,35 @@ template <typename T>
 point_ptr<T> add_first_point(active_bound_list_rev_itr<T>& bnd,
                              active_bound_list<T>& active_bounds,
                              mapbox::geometry::point<T> const& pt,
-                             ring_list<T>& rings) {
-    ring_ptr<T> r = new ring<T>();
+                             ring_manager<T>& rings) {
+    ring_ptr<T> r = create_new_ring(rings);
     // no ring currently set!
-    rings.emplace_back(r);
     (*bnd)->ring = r;
     r->is_open = ((*bnd)->winding_delta == 0);
-    point_ptr<T> new_point = new point<T>(r, pt);
+    point_ptr<T> new_point = create_new_point(r, pt, rings);
     r->points = new_point;
     if (!r->is_open) {
-        set_hole_state(bnd, active_bounds);
+        set_hole_state(bnd, active_bounds, rings);
     }
     return new_point;
 }
 
 template <typename T>
 point_ptr<T> add_point_to_ring(active_bound_list_itr<T>& bnd,
-                               mapbox::geometry::point<T> const& pt) {
+                               mapbox::geometry::point<T> const& pt,
+                               ring_manager<T>& rings) {
     assert((*bnd)->ring);
+    /*
+    if (pt.x == 37 && pt.y == 11) {
+        void* callstack[128];
+        int i, frames = backtrace(callstack, 128);
+        char** strs = backtrace_symbols(callstack, frames);
+        for (i = 0; i < frames; ++i) {
+            printf("%s\n", strs[i]);
+        }
+        free(strs);
+        std::clog << *(*bnd)->ring << std::endl;
+    }*/
     ring_ptr<T>& ring = (*bnd)->ring;
     // ring->points is the 'Left-most' point & ring->points->prev is the
     // 'Right-most'
@@ -141,7 +138,7 @@ point_ptr<T> add_point_to_ring(active_bound_list_itr<T>& bnd,
     } else if (!to_front && (pt == *op->prev)) {
         return op->prev;
     }
-    point_ptr<T> new_point = new point<T>(ring, pt, op);
+    point_ptr<T> new_point = create_new_point(ring, pt, op, rings);
     if (to_front) {
         ring->points = new_point;
     }
@@ -150,7 +147,8 @@ point_ptr<T> add_point_to_ring(active_bound_list_itr<T>& bnd,
 
 template <typename T>
 point_ptr<T> add_point_to_ring(active_bound_list_rev_itr<T>& bnd,
-                               mapbox::geometry::point<T> const& pt) {
+                               mapbox::geometry::point<T> const& pt,
+                               ring_manager<T>& rings) {
 
     assert((*bnd)->ring);
     ring_ptr<T>& ring = (*bnd)->ring;
@@ -164,21 +162,22 @@ point_ptr<T> add_point_to_ring(active_bound_list_rev_itr<T>& bnd,
     } else if (!to_front && (pt == *op->prev)) {
         return op->prev;
     }
-    point_ptr<T> new_point = new point<T>(ring, pt, op);
+    point_ptr<T> new_point = create_new_point(ring, pt, op, rings);
     if (to_front) {
         ring->points = new_point;
     }
     return new_point;
 }
+
 template <typename T>
 point_ptr<T> add_point(active_bound_list_itr<T>& bnd,
                        active_bound_list<T>& active_bounds,
                        mapbox::geometry::point<T> const& pt,
-                       ring_list<T>& rings) {
+                       ring_manager<T>& rings) {
     if (!(*bnd)->ring) {
         return add_first_point(bnd, active_bounds, pt, rings);
     } else {
-        return add_point_to_ring(bnd, pt);
+        return add_point_to_ring(bnd, pt, rings);
     }
 }
 
@@ -186,11 +185,11 @@ template <typename T>
 point_ptr<T> add_point(active_bound_list_rev_itr<T>& bnd,
                        active_bound_list<T>& active_bounds,
                        mapbox::geometry::point<T> const& pt,
-                       ring_list<T>& rings) {
+                       ring_manager<T>& rings) {
     if (!(*bnd)->ring) {
         return add_first_point(bnd, active_bounds, pt, rings);
     } else {
-        return add_point_to_ring(bnd, pt);
+        return add_point_to_ring(bnd, pt, rings);
     }
 }
 
@@ -199,7 +198,7 @@ point_ptr<T> add_local_minimum_point(active_bound_list_itr<T> b1,
                                      active_bound_list_itr<T> b2,
                                      active_bound_list<T>& active_bounds,
                                      mapbox::geometry::point<T> const& pt,
-                                     ring_list<T>& rings,
+                                     ring_manager<T>& rings,
                                      join_list<T>& joins) {
     point_ptr<T> result;
     active_bound_list_itr<T> b;
@@ -357,7 +356,7 @@ ring_ptr<T> get_lower_most_ring(ring_ptr<T> outRec1, ring_ptr<T> outRec2) {
 template <typename T>
 bool ring1_right_of_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2) {
     do {
-        ring1 = ring1->first_left;
+        ring1 = ring1->parent;
         if (ring1 == ring2) {
             return true;
         }
@@ -368,48 +367,66 @@ bool ring1_right_of_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2) {
 template <typename T>
 void append_ring(active_bound_list_itr<T>& b1,
                  active_bound_list_itr<T>& b2,
-                 active_bound_list<T>& active_bounds) {
+                 active_bound_list<T>& active_bounds,
+                 ring_manager<T> & manager) {
     // get the start and ends of both output polygons ...
     ring_ptr<T> outRec1 = (*b1)->ring;
     ring_ptr<T> outRec2 = (*b2)->ring;
 
-    ring_ptr<T> holeStateRec;
+    ring_ptr<T> keep_ring;
+    bound_ptr<T> keep_bound;
+    ring_ptr<T> remove_ring;
+    bound_ptr<T> remove_bound;
     if (ring1_right_of_ring2(outRec1, outRec2)) {
-        holeStateRec = outRec2;
+        keep_ring = outRec2;
+        keep_bound = *b2;
+        remove_ring = outRec1;
+        remove_bound = *b1;
     } else if (ring1_right_of_ring2(outRec2, outRec1)) {
-        holeStateRec = outRec1;
+        keep_ring = outRec1;
+        keep_bound = *b1;
+        remove_ring = outRec2;
+        remove_bound = *b2;
+    } else if (outRec1 == get_lower_most_ring(outRec1, outRec2)) {
+        keep_ring = outRec1;
+        keep_bound = *b1;
+        remove_ring = outRec2;
+        remove_bound = *b2;
     } else {
-        holeStateRec = get_lower_most_ring(outRec1, outRec2);
+        keep_ring = outRec2;
+        keep_bound = *b2;
+        remove_ring = outRec1;
+        remove_bound = *b1;
     }
 
     // get the start and ends of both output polygons and
-    // join e2 poly onto e1 poly and delete pointers to e2 ...
+    // join b2 poly onto b1 poly and delete pointers to b2 ...
 
-    point_ptr<T> p1_lft = outRec1->points;
+    point_ptr<T> p1_lft = keep_ring->points;
     point_ptr<T> p1_rt = p1_lft->prev;
-    point_ptr<T> p2_lft = outRec2->points;
+    point_ptr<T> p2_lft = remove_ring->points;
     point_ptr<T> p2_rt = p2_lft->prev;
 
-    // join e2 poly onto e1 poly and delete pointers to e2 ...
-    if ((*b1)->side == edge_left) {
-        if ((*b2)->side == edge_left) {
+    // join b2 poly onto b1 poly and delete pointers to b2 ...
+    if (keep_bound->side == edge_left) {
+        if (remove_bound->side == edge_left) {
             // z y x a b c
             reverse_ring(p2_lft);
             p2_lft->next = p1_lft;
             p1_lft->prev = p2_lft;
             p1_rt->next = p2_rt;
             p2_rt->prev = p1_rt;
-            outRec1->points = p2_rt;
+            keep_ring->points = p2_rt;
         } else {
             // x y z a b c
             p2_rt->next = p1_lft;
             p1_lft->prev = p2_rt;
             p2_lft->prev = p1_rt;
             p1_rt->next = p2_lft;
-            outRec1->points = p2_lft;
+            keep_ring->points = p2_lft;
         }
     } else {
-        if ((*b2)->side == edge_right) {
+        if (remove_bound->side == edge_right) {
             // a b c z y x
             reverse_ring(p2_lft);
             p1_rt->next = p2_rt;
@@ -425,40 +442,38 @@ void append_ring(active_bound_list_itr<T>& b1,
         }
     }
 
-    outRec1->bottom_point = nullptr;
-    if (holeStateRec == outRec2) {
-        if (outRec2->first_left != outRec1) {
-            outRec1->first_left = outRec2->first_left;
-        }
-        outRec1->is_hole = outRec2->is_hole;
+    keep_ring->bottom_point = nullptr;
+    bool keep_is_hole = ring_is_hole(keep_ring);
+    bool remove_is_hole = ring_is_hole(remove_ring);
+    
+    remove_ring->points = nullptr;
+    remove_ring->bottom_point = nullptr;
+    if (keep_is_hole != remove_is_hole) {
+        ring1_replaces_ring2(keep_ring->parent, remove_ring, manager);
+    } else {
+        ring1_replaces_ring2(keep_ring, remove_ring, manager);
     }
-    outRec2->points = nullptr;
-    outRec2->bottom_point = nullptr;
-    outRec2->first_left = outRec1;
-    ring_ptr<T> OkRing = (*b1)->ring;
-    ring_ptr<T> ObsoleteRing = (*b2)->ring;
 
-    update_points_ring(outRec1);
+    update_points_ring(keep_ring);
 
     // nb: safe because we only get here via AddLocalMaxPoly
-    (*b1)->ring = nullptr;
-    (*b2)->ring = nullptr;
+    keep_bound->ring = nullptr;
+    remove_bound->ring = nullptr;
 
     for (auto& b : active_bounds) {
-        if (b->ring == ObsoleteRing) {
-            b->ring = OkRing;
-            b->side = (*b1)->side;
+        if (b->ring == remove_ring) {
+            b->ring = keep_ring;
+            b->side = keep_bound->side;
             break; // Not sure why there is a break here but was transfered logic from angus
         }
     }
-    outRec2->replacement_ring = outRec1;
 }
 
 template <typename T>
 void add_local_maximum_point(active_bound_list_itr<T>& b1,
                              active_bound_list_itr<T>& b2,
                              mapbox::geometry::point<T> const& pt,
-                             ring_list<T>& rings,
+                             ring_manager<T>& rings,
                              active_bound_list<T>& active_bounds) {
     add_point(b1, active_bounds, pt, rings);
     if ((*b2)->winding_delta == 0) {
@@ -469,9 +484,9 @@ void add_local_maximum_point(active_bound_list_itr<T>& b1,
         (*b2)->ring = nullptr;
         // I am not certain that order is important here?
     } else if ((*b1)->ring->ring_index < (*b2)->ring->ring_index) {
-        append_ring(b1, b2, active_bounds);
+        append_ring(b1, b2, active_bounds, rings);
     } else {
-        append_ring(b2, b1, active_bounds);
+        append_ring(b2, b1, active_bounds, rings);
     }
 }
 
@@ -676,7 +691,10 @@ void dispose_out_points(point_ptr<T>& pp) {
     while (pp) {
         point_ptr<T> tmpPp = pp;
         pp = pp->next;
-        delete tmpPp;
+        tmpPp->next = tmpPp;
+        tmpPp->prev = tmpPp;
+        tmpPp->ring = nullptr;
+        //delete tmpPp;
     }
 }
 }

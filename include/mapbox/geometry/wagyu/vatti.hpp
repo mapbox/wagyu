@@ -48,17 +48,17 @@ bool add_linear_ring(mapbox::geometry::linear_ring<T> const& path_geometry,
 }
 
 template <typename T>
-active_bound_list_itr<T> do_maxima(active_bound_list_itr<T> bnd,
-                                   active_bound_list_itr<T> bndMaxPair,
+active_bound_list_itr<T> do_maxima(active_bound_list_itr<T> & bnd,
+                                   active_bound_list_itr<T> & bndMaxPair,
                                    clip_type cliptype,
                                    fill_type subject_fill_type,
                                    fill_type clip_fill_type,
-                                   ring_list<T>& rings,
+                                   ring_manager<T>& rings,
                                    join_list<T>& joins,
                                    active_bound_list<T>& active_bounds) {
     if (bndMaxPair == active_bounds.end()) {
         if ((*bnd)->ring) {
-            add_point_to_ring(bnd, (*bnd)->current_edge->top);
+            add_point_to_ring(bnd, (*bnd)->current_edge->top, rings);
         }
         return active_bounds.erase(bnd);
     }
@@ -67,7 +67,7 @@ active_bound_list_itr<T> do_maxima(active_bound_list_itr<T> bnd,
         std::llround((*bnd_prev)->curr.x) == (*bnd)->current_edge->top.x &&
         (*bnd_prev)->current_edge->top != (*bnd)->current_edge->top && (*bnd_prev)->ring &&
         (*bnd_prev)->winding_delta != 0 && (*bnd)->ring && (*bnd)->winding_delta != 0) {
-        add_point_to_ring(bnd_prev, (*bnd)->current_edge->top);
+        add_point_to_ring(bnd_prev, (*bnd)->current_edge->top, rings);
     }
     auto bnd_next = std::next(bnd);
     while (bnd_next != active_bounds.end() && bnd_next != bndMaxPair) {
@@ -81,7 +81,7 @@ active_bound_list_itr<T> do_maxima(active_bound_list_itr<T> bnd,
         std::llround((*bnd_next)->curr.x) == (*bnd)->current_edge->top.x &&
         (*bnd_next)->current_edge->top != (*bnd)->current_edge->top && (*bnd_next)->ring &&
         (*bnd_next)->winding_delta != 0 && (*bnd)->ring && (*bnd)->winding_delta != 0) {
-        add_point_to_ring(bnd_next, (*bnd)->current_edge->top);
+        add_point_to_ring(bnd_next, (*bnd)->current_edge->top, rings);
     }
 
     if (!(*bnd)->ring && !(*bndMaxPair)->ring) {
@@ -92,11 +92,11 @@ active_bound_list_itr<T> do_maxima(active_bound_list_itr<T> bnd,
         active_bounds.erase(bndMaxPair);
         return active_bounds.erase(bnd);
     } else if ((*bnd)->winding_delta == 0 && (*bnd)->ring) {
-        add_point_to_ring(bnd, (*bnd)->current_edge->top);
+        add_point_to_ring(bnd, (*bnd)->current_edge->top, rings);
         active_bounds.erase(bndMaxPair);
         return active_bounds.erase(bnd);
     } else if ((*bnd)->winding_delta == 0 && (*bndMaxPair)->ring) {
-        add_point_to_ring(bndMaxPair, (*bnd)->current_edge->top);
+        add_point_to_ring(bndMaxPair, (*bnd)->current_edge->top, rings);
         active_bounds.erase(bndMaxPair);
         return active_bounds.erase(bnd);
     } else {
@@ -110,7 +110,7 @@ void process_edges_at_top_of_scanbeam(T top_y,
                                       scanbeam_list<T>& scanbeam,
                                       local_minimum_ptr_list<T> const& minima_sorted,
                                       local_minimum_ptr_list_itr<T>& current_lm,
-                                      ring_list<T>& rings,
+                                      ring_manager<T>& rings,
                                       join_list<T>& joins,
                                       clip_type cliptype,
                                       fill_type subject_fill_type,
@@ -141,7 +141,7 @@ void process_edges_at_top_of_scanbeam(T top_y,
             if (is_intermediate(bnd, top_y) && next_edge_is_horizontal<T>(bnd)) {
                 next_edge_in_bound(bnd, scanbeam);
                 if ((*bnd)->ring) {
-                    add_point_to_ring(bnd, (*bnd)->current_edge->bot);
+                    add_point_to_ring(bnd, (*bnd)->current_edge->bot, rings);
                     maxima.push_back((*bnd)->current_edge->top.x);
                     maxima.push_back((*bnd)->current_edge->bot.x);
                 }
@@ -160,8 +160,8 @@ void process_edges_at_top_of_scanbeam(T top_y,
                           (*bnd)->current_edge->top == (*bnd_prev)->current_edge->top)) {
                         mapbox::geometry::point<T> pt(std::llround((*bnd)->curr.x),
                                                       std::llround((*bnd)->curr.y));
-                        point_ptr<T> op = add_point_to_ring(bnd_prev, pt);
-                        point_ptr<T> op2 = add_point_to_ring(bnd, pt);
+                        point_ptr<T> op = add_point_to_ring(bnd_prev, pt, rings);
+                        point_ptr<T> op2 = add_point_to_ring(bnd, pt, rings);
                         joins.emplace_back(op, op2, pt); // strictly simple type 3 join
                     }
                     ++bnd_prev;
@@ -192,7 +192,7 @@ void process_edges_at_top_of_scanbeam(T top_y,
         if (is_intermediate(bnd, top_y)) {
             point_ptr<T> p1 = nullptr;
             if ((*bnd)->ring) {
-                p1 = add_point_to_ring(bnd, (*bnd)->current_edge->top);
+                p1 = add_point_to_ring(bnd, (*bnd)->current_edge->top, rings);
             }
             next_edge_in_bound(bnd, scanbeam);
 
@@ -208,7 +208,7 @@ void process_edges_at_top_of_scanbeam(T top_y,
                     (*bnd_prev)->winding_delta != 0 && (*bnd_prev)->ring &&
                     std::llround((*bnd_prev)->curr.y) > (*bnd_prev)->current_edge->top.y &&
                     slopes_equal(*((*bnd)->current_edge), *((*bnd_prev)->current_edge))) {
-                    point_ptr<T> p2 = add_point_to_ring(bnd_prev, (*bnd)->current_edge->bot);
+                    point_ptr<T> p2 = add_point_to_ring(bnd_prev, (*bnd)->current_edge->bot, rings);
                     joins.emplace_back(p1, p2, (*bnd)->current_edge->top);
                 } else if (bnd_next != active_bounds.end() &&
                            std::llround((*bnd_next)->curr.x) == (*bnd)->current_edge->bot.x &&
@@ -216,7 +216,7 @@ void process_edges_at_top_of_scanbeam(T top_y,
                            (*bnd_next)->winding_delta != 0 && (*bnd_next)->ring &&
                            std::llround((*bnd_next)->curr.y) > (*bnd_next)->current_edge->top.y &&
                            slopes_equal(*((*bnd)->current_edge), *((*bnd_next)->current_edge))) {
-                    point_ptr<T> p2 = add_point_to_ring(bnd_next, (*bnd)->current_edge->bot);
+                    point_ptr<T> p2 = add_point_to_ring(bnd_next, (*bnd)->current_edge->bot, rings);
                     joins.emplace_back(p1, p2, (*bnd)->current_edge->top);
                 }
             }
@@ -225,7 +225,7 @@ void process_edges_at_top_of_scanbeam(T top_y,
 }
 
 template <typename T>
-void fixup_out_polyline(ring<T>& ring) {
+void fixup_out_polyline(ring<T>& ring, ring_manager<T> & rings) {
     point_ptr<T> pp = ring.points;
     point_ptr<T> lastPP = pp->prev;
     while (pp != lastPP) {
@@ -236,12 +236,16 @@ void fixup_out_polyline(ring<T>& ring) {
             point_ptr<T> tmpPP = pp->prev;
             tmpPP->next = pp->next;
             pp->next->prev = tmpPP;
-            delete pp;
+            //delete pp;
+            pp->next = pp;
+            pp->prev = pp;
+            pp->ring = nullptr;
             pp = tmpPP;
         }
     }
 
     if (pp == pp->prev) {
+        remove_ring(&ring, rings);
         dispose_out_points(pp);
         ring.points = nullptr;
         return;
@@ -249,7 +253,7 @@ void fixup_out_polyline(ring<T>& ring) {
 }
 
 template <typename T>
-void fixup_out_polygon(ring<T>& ring, bool simple) {
+void fixup_out_polygon(ring<T>& ring, ring_manager<T> & rings, bool simple) {
     // FixupOutPolygon() - removes duplicate points and simplifies consecutive
     // parallel edges by removing the middle vertex.
     point_ptr<T> lastOK = nullptr;
@@ -261,6 +265,7 @@ void fixup_out_polygon(ring<T>& ring, bool simple) {
             // We now need to make sure any children rings to this are promoted and their hole
             // status is changed
             // promote_children_of_removed_ring(&ring, rings);
+            remove_ring(&ring, rings);
             dispose_out_points(pp);
             ring.points = nullptr;
             return;
@@ -275,7 +280,9 @@ void fixup_out_polygon(ring<T>& ring, bool simple) {
             pp->prev->next = pp->next;
             pp->next->prev = pp->prev;
             pp = pp->prev;
-            delete tmp;
+            tmp->ring = nullptr;
+            tmp->next = tmp;
+            tmp->prev = tmp;
         } else if (pp == lastOK) {
             break;
         } else {
@@ -290,7 +297,7 @@ void fixup_out_polygon(ring<T>& ring, bool simple) {
 
 template <typename T>
 bool execute_vatti(local_minimum_list<T>& minima_list,
-                   ring_list<T>& rings,
+                   ring_manager<T>& rings,
                    clip_type cliptype,
                    fill_type subject_fill_type,
                    fill_type clip_fill_type) {
@@ -313,6 +320,7 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         }
         std::stable_sort(minima_sorted.begin(), minima_sorted.end(), local_minimum_sorter<T>());
         local_minimum_ptr_list_itr<T> current_lm = minima_sorted.begin();
+        //std::clog << output_all_edges(minima_sorted) << std::endl;
 
         setup_scanbeam(minima_list, scanbeam);
 
@@ -338,43 +346,40 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
     }
 
     // fix orientations ...
-    for (size_t i = 0; i < rings.size(); ++i) {
-        ring_ptr<T> r = rings[i];
+    for (auto & r :rings.all_rings) {
         if (!r->points || r->is_open) {
             continue;
         }
-        if (r->is_hole == (area(*r) > 0)) {
+        if (ring_is_hole(r) == (area(*r) > 0)) {
             reverse_ring(r->points);
         }
     }
-
+    /*
+    for (auto & c : rings.all_rings[5]->children) {
+        //std::clog << output_as_polygon(c) << std::endl;
+        std::clog << *c << std::endl;
+        std::clog << c->children << std::endl;
+        std::clog << std::endl;
+    }*/
     if (!joins.empty()) {
         join_common_edges(joins, rings);
     }
-
-    // unfortunately FixupOutPolygon() must be done after JoinCommonEdges()
-    for (size_t i = 0; i < rings.size(); ++i) {
-        ring_ptr<T> r = rings[i];
-        if (!r->points) {
-            continue;
-        }
-        if (r->is_open) {
-            fixup_out_polyline(*r);
-        } else {
-            //fix_hole_linkage(r);
-            fixup_out_polygon(*r, true);
-        }
-    }
+    //std::clog << output_as_polygon(rings.all_rings[0]) << std::endl;
+    //std::clog << "---------------" << std::endl;
+    /*for (auto & c : rings.children) {
+        std::clog << output_as_polygon(c) << std::endl;
+        std::clog << std::endl;
+    }*/
 
     do_simple_polygons(rings);
 
-    for (auto& r : rings) {
+    for (auto& r : rings.all_rings) {
         if (!r->points || r->is_open) {
             continue;
         }
-        fix_hole_linkage(r);
-        fixup_out_polygon(*r, false);
-        if (r->is_hole == (area(*r) > 0)) {
+        //fix_hole_linkage(r);
+        fixup_out_polygon(*r, rings, false);
+        if (ring_is_hole(r) == (area(*r) > 0)) {
             reverse_ring(r->points);
         }
     }

@@ -108,15 +108,17 @@ public:
                  std::vector<mapbox::geometry::polygon<value_type>>& solution,
                  fill_type subject_fill_type,
                  fill_type clip_fill_type) {
-        solution.clear(); // put here to do nothing for now.
-        ring_list<T> rings;
+        
+        ring_manager<T> rings;
         bool worked =
             execute_vatti(minima_list, rings, cliptype, subject_fill_type, clip_fill_type);
 
         build_result(solution, rings);
 
-        for (auto& r : rings) {
-            dispose_out_points(r->points);
+        for (auto& p : rings.all_points) {
+            delete p;
+        }
+        for (auto& r : rings.all_rings) {
             delete r;
         }
 

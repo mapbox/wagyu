@@ -38,24 +38,6 @@ bool orientation(mapbox::geometry::linear_ring<T> const& poly) {
 }
 
 template <typename T>
-std::size_t ring_depth(ring_ptr<T> r) {
-    std::size_t count = 0;
-    while (r) {
-        ring_ptr<T> first_left = r->first_left;
-        while (first_left && !first_left->points) {
-            first_left = first_left->first_left;
-        }
-        ++count;
-        r = first_left;
-    }
-    return count;
-}
-
-inline bool is_odd(std::size_t val) {
-    return val & 1;
-}
-
-template <typename T>
 bool slopes_equal(edge<T> const& e1, edge<T> const& e2) {
     return (e1.top.y - e1.bot.y) * (e2.top.x - e2.bot.x) ==
            (e1.top.x - e1.bot.x) * (e2.top.y - e2.bot.y);
