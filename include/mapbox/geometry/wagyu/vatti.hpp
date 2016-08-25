@@ -296,6 +296,33 @@ void fixup_out_polygon(ring<T>& ring, ring_manager<T> & rings, bool simple) {
 }
 
 template <typename T>
+void remove_spikes_in_polygons(ring_ptr<T> r, ring_manager<T> & rings) {
+
+    point_ptr<T> first_point = r->points;
+    remove_spikes(first_point);
+    if (!first_point) {
+        r->points = nullptr;
+        r->area = std::numeric_limits<double>::quiet_NaN();
+        remove_ring(r, rings);
+        return;
+    }
+    point_ptr<T> p = first_point->next;
+    while (p != first_point) {
+        remove_spikes(p);
+        if (!p) {
+            r->points = nullptr;
+            r->area = std::numeric_limits<double>::quiet_NaN();
+            remove_ring(r, rings);
+            return;
+        }
+        if (p->ring && !first_point->ring) {
+            first_point = p;
+        }
+        p = p->next;
+    }
+}
+
+template <typename T>
 bool execute_vatti(local_minimum_list<T>& minima_list,
                    ring_manager<T>& rings,
                    clip_type cliptype,
@@ -350,10 +377,13 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         if (!r->points || r->is_open) {
             continue;
         }
-        if (ring_is_hole(r) == (area(*r) > 0)) {
+        if (ring_is_hole(r) == (area_from_point(r->points) > 0)) {
             reverse_ring(r->points);
         }
+        remove_spikes_in_polygons(r, rings);
+        r->area = std::numeric_limits<double>::quiet_NaN();
     }
+    //std::clog << output_as_polygon(rings.all_rings[0]) << std::endl;
     /*
     for (auto & c : rings.all_rings[5]->children) {
         //std::clog << output_as_polygon(c) << std::endl;
@@ -361,9 +391,9 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         std::clog << c->children << std::endl;
         std::clog << std::endl;
     }*/
-    if (!joins.empty()) {
+    /*if (!joins.empty()) {
         join_common_edges(joins, rings);
-    }
+    }*/
     //std::clog << output_as_polygon(rings.all_rings[0]) << std::endl;
     //std::clog << "---------------" << std::endl;
     /*for (auto & c : rings.children) {
@@ -371,7 +401,19 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         std::clog << std::endl;
     }*/
 
+    std::clog << rings.all_rings << std::endl;
+    
     do_simple_polygons(rings);
+    
+#if DEBUG
+    for (auto& r : rings.all_rings) {
+        if (!r->points || r->is_open) {
+            continue;
+        }
+        double area_diff = area(r) - area_from_point(r->points); 
+        assert(std::fabs(area_diff) <= 0.0);
+    }
+#endif
 
     for (auto& r : rings.all_rings) {
         if (!r->points || r->is_open) {
@@ -379,10 +421,12 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         }
         //fix_hole_linkage(r);
         fixup_out_polygon(*r, rings, false);
-        if (ring_is_hole(r) == (area(*r) > 0)) {
+        if (ring_is_hole(r) == (area(r) > 0)) {
             reverse_ring(r->points);
+            r->area = std::numeric_limits<double>::quiet_NaN();
         }
     }
+    
     return true;
 }
 }

@@ -117,7 +117,7 @@ point_ptr<T> add_point_to_ring(active_bound_list_itr<T>& bnd,
                                ring_manager<T>& rings) {
     assert((*bnd)->ring);
     /*
-    if (pt.x == 37 && pt.y == 11) {
+    if (pt.x == -2500 && pt.y == -2696) {
         void* callstack[128];
         int i, frames = backtrace(callstack, 128);
         char** strs = backtrace_symbols(callstack, frames);
@@ -126,7 +126,8 @@ point_ptr<T> add_point_to_ring(active_bound_list_itr<T>& bnd,
         }
         free(strs);
         std::clog << *(*bnd)->ring << std::endl;
-    }*/
+    }
+    */
     ring_ptr<T>& ring = (*bnd)->ring;
     // ring->points is the 'Left-most' point & ring->points->prev is the
     // 'Right-most'
@@ -282,7 +283,7 @@ bool first_is_bottom_point(const_point_ptr<T> btmPt1, const_point_ptr<T> btmPt2)
             std::numeric_limits<double>::epsilon() &&
         std::fabs(std::min(dx1p, dx1n) - std::min(dx2p, dx2n)) <
             std::numeric_limits<double>::epsilon()) {
-        return area(btmPt1) > 0; // if otherwise identical use orientation
+        return area_from_point(btmPt1) > 0; // if otherwise identical use orientation
     } else {
         return (dx1p >= dx2p && dx1p >= dx2n) || (dx1n >= dx2p && dx1n >= dx2n);
     }
@@ -631,10 +632,10 @@ point_in_polygon_result point_in_polygon(mapbox::geometry::point<double> const& 
 template <typename T>
 point_in_polygon_result inside_or_outside_special(point_ptr<T> first_pt, point_ptr<T> other_poly) {
 
-    if (std::fabs(area(first_pt)) <= 0.0) {
+    if (std::fabs(area(first_pt->ring)) <= 0.0) {
         return point_inside_polygon;
     }
-    if (std::fabs(area(other_poly)) <= 0.0) {
+    if (std::fabs(area(other_poly->ring)) <= 0.0) {
         return point_outside_polygon;
     }
     point_ptr<T> pt = first_pt;

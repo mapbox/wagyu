@@ -248,7 +248,6 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
     if (is_maxima_edge) {
         bound_max_pair = get_maxima_pair<T>(horz_bound, active_bounds);
     }
-
     auto max_iter = maxima.rbegin();
     while (max_iter != maxima.rend() &&
            *max_iter > std::llround((*horz_bound)->current_edge->bot.x)) {
@@ -258,7 +257,6 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
     point_ptr<T> p1 = nullptr;
 
     auto bnd = active_bound_list_rev_itr<T>(horz_bound);
-
     while (bnd != active_bounds.rend()) {
         // this code block inserts extra coords into horizontal edges (in output
         // polygons) wherever maxima touch these horizontal edges. This helps
@@ -316,9 +314,11 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
                          mapbox::geometry::point<T>(std::llround((*bnd)->curr.x),
                                                     std::llround((*horz_bound)->curr.y)),
                          cliptype, subject_fill_type, clip_fill_type, rings, joins, active_bounds);
-        auto next_bnd = std::next(bnd);
         swap_positions_in_ABL(horz_bound, bnd_forward, active_bounds);
-        bnd = next_bnd;
+        // Why are we not incrementing the bnd iterator here:
+        // It is because reverse iterators point to a `base()` iterator that is a forward
+        // iterator that is one ahead of the reverse bound. This will always be the horizontal bound, 
+        // so what the reverse bound points to will have changed.
     } // end while (bnd != active_bounds.rend())
 
     if ((*horz_bound)->ring && !is_open) {

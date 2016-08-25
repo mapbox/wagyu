@@ -89,8 +89,9 @@ bool find_intersect_loop(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>
     for (auto it = range.first;
          it != range.second && it != dupe_ring.end() && it->first == ring_search; ++it) {
         ring_ptr<T> it_ring = it->second.op2->ring;
-        if (visited.count(it_ring) > 0 ||
+        if (visited.count(it_ring) > 0 || it_ring == nullptr || 
             (ring_parent != it_ring && ring_parent != it_ring->parent) ||
+            std::fabs(area(it_ring)) <= 0.0 ||
             *prev_pt == *it->second.op2) {
             continue;
         }
@@ -147,6 +148,15 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
                     ring_ptr<T> ring_k,
                     ring_manager<T>& rings,
                     bool add_if_not_found) {
+    bool debug = false;
+    if (op_j->x == 14 && op_j->y == 41) {
+        debug = true;
+        std::clog << rings.all_rings << std::endl;
+        std::clog << *ring_j << std::endl;
+        std::clog << *ring_k << std::endl;
+        std::clog << dupe_ring << std::endl;
+    }
+
     if (ring_j == ring_k) {
         return false;
     }
@@ -209,8 +219,9 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
         for (auto it = range.first;
              it != range.second && it != dupe_ring.end() && it->first == ring_search; ++it) {
             ring_ptr<T> it_ring = it->second.op2->ring;
-            if (it_ring != ring_search && *op_origin_2 != *it->second.op2 &&
+            if (it_ring != ring_search && *op_origin_2 != *it->second.op2 && it_ring != nullptr &&
                 (ring_parent == it_ring || ring_parent == it_ring->parent) &&
+                std::fabs(area(it_ring)) > 0.0 &&
                 find_intersect_loop(dupe_ring, iList, ring_parent, ring_origin, it_ring, visited,
                                     op_origin_2, it->second.op2, rings)) {
                 found = true;
@@ -276,10 +287,12 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
         if (op_origin_1 == nullptr && op_origin_2 == nullptr) {
             // Self destruction!
             ring_origin->points = nullptr;
+            ring_origin->area = std::numeric_limits<double>::quiet_NaN();
             remove_ring(ring_origin, rings);
             for (auto& iRing : iList) {
                 ring_ptr<T> ring_itr = iRing.first;
                 ring_itr->points = nullptr;
+                ring_itr->area = std::numeric_limits<double>::quiet_NaN();
                 remove_ring(ring_itr, rings);
             }
         } else {
@@ -289,9 +302,12 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
                 //(op_origin_2 == nullptr)
                 ring_origin->points = op_origin_1;
             }
+            ring_origin->area = std::numeric_limits<double>::quiet_NaN();
+            update_points_ring(ring_origin);
             for (auto& iRing : iList) {
                 ring_ptr<T> ring_itr = iRing.first;
                 ring_itr->points = nullptr;
+                ring_itr->area = std::numeric_limits<double>::quiet_NaN();
                 ring_itr->bottom_point = nullptr;
                 if (ring_is_hole(ring_origin)) {
                     ring1_replaces_ring2(ring_origin, ring_itr, rings);
@@ -302,12 +318,18 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
         }
     } else {
         ring_ptr<T> ring_new = create_new_ring(rings);
-        if (ring_is_hole(ring_origin) && ((area(op_origin_1) < 0.0))) {
+        double area_1 = area_from_point(op_origin_1);
+        double area_2 = area_from_point(op_origin_2);
+        if (ring_is_hole(ring_origin) && ((area_1 < 0.0))) {
             ring_origin->points = op_origin_1;
+            ring_origin->area = area_1;
             ring_new->points = op_origin_2;
+            ring_new->area = area_2;
         } else {
             ring_origin->points = op_origin_2;
+            ring_origin->area = area_2;
             ring_new->points = op_origin_1;
+            ring_new->area = area_1;
         }
 
         update_points_ring(ring_origin);
@@ -318,6 +340,7 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
         for (auto& iRing : iList) {
             ring_ptr<T> ring_itr = iRing.first;
             ring_itr->points = nullptr;
+            ring_itr->area = std::numeric_limits<double>::quiet_NaN();
             ring_itr->bottom_point = nullptr;
             if (ring_is_hole(ring_origin)) {
                 ring1_replaces_ring2(ring_origin, ring_itr, rings);
@@ -326,11 +349,21 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
             }
         }
         if (ring_is_hole(ring_origin)) {
-            ring1_child_of_ring2(ring_new, ring_origin, rings);
+            ring_new->parent = ring_origin;
+            if (ring_new->parent == nullptr) {
+                rings.children.push_back(ring_new);
+            } else {
+                ring_new->parent->children.push_back(ring_new);
+            }
             fixup_children(ring_origin, ring_new);
             fixup_children(ring_parent, ring_new);
         } else {
-            ring1_sibling_of_ring2(ring_new, ring_origin, rings);
+            ring_new->parent = ring_origin->parent;
+            if (ring_new->parent == nullptr) {
+                rings.children.push_back(ring_new);
+            } else {
+                ring_new->parent->children.push_back(ring_new);
+            }
             fixup_children(ring_origin, ring_new);
         }
     }
@@ -490,13 +523,15 @@ void handle_self_intersections(point_ptr<T> op,
                                ring_manager<T>& rings) {
     /*
     bool debug = false;
-    if (op->x == 31 && op->y == 8) {
+    if (op->x == 14 && op->y == 41) {
         std::clog << "FOUND" << std::endl;
         std::clog << *ring << std::endl;
         std::clog << *ring2 << std::endl;
+        std::clog << rings.all_rings << std::endl;
         debug = true;
     }
     */
+
     // Check that are same ring
     if (ring != ring2) {
         return;
@@ -515,7 +550,7 @@ void handle_self_intersections(point_ptr<T> op,
 
     assert(op != op2);
     
-    double original_area = area(ring->points);
+    double original_area = area(ring);
     bool original_is_positive = (original_area > 0.0);
 #ifdef DEBUG
     bool crossing = intersections_cross(op, op2);
@@ -536,35 +571,33 @@ void handle_self_intersections(point_ptr<T> op,
     if (op == nullptr && op2 == nullptr) {
         // Self destruction!
         ring->points = nullptr;
+        ring->area = std::numeric_limits<double>::quiet_NaN();
         remove_ring(ring, rings);
         update_duplicate_point_entries(ring, dupe_ring);
         return;
     } else if (op == nullptr) {
         ring->points = op2;
+        ring->area = std::numeric_limits<double>::quiet_NaN();
         update_duplicate_point_entries(ring, dupe_ring);
         return;
     } else if (op2 == nullptr) {
         ring->points = op;
+        ring->area = std::numeric_limits<double>::quiet_NaN();
         update_duplicate_point_entries(ring, dupe_ring);
         return;
     }
 
     ring_ptr<T> new_ring = create_new_ring(rings);
     
-    // We are select where op is assigned because it provides
-    // a performance increase in poly2_contains_poly1 below.
-    if (point_count(op) > point_count(op2)) {
-        ring->points = op;
-        new_ring->points = op2;
-    } else {
-        ring->points = op2;
-        new_ring->points = op;
-    }
+    ring->points = op;
+    ring->area = std::numeric_limits<double>::quiet_NaN();
+    new_ring->points = op2;
+    new_ring->area = std::numeric_limits<double>::quiet_NaN();
 
     update_points_ring(ring);
     update_points_ring(new_ring);
-    double area_1 = area(ring->points);
-    double area_2 = area(new_ring->points);
+    double area_1 = area(ring);
+    double area_2 = area(new_ring);
     bool area_1_is_positive = (area_1 > 0.0);
     bool area_2_is_positive = (area_2 > 0.0);
     bool area_1_is_zero = std::fabs(area_1) <= 0.0;
@@ -572,16 +605,31 @@ void handle_self_intersections(point_ptr<T> op,
 
     if (area_2_is_zero || (area_1_is_positive != area_2_is_positive && area_1_is_positive == original_is_positive)) {
         // new_ring is contained by ring ...
-        ring1_child_of_ring2(new_ring, ring, rings);
+        new_ring->parent = ring;
+        if (new_ring->parent == nullptr) {
+            rings.children.push_back(new_ring);
+        } else {
+            new_ring->parent->children.push_back(new_ring);
+        }
         fixup_children(new_ring, ring);
     } else if (area_1_is_zero || (area_1_is_positive != area_2_is_positive && area_2_is_positive == original_is_positive)) {
         // ring is contained by new_ring ...
-        ring1_sibling_of_ring2(new_ring, ring, rings);
+        new_ring->parent = ring->parent;
+        if (new_ring->parent == nullptr) {
+            rings.children.push_back(new_ring);
+        } else {
+            new_ring->parent->children.push_back(new_ring);
+        }
         ring1_child_of_ring2(ring, new_ring, rings);
         fixup_children(new_ring, ring);
     } else {
         // the 2 polygons are separate ...
-        ring1_sibling_of_ring2(new_ring, ring, rings);
+        new_ring->parent = ring->parent;
+        if (new_ring->parent == nullptr) {
+            rings.children.push_back(new_ring);
+        } else {
+            new_ring->parent->children.push_back(new_ring);
+        }
         fixup_children(new_ring, ring);
     }
     update_duplicate_point_entries(ring, dupe_ring);
@@ -616,8 +664,10 @@ void handle_collinear_edges(point_ptr<T> pt1, point_ptr<T> pt2,
     if (!pt1) {
         // rings self destructed
         ring1->points = nullptr;
+        ring1->area = std::numeric_limits<double>::quiet_NaN();
         remove_ring(ring1, rings);
         ring2->points = nullptr;
+        ring2->area = std::numeric_limits<double>::quiet_NaN();
         remove_ring(ring2, rings);
         return;
     }
@@ -626,13 +676,17 @@ void handle_collinear_edges(point_ptr<T> pt1, point_ptr<T> pt2,
         if (!pt2) {
             // rings self destructed
             ring1->points = nullptr;
+            ring1->area = std::numeric_limits<double>::quiet_NaN();
             remove_ring(ring1, rings);
             ring2->points = nullptr;
+            ring2->area = std::numeric_limits<double>::quiet_NaN();
             remove_ring(ring2, rings);
             return;
         }
     }
     ring1->points = pt1;
+    ring1->area = std::numeric_limits<double>::quiet_NaN();
+    ring2->area = std::numeric_limits<double>::quiet_NaN();
     ring1_replaces_ring2(ring1, ring2, rings);
     update_points_ring(ring1);
     update_duplicate_point_entries(ring2, dupe_ring);
@@ -670,11 +724,10 @@ void process_repeated_points(std::size_t repeated_point_count,
             }
             handle_self_intersections(op_j, op_k, op_j->ring, op_k->ring, dupe_ring,
                                       rings);
-            /*if (!op_k->ring || !op_j->ring) {
+            if (!op_k->ring || !op_j->ring) {
                 continue;
             }
             handle_collinear_edges(op_j, op_k, dupe_ring, rings);
-            */
         }
     }
 }

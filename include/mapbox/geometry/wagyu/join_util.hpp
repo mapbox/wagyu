@@ -418,10 +418,38 @@ void fixup_children(ring_ptr<T> old_ring, ring_ptr<T> new_ring) {
 
 template <typename T>
 bool intersections_cross(point_ptr<T> p1, point_ptr<T> p2) {
-    double a1_p1 = std::atan2(static_cast<double>(p1->prev->y - p1->y), static_cast<double>(p1->prev->x - p1->x));
-    double a2_p1 = std::atan2(static_cast<double>(p1->next->y - p1->y), static_cast<double>(p1->next->x - p1->x));
-    double a1_p2 = std::atan2(static_cast<double>(p2->prev->y - p2->y), static_cast<double>(p2->prev->x - p2->x));
-    double a2_p2 = std::atan2(static_cast<double>(p2->next->y - p2->y), static_cast<double>(p2->next->x - p2->x));
+    point_ptr<T> p1_next = p1->next;
+    point_ptr<T> p2_next = p2->next;
+    point_ptr<T> p1_prev = p1->prev;
+    point_ptr<T> p2_prev = p2->prev;
+    while (*p1_next == *p1) {
+        if (p1_next == p1) {
+            return false;
+        }
+        p1_next = p1_next->next;
+    }
+    while (*p2_next == *p2) {
+        if (p2_next == p2) {
+            return false;
+        }
+        p2_next = p2_next->next;
+    }
+    while (*p1_prev == *p1) {
+        if (p1_prev == p1) {
+            return false;
+        }
+        p1_prev = p1_prev->prev;
+    }
+    while (*p2_prev == *p2) {
+        if (p2_prev == p2) {
+            return false;
+        }
+        p2_prev = p2_prev->prev;
+    }
+    double a1_p1 = std::atan2(static_cast<double>(p1_prev->y - p1->y), static_cast<double>(p1_prev->x - p1->x));
+    double a2_p1 = std::atan2(static_cast<double>(p1_next->y - p1->y), static_cast<double>(p1_next->x - p1->x));
+    double a1_p2 = std::atan2(static_cast<double>(p2_prev->y - p2->y), static_cast<double>(p2_prev->x - p2->x));
+    double a2_p2 = std::atan2(static_cast<double>(p2_next->y - p2->y), static_cast<double>(p2_next->x - p2->x));
     double min_p1 = std::min(a1_p1, a2_p1);
     double max_p1 = std::max(a1_p1, a2_p1);
     double min_p2 = std::min(a1_p2, a2_p2);
@@ -480,6 +508,11 @@ void join_common_edges(join_list<T>& joins, ring_manager<T>& rings) {
 
         ring_ptr<T> ring1 = join->point1->ring;
         ring_ptr<T> ring2 = join->point2->ring;
+        if (join->point1->x == 9 && join->point1->y == 26) {
+            std::clog << " YEA WHAT!" << std::endl;
+                std::clog << *ring1 << std::endl;
+                std::clog << *ring2 << std::endl;
+        }
 
         if (!ring1 || !ring2) {
             continue;
@@ -506,15 +539,21 @@ void join_common_edges(join_list<T>& joins, ring_manager<T>& rings) {
         }
     
 #ifdef DEBUG
+        bool crossing = false;
         if (*(join->point1) == *(join->point2) && join->off_point == *(join->point1)) {
-            bool crossing = intersections_cross(join->point1, join->point2);
+            crossing = intersections_cross(join->point1, join->point2);
+            if (crossing) {
+                std::clog << join->point1->x << ", " << join->point1->y << std::endl;
+                std::clog << *ring1 << std::endl;
+                std::clog << *ring2 << std::endl;
+            }
             assert(!crossing);
         }
 #endif
         double original_area;
         bool original_is_positive;
         if (ring1 == ring2) {
-            original_area = area(ring1->points);
+            original_area = area(ring1);
             original_is_positive = (original_area > 0.0);
         }
 
@@ -536,34 +575,23 @@ void join_common_edges(join_list<T>& joins, ring_manager<T>& rings) {
                 continue;
             } else if (pt1 == nullptr) {
                 ring1->points = pt2;
+                ring1->area = std::numeric_limits<double>::quiet_NaN();
                 continue;
             } else if (pt2 == nullptr) {
                 ring1->points = pt1;
+                ring1->area = std::numeric_limits<double>::quiet_NaN();
                 continue;
             }
 
             ring1->bottom_point = nullptr;
             ring2 = create_new_ring(rings);
 
-            std::size_t p1_count;
-            std::size_t p2_count;
-            double p1_area;
-            double p2_area;
-            double ring1_area;
-            double ring2_area;
-            area_and_count(pt1, p1_count, p1_area);
-            area_and_count(pt2, p2_count, p2_area);
-            if (p1_count > p2_count) {
-                ring1->points = pt1;
-                ring1_area = p1_area;
-                ring2->points = pt2;
-                ring2_area = p2_area;
-            } else {
-                ring1->points = pt2;
-                ring1_area = p2_area;
-                ring2->points = pt1;
-                ring2_area = p1_area;
-            }
+            ring1->points = pt1;
+            ring1->area = std::numeric_limits<double>::quiet_NaN();
+            ring2->points = pt2;
+            ring2->area = std::numeric_limits<double>::quiet_NaN();
+            double ring1_area = area(ring1);
+            double ring2_area = area(ring2);
             bool area_1_is_positive = (ring1_area > 0.0);
             bool area_2_is_positive = (ring2_area > 0.0);
             bool area_1_is_zero = std::fabs(ring1_area) <= 0.0;
@@ -616,6 +644,8 @@ void join_common_edges(join_list<T>& joins, ring_manager<T>& rings) {
         } else {
             // joined 2 polygons together ...
             ring2->points = nullptr;
+            ring2->area = std::numeric_limits<double>::quiet_NaN();
+            ring1->area = std::numeric_limits<double>::quiet_NaN();
             ring2->bottom_point = nullptr;
 
             if (hole_state_ring == ring2) {

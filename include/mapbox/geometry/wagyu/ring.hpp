@@ -34,6 +34,7 @@ using ring_list = std::list<ring_ptr<T>>;
 template <typename T>
 struct ring {
     std::size_t ring_index; // To support unset 0 is undefined and indexes offset by 1
+    double area;
     ring_ptr<T> parent;
     ring_list<T> children;
     point_ptr<T> points;
@@ -42,6 +43,7 @@ struct ring {
 
     ring()
         : ring_index(0),
+          area(std::numeric_limits<double>::quiet_NaN()),
           parent(nullptr),
           children(),
           points(nullptr),
@@ -264,7 +266,7 @@ void reverse_ring(point_ptr<T> pp) {
 }
 
 template <typename T>
-double area(point_ptr<T> op) {
+double area_from_point(point_ptr<T> op) {
     point_ptr<T> startOp = op;
     if (!op) {
         return 0.0;
@@ -278,10 +280,14 @@ double area(point_ptr<T> op) {
 }
 
 template <typename T>
-double area(ring<T> const& polygon_ring) {
-    return area(polygon_ring.points);
+double area(ring_ptr<T> r) {
+    if (std::isnan(r->area)) {
+        r->area = area_from_point(r->points);
+    }
+    return r->area;
 }
 
+/*
 template <typename T>
 void area_and_count(point_ptr<T> op, std::size_t& count, double& area) {
     point_ptr<T> startOp = op;
@@ -299,6 +305,7 @@ void area_and_count(point_ptr<T> op, std::size_t& count, double& area) {
     area = area * 0.5;
     return;
 }
+*/
 
 #ifdef DEBUG
 
@@ -321,7 +328,7 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
     }
     auto pt_itr = r.points;
     if (pt_itr) {
-        out << "  area: " << area(r.points) << std::endl;
+        out << "  area: " << r.area << std::endl;
         out << "  points:" << std::endl;
         out << "      [[[" << pt_itr->x << "," << pt_itr->y << "],";
         pt_itr = pt_itr->next;
@@ -375,9 +382,8 @@ template <class charT, class traits, typename T>
 inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
                                                      const ring_list<T>& rings) {
     out << "START RING LIST" << std::endl;
-    std::size_t c = 0;
     for (auto& r : rings) {
-        out << " ring: " << c++ << " - " << r << std::endl;
+        out << " ring: " << r->ring_index << " - " << r << std::endl;
         out << *r;
     }
     out << "END RING LIST" << std::endl;
@@ -388,9 +394,11 @@ template <class charT, class traits, typename T>
 inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
                                                      const ring_vector<T>& rings) {
     out << "START RING VECTOR" << std::endl;
-    std::size_t c = 0;
     for (auto& r : rings) {
-        out << " ring: " << c++ << " - " << r << std::endl;
+        if (!r->points) {
+            continue;
+        }
+        out << " ring: " << r->ring_index << " - " << r << std::endl;
         out << *r;
     }
     out << "END RING VECTOR" << std::endl;
