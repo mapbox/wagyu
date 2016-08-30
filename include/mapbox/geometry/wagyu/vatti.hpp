@@ -383,25 +383,8 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         remove_spikes_in_polygons(r, rings);
         r->area = std::numeric_limits<double>::quiet_NaN();
     }
-    //std::clog << output_as_polygon(rings.all_rings[0]) << std::endl;
-    /*
-    for (auto & c : rings.all_rings[5]->children) {
-        //std::clog << output_as_polygon(c) << std::endl;
-        std::clog << *c << std::endl;
-        std::clog << c->children << std::endl;
-        std::clog << std::endl;
-    }*/
-    /*if (!joins.empty()) {
-        join_common_edges(joins, rings);
-    }*/
-    //std::clog << output_as_polygon(rings.all_rings[0]) << std::endl;
-    //std::clog << "---------------" << std::endl;
-    /*for (auto & c : rings.children) {
-        std::clog << output_as_polygon(c) << std::endl;
-        std::clog << std::endl;
-    }*/
 
-    std::clog << rings.all_rings << std::endl;
+    //std::clog << rings.all_rings << std::endl;
     
     do_simple_polygons(rings);
     

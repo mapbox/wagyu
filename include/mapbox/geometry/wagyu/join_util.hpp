@@ -403,10 +403,6 @@ void fixup_children(ring_ptr<T> old_ring, ring_ptr<T> new_ring) {
         if ((*r) != new_ring && 
             !ring1_right_of_ring2(new_ring, (*r)) && 
             poly2_contains_poly1((*r)->points, new_ring->points)) {
-            /*if (ring->is_hole == new_ring->is_hole) {
-                ring->is_hole = !ring->is_hole;
-                reverse_ring(ring->points);
-            }*/
             (*r)->parent = new_ring;
             new_ring->children.push_back((*r));
             r = old_ring->children.erase(r);
