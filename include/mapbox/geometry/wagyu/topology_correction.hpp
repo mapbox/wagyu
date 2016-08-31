@@ -545,12 +545,11 @@ void handle_self_intersections(point_ptr<T> op,
                                ring_ptr<T> ring2,
                                std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring,
                                ring_manager<T>& rings) {
-    /*bool debug = false;
-    if (ring->ring_index == 0) {//op->x == 13 && op->y == 42) {
-        std::clog << "POINT IS: " << op->x << ", " << op->y << std::endl;
-        std::clog << *ring << std::endl;
+    bool debug = false;
+    /*if (op->x == 38 && op->y == 29) {
         //std::clog << *ring2 << std::endl;
         //std::clog << rings.all_rings << std::endl;
+        std::clog << *ring << std::endl;
         debug = true;
     }*/
 
@@ -631,6 +630,7 @@ void handle_self_intersections(point_ptr<T> op,
     //      * It may contain any of the children of the old ring.
     if (area_2_is_zero || area_1_is_zero || area_1_is_positive != area_2_is_positive) {
         // Situation #1 - new_ring is contained by ring ...
+        if (debug) std::clog << "Situation 1" << std::endl;
         if (area_2_is_zero || (!area_1_is_zero && area_1_is_positive == original_is_positive)) {
             ring->points = op;
             ring->area = area_1;
@@ -651,7 +651,15 @@ void handle_self_intersections(point_ptr<T> op,
             new_ring->parent->children.push_back(new_ring);
         }
         fixup_children_new_interior_ring(ring, new_ring);
+        if (debug) {
+            std::clog << "Ring" << std::endl;
+            std::clog << *ring << std::endl;
+            std::clog << "New Ring" << std::endl;
+            std::clog << *new_ring << std::endl;
+        }
     } else {
+        // Situation #2 - create new ring
+        if (debug) std::clog << "Situation 2" << std::endl;
         // The largest absolute area is the parent
         if (std::fabs(area_1) > std::fabs(area_2)) {
             ring->points = op;
@@ -878,6 +886,10 @@ void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
     angle_point_vector<T> angle_points;
     point_ptr<T> first_point = point_list.front();
     ring_ptr<T> r = first_point->ring;
+    if (first_point->x == 13 && first_point->y == 23) {
+        std::clog << "yeah, this happened?" << std::endl;
+        std::clog << *r << std::endl;
+    }
     if (r == nullptr) {
         point_list.pop_front();
         return;
@@ -910,11 +922,18 @@ void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
     }
     
     auto search_itr = fp_itr;
+    
+    // Origin points are used for the rare situation where another vertex has the same angle 
+    // as the first point. Therefore we must track it as well if this occurs, because we must
+    // handle the self intersection with the closest angle to the match.
+    std::vector<point_ptr<T>> origin_points;
+
     std::vector<point_ptr<T>> possible_match;
     while (true) {
         if (search_itr == angle_points.end()) {
             search_itr = angle_points.begin();
         }
+
         if (!possible_match.empty()) {
             point_ptr<T> found_pt = search_itr->second;
             auto next_itr = std::next(search_itr);
@@ -926,32 +945,47 @@ void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
                 ++next_itr;
             }
             if (std::find(possible_match.begin(), possible_match.end(), found_pt) != possible_match.end()) {
-                handle_self_intersections(first_point, found_pt, first_point->ring, found_pt->ring, dupe_ring,
+                point_ptr<T> origin_pt = first_point;
+                origin_points.erase(std::remove(origin_points.begin(), origin_points.end(), found_pt), origin_points.end());
+                if (origin_points.size() >= 2) {
+                    auto itr = search_itr;
+                    while (std::find(origin_points.begin(), origin_points.end(), itr->second) == origin_points.end()) {
+                        ++itr;
+                        if (itr == angle_points.end()) {
+                            itr = angle_points.begin();
+                        }
+                    }
+                    origin_pt = itr->second;
+                }
+                handle_self_intersections(origin_pt, found_pt, origin_pt->ring, found_pt->ring, dupe_ring,
                                           rings);
                 return;
             } else {
                 // assert from "crossing" situation
                 if (found_pt == first_point) {
-                    for (auto c : angle_points) {
-                        std::clog << "  angle " << c.first << " - " << c.second << std::endl;   
-                    }
-                    std::clog << "Crossing intersection at: " << found_pt->x << ", " << found_pt->y << std::endl;
-                    std::clog << "Crossing intersection ring: " << std::endl;
-                    std::clog << *found_pt->ring << std::endl;
                     throw std::runtime_error("Crossing intersection!");
                 }
                 break;
             }
         } else {
-            auto next_itr = std::next(search_itr);
+            bool set_origin = search_itr->second == first_point;
+            if (set_origin) {
+                origin_points.clear();
+                origin_points.push_back(search_itr->second);
+            }
             if (search_itr->second != first_point) {
                 possible_match.push_back(search_itr->second);
-            }
-            while (next_itr != angle_points.end() && std::fabs(next_itr->first - search_itr->first) <= 0.0) {
-                if (next_itr->second != first_point) {
-                    possible_match.push_back(next_itr->second);
+            } else {
+                auto next_itr = std::next(search_itr);
+                while (next_itr != angle_points.end() && std::fabs(next_itr->first - search_itr->first) <= 0.0) {
+                    if (next_itr->second != first_point) {
+                        possible_match.push_back(next_itr->second);
+                    }
+                    if (set_origin) {
+                        origin_points.push_back(next_itr->second);
+                    }
+                    ++next_itr;
                 }
-                ++next_itr;
             }
         }
         ++search_itr;
@@ -968,6 +1002,7 @@ void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
     
     search_itr = fp_itr;
     possible_match.clear();
+    origin_points.clear();
     while (true) {
         if (search_itr == angle_points.end()) {
             search_itr = angle_points.begin();
@@ -983,29 +1018,47 @@ void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
                 ++next_itr;
             }
             if (std::find(possible_match.begin(), possible_match.end(), found_pt) != possible_match.end()) {
-                handle_self_intersections(first_point, found_pt, first_point->ring, found_pt->ring, dupe_ring,
+                point_ptr<T> origin_pt = first_point;
+                origin_points.erase(std::remove(origin_points.begin(), origin_points.end(), found_pt), origin_points.end());
+                if (origin_points.size() >= 2) {
+                    auto itr = search_itr;
+                    while (std::find(origin_points.begin(), origin_points.end(), itr->second) == origin_points.end()) {
+                        ++itr;
+                        if (itr == angle_points.end()) {
+                            itr = angle_points.begin();
+                        }
+                    }
+                    origin_pt = itr->second;
+                }
+                handle_self_intersections(origin_pt, found_pt, origin_pt->ring, found_pt->ring, dupe_ring,
                                           rings);
                 return;
             } else {
                 if (found_pt == first_point) {
-                    std::clog << "Crossing intersection at: " << found_pt->x << ", " << found_pt->y << std::endl;
-                    std::clog << "Crossing intersection ring: " << std::endl;
-                    std::clog << *found_pt->ring << std::endl;
                     throw std::runtime_error("Crossing intersection");
                 }
                 point_list.splice(point_list.end(), point_list, point_list.begin());
                 break;
             }
         } else {
-            auto next_itr = std::next(search_itr);
+            bool set_origin = search_itr->second == first_point;
+            if (set_origin) {
+                origin_points.clear();
+                origin_points.push_back(search_itr->second);
+            }
             if (search_itr->second != first_point) {
                 possible_match.push_back(search_itr->second);
-            }
-            while (next_itr != angle_points.end() && std::fabs(next_itr->first - search_itr->first) <= 0.0) {
-                if (next_itr->second != first_point) {
-                    possible_match.push_back(next_itr->second);
+            } else {
+                auto next_itr = std::next(search_itr);
+                while (next_itr != angle_points.end() && std::fabs(next_itr->first - search_itr->first) <= 0.0) {
+                    if (next_itr->second != first_point) {
+                        possible_match.push_back(next_itr->second);
+                    }
+                    if (set_origin) {
+                        origin_points.push_back(next_itr->second);
+                    }
+                    ++next_itr;
                 }
-                ++next_itr;
             }
         }
         ++search_itr;
@@ -1104,6 +1157,7 @@ void do_simple_polygons(ring_manager<T>& rings) {
         process_collinear_rings(count, i, rings); //dupe_ring, rings);
         count = 0;
     }
+    //std::clog << rings.all_rings << std::endl;
     count = 0;
     for (std::size_t i = 1; i < rings.all_points.size(); ++i) {
         if (*rings.all_points[i] == *rings.all_points[i - 1]) {
