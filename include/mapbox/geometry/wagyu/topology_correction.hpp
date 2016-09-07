@@ -8,8 +8,6 @@
 #include <utility>
 
 #include <mapbox/geometry/wagyu/config.hpp>
-#include <mapbox/geometry/wagyu/join.hpp>
-#include <mapbox/geometry/wagyu/join_util.hpp>
 #include <mapbox/geometry/wagyu/ring.hpp>
 #include <mapbox/geometry/wagyu/ring_util.hpp>
 
@@ -139,6 +137,26 @@ void remove_spikes(point_ptr<T> & pt) {
         }
     }
 }
+
+template <typename T>
+void fixup_children(ring_ptr<T> old_ring, ring_ptr<T> new_ring) {
+    // Tests if any of the children from the old ring are now children of the new ring
+    assert(old_ring != new_ring);
+    for (auto r = old_ring->children.begin(); r != old_ring->children.end();) {
+        assert((*r)->points);
+        assert((*r) != old_ring);
+        if ((*r) != new_ring && 
+            !ring1_right_of_ring2(new_ring, (*r)) && 
+            poly2_contains_poly1((*r)->points, new_ring->points)) {
+            (*r)->parent = new_ring;
+            new_ring->children.push_back((*r));
+            r = old_ring->children.erase(r);
+        } else {
+            ++r;
+        }
+    }
+}
+
 
 template <typename T>
 bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring,
@@ -526,6 +544,52 @@ void fixup_children_new_interior_ring(ring_ptr<T> old_ring, ring_ptr<T> new_ring
     }
 }
 
+template <typename T>
+bool intersections_cross(point_ptr<T> p1, point_ptr<T> p2) {
+    point_ptr<T> p1_next = p1->next;
+    point_ptr<T> p2_next = p2->next;
+    point_ptr<T> p1_prev = p1->prev;
+    point_ptr<T> p2_prev = p2->prev;
+    while (*p1_next == *p1) {
+        if (p1_next == p1) {
+            return false;
+        }
+        p1_next = p1_next->next;
+    }
+    while (*p2_next == *p2) {
+        if (p2_next == p2) {
+            return false;
+        }
+        p2_next = p2_next->next;
+    }
+    while (*p1_prev == *p1) {
+        if (p1_prev == p1) {
+            return false;
+        }
+        p1_prev = p1_prev->prev;
+    }
+    while (*p2_prev == *p2) {
+        if (p2_prev == p2) {
+            return false;
+        }
+        p2_prev = p2_prev->prev;
+    }
+    double a1_p1 = std::atan2(static_cast<double>(p1_prev->y - p1->y), static_cast<double>(p1_prev->x - p1->x));
+    double a2_p1 = std::atan2(static_cast<double>(p1_next->y - p1->y), static_cast<double>(p1_next->x - p1->x));
+    double a1_p2 = std::atan2(static_cast<double>(p2_prev->y - p2->y), static_cast<double>(p2_prev->x - p2->x));
+    double a2_p2 = std::atan2(static_cast<double>(p2_next->y - p2->y), static_cast<double>(p2_next->x - p2->x));
+    double min_p1 = std::min(a1_p1, a2_p1);
+    double max_p1 = std::max(a1_p1, a2_p1);
+    double min_p2 = std::min(a1_p2, a2_p2);
+    double max_p2 = std::max(a1_p2, a2_p2);
+    if (min_p1 < max_p2 && min_p1 > min_p2 && max_p1 > max_p2) {
+        return true;
+    } else if (min_p2 < max_p1 && min_p2 > min_p1 && max_p2 > max_p1) {
+        return true;
+    } else {
+        return false;
+    }
+}
 
 template <typename T>
 void handle_self_intersections(point_ptr<T> op,

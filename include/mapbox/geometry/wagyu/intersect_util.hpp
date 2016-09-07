@@ -5,7 +5,6 @@
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/intersect.hpp>
 #include <mapbox/geometry/wagyu/intersect_point.hpp>
-#include <mapbox/geometry/wagyu/join.hpp>
 #include <mapbox/geometry/wagyu/ring_util.hpp>
 #include <mapbox/geometry/wagyu/sorted_bound_list.hpp>
 #include <mapbox/geometry/wagyu/util.hpp>
@@ -196,7 +195,6 @@ void intersect_bounds(active_bound_list_itr<T>& b1,
                       fill_type subject_fill_type,
                       fill_type clip_fill_type,
                       ring_manager<T>& rings,
-                      join_list<T>& joins,
                       active_bound_list<T>& active_bounds) {
     bool b1Contributing = ((*b1)->ring != nullptr);
     bool b2Contributing = ((*b2)->ring != nullptr);
@@ -382,28 +380,28 @@ void intersect_bounds(active_bound_list_itr<T>& b1,
         }
 
         if ((*b1)->poly_type != (*b2)->poly_type) {
-            add_local_minimum_point(b1, b2, active_bounds, pt, rings, joins);
+            add_local_minimum_point(b1, b2, active_bounds, pt, rings);
         } else if (b1Wc == 1 && b2Wc == 1) {
             switch (cliptype) {
             case clip_type_intersection:
                 if (b1Wc2 > 0 && b2Wc2 > 0) {
-                    add_local_minimum_point(b1, b2, active_bounds, pt, rings, joins);
+                    add_local_minimum_point(b1, b2, active_bounds, pt, rings);
                 }
                 break;
             default:
             case clip_type_union:
                 if (b1Wc2 <= 0 && b2Wc2 <= 0) {
-                    add_local_minimum_point(b1, b2, active_bounds, pt, rings, joins);
+                    add_local_minimum_point(b1, b2, active_bounds, pt, rings);
                 }
                 break;
             case clip_type_difference:
                 if ((((*b1)->poly_type == polygon_type_clip) && (b1Wc2 > 0) && (b2Wc2 > 0)) ||
                     (((*b1)->poly_type == polygon_type_subject) && (b1Wc2 <= 0) && (b2Wc2 <= 0))) {
-                    add_local_minimum_point(b1, b2, active_bounds, pt, rings, joins);
+                    add_local_minimum_point(b1, b2, active_bounds, pt, rings);
                 }
                 break;
             case clip_type_x_or:
-                add_local_minimum_point(b1, b2, active_bounds, pt, rings, joins);
+                add_local_minimum_point(b1, b2, active_bounds, pt, rings);
             }
         } else {
             swap_sides(*(*b1), *(*b2));
@@ -418,7 +416,6 @@ void process_intersect_list(T top_y,
                             fill_type subject_fill_type,
                             fill_type clip_fill_type,
                             ring_manager<T>& rings,
-                            join_list<T>& joins,
                             active_bound_list<T>& active_bounds) {
     hot_pixel_set<T> hot_pixels;
     for (auto& node : intersects) {
@@ -431,7 +428,7 @@ void process_intersect_list(T top_y,
         }
         hot_pixels.insert(pt);
         intersect_bounds(node.bound1->bound, node.bound2->bound, pt, cliptype, subject_fill_type,
-                         clip_fill_type, rings, joins, active_bounds);
+                         clip_fill_type, rings, active_bounds);
         swap_positions_in_ABL(node.bound1->bound, node.bound2->bound, active_bounds);
     }
 }
@@ -442,8 +439,7 @@ void process_intersections(T top_y,
                            clip_type cliptype,
                            fill_type subject_fill_type,
                            fill_type clip_fill_type,
-                           ring_manager<T>& rings,
-                           join_list<T>& joins) {
+                           ring_manager<T>& rings) {
     if (active_bounds.empty()) {
         return;
     }
@@ -464,7 +460,7 @@ void process_intersections(T top_y,
         fixup_intersection_order(sorted_bound_list, intersects);
     }
     process_intersect_list(top_y, intersects, cliptype, subject_fill_type, clip_fill_type, rings,
-                           joins, active_bounds);
+                           active_bounds);
     return;
 }
 }

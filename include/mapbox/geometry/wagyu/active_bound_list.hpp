@@ -2,15 +2,12 @@
 
 #ifdef DEBUG
 #include <iostream>
-//#include <execinfo.h>
-//#include <stdio.h>
 #endif
 
 #include <mapbox/geometry/wagyu/bound.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/edge.hpp>
 #include <mapbox/geometry/wagyu/exceptions.hpp>
-#include <mapbox/geometry/wagyu/join.hpp>
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
 #include <mapbox/geometry/wagyu/local_minimum_util.hpp>
 #include <mapbox/geometry/wagyu/ring.hpp>
@@ -422,7 +419,6 @@ void insert_lm_left_and_right_bound(bound<T>& left_bound,
                                     bound<T>& right_bound,
                                     active_bound_list<T>& active_bounds,
                                     ring_manager<T>& rings,
-                                    join_list<T>& joins,
                                     scanbeam_list<T>& scanbeam,
                                     clip_type cliptype,
                                     fill_type subject_fill_type,
@@ -435,8 +431,8 @@ void insert_lm_left_and_right_bound(bound<T>& left_bound,
     (*rb_abl_itr)->winding_count = (*lb_abl_itr)->winding_count;
     (*rb_abl_itr)->winding_count2 = (*lb_abl_itr)->winding_count2;
     if (is_contributing(left_bound, cliptype, subject_fill_type, clip_fill_type)) {
-        point_ptr<T> p1 = add_local_minimum_point(lb_abl_itr, rb_abl_itr, active_bounds,
-                                                  (*lb_abl_itr)->current_edge->bot, rings, joins);
+        add_local_minimum_point(lb_abl_itr, rb_abl_itr, active_bounds,
+                                (*lb_abl_itr)->current_edge->bot, rings);
         if ((*lb_abl_itr)->winding_delta != 0) {
             // If left bound winding delta is zero we know that right bound winding delta is also
             // not zero
@@ -444,31 +440,13 @@ void insert_lm_left_and_right_bound(bound<T>& left_bound,
             if (bnd_prev != active_bounds.rend() && (*bnd_prev)->ring &&
                 std::llround((*bnd_prev)->curr.x) == (*lb_abl_itr)->current_edge->bot.x &&
                 (*bnd_prev)->winding_delta != 0) {
-                point_ptr<T> p2 = add_point_to_ring(bnd_prev, (*lb_abl_itr)->current_edge->bot, rings);
-                if (slopes_equal((*bnd_prev)->current_edge->bot, (*bnd_prev)->current_edge->top,
-                                 (*lb_abl_itr)->current_edge->bot,
-                                 (*lb_abl_itr)->current_edge->top)) {
-                    // Note: this logic mimics that of the angus clipper
-                    // but it doesn't seem to make sense, why the join's point is
-                    // at the top point, and why does it check that slopes are equal?
-                    joins.emplace_back(p1, p2, (*lb_abl_itr)->current_edge->top);
-                }
+                add_point_to_ring(bnd_prev, (*lb_abl_itr)->current_edge->bot, rings);
             }
             auto bnd_next = std::next(rb_abl_itr);
             if (bnd_next != active_bounds.end() && (*bnd_next)->ring &&
                 std::llround((*bnd_next)->curr.x) == (*rb_abl_itr)->current_edge->bot.x &&
                 (*bnd_next)->winding_delta != 0) {
-                point_ptr<T> p2 = add_point_to_ring(bnd_next, (*rb_abl_itr)->current_edge->bot, rings);
-                if (slopes_equal((*bnd_next)->current_edge->bot, (*bnd_next)->current_edge->top,
-                                 (*rb_abl_itr)->current_edge->bot,
-                                 (*rb_abl_itr)->current_edge->top)) {
-                    // The same note as above -- additionally the angus clipper
-                    // would check that the left bound next in AEL was not the right bound
-                    // before this call for the right bound, however, that doesn't make complete
-                    // sense, so I simply just made it always do this check just like the left
-                    // bound would do above
-                    joins.emplace_back(p1, p2, (*rb_abl_itr)->current_edge->top);
-                }
+                add_point_to_ring(bnd_next, (*rb_abl_itr)->current_edge->bot, rings);
             }
         }
     }
@@ -486,7 +464,7 @@ void insert_lm_left_and_right_bound(bound<T>& left_bound,
         // to swap the positions in the ABL following this or at least move
         // lb and rb to be next to each other in the ABL.
         intersect_bounds(rb_abl_itr, abl_itr, (*lb_abl_itr)->current_edge->bot, cliptype,
-                         subject_fill_type, clip_fill_type, rings, joins, active_bounds);
+                         subject_fill_type, clip_fill_type, rings, active_bounds);
         ++abl_itr;
     }
 }
@@ -497,7 +475,6 @@ void insert_local_minima_into_ABL(T const bot_y,
                                   local_minimum_ptr_list_itr<T>& current_lm,
                                   active_bound_list<T>& active_bounds,
                                   ring_manager<T>& rings,
-                                  join_list<T>& joins,
                                   scanbeam_list<T>& scanbeam,
                                   clip_type cliptype,
                                   fill_type subject_fill_type,
@@ -513,7 +490,7 @@ void insert_local_minima_into_ABL(T const bot_y,
             insert_lm_only_one_bound(left_bound, active_bounds, rings, scanbeam, cliptype,
                                      subject_fill_type, clip_fill_type);
         } else {
-            insert_lm_left_and_right_bound(left_bound, right_bound, active_bounds, rings, joins,
+            insert_lm_left_and_right_bound(left_bound, right_bound, active_bounds, rings,
                                            scanbeam, cliptype, subject_fill_type, clip_fill_type);
         }
         ++current_lm;
@@ -526,7 +503,6 @@ void insert_horizontal_local_minima_into_ABL(T const top_y,
                                              local_minimum_ptr_list_itr<T>& current_lm,
                                              active_bound_list<T>& active_bounds,
                                              ring_manager<T>& rings,
-                                             join_list<T>& joins,
                                              scanbeam_list<T>& scanbeam,
                                              clip_type cliptype,
                                              fill_type subject_fill_type,
@@ -548,7 +524,7 @@ void insert_horizontal_local_minima_into_ABL(T const top_y,
             throw clipper_exception(
                 "There should only be horizontal local minimum on right bounds!");
         } else {
-            insert_lm_left_and_right_bound(left_bound, right_bound, active_bounds, rings, joins,
+            insert_lm_left_and_right_bound(left_bound, right_bound, active_bounds, rings,
                                            scanbeam, cliptype, subject_fill_type, clip_fill_type);
             if (right_bound.ring) {
                 maxima.push_back(right_bound.current_edge->bot.x);

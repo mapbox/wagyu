@@ -9,8 +9,6 @@
 #include <mapbox/geometry/wagyu/edge.hpp>
 #include <mapbox/geometry/wagyu/exceptions.hpp>
 #include <mapbox/geometry/wagyu/intersect_util.hpp>
-#include <mapbox/geometry/wagyu/join.hpp>
-#include <mapbox/geometry/wagyu/join_util.hpp>
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
 #include <mapbox/geometry/wagyu/local_minimum_util.hpp>
 #include <mapbox/geometry/wagyu/process_horizontal.hpp>
@@ -54,7 +52,6 @@ active_bound_list_itr<T> do_maxima(active_bound_list_itr<T> & bnd,
                                    fill_type subject_fill_type,
                                    fill_type clip_fill_type,
                                    ring_manager<T>& rings,
-                                   join_list<T>& joins,
                                    active_bound_list<T>& active_bounds) {
     if (bndMaxPair == active_bounds.end()) {
         if ((*bnd)->ring) {
@@ -72,7 +69,7 @@ active_bound_list_itr<T> do_maxima(active_bound_list_itr<T> & bnd,
     auto bnd_next = std::next(bnd);
     while (bnd_next != active_bounds.end() && bnd_next != bndMaxPair) {
         intersect_bounds(bnd, bnd_next, (*bnd)->current_edge->top, cliptype, subject_fill_type,
-                         clip_fill_type, rings, joins, active_bounds);
+                         clip_fill_type, rings, active_bounds);
         swap_positions_in_ABL(bnd, bnd_next, active_bounds);
         bnd_next = std::next(bnd);
     }
@@ -111,7 +108,6 @@ void process_edges_at_top_of_scanbeam(T top_y,
                                       local_minimum_ptr_list<T> const& minima_sorted,
                                       local_minimum_ptr_list_itr<T>& current_lm,
                                       ring_manager<T>& rings,
-                                      join_list<T>& joins,
                                       clip_type cliptype,
                                       fill_type subject_fill_type,
                                       fill_type clip_fill_type) {
@@ -134,7 +130,7 @@ void process_edges_at_top_of_scanbeam(T top_y,
         if (is_maxima_edge) {
             maxima.push_back((*bnd)->current_edge->top.x);
             bnd = do_maxima(bnd, bnd_max_pair, cliptype, subject_fill_type, clip_fill_type, rings,
-                            joins, active_bounds);
+                            active_bounds);
         } else {
             // 2. Promote horizontal edges.
 
@@ -160,9 +156,8 @@ void process_edges_at_top_of_scanbeam(T top_y,
                           (*bnd)->current_edge->top == (*bnd_prev)->current_edge->top)) {
                         mapbox::geometry::point<T> pt(std::llround((*bnd)->curr.x),
                                                       std::llround((*bnd)->curr.y));
-                        point_ptr<T> op = add_point_to_ring(bnd_prev, pt, rings);
-                        point_ptr<T> op2 = add_point_to_ring(bnd, pt, rings);
-                        joins.emplace_back(op, op2, pt); // strictly simple type 3 join
+                        add_point_to_ring(bnd_prev, pt, rings);
+                        add_point_to_ring(bnd, pt, rings);
                     }
                     ++bnd_prev;
                 }
@@ -172,7 +167,7 @@ void process_edges_at_top_of_scanbeam(T top_y,
     }
 
     insert_horizontal_local_minima_into_ABL(top_y, minima_sorted, current_lm, active_bounds, rings,
-                                            joins, scanbeam, cliptype, subject_fill_type,
+                                            scanbeam, cliptype, subject_fill_type,
                                             clip_fill_type, maxima);
 
     auto lm = current_lm;
@@ -183,7 +178,7 @@ void process_edges_at_top_of_scanbeam(T top_y,
         ++lm;
     }
 
-    process_horizontals(top_y, maxima, active_bounds, joins, rings, scanbeam, cliptype,
+    process_horizontals(top_y, maxima, active_bounds, rings, scanbeam, cliptype,
                         subject_fill_type, clip_fill_type);
 
     // 4. Promote intermediate vertices
@@ -196,7 +191,8 @@ void process_edges_at_top_of_scanbeam(T top_y,
             }
             next_edge_in_bound(bnd, scanbeam);
 
-            // If output polygons share an edge, they'll need to be joined later.
+            // If output polygons share an edge, they'll need to have points on
+            // both edges
 
             if ((*bnd)->winding_delta != 0) {
                 auto bnd_prev = active_bound_list_rev_itr<T>(bnd);
@@ -208,16 +204,14 @@ void process_edges_at_top_of_scanbeam(T top_y,
                     (*bnd_prev)->winding_delta != 0 && (*bnd_prev)->ring &&
                     std::llround((*bnd_prev)->curr.y) > (*bnd_prev)->current_edge->top.y &&
                     slopes_equal(*((*bnd)->current_edge), *((*bnd_prev)->current_edge))) {
-                    point_ptr<T> p2 = add_point_to_ring(bnd_prev, (*bnd)->current_edge->bot, rings);
-                    joins.emplace_back(p1, p2, (*bnd)->current_edge->top);
+                    add_point_to_ring(bnd_prev, (*bnd)->current_edge->bot, rings);
                 } else if (bnd_next != active_bounds.end() &&
                            std::llround((*bnd_next)->curr.x) == (*bnd)->current_edge->bot.x &&
                            std::llround((*bnd_next)->curr.y) == (*bnd)->current_edge->bot.y &&
                            (*bnd_next)->winding_delta != 0 && (*bnd_next)->ring &&
                            std::llround((*bnd_next)->curr.y) > (*bnd_next)->current_edge->top.y &&
                            slopes_equal(*((*bnd)->current_edge), *((*bnd_next)->current_edge))) {
-                    point_ptr<T> p2 = add_point_to_ring(bnd_next, (*bnd)->current_edge->bot, rings);
-                    joins.emplace_back(p1, p2, (*bnd)->current_edge->top);
+                    add_point_to_ring(bnd_next, (*bnd)->current_edge->bot, rings);
                 }
             }
         }
@@ -328,7 +322,6 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
                    clip_type cliptype,
                    fill_type subject_fill_type,
                    fill_type clip_fill_type) {
-    join_list<T> joins;
 
     if (minima_list.empty()) {
         return false;
@@ -354,20 +347,20 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         while (pop_from_scanbeam(scanline_y, scanbeam) || current_lm != minima_sorted.end()) {
 
             process_intersections(scanline_y, active_bounds, cliptype, subject_fill_type,
-                                  clip_fill_type, rings, joins);
+                                  clip_fill_type, rings);
 
             // First we process bounds that has already been added to the active bound list --
             // if the active bound list is empty local minima that are at this scanline_y and
             // have a horizontal edge at the local minima will be processed
             process_edges_at_top_of_scanbeam(scanline_y, active_bounds, scanbeam, minima_sorted,
-                                             current_lm, rings, joins, cliptype, subject_fill_type,
+                                             current_lm, rings, cliptype, subject_fill_type,
                                              clip_fill_type);
 
             // Next we will add local minima bounds to the active bounds list that are on the local
             // minima queue at
             // this current scanline_y
             insert_local_minima_into_ABL(scanline_y, minima_sorted, current_lm, active_bounds,
-                                         rings, joins, scanbeam, cliptype, subject_fill_type,
+                                         rings, scanbeam, cliptype, subject_fill_type,
                                          clip_fill_type);
         }
     }

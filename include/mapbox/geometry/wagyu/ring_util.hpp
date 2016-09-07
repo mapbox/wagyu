@@ -199,8 +199,7 @@ point_ptr<T> add_local_minimum_point(active_bound_list_itr<T> b1,
                                      active_bound_list_itr<T> b2,
                                      active_bound_list<T>& active_bounds,
                                      mapbox::geometry::point<T> const& pt,
-                                     ring_manager<T>& rings,
-                                     join_list<T>& joins) {
+                                     ring_manager<T>& rings) {
     point_ptr<T> result;
     active_bound_list_itr<T> b;
     active_bound_list_rev_itr<T> prev_bound;
@@ -237,8 +236,7 @@ point_ptr<T> add_local_minimum_point(active_bound_list_itr<T> b1,
         if (x_prev == x_bound && (*b)->winding_delta != 0 && (*prev_bound)->winding_delta != 0 &&
             slopes_equal(mapbox::geometry::point<T>(x_prev, pt.y), (*prev_bound)->current_edge->top,
                          mapbox::geometry::point<T>(x_bound, pt.y), (*b)->current_edge->top)) {
-            point_ptr<T> outpt = add_point(prev_bound, active_bounds, pt, rings);
-            joins.emplace_back(result, outpt, (*b)->current_edge->top);
+            add_point(prev_bound, active_bounds, pt, rings);
         }
     }
     return result;
@@ -364,6 +362,16 @@ bool ring1_right_of_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2) {
     } while (ring1);
     return false;
 }
+
+template <typename T>
+void update_points_ring(ring_ptr<T> ring) {
+    point_ptr<T> op = ring->points;
+    do {
+        op->ring = ring;
+        op = op->prev;
+    } while (op != ring->points);
+}
+
 
 template <typename T>
 void append_ring(active_bound_list_itr<T>& b1,
