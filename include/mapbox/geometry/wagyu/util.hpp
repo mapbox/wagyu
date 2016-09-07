@@ -5,6 +5,7 @@
 #include <mapbox/geometry/point.hpp>
 #include <mapbox/geometry/polygon.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
+#include <mapbox/geometry/wagyu/edge.hpp>
 #include <mapbox/geometry/wagyu/ring.hpp>
 
 namespace mapbox {
@@ -34,216 +35,6 @@ double area(mapbox::geometry::linear_ring<T> const& poly) {
 template <typename T>
 bool orientation(mapbox::geometry::linear_ring<T> const& poly) {
     return area(poly) >= 0;
-}
-
-template <typename T>
-bool PointIsVertex(mapbox::geometry::point<T> const& Pt, point_ptr<T> pp) {
-    point_ptr<T> pp2 = pp;
-    do {
-        if (*pp2 == Pt) {
-            return true;
-        }
-        pp2 = pp2->next;
-    } while (pp2 != pp);
-    return false;
-}
-
-enum point_in_polygon_result : std::int8_t {
-    point_on_polygon = -1,
-    point_inside_polygon = 0,
-    point_outside_polygon = 1
-};
-
-template <typename T>
-point_in_polygon_result point_in_polygon(point<T> const& pt,
-                                         mapbox::geometry::linear_ring<T> const& path) {
-    // returns 0 if false, +1 if true, -1 if pt ON polygon boundary
-    std::size_t cnt = path.size();
-    if (cnt < 3) {
-        return point_outside_polygon;
-    }
-    point_in_polygon_result result = point_outside_polygon;
-    auto itr = path.begin();
-    auto itr_prev = path.end();
-    --itr_prev;
-    if (itr->y == pt.y) {
-        if ((itr->x == pt.x) ||
-            (itr_prev->y == pt.y && ((itr->x > pt.x) == (itr_prev->x < pt.x)))) {
-            return point_on_polygon;
-        }
-    }
-    if ((itr_prev->y < pt.y) != (itr->y < pt.y)) {
-        if (itr_prev->x >= pt.x) {
-            if (itr->x > pt.x) {
-                // Switch between point outside polygon and point inside polygon
-                if (result == point_outside_polygon) {
-                    result = point_inside_polygon;
-                } else {
-                    result = point_outside_polygon;
-                }
-            } else {
-                double d =
-                    static_cast<double>(itr_prev->x - pt.x) * static_cast<double>(itr->y - pt.y) -
-                    static_cast<double>(itr->x - pt.x) * static_cast<double>(itr_prev->y - pt.y);
-                if (d <= 0) {
-                    return point_on_polygon;
-                }
-                if ((d > 0) == (itr->y > itr_prev->y)) {
-                    // Switch between point outside polygon and point inside
-                    // polygon
-                    if (result == point_outside_polygon) {
-                        result = point_inside_polygon;
-                    } else {
-                        result = point_outside_polygon;
-                    }
-                }
-            }
-        } else {
-            if (itr->x > pt.x) {
-                double d =
-                    static_cast<double>(itr_prev->x - pt.x) * static_cast<double>(itr->y - pt.y) -
-                    static_cast<double>(itr->x - pt.x) * static_cast<double>(itr_prev->y - pt.y);
-                if (d <= 0) {
-                    return point_on_polygon;
-                }
-                if ((d > 0) == (itr->y > itr_prev->y)) {
-                    // Switch between point outside polygon and point inside
-                    // polygon
-                    if (result == point_outside_polygon) {
-                        result = point_inside_polygon;
-                    } else {
-                        result = point_outside_polygon;
-                    }
-                }
-            }
-        }
-    }
-    ++itr;
-    itr_prev = path.begin();
-    for (; itr != path.end(); ++itr, ++itr_prev) {
-        if (itr->y == pt.y) {
-            if ((itr->x == pt.x) ||
-                (itr_prev->y == pt.y && ((itr->x > pt.x) == (itr_prev->x < pt.x)))) {
-                return point_on_polygon;
-            }
-        }
-        if ((itr_prev->y < pt.y) != (itr->y < pt.y)) {
-            if (itr_prev->x >= pt.x) {
-                if (itr->x > pt.x) {
-                    // Switch between point outside polygon and point inside
-                    // polygon
-                    if (result == point_outside_polygon) {
-                        result = point_inside_polygon;
-                    } else {
-                        result = point_outside_polygon;
-                    }
-                } else {
-                    double d = static_cast<double>(itr_prev->x - pt.x) *
-                                   static_cast<double>(itr->y - pt.y) -
-                               static_cast<double>(itr->x - pt.x) *
-                                   static_cast<double>(itr_prev->y - pt.y);
-                    if (d <= 0) {
-                        return point_on_polygon;
-                    }
-                    if ((d > 0) == (itr->y > itr_prev->y)) {
-                        // Switch between point outside polygon and point inside
-                        // polygon
-                        if (result == point_outside_polygon) {
-                            result = point_inside_polygon;
-                        } else {
-                            result = point_outside_polygon;
-                        }
-                    }
-                }
-            } else {
-                if (itr->x > pt.x) {
-                    double d = static_cast<double>(itr_prev->x - pt.x) *
-                                   static_cast<double>(itr->y - pt.y) -
-                               static_cast<double>(itr->x - pt.x) *
-                                   static_cast<double>(itr_prev->y - pt.y);
-                    if (d <= 0) {
-                        return point_on_polygon;
-                    }
-                    if ((d > 0) == (itr->y > itr_prev->y)) {
-                        // Switch between point outside polygon and point inside
-                        // polygon
-                        if (result == point_outside_polygon) {
-                            result = point_inside_polygon;
-                        } else {
-                            result = point_outside_polygon;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return result;
-}
-
-template <typename T>
-point_in_polygon_result point_in_polygon(point<T> const& pt, point_ptr<T> op) {
-    // returns 0 if false, +1 if true, -1 if pt ON polygon boundary
-    point_in_polygon_result result = point_outside_polygon;
-    point_ptr<T> startOp = op;
-    do {
-        if (op->next->y == pt.y) {
-            if ((op->next->x == pt.x) ||
-                (op->y == pt.y && ((op->next->x > pt.x) == (op->x < pt.x)))) {
-                return point_on_polygon;
-            }
-        }
-        if ((op->y < pt.y) != (op->next->y < pt.y)) {
-            if (op->x >= pt.x) {
-                if (op->next->x > pt.x) {
-                    // Switch between point outside polygon and point inside
-                    // polygon
-                    if (result == point_outside_polygon) {
-                        result = point_inside_polygon;
-                    } else {
-                        result = point_outside_polygon;
-                    }
-                } else {
-                    double d =
-                        static_cast<double>(op->x - pt.x) *
-                            static_cast<double>(op->next->y - pt.y) -
-                        static_cast<double>(op->next->x - pt.x) * static_cast<double>(op->y - pt.y);
-                    if (d <= 0) {
-                        return point_on_polygon;
-                    }
-                    if ((d > 0) == (op->next->y > op->y)) {
-                        // Switch between point outside polygon and point inside
-                        // polygon
-                        if (result == point_outside_polygon) {
-                            result = point_inside_polygon;
-                        } else {
-                            result = point_outside_polygon;
-                        }
-                    }
-                }
-            } else {
-                if (op->next->x > pt.x) {
-                    double d =
-                        static_cast<double>(op->x - pt.x) *
-                            static_cast<double>(op->next->y - pt.y) -
-                        static_cast<double>(op->next->x - pt.x) * static_cast<double>(op->y - pt.y);
-                    if (d <= 0) {
-                        return point_on_polygon;
-                    }
-                    if ((d > 0) == (op->next->y > op->y)) {
-                        // Switch between point outside polygon and point inside
-                        // polygon
-                        if (result == point_outside_polygon) {
-                            result = point_inside_polygon;
-                        } else {
-                            result = point_outside_polygon;
-                        }
-                    }
-                }
-            }
-        }
-        op = op->next;
-    } while (startOp != op);
-    return result;
 }
 
 template <typename T>
@@ -287,10 +78,10 @@ inline bool is_horizontal(edge<T> const& e) {
 }
 
 template <typename T>
-bool is_even_odd_fill_type(edge<T> const& edge,
+bool is_even_odd_fill_type(bound<T> const& bound,
                            fill_type subject_fill_type,
                            fill_type clip_fill_type) {
-    if (edge.poly_type == polygon_type_subject) {
+    if (bound.poly_type == polygon_type_subject) {
         return subject_fill_type == fill_type_even_odd;
     } else {
         return clip_fill_type == fill_type_even_odd;
@@ -298,10 +89,10 @@ bool is_even_odd_fill_type(edge<T> const& edge,
 }
 
 template <typename T>
-bool is_even_odd_alt_fill_type(edge<T> const& edge,
+bool is_even_odd_alt_fill_type(bound<T> const& bound,
                                fill_type subject_fill_type,
                                fill_type clip_fill_type) {
-    if (edge.poly_type == polygon_type_subject) {
+    if (bound.poly_type == polygon_type_subject) {
         return clip_fill_type == fill_type_even_odd;
     } else {
         return subject_fill_type == fill_type_even_odd;
@@ -309,12 +100,12 @@ bool is_even_odd_alt_fill_type(edge<T> const& edge,
 }
 
 template <typename T>
-inline T get_current_x(edge<T> const& edge, const T current_y) {
+inline double get_current_x(edge<T> const& edge, const T current_y) {
     if (current_y == edge.top.y) {
-        return edge.top.x;
+        return static_cast<double>(edge.top.x);
     } else {
-        return edge.bot.x +
-               static_cast<T>(std::round(edge.dx * static_cast<double>(current_y - edge.bot.y)));
+        return static_cast<double>(edge.bot.x) +
+               edge.dx * static_cast<double>(current_y - edge.bot.y);
     }
 }
 
@@ -383,19 +174,6 @@ bool point_2_is_between_point_1_and_point_3(mapbox::geometry::wagyu::point<T> pt
     } else {
         return (pt2.y > pt1.y) == (pt2.y < pt3.y);
     }
-}
-
-template <typename T>
-bool horizontal_segments_overlap(T seg1a, T seg1b, T seg2a, T seg2b) {
-    // Note: the use of swap here is rather confusing, perhaps
-    // we should change the logic?
-    if (seg1a > seg1b) {
-        std::swap(seg1a, seg1b);
-    }
-    if (seg2a > seg2b) {
-        std::swap(seg2a, seg2b);
-    }
-    return (seg1a < seg2b) && (seg2a < seg1b);
 }
 }
 }

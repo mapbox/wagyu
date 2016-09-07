@@ -1,4 +1,6 @@
 #include "rapidjson/writer.h"
+#include "util/boost_geometry_adapters.hpp"
+#include <cstdio>
 #include <iostream>
 #include <mapbox/geometry/polygon.hpp>
 #include <mapbox/geometry/wagyu/wagyu.hpp>
@@ -6,7 +8,6 @@
 #include <rapidjson/document.h>
 #include <rapidjson/filereadstream.h>
 #include <rapidjson/filewritestream.h>
-#include <cstdio>
 
 using namespace rapidjson;
 using namespace mapbox::geometry::wagyu;
@@ -17,6 +18,31 @@ struct Options {
     char* subject_file;
     char* clip_file;
 } options;
+
+void log_ring(mapbox::geometry::polygon<std::int64_t> const& p) {
+    bool first = true;
+    std::clog << "[";
+    for (auto const& r : p) {
+        if (first) {
+            std::clog << "[";
+            first = false;
+        } else {
+            std::clog << ",[";
+        }
+        bool first2 = true;
+        for (auto const& pt : r) {
+            if (first2) {
+                std::clog << "[";
+                first2 = false;
+            } else {
+                std::clog << ",[";
+            }
+            std::clog << pt.x << "," << pt.y << "]";
+        }
+        std::clog << "]";
+    }
+    std::clog << "]" << std::endl;
+}
 
 void parse_file(const char* file_path, clipper<value_type>& clipper, polygon_type polytype) {
     // todo safety checks opening files
@@ -46,7 +72,7 @@ void parse_file(const char* file_path, clipper<value_type>& clipper, polygon_typ
     fclose(file);
 }
 
-void polys_to_json(Document& output, std::vector<mapbox::geometry::polygon<value_type>> solution) {
+void polys_to_json(Document& output, std::vector<mapbox::geometry::polygon<value_type>> & solution) {
     output.SetArray();
     Document::AllocatorType& allocator = output.GetAllocator();
     output.Reserve(solution.size(), allocator);
@@ -127,6 +153,16 @@ int main(int argc, char* const argv[]) {
 
     Document output;
     polys_to_json(output, solution);
+    for (auto const& p : solution) {
+        std::string message;
+        if (!boost::geometry::is_valid(p, message)) {
+            std::clog << std::endl;
+            std::clog << "Error: geometry not valid" << std::endl;
+            std::clog << message << std::endl;
+            log_ring(p);
+            return -1;
+        }
+    }
 
     char write_buffer[65536];
     FileWriteStream out_stream(stdout, write_buffer, sizeof(write_buffer));

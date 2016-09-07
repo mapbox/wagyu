@@ -8,10 +8,10 @@ using T = std::int64_t;
 TEST_CASE("test returns zero with no data provided - int64") {
     mapbox::geometry::wagyu::clipper<T> clipper;
     auto bounds = clipper.get_bounds();
-    CHECK(bounds.left == 0);
-    CHECK(bounds.top == 0);
-    CHECK(bounds.right == 0);
-    CHECK(bounds.bottom == 0);
+    CHECK(bounds.min.x == 0);
+    CHECK(bounds.min.y == 0);
+    CHECK(bounds.max.x == 0);
+    CHECK(bounds.max.y == 0);
 }
 
 TEST_CASE("test returns simple box - int64") {
@@ -26,10 +26,10 @@ TEST_CASE("test returns simple box - int64") {
     mapbox::geometry::wagyu::clipper<T> clipper;
     CHECK(clipper.add_polygon(polygon));
     auto bounds = clipper.get_bounds();
-    CHECK(bounds.left == 0);
-    CHECK(bounds.top == 0);
-    CHECK(bounds.right == 5);
-    CHECK(bounds.bottom == 5);
+    CHECK(bounds.min.x == 0);
+    CHECK(bounds.min.y == 0);
+    CHECK(bounds.max.x == 5);
+    CHECK(bounds.max.y == 5);
 }
 
 TEST_CASE("test returns simple box negative - int64") {
@@ -44,10 +44,10 @@ TEST_CASE("test returns simple box negative - int64") {
     mapbox::geometry::wagyu::clipper<T> clipper;
     CHECK(clipper.add_polygon(polygon));
     auto bounds = clipper.get_bounds();
-    CHECK(bounds.left == -5);
-    CHECK(bounds.top == -5);
-    CHECK(bounds.right == 0);
-    CHECK(bounds.bottom == 0);
+    CHECK(bounds.min.x == -5);
+    CHECK(bounds.min.y == -5);
+    CHECK(bounds.max.x == 0);
+    CHECK(bounds.max.y == 0);
 }
 
 TEST_CASE("two polygons - int64") {
@@ -74,8 +74,8 @@ TEST_CASE("two polygons - int64") {
     CHECK(clipper.add_polygon(polygon));
 
     auto bounds = clipper.get_bounds();
-    CHECK(bounds.left == 0);
-    CHECK(bounds.top == 0);
-    CHECK(bounds.right == 10);
-    CHECK(bounds.bottom == 10);
+    CHECK(bounds.min.x == 0);
+    CHECK(bounds.min.y == 0);
+    CHECK(bounds.max.x == 10);
+    CHECK(bounds.max.y == 10);
 }
