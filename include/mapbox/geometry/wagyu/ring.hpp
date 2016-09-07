@@ -71,6 +71,17 @@ ring_ptr<T> create_new_ring(ring_manager<T>& rings) {
     ring_ptr<T> result = new ring<T>();
     result->ring_index = rings.index++;
     rings.all_rings.push_back(result);
+    /*
+    if (result->ring_index == 85) {
+        void* callstack[128];
+        int i, frames = backtrace(callstack, 128);
+        char** strs = backtrace_symbols(callstack, frames);
+        for (i = 0; i < frames; ++i) {
+            printf("%s\n", strs[i]);
+        }
+        free(strs);
+    }
+    */
     return result;
 }
 
