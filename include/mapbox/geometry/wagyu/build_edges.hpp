@@ -111,6 +111,7 @@ bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry, edge
                 } else {
                     pt1 = edges.back().top;
                 }
+                back_pt = pt1;
             } else {
                 // If this occurs we must look to the back of the
                 // ring for new points.
