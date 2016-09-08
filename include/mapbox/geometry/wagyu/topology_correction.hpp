@@ -1,5 +1,8 @@
 #pragma once
 
+#define _USE_MATH_DEFINES
+#include <cmath>
+
 #include <algorithm>
 #include <list>
 #include <set>
@@ -933,47 +936,46 @@ std::list<point_ptr<T>> build_point_list(std::size_t repeated_point_count,
 }
 
 template <typename T>
-using angle_point = std::tuple<double, point_ptr<T>, bool>;
+using angle_point = std::tuple<double, point_ptr<T>, bool, double>;
 
 template <typename T>
 using angle_point_vector = std::vector<angle_point<T>>;
 
+#ifdef DEBUG
+
+template <class charT, class traits, typename T>
+inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
+                                                     const angle_point<T>& x) {
+    out << "   ap: " << std::get<0>(x) << " - " << std::get<1>(x);
+    if (std::get<2>(x)) {
+        out << " - away";
+    } else {
+        out << " - towards";    
+    }
+    out << " - " << std::get<3>(x) << std::endl;
+    return out;
+}
+
+template <class charT, class traits, typename T>
+inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
+                                                     const angle_point_vector<T>& angles) {
+    out << "Angle Point Vector:" << std::endl;
+    for (auto& x : angles) {
+        out << x;
+    }
+    return out;
+}
+
+#endif
+
 template <typename T>
 struct segment_angle_sorter {
 
-    point_ptr<T> first_point;
-
-    segment_angle_sorter(point_ptr<T> first_point_): first_point(first_point_) {}
-
     inline bool operator()(angle_point<T> const& p1, angle_point<T> const& p2) {
         if (std::fabs(std::get<0>(p1) - std::get<0>(p2)) <= 0.0) {
-            if (std::get<1>(p1) == first_point) {
-                return std::get<1>(p2) != first_point;
-            } else {
-                return false;
-            }
+            return std::get<3>(p1) > std::get<3>(p2);
         } else {
             return std::get<0>(p1) < std::get<0>(p2);
-        }
-    }
-};
-
-template <typename T>
-struct segment_angle_sorter_rev {
-
-    point_ptr<T> first_point;
-
-    segment_angle_sorter_rev(point_ptr<T> first_point_): first_point(first_point_) {}
-
-    inline bool operator()(angle_point<T> const& p1, angle_point<T> const& p2) {
-        if (std::fabs(std::get<0>(p1) - std::get<0>(p2)) <= 0.0) {
-            if (std::get<1>(p1) == first_point) {
-                return std::get<1>(p2) != first_point;
-            } else {
-                return false;
-            }
-        } else {
-            return std::get<0>(p1) > std::get<0>(p2);
         }
     }
 };
@@ -1005,8 +1007,17 @@ void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
             remove_spikes(spike);
             p = point_list.erase(p);
         } else {
-            angle_points.emplace_back(next_angle, *p);
-            angle_points.emplace_back(prev_angle, *p);
+            double dist_next_to_prev;
+            double dist_prev_to_next;
+            if (next_angle > prev_angle) {
+                dist_prev_to_next = next_angle - prev_angle;
+                dist_next_to_prev = (2.0 * M_PI) - dist_prev_to_next;
+            } else {
+                dist_next_to_prev = prev_angle - next_angle;
+                dist_prev_to_next = (2.0 * M_PI) - dist_next_to_prev;
+            }
+            angle_points.emplace_back(next_angle, *p, true, dist_next_to_prev);
+            angle_points.emplace_back(prev_angle, *p, false, dist_prev_to_next);
             ++p;
         }
     }
@@ -1017,197 +1028,61 @@ void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
     }
     
     // Search forward
-    std::stable_sort(angle_points.begin(), angle_points.end(), segment_angle_sorter<T>(first_point));
+    std::stable_sort(angle_points.begin(), angle_points.end(), segment_angle_sorter<T>());
     point_ptr<T> point_1 = nullptr;
     point_ptr<T> point_2 = nullptr;
-    if (find_repeated_point_pair(angle_points, first_point, point_1, point_2)) {
-
-        handle_self_intersections(point_1, point_2, point_1->ring, point_2->ring, dupe_ring,
-                                  rings);
-        return;
-    }
-    
-    // Search backwards
-    std::stable_sort(angle_points.begin(), angle_points.end(), segment_angle_sorter_rev<T>(first_point));
-    point_1 = nullptr;
-    point_2 = nullptr;
-    if (find_repeated_point_pair(angle_points, first_point, point_1, point_2)) {
-
-        handle_self_intersections(point_1, point_2, point_1->ring, point_2->ring, dupe_ring,
-                                  rings);
-    } else {
-        point_list.splice(point_list.end(), point_list, point_list.begin());
-    }
-
+    //std::clog << "First Point: " << first_point << std::endl;
+    //std::clog << angle_points;
+    find_repeated_point_pair(angle_points, first_point, point_1, point_2);
+    handle_self_intersections(point_1, point_2, point_1->ring, point_2->ring, dupe_ring,
+                              rings);
 }
 
 template <typename T>
-bool find_same_angle_as_origin(angle_point_vector<T> & angle_points,
-                               point_ptr<T> first_point,
-                               point_ptr<T> & point_1,
-                               point_ptr<T> & point_2,
-                               typename angle_point_vector<T>::iterator & search_itr,
-                               std::vector<point_ptr<T>> & possible_match) {
-    // If the angle is the same as the origin, then all possible_matches
-    // are angles that lie on top of the origin. In this case we are not
-    // necessarily going to use the "first point" as the part of paths
-    // that intersect. 
-    possible_match.push_back(first_point);
-    
-    ++search_itr;
-    if (search_itr == angle_points.end()) {
-        search_itr = angle_points.begin();
-    }
-    // Find if this iter or any of the other associated iters are a possible
-    // pair to match with the origins
-    point_1 = first_point;
-    point_2 = search_itr->second;
-    bool in_possible_match = false;
-    
-    if (std::find(possible_match.begin(), possible_match.end(), search_itr->second) == possible_match.end()) {
-        // This point was not in the set of possible matches, but lets test if there are any other 
-        // points that have the same angle as this, that might be in the match set!
-        double orig_angle = std::get<0>(*search_itr);
-        while (search_itr != angle_points.end() && std::fabs(std::get<0>(*search_itr) - orig_angle) <= 0.0) {
-            if (std::find(possible_match.begin(), possible_match.end(), std::get<1>(*search_itr)) != possible_match.end()) {
-                point_2 = search_itr->second;
-                in_possible_match = true;
-                break;
-            }
-            ++search_itr;
-        }
-    } else {
-        in_possible_match = true;
-    }
-    if (search_itr == angle_points.end()) {
-        search_itr = angle_points.begin();
-    }
-
-    if (in_possible_match) {
-        // remove point 2 from possible matches
-        possible_match.erase(std::remove(possible_match.begin(), possible_match.end(), point_2), possible_match.end());
-        // Move itr to "point_2"
-        while (search_itr->second != point_2) {
-            ++search_itr;
-        }
-        // Now we must find the next possible_match point in the group!
-        while (true) {
-            ++search_itr;
-            if (search_itr == angle_points.end()) {
-                search_itr = angle_points.begin();
-            }
-            if (std::find(possible_match.begin(), possible_match.end(), search_itr->second) != possible_match.end()) {
-                point_1 = search_itr->second;
-                return true;
-            }
-        }
-    } else {
-        bool found_second_point_2 = false;
-        while (true) {
-            ++search_itr;
-            if (search_itr == angle_points.end()) {
-                search_itr = angle_points.begin();
-            }
-            if (std::find(possible_match.begin(), possible_match.end(), search_itr->second) != possible_match.end()) {
-                if (!found_second_point_2) {
-                    return false;
-                }
-                point_1 = search_itr->second;
-                return true;
-            }
-            if (search_itr->second == point_2) {
-                found_second_point_2 = true;
-            }
-        }
-    }
-    return false;
-}
-
-template <typename T>
-bool find_last_pair_in_possible(angle_point_vector<T> & angle_points,
-                                point_ptr<T> first_point,
-                                point_ptr<T> & point_1,
-                                point_ptr<T> & point_2,
-                                typename angle_point_vector<T>::iterator & search_itr,
-                                std::vector<point_ptr<T>> & possible_match) {
-    while (true) {
-        if (search_itr == angle_points.end()) {
-            search_itr = angle_points.begin();
-        }
-        if (possible_match.size() > 1) {
-            if (std::find(possible_match.begin(), possible_match.end(), search_itr->second) != possible_match.end()) {
-                possible_match.erase(std::remove(possible_match.begin(), possible_match.end(), search_itr->second), possible_match.end());
-            } else if (search_itr->second == first_point) {
-                throw std::runtime_error("Crossing situation");
-            } else {
-                return false;
-            }
-        } else {
-            if (possible_match[0] == search_itr->second) {
-                point_1 = first_point;
-                point_2 = search_itr->second;
-                return true;
-            } else {
-                return false;
-            }
-        }
-        ++search_itr;
-    }
-    return false;
-}
-
-template <typename T>
-bool find_repeated_point_pair(angle_point_vector<T> & angle_points,
+void find_repeated_point_pair(angle_point_vector<T> & angle_points,
                               point_ptr<T> first_point,
                               point_ptr<T> & point_1,
                               point_ptr<T> & point_2) {
 
-    std::vector<point_ptr<T>> possible_match;
+    angle_point_vector<T> possible_match;
     auto search_itr = angle_points.begin();
     
     // Move itr to "first point"
-    while (search_itr->second != first_point) {
+    while (std::get<1>(*search_itr) != first_point) {
         ++search_itr;
     }
     
-    // Set origin angle
-    double origin_angle = std::get<0>(*search_itr);
+    angle_point<T> angle_1 = *search_itr;
+
+    // Now find next angle for the match
     ++search_itr;
     if (search_itr == angle_points.end()) {
         search_itr = angle_points.begin();
     }
-    
-    if (search_itr->second == first_point) {
-        origin_angle = search_itr->first;
+
+    // It is possible that we have the same angle here..
+    while (std::fabs(std::get<0>(angle_1) - std::get<0>(*search_itr)) <= 0.0 && std::get<2>(angle_1) == std::get<2>(*search_itr)) {
         ++search_itr;
         if (search_itr == angle_points.end()) {
             search_itr = angle_points.begin();
         }
     }
 
-    bool angle_same_as_origin = std::fabs(origin_angle - search_itr->first) <= 0.0;
-    double first_angle = search_itr->first;
-    while (search_itr != angle_points.end() && std::fabs(search_itr->first - first_angle) <= 0.0) {
-        if (search_itr->second == first_point) {
-            throw std::runtime_error("Should not have same as first_point! This is likely a spike or other error?");
-        }
-        possible_match.push_back(search_itr->second);
+    // Find next point that is not the same
+    while (std::get<1>(angle_1) == std::get<1>(*search_itr)) {
+        angle_1 = *search_itr;
         ++search_itr;
+        if (search_itr == angle_points.end()) {
+            search_itr = angle_points.begin();
+        }
     }
 
-    if (search_itr == angle_points.end()) {
-        search_itr = angle_points.begin();
-    }
+    angle_point<T> angle_2 = *search_itr;
 
-    if (angle_same_as_origin) {
-        return find_same_angle_as_origin(angle_points, first_point, point_1, point_2, 
-                                         search_itr, possible_match);
-    } else if (possible_match.size() <= 1) {
-        return find_last_pair_in_possible(angle_points, first_point, point_1, point_2, 
-                                          search_itr, possible_match);
-    } else {
-        return false;
-    }
+    assert(std::get<2>(angle_1) != std::get<2>(angle_2));
+    
+    point_1 = std::get<1>(angle_1);
+    point_2 = std::get<1>(angle_2);
 }
 
 template <typename T>
