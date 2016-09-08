@@ -71,17 +71,6 @@ ring_ptr<T> create_new_ring(ring_manager<T>& rings) {
     ring_ptr<T> result = new ring<T>();
     result->ring_index = rings.index++;
     rings.all_rings.push_back(result);
-    /*
-    if (result->ring_index == 85) {
-        void* callstack[128];
-        int i, frames = backtrace(callstack, 128);
-        char** strs = backtrace_symbols(callstack, frames);
-        for (i = 0; i < frames; ++i) {
-            printf("%s\n", strs[i]);
-        }
-        free(strs);
-    }
-    */
     return result;
 }
 
@@ -91,6 +80,17 @@ point_ptr<T> create_new_point(ring_ptr<T> r, mapbox::geometry::point<T> const& p
     rings.all_points.push_back(point);
     return point;
 }
+
+template <typename T>
+point_ptr<T> create_new_point(ring_ptr<T> r, 
+                              mapbox::geometry::point<T> const& pt, 
+                              point_ptr<T> before_this_point,
+                              ring_manager<T>& rings) {
+    point_ptr<T> point = new wagyu::point<T>(r, pt, before_this_point);
+    rings.all_points.push_back(point);
+    return point;
+}
+
 
 template <typename T>
 void ring1_child_of_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2, ring_manager<T> & manager) {
@@ -176,16 +176,6 @@ bool ring_is_hole(ring_ptr<T> r) {
         r = r->parent;
     }
     return depth & 1;
-}
-
-template <typename T>
-point_ptr<T> create_new_point(ring_ptr<T> r, 
-                              mapbox::geometry::point<T> const& pt, 
-                              point_ptr<T> before_this_point,
-                              ring_manager<T>& rings) {
-    point_ptr<T> point = new wagyu::point<T>(r, pt, before_this_point);
-    rings.all_points.push_back(point);
-    return point;
 }
 
 template <typename T>

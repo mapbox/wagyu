@@ -117,7 +117,7 @@ point_ptr<T> add_point_to_ring(active_bound_list_itr<T>& bnd,
                                ring_manager<T>& rings) {
     assert((*bnd)->ring);
     /*
-    if (pt.x == -2500 && pt.y == -2696) {
+    if (pt.x == 16 && pt.y == 13) {
         void* callstack[128];
         int i, frames = backtrace(callstack, 128);
         char** strs = backtrace_symbols(callstack, frames);
@@ -139,6 +139,26 @@ point_ptr<T> add_point_to_ring(active_bound_list_itr<T>& bnd,
     } else if (!to_front && (pt == *op->prev)) {
         return op->prev;
     }
+    // Add touching points on "cut backs"
+    if (to_front) {
+        if (pt.y == op->y && 
+            op->next != op && op->next != op->prev && op->y == op->next->y &&
+            ((op->x < op->next->x && op->next->x < pt.x) ||
+            (op->x > op->next->x && op->next->x > pt.x)))
+        {
+            mapbox::geometry::point<T> cut_back(op->next->x,op->next->y);
+            op = create_new_point(ring, cut_back, op, rings);
+        } 
+    } else {
+        if (pt.y == op->prev->y && 
+            op->prev != op && op != op->prev->prev && op->prev->y == op->prev->prev->y && 
+            ((op->prev->x > op->prev->prev->x && op->prev->prev->x > pt.x) ||
+            (op->prev->x < op->prev->prev->x && op->prev->prev->x < pt.x)))
+        {
+            mapbox::geometry::point<T> cut_back(op->prev->prev->x,op->prev->prev->y);
+            create_new_point(ring, cut_back, op, rings);
+        } 
+    }   
     point_ptr<T> new_point = create_new_point(ring, pt, op, rings);
     if (to_front) {
         ring->points = new_point;
@@ -150,7 +170,19 @@ template <typename T>
 point_ptr<T> add_point_to_ring(active_bound_list_rev_itr<T>& bnd,
                                mapbox::geometry::point<T> const& pt,
                                ring_manager<T>& rings) {
-
+    
+    /*
+    if (pt.x == 16 && pt.y == 13) {
+        void* callstack[128];
+        int i, frames = backtrace(callstack, 128);
+        char** strs = backtrace_symbols(callstack, frames);
+        for (i = 0; i < frames; ++i) {
+            printf("%s\n", strs[i]);
+        }
+        free(strs);
+        std::clog << *(*bnd)->ring << std::endl;
+    }
+    */
     assert((*bnd)->ring);
     ring_ptr<T>& ring = (*bnd)->ring;
     // ring->points is the 'Left-most' point & ring->points->prev is the
@@ -163,6 +195,26 @@ point_ptr<T> add_point_to_ring(active_bound_list_rev_itr<T>& bnd,
     } else if (!to_front && (pt == *op->prev)) {
         return op->prev;
     }
+    // Add touching points on "cut backs"
+    if (to_front) {
+        if (pt.y == op->y && 
+            op->next != op && op->next != op->prev && op->y == op->next->y &&
+            ((op->x < op->next->x && op->next->x < pt.x) ||
+            (op->x > op->next->x && op->next->x > pt.x)))
+        {
+            mapbox::geometry::point<T> cut_back(op->next->x,op->next->y);
+            op = create_new_point(ring, cut_back, op, rings);
+        } 
+    } else {
+        if (pt.y == op->prev->y && 
+            op->prev != op && op != op->prev->prev && op->prev->y == op->prev->prev->y && 
+            ((op->prev->x > op->prev->prev->x && op->prev->prev->x > pt.x) ||
+            (op->prev->x < op->prev->prev->x && op->prev->prev->x < pt.x)))
+        {
+            mapbox::geometry::point<T> cut_back(op->prev->prev->x,op->prev->prev->y);
+            create_new_point(ring, cut_back, op, rings);
+        } 
+    }   
     point_ptr<T> new_point = create_new_point(ring, pt, op, rings);
     if (to_front) {
         ring->points = new_point;

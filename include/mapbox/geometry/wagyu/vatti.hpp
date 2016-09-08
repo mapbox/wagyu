@@ -365,6 +365,8 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         }
     }
 
+    //std::clog << rings.all_rings << std::endl;
+    
     // fix orientations ...
     for (auto & r :rings.all_rings) {
         if (!r->points || r->is_open) {
@@ -376,8 +378,6 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         remove_spikes_in_polygons(r, rings);
         r->area = std::numeric_limits<double>::quiet_NaN();
     }
-
-    //std::clog << rings.all_rings << std::endl;
     
     do_simple_polygons(rings);
     
