@@ -394,20 +394,6 @@ void insert_lm_only_one_bound(bound<T>& bnd,
     set_winding_count(abl_itr, active_bounds, cliptype, subject_fill_type, clip_fill_type);
     if (is_contributing(bnd, cliptype, subject_fill_type, clip_fill_type)) {
         add_first_point(abl_itr, active_bounds, (*abl_itr)->current_edge->bot, rings);
-        if ((*abl_itr)->winding_delta != 0) {
-            auto bnd_prev = active_bound_list_rev_itr<T>(abl_itr);
-            if (bnd_prev != active_bounds.rend() && (*bnd_prev)->ring &&
-                std::llround((*bnd_prev)->curr.x) == (*abl_itr)->current_edge->bot.x &&
-                (*bnd_prev)->winding_delta != 0) {
-                add_point_to_ring(bnd_prev, (*abl_itr)->current_edge->bot, rings);
-            }
-            auto bnd_next = std::next(abl_itr);
-            if (bnd_next != active_bounds.end() && (*bnd_next)->ring &&
-                std::llround((*bnd_next)->curr.x) == (*abl_itr)->current_edge->bot.x &&
-                (*bnd_next)->winding_delta != 0) {
-                add_point_to_ring(bnd_next, (*abl_itr)->current_edge->bot, rings);
-            }
-        }
     }
     if (!current_edge_is_horizontal<T>(abl_itr)) {
         scanbeam.push((*abl_itr)->current_edge->top.y);
@@ -433,22 +419,6 @@ void insert_lm_left_and_right_bound(bound<T>& left_bound,
     if (is_contributing(left_bound, cliptype, subject_fill_type, clip_fill_type)) {
         add_local_minimum_point(lb_abl_itr, rb_abl_itr, active_bounds,
                                 (*lb_abl_itr)->current_edge->bot, rings);
-        if ((*lb_abl_itr)->winding_delta != 0) {
-            // If left bound winding delta is zero we know that right bound winding delta is also
-            // not zero
-            auto bnd_prev = active_bound_list_rev_itr<T>(lb_abl_itr);
-            if (bnd_prev != active_bounds.rend() && (*bnd_prev)->ring &&
-                std::llround((*bnd_prev)->curr.x) == (*lb_abl_itr)->current_edge->bot.x &&
-                (*bnd_prev)->winding_delta != 0) {
-                add_point_to_ring(bnd_prev, (*lb_abl_itr)->current_edge->bot, rings);
-            }
-            auto bnd_next = std::next(rb_abl_itr);
-            if (bnd_next != active_bounds.end() && (*bnd_next)->ring &&
-                std::llround((*bnd_next)->curr.x) == (*rb_abl_itr)->current_edge->bot.x &&
-                (*bnd_next)->winding_delta != 0) {
-                add_point_to_ring(bnd_next, (*rb_abl_itr)->current_edge->bot, rings);
-            }
-        }
     }
 
     // Add top of edges to scanbeam

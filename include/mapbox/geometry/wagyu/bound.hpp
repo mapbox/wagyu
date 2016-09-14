@@ -22,6 +22,7 @@ struct bound {
     edge_list<T> edges;
     edge_list_itr<T> current_edge;
     mapbox::geometry::point<double> curr;
+    mapbox::geometry::point<T> last_point;
     ring_ptr<T> ring;
     bound_ptr<T> maximum_bound; // the bound who's maximum connects with this bound
     std::int32_t winding_count;
@@ -34,6 +35,7 @@ struct bound {
         : edges(),
           current_edge(edges.end()),
           curr({ 0.0, 0.0 }),
+          last_point({ 0, 0 }),
           ring(nullptr),
           maximum_bound(nullptr),
           winding_count(0),

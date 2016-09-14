@@ -11,6 +11,7 @@ namespace mapbox {
 namespace geometry {
 namespace wagyu {
 
+/*
 template <typename T>
 inline T get_current_min_x(edge<T> const& edge, const T current_y, mapbox::geometry::point<double> const& int_pt) {
     if (is_horizontal(edge)) {
@@ -368,6 +369,7 @@ void intersection_point(bound<T> const& Bound1,
         }
     }
 }
+*/
 }
 }
 }

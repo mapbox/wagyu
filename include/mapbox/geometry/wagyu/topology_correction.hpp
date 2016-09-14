@@ -986,6 +986,7 @@ void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
                                  ring_manager<T> & rings) {
     angle_point_vector<T> angle_points;
     point_ptr<T> first_point = point_list.front();
+    assert(first_point != nullptr);
     ring_ptr<T> r = first_point->ring;
     if (r == nullptr) {
         point_list.pop_front();
@@ -1021,6 +1022,9 @@ void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
             ++p;
         }
     }
+    if (first_point->ring == nullptr) {
+        return;
+    }
 
     if (angle_points.size() <= 2) {
         point_list.pop_front();
@@ -1031,8 +1035,6 @@ void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
     std::stable_sort(angle_points.begin(), angle_points.end(), segment_angle_sorter<T>());
     point_ptr<T> point_1 = nullptr;
     point_ptr<T> point_2 = nullptr;
-    //std::clog << "First Point: " << first_point << std::endl;
-    //std::clog << angle_points;
     find_repeated_point_pair(angle_points, first_point, point_1, point_2);
     handle_self_intersections(point_1, point_2, point_1->ring, point_2->ring, dupe_ring,
                               rings);
@@ -1046,6 +1048,7 @@ void find_repeated_point_pair(angle_point_vector<T> & angle_points,
 
     angle_point_vector<T> possible_match;
     auto search_itr = angle_points.begin();
+    std::clog << *first_point << std::endl;
     
     // Move itr to "first point"
     while (std::get<1>(*search_itr) != first_point) {
@@ -1078,6 +1081,18 @@ void find_repeated_point_pair(angle_point_vector<T> & angle_points,
     }
 
     angle_point<T> angle_2 = *search_itr;
+
+#ifdef DEBUG
+/*
+    if (std::get<2>(angle_1) == std::get<2>(angle_2)) {
+        std::clog << "First Point: " << first_point << std::endl;
+        std::clog << *first_point << std::endl;
+        std::clog << angle_1 << std::endl;
+        std::clog << angle_2 << std::endl;
+        std::clog << angle_points << std::endl;
+    }
+    */
+#endif
 
     assert(std::get<2>(angle_1) != std::get<2>(angle_2));
     

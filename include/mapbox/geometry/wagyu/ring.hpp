@@ -3,6 +3,7 @@
 #include <mapbox/geometry/wagyu/point.hpp>
 
 #include <list>
+#include <map>
 #include <vector>
 
 #ifdef DEBUG
@@ -53,17 +54,25 @@ struct ring {
 };
 
 template <typename T>
+using hot_pixel_set = std::set<T>;
+
+template <typename T>
+using hot_pixel_map = std::map<T, std::set<T>>;
+
+template <typename T>
 struct ring_manager {
     std::size_t index;
     ring_vector<T> all_rings;
     ring_list<T> children;
     std::vector<point_ptr<T>> all_points;
+    hot_pixel_map<T> hot_pixels;
     
     ring_manager():
         index(0),
         all_rings(),
         children(),
-        all_points() {}
+        all_points(),
+        hot_pixels() {}
 };
 
 template <typename T>
@@ -282,6 +291,7 @@ double area_from_point(point_ptr<T> op) {
 
 template <typename T>
 double area(ring_ptr<T> r) {
+    //assert(r != nullptr);
     if (std::isnan(r->area)) {
         r->area = area_from_point(r->points);
     }
