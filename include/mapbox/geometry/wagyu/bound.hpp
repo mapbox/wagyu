@@ -53,6 +53,7 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
                                                      const bound<T>& bnd) {
     out << "    Bound: " << &bnd << std::endl;
     out << "        curr: " << bnd.curr.x << ", " << bnd.curr.y << std::endl;
+    out << "        last_point: " << bnd.last_point.x << ", " << bnd.last_point.y << std::endl;
     out << *(bnd.current_edge);
     out << "        winding count: " << bnd.winding_count << std::endl;
     out << "        winding_count2: " << bnd.winding_count2 << std::endl;

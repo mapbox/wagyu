@@ -57,7 +57,7 @@ template <typename T>
 using hot_pixel_set = std::set<T>;
 
 template <typename T>
-using hot_pixel_map = std::map<T, std::set<T>>;
+using hot_pixel_map = std::map<T, std::set<T>, std::greater<T>>;
 
 template <typename T>
 struct ring_manager {
@@ -416,6 +416,30 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
     return out;
 }
 
+template <class charT, class traits, typename T>
+inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
+                                                     const hot_pixel_set<T>& hp_set) {
+    bool first = true;
+    for (auto& hp : hp_set) {
+        if (first) {
+            out << hp;
+            first = false;
+        } else {
+            out << ", " << hp;
+        }
+    }
+    return out;
+}
+
+template <class charT, class traits, typename T>
+inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
+                                                     const hot_pixel_map<T>& hp_map) {
+    out << "Hot Pixels: " << std::endl;
+    for (auto& hp_set : hp_map) {
+        out << "     y: " << hp_set.first << " - x: " << hp_set.second << std::endl;
+    }
+    return out;
+}
 #endif
 }
 }

@@ -307,7 +307,7 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         }
         std::stable_sort(minima_sorted.begin(), minima_sorted.end(), local_minimum_sorter<T>());
         local_minimum_ptr_list_itr<T> current_lm = minima_sorted.begin();
-        std::clog << output_all_edges(minima_sorted) << std::endl;
+        //std::clog << output_all_edges(minima_sorted) << std::endl;
 
         setup_scanbeam(minima_list, scanbeam);
 

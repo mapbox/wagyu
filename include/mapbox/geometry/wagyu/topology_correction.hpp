@@ -72,7 +72,7 @@ bool find_intersect_loop(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>
     for (auto it = range.first; it != range.second;) {
         ring_ptr<T> it_ring1 = it->second.op1->ring;
         ring_ptr<T> it_ring2 = it->second.op2->ring;
-        if (it_ring1 != ring_search || (!ring_is_hole(it_ring1) && !ring_is_hole(it_ring2))) {
+        if (!it_ring1 || !it_ring2 || it_ring1 != ring_search || (!ring_is_hole(it_ring1) && !ring_is_hole(it_ring2))) {
             it = dupe_ring.erase(it);
             continue;
         }
@@ -1048,7 +1048,6 @@ void find_repeated_point_pair(angle_point_vector<T> & angle_points,
 
     angle_point_vector<T> possible_match;
     auto search_itr = angle_points.begin();
-    std::clog << *first_point << std::endl;
     
     // Move itr to "first point"
     while (std::get<1>(*search_itr) != first_point) {
