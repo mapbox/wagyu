@@ -95,7 +95,7 @@ T round_towards_max(double val) {
 }
 
 template <typename T>
-inline T get_edge_min_x(edge<T> const& edge, const T current_y, bool debug = false) {
+inline T get_edge_min_x(edge<T> const& edge, const T current_y) {
     if (is_horizontal(edge)) {
         if (edge.bot.x < edge.top.x) {
             return edge.bot.x;
@@ -108,9 +108,7 @@ inline T get_edge_min_x(edge<T> const& edge, const T current_y, bool debug = fal
         } else {
             double lower_range_y = static_cast<double>(current_y - edge.bot.y) - 0.5;
             double return_val = static_cast<double>(edge.bot.x) + edge.dx * lower_range_y;
-            if (debug) std::clog << "      MIN - value: " << return_val << std::endl;
             T value = round_towards_max<T>(return_val);
-            if (debug) std::clog << "      MIN - Return value: " << value << std::endl;
             return value;
         }
     } else {
@@ -118,16 +116,14 @@ inline T get_edge_min_x(edge<T> const& edge, const T current_y, bool debug = fal
             return edge.bot.x;
         } else {
             double return_val = static_cast<double>(edge.bot.x) + edge.dx * (static_cast<double>(current_y - edge.bot.y) + 0.5);
-            if (debug) std::clog << "      MIN 2 - value: " << return_val << std::endl;
             T value = round_towards_max<T>(return_val);
-            if (debug) std::clog << "      MIN 2 - Return value: " << value << std::endl;
             return value;
         }
     }
 }
 
 template <typename T>
-inline T get_edge_max_x(edge<T> const& edge, const T current_y, bool debug = false) {
+inline T get_edge_max_x(edge<T> const& edge, const T current_y) {
     if (is_horizontal(edge)) {
         if (edge.bot.x > edge.top.x) {
             return edge.bot.x;
@@ -140,9 +136,7 @@ inline T get_edge_max_x(edge<T> const& edge, const T current_y, bool debug = fal
         } else {
             double lower_range_y = static_cast<double>(current_y - edge.bot.y) - 0.5;
             double return_val = static_cast<double>(edge.bot.x) + edge.dx * lower_range_y;
-            if (debug) std::clog << "      MAX - value: " << return_val << std::endl;
             T value = round_towards_min<T>(return_val);
-            if (debug) std::clog << "      MAX - Return value: " << value << std::endl;
             return value;
         }
     } else {
@@ -150,9 +144,7 @@ inline T get_edge_max_x(edge<T> const& edge, const T current_y, bool debug = fal
             return edge.bot.x;
         } else {
             double return_val = static_cast<double>(edge.bot.x) + edge.dx * (static_cast<double>(current_y - edge.bot.y) + 0.5);
-            if (debug) std::clog << "      MAX 2 - value: " << return_val << std::endl;
             T value = round_towards_min<T>(return_val);
-            if (debug) std::clog << "      MAX 2 - Return value: " << value << std::endl;
             return value;
         }
     }
@@ -164,20 +156,16 @@ void hot_pixel_set_left_to_right(T y,
                                  T end_x,
                                  bound<T> & bnd,
                                  ring_manager<T> & rings, 
-                                 hot_pixel_set<T>& set,
-                                 bool debug) {
-    T x_min = get_edge_min_x(*(bnd.current_edge), y, debug);
+                                 hot_pixel_set<T>& set) {
+    T x_min = get_edge_min_x(*(bnd.current_edge), y);
     x_min = std::max(x_min, start_x);
-    T x_max = get_edge_max_x(*(bnd.current_edge), y, debug);
+    T x_max = get_edge_max_x(*(bnd.current_edge), y);
     x_max = std::min(x_max, end_x);
-    if (debug) std::clog << "min_x: " << x_min << std::endl;
-    if (debug) std::clog << "max_x: " << x_max << std::endl;
     for (auto itr = set.begin(); itr != set.end(); ++itr) {
         if (*itr > x_max || *itr < x_min) {
             continue;
         }
         mapbox::geometry::point<T> pt(*itr, y);
-        if (debug) std::clog << "creating new " << pt << std::endl;
         point_ptr<T> op = bnd.ring->points;
         bool to_front = (bnd.side == edge_left);
         if (to_front && (pt == *op)) {
@@ -198,20 +186,16 @@ void hot_pixel_set_right_to_left(T y,
                                  T end_x,
                                  bound<T> & bnd,
                                  ring_manager<T> & rings, 
-                                 hot_pixel_set<T>& set,
-                                 bool debug) {
-    T x_min = get_edge_min_x(*(bnd.current_edge), y, debug);
+                                 hot_pixel_set<T>& set) {
+    T x_min = get_edge_min_x(*(bnd.current_edge), y);
     x_min = std::max(x_min, end_x);
-    T x_max = get_edge_max_x(*(bnd.current_edge), y, debug);
+    T x_max = get_edge_max_x(*(bnd.current_edge), y);
     x_max = std::min(x_max, start_x);
-    if (debug) std::clog << "min_x: " << x_min << std::endl;
-    if (debug) std::clog << "max_x: " << x_max << std::endl;
     for (auto itr = set.rbegin(); itr != set.rend(); ++itr) {
         if (*itr > x_max || *itr < x_min) {
             continue;
         }
         mapbox::geometry::point<T> pt(*itr, y);
-        if (debug) std::clog << "creating new " << pt << std::endl;
         point_ptr<T> op = bnd.ring->points;
         bool to_front = (bnd.side == edge_left);
         if (to_front && (pt == *op)) {
@@ -229,22 +213,7 @@ void hot_pixel_set_right_to_left(T y,
 template <typename T>
 void insert_hot_pixels_in_path(bound<T> & bnd, 
                                mapbox::geometry::point<T> end_pt,
-                               ring_manager<T>& rings,
-                               bool debug = false) {
-    /*if (end_pt.x == 16 && end_pt.y == 36 && 
-        bnd.current_edge->bot.x == 14 && bnd.current_edge->bot.y == 40 && 
-        bnd.current_edge->top.x == 37 && bnd.current_edge->top.y == 3) { 
-        debug = true;
-        std::clog << "-------------" << std::endl;
-        std::clog << bnd << std::endl;
-        std::clog << rings.hot_pixels;
-    }*/
-    /*
-    if (bnd.current_edge->bot.x == -5000 && bnd.current_edge->bot.y == 5000) {
-        debug = true;
-        std::clog << "HERE GOES NOTHING!" << std::endl;
-    }
-    */
+                               ring_manager<T>& rings) {
     if (end_pt == bnd.last_point) {
         return;
     }
@@ -258,28 +227,21 @@ void insert_hot_pixels_in_path(bound<T> & bnd,
     T end_y = end_pt.y;
     T end_x = end_pt.x;
 
-    if (debug) std::clog << "Starting " << bnd.last_point << std::endl;
-    if (debug) std::clog << "Ending " << end_pt << std::endl;
     if (start_x > end_x) {
-        if (debug) std::clog << "right to left" << std::endl;
         for (auto hp : rings.hot_pixels) {
             if (hp.first > start_y || hp.first < end_y) {
                 continue;
             }
-            if (debug) std::clog << "  EXPLORING: " << hp.first << std::endl;
-            hot_pixel_set_right_to_left(hp.first, start_x, end_x, bnd, rings, hp.second, debug);
+            hot_pixel_set_right_to_left(hp.first, start_x, end_x, bnd, rings, hp.second);
         }
     } else {
-        if (debug) std::clog << "left to right" << std::endl;
         for (auto hp : rings.hot_pixels) {
             if (hp.first > start_y || hp.first < end_y) {
                 continue;
             }
-            if (debug) std::clog << "  EXPLORING: " << hp.first << std::endl;
-            hot_pixel_set_left_to_right(hp.first, start_x, end_x, bnd, rings, hp.second, debug);
+            hot_pixel_set_left_to_right(hp.first, start_x, end_x, bnd, rings, hp.second);
         }
     }
-    if (debug) std::clog << "Last point set to " << end_pt << std::endl;
     bnd.last_point = end_pt;
 }
 
@@ -335,19 +297,8 @@ void add_point_to_ring(bound<T> & bnd,
                                mapbox::geometry::point<T> const& pt,
                                ring_manager<T>& rings) {
     assert(bnd.ring);
-    bool debug = false;
-    /*
-    if (pt.x == 16 && pt.y == 36) { 
-        //bnd.current_edge->bot.x == 15 && bnd.current_edge->bot.y == 42) {
-        debug = true;
-        std::clog << "---------------------" << std::endl;
-        std::clog << pt << std::endl;
-        std::clog << bnd << std::endl;
-        //std::clog << *bnd.ring << std::endl;
-    }
-    */
     // Handle hot pixels
-    insert_hot_pixels_in_path(bnd, pt, rings, debug); 
+    insert_hot_pixels_in_path(bnd, pt, rings); 
     
     // bnd.ring->points is the 'Left-most' point & bnd.ring->points->prev is the
     // 'Right-most'
@@ -364,11 +315,6 @@ void add_point_to_ring(bound<T> & bnd,
         bnd.ring->points = new_point;
     }
     add_to_hot_pixels(pt, rings);
-    if (debug) {
-        //std::clog << *bnd.ring << std::endl;
-        //std::clog << rings.all_rings << std::endl;
-        std::clog << "****************" << std::endl;
-    }
 }
 
 template <typename T>

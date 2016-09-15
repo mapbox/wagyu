@@ -526,7 +526,7 @@ bool parent_in_tree(ring_ptr<T> r, ring_ptr<T> possible_parent) {
 }
 
 template <typename T>
-void fixup_children_new_interior_ring(ring_ptr<T> old_ring, ring_ptr<T> new_ring) {
+void fixup_children_new_interior_ring(ring_ptr<T> old_ring, ring_ptr<T> new_ring, ring_manager<T> & rings) {
     // The only rings that could possibly be a child to a new interior ring are those
     // child rings that have the same sign of their area as the old ring.
     bool old_ring_area_is_positive = area(old_ring) > 0.0;
@@ -543,6 +543,41 @@ void fixup_children_new_interior_ring(ring_ptr<T> old_ring, ring_ptr<T> new_ring
             r = old_ring->children.erase(r);
         } else {
             ++r;
+        }
+    }
+
+    // Now we must search the siblings of the old ring
+    // This is slow, but there is no other way I know of currently
+    // to solve these problems.
+    if (old_ring->parent == nullptr) {
+        for (auto r = rings.children.begin(); r != rings.children.end();) {
+            assert((*r)->points);
+            bool ring_area_is_positive = area((*r)) > 0.0;
+            if ((*r) != new_ring &&
+                ring_area_is_positive == old_ring_area_is_positive && 
+                poly2_contains_poly1((*r)->points, new_ring->points)) {
+                (*r)->parent = new_ring;
+                new_ring->children.push_back((*r));
+                r = rings.children.erase(r);
+            } else {
+                ++r;
+            }
+        }
+    } else {
+        ring_ptr<T> parent = old_ring->parent;
+        for (auto r = parent->children.begin(); r != parent->children.end();) {
+            assert((*r)->points);
+            assert((*r) != parent);
+            bool ring_area_is_positive = area((*r)) > 0.0;
+            if ((*r) != new_ring &&
+                ring_area_is_positive == old_ring_area_is_positive && 
+                poly2_contains_poly1((*r)->points, new_ring->points)) {
+                (*r)->parent = new_ring;
+                new_ring->children.push_back((*r));
+                r = parent->children.erase(r);
+            } else {
+                ++r;
+            }
         }
     }
 }
@@ -697,7 +732,7 @@ void handle_self_intersections(point_ptr<T> op,
         } else {
             new_ring->parent->children.push_back(new_ring);
         }
-        fixup_children_new_interior_ring(ring, new_ring);
+        fixup_children_new_interior_ring(ring, new_ring, rings);
     } else {
         // Situation #2 - create new ring
         // The largest absolute area is the parent
@@ -1081,18 +1116,6 @@ void find_repeated_point_pair(angle_point_vector<T> & angle_points,
 
     angle_point<T> angle_2 = *search_itr;
 
-#ifdef DEBUG
-/*
-    if (std::get<2>(angle_1) == std::get<2>(angle_2)) {
-        std::clog << "First Point: " << first_point << std::endl;
-        std::clog << *first_point << std::endl;
-        std::clog << angle_1 << std::endl;
-        std::clog << angle_2 << std::endl;
-        std::clog << angle_points << std::endl;
-    }
-    */
-#endif
-
     assert(std::get<2>(angle_1) != std::get<2>(angle_2));
     
     point_1 = std::get<1>(angle_1);
@@ -1129,10 +1152,6 @@ void process_repeated_points(std::size_t repeated_point_count,
                 double c_area = area(c);
                 bool c_is_positive = c_area > 0.0;
                 bool c_is_zero = std::fabs(c_area) <= 0.0;
-                if (!c_is_zero && c_is_positive == ring_is_positive) {
-                    std::clog << *c << std::endl;
-                    std::clog << *op_j->ring << std::endl;
-                }
                 assert(c_is_zero || c_is_positive != ring_is_positive);
             }
         }

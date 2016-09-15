@@ -337,7 +337,8 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
     }
 
     //std::clog << rings.all_rings << std::endl;
-    
+    //std::clog << output_as_polygon(rings.all_rings[0]);    
+
     // fix orientations ...
     for (auto & r :rings.all_rings) {
         if (!r->points || r->is_open) {
