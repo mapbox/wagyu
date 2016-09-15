@@ -846,6 +846,9 @@ void handle_collinear_rings(point_ptr<T> pt1, point_ptr<T> pt2,
             remove_ring(ring2, rings);
             return;
         }
+        if (!pt1->ring) {
+            pt1 = pt2;
+        }
     }
     ring1->points = pt1;
     ring2->points = nullptr;
@@ -1138,7 +1141,11 @@ void find_repeated_point_pair(angle_point_vector<T> & angle_points,
 
     angle_point<T> angle_2 = *search_itr;
 
-    assert(std::get<2>(angle_1) != std::get<2>(angle_2));
+#ifdef DEBUG
+    if (std::get<2>(angle_1) == std::get<2>(angle_2)) {
+        throw std::runtime_error("Segments are found to be crossing");
+    }
+#endif
     
     point_1 = std::get<1>(angle_1);
     point_2 = std::get<1>(angle_2);

@@ -298,7 +298,7 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         // This section in its own { } to limit memory scope of variables
         active_bound_list<T> active_bounds;
         scanbeam_list<T> scanbeam;
-        T scanline_y;
+        T scanline_y = std::numeric_limits<T>::max();
 
         local_minimum_ptr_list<T> minima_sorted;
         minima_sorted.reserve(minima_list.size());
