@@ -632,27 +632,49 @@ bool intersections_cross(point_ptr<T> p1, point_ptr<T> p2) {
 template <typename T>
 void handle_self_intersections(point_ptr<T> op,
                                point_ptr<T> op2,
-                               ring_ptr<T> ring,
-                               ring_ptr<T> ring2,
                                std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring,
                                ring_manager<T>& rings) {
     // Check that are same ring
-    if (ring != ring2) {
-        return;
-    }
+    assert(op->ring == op2->ring);
+    ring_ptr<T> ring = op->ring;
 
-    remove_spikes(op);
-    if (!op || *op != *op2 || !op2->ring) {
+    point_ptr<T> pt1 = op;
+    remove_spikes(pt1);
+    if (pt1 == nullptr) {
+        ring->points = nullptr;
+        ring->area = std::numeric_limits<double>::quiet_NaN();
+        remove_ring(ring, rings);
         update_duplicate_point_entries(ring, dupe_ring);
         return;
-    }
-    remove_spikes(op2);
-    if (!op2 || *op != *op2 || !op->ring) {
+    } else if (*pt1 != *op) {
+        ring->points = pt1;
         update_duplicate_point_entries(ring, dupe_ring);
         return;
+    } else if (pt1 != op) {
+        ring->points = pt1;
+        op = pt1;
     }
-
-    assert(op != op2);
+    
+    point_ptr<T> pt2 = op2;
+    remove_spikes(pt2);
+    if (pt2 == nullptr) {
+        ring->points = nullptr;
+        ring->area = std::numeric_limits<double>::quiet_NaN();
+        remove_ring(ring, rings);
+        update_duplicate_point_entries(ring, dupe_ring);
+        return;
+    } else if (*pt2 != *op2) {
+        ring->points = pt2;
+        update_duplicate_point_entries(ring, dupe_ring);
+        return;
+    } else if (pt2 != op2) {
+        ring->points = pt2;
+        op2 = pt2;
+    }
+    
+    if (op == op2) {
+        return;
+    }
     
     double original_area = area(ring);
     bool original_is_positive = (original_area > 0.0);
@@ -1071,7 +1093,7 @@ void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
     point_ptr<T> point_1 = nullptr;
     point_ptr<T> point_2 = nullptr;
     find_repeated_point_pair(angle_points, first_point, point_1, point_2);
-    handle_self_intersections(point_1, point_2, point_1->ring, point_2->ring, dupe_ring,
+    handle_self_intersections(point_1, point_2, dupe_ring,
                               rings);
 }
 

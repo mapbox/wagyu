@@ -291,32 +291,12 @@ double area_from_point(point_ptr<T> op) {
 
 template <typename T>
 double area(ring_ptr<T> r) {
-    //assert(r != nullptr);
+    assert(r != nullptr);
     if (std::isnan(r->area)) {
         r->area = area_from_point(r->points);
     }
     return r->area;
 }
-
-/*
-template <typename T>
-void area_and_count(point_ptr<T> op, std::size_t& count, double& area) {
-    point_ptr<T> startOp = op;
-    count = 0;
-    if (!op) {
-        area = 0.0;
-        return;
-    }
-    area = 0.0;
-    do {
-        ++count;
-        area += static_cast<double>(op->prev->x + op->x) * static_cast<double>(op->prev->y - op->y);
-        op = op->next;
-    } while (op != startOp);
-    area = area * 0.5;
-    return;
-}
-*/
 
 #ifdef DEBUG
 
