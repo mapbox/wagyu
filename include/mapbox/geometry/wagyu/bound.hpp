@@ -65,9 +65,9 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
         out << "        side: right" << std::endl;
     }
     out << "        ring: " << bnd.ring << std::endl;
-    /*if (bnd.ring) {
-        out << *(bnd.ring) << std::endl;
-    }*/
+    if (bnd.ring) {
+        out << "        ring index: " << bnd.ring->ring_index << std::endl;
+    }
     return out;
 }
 

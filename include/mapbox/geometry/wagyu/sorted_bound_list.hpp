@@ -15,10 +15,14 @@ template <typename T>
 struct sorting_bound {
 
     active_bound_list_itr<T> bound;
+    edge_ptr<T> current_edge;
     std::size_t index;
+    double current_x;
 
-    sorting_bound(active_bound_list_itr<T> bound_, std::size_t index_)
-        : bound(bound_), index(index_) {
+    sorting_bound(active_bound_list_itr<T> bound_, 
+                  edge_ptr<T> current_edge_,
+                  std::size_t index_, double current_x_)
+        : bound(bound_), current_edge(current_edge_), index(index_), current_x(current_x_) {
     }
 };
 
@@ -57,7 +61,9 @@ template <class charT, class traits, typename T>
 inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
                                                      const sorting_bound<T>& s) {
     out << "    index: " << s.index << std::endl;
-    out << *(*(s.bound)) << std::endl;
+    out << "    current_x : " << s.current_x << std::endl;
+    out << "    edge: " << std::endl;
+    out << *s.current_edge << std::endl;    
     return out;
 }
 

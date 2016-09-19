@@ -212,7 +212,7 @@ void hot_pixel_set_right_to_left(T y,
 
 template <typename T>
 void insert_hot_pixels_in_path(bound<T> & bnd, 
-                               mapbox::geometry::point<T> end_pt,
+                               mapbox::geometry::point<T> const& end_pt,
                                ring_manager<T>& rings) {
     if (end_pt == bnd.last_point) {
         return;
@@ -354,6 +354,7 @@ void add_local_minimum_point(active_bound_list_itr<T> b1,
     if (is_horizontal(*((*b2)->current_edge)) ||
         ((*b1)->current_edge->dx > (*b2)->current_edge->dx)) {
         add_point(b1, active_bounds, pt, rings);
+        (*b2)->last_point = pt;
         (*b2)->ring = (*b1)->ring;
         (*b1)->side = edge_left;
         (*b2)->side = edge_right;
@@ -365,6 +366,7 @@ void add_local_minimum_point(active_bound_list_itr<T> b1,
         }
     } else {
         add_point(b2, active_bounds, pt, rings);
+        (*b1)->last_point = pt;
         (*b1)->ring = (*b2)->ring;
         (*b1)->side = edge_right;
         (*b2)->side = edge_left;

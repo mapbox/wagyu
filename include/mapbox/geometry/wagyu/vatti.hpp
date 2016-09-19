@@ -313,7 +313,7 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
 
         while (pop_from_scanbeam(scanline_y, scanbeam) || current_lm != minima_sorted.end()) {
 
-            process_intersections(scanline_y, active_bounds, cliptype, subject_fill_type,
+            process_intersections(scanline_y, minima_sorted, current_lm, active_bounds, cliptype, subject_fill_type,
                                   clip_fill_type, rings);
 
             // First we process bounds that has already been added to the active bound list --

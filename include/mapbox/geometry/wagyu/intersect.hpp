@@ -23,7 +23,7 @@ struct intersect_node {
 
     intersect_node(sorting_bound_list_itr<T> const& bound1_,
                    sorting_bound_list_itr<T> const& bound2_,
-                   mapbox::geometry::point<double> pt_)
+                   mapbox::geometry::point<double> const& pt_)
         : bound1(bound1_), bound2(bound2_), pt(pt_) {
     }
 };

@@ -48,9 +48,6 @@ template <typename T>
 using edge_ptr = edge<T>*;
 
 template <typename T>
-using const_edge_ptr = edge<T>* const;
-
-template <typename T>
 using edge_list = std::list<edge<T>>;
 
 template <typename T>
