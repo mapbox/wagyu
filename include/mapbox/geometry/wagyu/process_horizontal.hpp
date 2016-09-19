@@ -51,7 +51,7 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
             ++max_iter;
         }
 
-        if (std::llround((*bnd)->curr.x) > (*horz_bound)->current_edge->top.x) {
+        if ((*bnd)->curr.x > static_cast<double>((*horz_bound)->current_edge->top.x)) {
             break;
         }
 
@@ -175,7 +175,7 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
             ++max_iter;
         }
 
-        if (std::llround((*bnd)->curr.x) < (*horz_bound)->current_edge->top.x) {
+        if ((*bnd)->curr.x < static_cast<double>((*horz_bound)->current_edge->top.x)) {
             break;
         }
 
