@@ -476,8 +476,7 @@ void insert_horizontal_local_minima_into_ABL(T const top_y,
                                              scanbeam_list<T>& scanbeam,
                                              clip_type cliptype,
                                              fill_type subject_fill_type,
-                                             fill_type clip_fill_type,
-                                             maxima_list<T>& maxima) {
+                                             fill_type clip_fill_type) {
     while (current_lm != minima_sorted.end() && top_y == (*current_lm)->y &&
            (*current_lm)->minimum_has_horizontal) {
         initialize_lm<T>(current_lm);
@@ -487,8 +486,10 @@ void insert_horizontal_local_minima_into_ABL(T const top_y,
             insert_lm_only_one_bound(right_bound, active_bounds, rings, scanbeam, cliptype,
                                      subject_fill_type, clip_fill_type);
             if (right_bound.ring) {
-                maxima.push_back(right_bound.current_edge->bot.x);
-                maxima.push_back(right_bound.current_edge->top.x);
+                mapbox::geometry::point<T> hp(right_bound.current_edge->top.x, top_y); 
+                mapbox::geometry::point<T> hp2(right_bound.current_edge->bot.x, top_y); 
+                add_to_hot_pixels(hp, rings);
+                add_to_hot_pixels(hp2, rings);
             }
         } else if (right_bound.edges.empty() && !left_bound.edges.empty()) {
             throw clipper_exception(
@@ -497,8 +498,10 @@ void insert_horizontal_local_minima_into_ABL(T const top_y,
             insert_lm_left_and_right_bound(left_bound, right_bound, active_bounds, rings,
                                            scanbeam, cliptype, subject_fill_type, clip_fill_type);
             if (right_bound.ring) {
-                maxima.push_back(right_bound.current_edge->bot.x);
-                maxima.push_back(right_bound.current_edge->top.x);
+                mapbox::geometry::point<T> hp(right_bound.current_edge->top.x, top_y); 
+                mapbox::geometry::point<T> hp2(right_bound.current_edge->bot.x, top_y); 
+                add_to_hot_pixels(hp, rings);
+                add_to_hot_pixels(hp2, rings);
             }
         }
         ++current_lm;

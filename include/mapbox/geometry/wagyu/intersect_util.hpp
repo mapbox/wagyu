@@ -4,7 +4,6 @@
 #include <mapbox/geometry/wagyu/bound.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/intersect.hpp>
-#include <mapbox/geometry/wagyu/intersect_point.hpp>
 #include <mapbox/geometry/wagyu/ring_util.hpp>
 #include <mapbox/geometry/wagyu/sorted_bound_list.hpp>
 #include <mapbox/geometry/wagyu/util.hpp>
@@ -77,16 +76,30 @@ void add_extra_hot_pixels(T top_y,
                           local_minimum_ptr_list_itr<T> const& current_lm,
                           sorting_bound_list<T>& sorted_bound_list, 
                           ring_manager<T>& rings) {
-    
+    active_bound_list<T> tmp_abl;
     auto lm = current_lm;
     while (lm != minima_sorted.end() && (*lm)->y == top_y) {
         if (!(*lm)->minimum_has_horizontal && !(*lm)->left_bound.edges.empty() && !(*lm)->right_bound.edges.empty()) {
             mapbox::geometry::point<T> hp((*lm)->left_bound.edges.front().bot.x, top_y);
             add_to_hot_pixels(hp, rings);
         }
+        auto& left_bound = (*lm)->left_bound;
+        left_bound.current_edge = left_bound.edges.begin();
+        left_bound.curr.x = static_cast<double>(left_bound.current_edge->bot.x);
+        left_bound.curr.y = static_cast<double>(left_bound.current_edge->bot.y);
+        if (!left_bound.edges.empty()) {
+            insert_bound_into_SBL(left_bound, tmp_abl, sorted_bound_list);
+        }
+        auto& right_bound = (*lm)->right_bound;
+        right_bound.current_edge = right_bound.edges.begin();
+        right_bound.curr.x = static_cast<double>(right_bound.current_edge->bot.x);
+        right_bound.curr.y = static_cast<double>(right_bound.current_edge->bot.y);
+        if (!right_bound.edges.empty()) {
+            insert_bound_into_SBL(right_bound, tmp_abl, sorted_bound_list);
+        }
         ++lm;
     }
-
+    
     // We now need to add hot pixels for intersections that might occur -0.5 below the top_y    
     for (auto bnd_itr = sorted_bound_list.begin(); bnd_itr != sorted_bound_list.end();) {
         bound_ptr<T> bnd = *(bnd_itr->bound);
@@ -101,9 +114,15 @@ void add_extra_hot_pixels(T top_y,
                 continue;
             }
             bnd_itr->current_edge = &(*edge_itr);
+            bnd_itr->current_x = bnd_itr->current_edge->bot.x;
         }    
-        bnd_itr->current_x = get_current_x(*(bnd_itr->current_edge), top_y - 1);
         ++bnd_itr;
+    }
+    
+    sorted_bound_list.sort(sorting_bound_current_sorter<T>());
+    
+    for (auto bnd_itr = sorted_bound_list.begin(); bnd_itr != sorted_bound_list.end(); ++bnd_itr) {
+        bnd_itr->current_x = get_current_x(*(bnd_itr->current_edge), top_y - 1);
     }
 
     // bubblesort ...
@@ -173,7 +192,7 @@ void fixup_intersection_order(sorting_bound_list<T>& sorted_bound_list,
     // so reorder the intersections to ensure this if necessary.
 
     // resort sorted bound list to the same as the active bound list
-    sorted_bound_list.sort(sorting_bound_sorter<T>());
+    sorted_bound_list.sort(sorting_bound_index_sorter<T>());
 
     // Sort the intersection list
     std::stable_sort(intersects.begin(), intersects.end(), intersect_list_sorter<T>());
@@ -432,9 +451,6 @@ void process_intersections(T top_y,
                            fill_type subject_fill_type,
                            fill_type clip_fill_type,
                            ring_manager<T>& rings) {
-    if (active_bounds.empty()) {
-        return;
-    }
     sorting_bound_list<T> sorted_bound_list;
     std::size_t index = 0;
     // create sorted edge list from AEL

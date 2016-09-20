@@ -98,7 +98,6 @@ void process_edges_at_top_of_scanbeam(T top_y,
                                       fill_type subject_fill_type,
                                       fill_type clip_fill_type) {
 
-    maxima_list<T> maxima;
     for (auto bnd = active_bounds.begin(); bnd != active_bounds.end();) {
         // 1. Process maxima, treating them as if they are "bent" horizontal edges,
         // but exclude maxima with horizontal edges.
@@ -114,18 +113,16 @@ void process_edges_at_top_of_scanbeam(T top_y,
         }
 
         if (is_maxima_edge) {
-            maxima.push_back((*bnd)->current_edge->top.x);
             bnd = do_maxima(bnd, bnd_max_pair, cliptype, subject_fill_type, clip_fill_type, rings,
                             active_bounds);
         } else {
             // 2. Promote horizontal edges.
-
             if (is_intermediate(bnd, top_y) && next_edge_is_horizontal<T>(bnd)) {
                 next_edge_in_bound(bnd, scanbeam);
                 if ((*bnd)->ring) {
                     add_point_to_ring(*(*bnd), (*bnd)->current_edge->bot, rings);
-                    maxima.push_back((*bnd)->current_edge->top.x);
-                    maxima.push_back((*bnd)->current_edge->bot.x);
+                    mapbox::geometry::point<T> hp((*bnd)->current_edge->top.x, top_y); 
+                    add_to_hot_pixels(hp, rings);
                 }
             } else {
                 (*bnd)->curr.x = get_current_x(*((*bnd)->current_edge), top_y);
@@ -138,17 +135,9 @@ void process_edges_at_top_of_scanbeam(T top_y,
 
     insert_horizontal_local_minima_into_ABL(top_y, minima_sorted, current_lm, active_bounds, rings,
                                             scanbeam, cliptype, subject_fill_type,
-                                            clip_fill_type, maxima);
+                                            clip_fill_type);
 
-    auto lm = current_lm;
-    while (lm != minima_sorted.end() && (*lm)->y == top_y) {
-        if (!(*lm)->left_bound.edges.empty() && !(*lm)->right_bound.edges.empty()) {
-            maxima.push_back((*lm)->left_bound.edges.front().bot.x);
-        }
-        ++lm;
-    }
-
-    process_horizontals(top_y, maxima, active_bounds, rings, scanbeam, cliptype,
+    process_horizontals(top_y, active_bounds, rings, scanbeam, cliptype,
                         subject_fill_type, clip_fill_type);
 
     // 4. Promote intermediate vertices

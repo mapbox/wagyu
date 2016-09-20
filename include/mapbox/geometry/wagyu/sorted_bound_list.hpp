@@ -33,9 +33,16 @@ template <typename T>
 using sorting_bound_list_itr = typename sorting_bound_list<T>::iterator;
 
 template <typename T>
-struct sorting_bound_sorter {
+struct sorting_bound_index_sorter {
     inline bool operator()(sorting_bound<T> const& bound1, sorting_bound<T> const& bound2) {
         return bound2.index > bound1.index;
+    }
+};
+
+template <typename T>
+struct sorting_bound_current_sorter {
+    inline bool operator()(sorting_bound<T> const& bound1, sorting_bound<T> const& bound2) {
+        return bound2.current_x > bound1.current_x;
     }
 };
 
@@ -53,6 +60,17 @@ inline void swap_positions_in_SBL(sorting_bound_list_itr<T>& bnd1,
         sorting_bounds.splice(next_bnd1, sorting_bounds, bnd2);
         sorting_bounds.splice(next_bnd2, sorting_bounds, bnd1);
     }
+}
+
+template <typename T>
+sorting_bound_list_itr<T> insert_bound_into_SBL(bound<T>& bnd, active_bound_list<T>& temp_active_bounds, sorting_bound_list<T> & sorted_bound_list) {
+    auto ab_itr = temp_active_bounds.insert(temp_active_bounds.end(), &bnd);
+    auto itr = sorted_bound_list.begin();
+    while (itr != sorted_bound_list.end() && !bound2_inserts_before_bound1(*(*(itr->bound)), bnd)) {
+        ++itr;
+    }
+    edge_ptr<T> e = &*(bnd.current_edge);
+    return sorted_bound_list.insert(itr, sorting_bound<T>(ab_itr, e, 0, e->bot.x));
 }
 
 #ifdef DEBUG
