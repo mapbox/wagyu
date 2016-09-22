@@ -216,7 +216,18 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
     if (ring_parent != ring_search->parent) {
         // The two holes do not have the same parent, do not add them
         // simply return!
-        return false;
+        if (poly2_contains_poly1(ring_search->points, ring_parent->points)) {
+            ring_ptr<T> old_parent = ring_search->parent;
+            ring_search->parent = ring_parent;
+            if (old_parent) {
+                old_parent->children.remove(ring_search);
+            } else {
+                rings.children.remove(ring_search);
+            }
+            ring_parent->children.push_back(ring_search);
+        } else {
+            return false;
+        }
     }
     bool found = false;
     std::list<std::pair<ring_ptr<T>, point_ptr_pair<T>>> iList;
