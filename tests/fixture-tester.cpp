@@ -15,6 +15,7 @@ using value_type = std::int64_t;
 
 struct Options {
     clip_type operation = clip_type_union;
+    fill_type fill = fill_type_even_odd;
     char* subject_file;
     char* clip_file;
 } options;
@@ -121,6 +122,18 @@ void parse_options(int argc, char* const argv[]) {
                 options.operation = clip_type_x_or;
             }
             skip = true;
+        } else if (strcmp(argv[i], "-f") == 0) {
+            std::string type = argv[i + 1];
+            if (type.compare("even_odd") == 0) {
+                options.fill = fill_type_even_odd;
+            } else if (type.compare("non_zero") == 0) {
+                options.fill = fill_type_non_zero;
+            } else if (type.compare("positive") == 0) {
+                options.fill = fill_type_positive;
+            } else if (type.compare("negative") == 0) {
+                options.fill = fill_type_negative;
+            }
+            skip = true;
         } else {
             // If we didn't catch this argument as a flag or a flag value,
             // set the input files
@@ -140,6 +153,7 @@ int main(int argc, char* const argv[]) {
         std::cout << "  ./fixture-test ./path/to/subject.json ./path/to/object.json\n" << std::endl;
         std::cout << "Options:" << std::endl;
         std::cout << "  -t     type of operation (default: union)\n" << std::endl;
+        std::cout << "  -f     fill_type (default: even_odd)\n" << std::endl;
         return -1;
     }
     parse_options(argc, argv);
@@ -149,7 +163,7 @@ int main(int argc, char* const argv[]) {
     parse_file(options.clip_file, clipper, polygon_type_clip);
 
     std::vector<mapbox::geometry::polygon<value_type>> solution;
-    clipper.execute(options.operation, solution, fill_type_even_odd, fill_type_even_odd);
+    clipper.execute(options.operation, solution, options.fill, fill_type_even_odd);
 
     Document output;
     polys_to_json(output, solution);
