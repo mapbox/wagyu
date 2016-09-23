@@ -725,9 +725,9 @@ point_in_polygon_result point_in_polygon(mapbox::geometry::point<double> const& 
     point_in_polygon_result result = point_outside_polygon;
     point_ptr<T> startOp = op;
     do {
-        if (std::fabs(op->next->y - pt.y) <= 0.0) {
-            if (std::fabs(op->next->x - pt.x) <= 0.0 ||
-                (std::fabs(op->y - pt.y) <= 0.0 && ((op->next->x > pt.x) == (op->x < pt.x)))) {
+        if (std::fabs(op->next->y - pt.y) < std::numeric_limits<double>::epsilon()) {
+            if (std::fabs(op->next->x - pt.x) < std::numeric_limits<double>::epsilon() ||
+                (std::fabs(op->y - pt.y) < std::numeric_limits<double>::epsilon() && ((op->next->x > pt.x) == (op->x < pt.x)))) {
                 return point_on_polygon;
             }
         }
@@ -788,10 +788,10 @@ point_in_polygon_result point_in_polygon(mapbox::geometry::point<double> const& 
 template <typename T>
 point_in_polygon_result inside_or_outside_special(point_ptr<T> first_pt, point_ptr<T> other_poly) {
 
-    if (std::fabs(area(first_pt->ring)) <= 0.0) {
+    if (std::fabs(area(first_pt->ring)) < std::numeric_limits<double>::epsilon()) {
         return point_inside_polygon;
     }
-    if (std::fabs(area(other_poly->ring)) <= 0.0) {
+    if (std::fabs(area(other_poly->ring)) < std::numeric_limits<double>::epsilon()) {
         return point_outside_polygon;
     }
     point_ptr<T> pt = first_pt;

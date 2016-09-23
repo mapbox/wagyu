@@ -92,7 +92,7 @@ bool find_intersect_loop(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>
         ring_ptr<T> it_ring = it->second.op2->ring;
         if (visited.count(it_ring) > 0 || it_ring == nullptr || 
             (ring_parent != it_ring && ring_parent != it_ring->parent) ||
-            std::fabs(area(it_ring)) <= 0.0 ||
+            std::fabs(area(it_ring)) < std::numeric_limits<double>::epsilon() ||
             *prev_pt == *it->second.op2) {
             continue;
         }
@@ -736,8 +736,8 @@ void handle_self_intersections(point_ptr<T> op,
     double area_2 = area_from_point(op2);
     bool area_1_is_positive = (area_1 > 0.0);
     bool area_2_is_positive = (area_2 > 0.0);
-    bool area_1_is_zero = std::fabs(area_1) <= 0.0;
-    bool area_2_is_zero = std::fabs(area_2) <= 0.0;
+    bool area_1_is_zero = std::fabs(area_1) < std::numeric_limits<double>::epsilon();
+    bool area_2_is_zero = std::fabs(area_2) < std::numeric_limits<double>::epsilon();
     
     // Situation # 1 - Orientations are NOT the same:
     // - One ring contains the other and MUST be a child of that ring 
@@ -1060,7 +1060,7 @@ template <typename T>
 struct segment_angle_sorter {
 
     inline bool operator()(angle_point<T> const& p1, angle_point<T> const& p2) {
-        if (std::fabs(std::get<0>(p1) - std::get<0>(p2)) <= 0.0) {
+        if (std::fabs(std::get<0>(p1) - std::get<0>(p2)) < std::numeric_limits<double>::epsilon()) {
             return std::get<3>(p1) > std::get<3>(p2);
         } else {
             return std::get<0>(p1) < std::get<0>(p2);
@@ -1091,7 +1091,7 @@ void find_repeated_point_pair(angle_point_vector<T> & angle_points,
     }
 
     // It is possible that we have the same angle here..
-    while (std::fabs(std::get<0>(angle_1) - std::get<0>(*search_itr)) <= 0.0 && std::get<2>(angle_1) == std::get<2>(*search_itr)) {
+    while (std::fabs(std::get<0>(angle_1) - std::get<0>(*search_itr)) < std::numeric_limits<double>::epsilon() && std::get<2>(angle_1) == std::get<2>(*search_itr)) {
         ++search_itr;
         if (search_itr == angle_points.end()) {
             search_itr = angle_points.begin();
@@ -1141,7 +1141,7 @@ void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
             ++p;
             continue;
         }
-        if (std::fabs(next_angle - prev_angle) <= 0.0) {
+        if (std::fabs(next_angle - prev_angle) < std::numeric_limits<double>::epsilon()) {
             point_ptr<T> spike = *p;
             ring_ptr<T> spike_ring = spike->ring;
             remove_spikes(spike);
@@ -1201,12 +1201,12 @@ void process_repeated_points(std::size_t repeated_point_count,
         }
         double ring_area = area(op_j->ring);
         bool ring_is_positive = ring_area > 0.0;
-        bool ring_is_zero = std::fabs(ring_area) <= 0.0;
+        bool ring_is_zero = std::fabs(ring_area) < std::numeric_limits<double>::epsilon();
         if (!ring_is_zero) {
             if (op_j->ring->parent) {
                 double parent_area = area(op_j->ring->parent);
                 bool parent_is_positive = parent_area > 0.0;
-                bool parent_is_zero = std::fabs(parent_area) <= 0.0;
+                bool parent_is_zero = std::fabs(parent_area) < std::numeric_limits<double>::epsilon();
                 if (!parent_is_zero && ring_is_positive == parent_is_positive) {
                     throw std::runtime_error("Created a ring with a parent having the same orientation (sign of area)");
                 }
@@ -1214,7 +1214,7 @@ void process_repeated_points(std::size_t repeated_point_count,
             for (auto c : op_j->ring->children) {
                 double c_area = area(c);
                 bool c_is_positive = c_area > 0.0;
-                bool c_is_zero = std::fabs(c_area) <= 0.0;
+                bool c_is_zero = std::fabs(c_area) < std::numeric_limits<double>::epsilon();
                 if (!c_is_zero && ring_is_positive == c_is_positive) {
                     throw std::runtime_error("Created a ring with a child having the same orientation (sign of area)");
                 }
@@ -1267,7 +1267,7 @@ void handle_collinear_rings_point_list(std::list<point_ptr<T>> & point_list, rin
             ++p;
             continue;
         }
-        if (std::fabs(next_angle - prev_angle) <= 0.0) {
+        if (std::fabs(next_angle - prev_angle) < std::numeric_limits<double>::epsilon()) {
             point_ptr<T> spike = *p;
             ring_ptr<T> spike_ring = spike->ring;
             remove_spikes(spike);
@@ -1300,7 +1300,7 @@ void handle_collinear_rings_point_list(std::list<point_ptr<T>> & point_list, rin
     auto p = angle_points.begin();
     auto p_next = std::next(p);
     while (p_next != angle_points.end()) {
-        if (std::fabs(std::get<0>(*p) - std::get<0>(*p_next)) <= 0.0 &&
+        if (std::fabs(std::get<0>(*p) - std::get<0>(*p_next)) < std::numeric_limits<double>::epsilon() &&
             std::get<2>(*p) != std::get<2>(*p_next) && 
             std::get<1>(*p)->ring != std::get<1>(*p_next)->ring) {
             handle_collinear_rings(std::get<1>(*p), std::get<1>(*p_next), rings);

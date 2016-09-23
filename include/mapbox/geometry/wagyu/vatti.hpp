@@ -60,7 +60,10 @@ active_bound_list_itr<T> do_maxima(active_bound_list_itr<T> & bnd,
         return active_bounds.erase(bnd);
     }
     auto bnd_next = std::next(bnd);
+    auto return_bnd = bnd_next;
+    bool skipped = false;
     while (bnd_next != active_bounds.end() && bnd_next != bndMaxPair) {
+        skipped = true;
         intersect_bounds(bnd, bnd_next, (*bnd)->current_edge->top, cliptype, subject_fill_type,
                          clip_fill_type, rings, active_bounds);
         swap_positions_in_ABL(bnd, bnd_next, active_bounds);
@@ -69,21 +72,23 @@ active_bound_list_itr<T> do_maxima(active_bound_list_itr<T> & bnd,
 
     if (!(*bnd)->ring && !(*bndMaxPair)->ring) {
         active_bounds.erase(bndMaxPair);
-        return active_bounds.erase(bnd);
     } else if ((*bnd)->ring && (*bndMaxPair)->ring) {
         add_local_maximum_point(bnd, bndMaxPair, (*bnd)->current_edge->top, rings, active_bounds);
         active_bounds.erase(bndMaxPair);
-        return active_bounds.erase(bnd);
     } else if ((*bnd)->winding_delta == 0 && (*bnd)->ring) {
         add_point_to_ring(*(*bnd),(*bnd)->current_edge->top, rings);
         active_bounds.erase(bndMaxPair);
-        return active_bounds.erase(bnd);
     } else if ((*bnd)->winding_delta == 0 && (*bndMaxPair)->ring) {
         add_point_to_ring(*(*bndMaxPair), (*bnd)->current_edge->top, rings);
         active_bounds.erase(bndMaxPair);
-        return active_bounds.erase(bnd);
     } else {
         throw clipper_exception("DoMaxima error");
+    }
+    auto prev_itr = active_bounds.erase(bnd);
+    if (skipped) {
+        return return_bnd;
+    } else {
+        return prev_itr;
     }
 }
 
@@ -350,7 +355,9 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
             continue;
         }
         double area_diff = area(r) - area_from_point(r->points); 
-        assert(std::fabs(area_diff) <= 0.0);
+        if (std::fabs(area_diff) > std::numeric_limits<double>::epsilon()) {
+            throw std::runtime_error("Difference in stored area vs calculated area!");
+        }
     }
 #endif
 
