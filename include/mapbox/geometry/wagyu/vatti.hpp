@@ -354,8 +354,13 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         if (!r->points || r->is_open) {
             continue;
         }
-        double area_diff = area(r) - area_from_point(r->points); 
-        if (std::fabs(area_diff) > std::numeric_limits<double>::epsilon()) {
+        double stored_area = area(r);
+        double calculated_area = area_from_point(r->points);
+        if (std::fabs(stored_area - calculated_area) > (5.0 * std::numeric_limits<double>::epsilon())) {
+            std::clog << "stored area: " << stored_area << std::endl;
+            std::clog << "calculated area: " << calculated_area << std::endl;
+            std::clog << "difference between the two of: " << std::fabs(stored_area - calculated_area) << std::endl;
+            std::clog << *r << std::endl;
             throw std::runtime_error("Difference in stored area vs calculated area!");
         }
     }

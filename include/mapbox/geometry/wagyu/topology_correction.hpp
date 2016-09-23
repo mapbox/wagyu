@@ -111,6 +111,7 @@ void remove_spikes(point_ptr<T> & pt) {
     while (true) {
         if (pt->next == pt) {
             r->points = nullptr;
+            r->area = std::numeric_limits<double>::quiet_NaN();
             pt->ring = nullptr;
             pt = nullptr;
             break;
@@ -123,6 +124,7 @@ void remove_spikes(point_ptr<T> & pt) {
             if (r->points == old_next) {
                 r->points = pt;
             }
+            r->area = std::numeric_limits<double>::quiet_NaN();
             old_next->ring = nullptr;
         } else if (*(pt) == *(pt->prev)) {
             point_ptr<T> old_prev = pt->prev;
@@ -133,6 +135,7 @@ void remove_spikes(point_ptr<T> & pt) {
             if (r->points == old_prev) {
                 r->points = pt;
             }
+            r->area = std::numeric_limits<double>::quiet_NaN();
             old_prev->ring = nullptr;
         } else if (*(pt->next) == *(pt->prev)) {
             point_ptr<T> next = pt->next;
@@ -142,6 +145,7 @@ void remove_spikes(point_ptr<T> & pt) {
             if (r->points == pt) {
                 r->points = prev;
             }
+            r->area = std::numeric_limits<double>::quiet_NaN();
             pt->ring = nullptr;
             pt->next = pt;
             pt->prev = pt;
@@ -234,6 +238,14 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
     auto range = dupe_ring.equal_range(ring_search);
     // Check for direct connection
     for (auto it = range.first; it != range.second;) {
+        if (!it->second.op1->ring) {
+            it = dupe_ring.erase(it);
+            continue;
+        } 
+        if (!it->second.op2->ring) {
+            it = dupe_ring.erase(it);
+            continue;
+        } 
         ring_ptr<T> it_ring2 = it->second.op2->ring;
         if (it_ring2 == ring_origin) {
             found = true;
@@ -669,6 +681,7 @@ void handle_self_intersections(point_ptr<T> op,
         update_duplicate_point_entries(ring, dupe_ring);
         return;
     } else if (*pt1 != *op) {
+        ring->area = std::numeric_limits<double>::quiet_NaN();
         update_duplicate_point_entries(ring, dupe_ring);
         return;
     } else if (pt1 != op) {
@@ -684,6 +697,7 @@ void handle_self_intersections(point_ptr<T> op,
         update_duplicate_point_entries(ring, dupe_ring);
         return;
     } else if (*pt2 != *op2) {
+        ring->area = std::numeric_limits<double>::quiet_NaN();
         update_duplicate_point_entries(ring, dupe_ring);
         return;
     } else if (pt2 != op2) {
@@ -691,6 +705,7 @@ void handle_self_intersections(point_ptr<T> op,
     }
     
     if (op == op2) {
+        ring->area = std::numeric_limits<double>::quiet_NaN();
         return;
     }
     
@@ -843,6 +858,9 @@ void handle_collinear_rings(point_ptr<T> pt1, point_ptr<T> pt2,
     pt4->next = pt1;
     pt2->prev = pt3;
     pt3->next = pt2;
+    
+    ring1->area = std::numeric_limits<double>::quiet_NaN();
+    ring2->area = std::numeric_limits<double>::quiet_NaN();
 
     // remove spikes
     remove_spikes(pt1);
@@ -874,8 +892,6 @@ void handle_collinear_rings(point_ptr<T> pt1, point_ptr<T> pt2,
     }
     ring1->points = pt1;
     ring2->points = nullptr;
-    ring1->area = std::numeric_limits<double>::quiet_NaN();
-    ring2->area = std::numeric_limits<double>::quiet_NaN();
     ring1_replaces_ring2(ring1, ring2, rings);
     update_points_ring(ring1);
 }
