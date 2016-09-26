@@ -175,14 +175,14 @@ void fixup_children(ring_ptr<T> old_ring, ring_ptr<T> new_ring) {
     }
 }
 
-
 template <typename T>
 bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring,
                     point_ptr<T> op_j,
                     point_ptr<T> op_k,
                     ring_ptr<T> ring_j,
                     ring_ptr<T> ring_k,
-                    ring_manager<T>& rings) {
+                    ring_manager<T>& rings,
+                    mapbox::geometry::point<T> & rewind_point) {
     if (ring_j == ring_k) {
         return false;
     }
@@ -306,6 +306,7 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
         }
     }
 
+    
     // Switch
     point_ptr<T> op_origin_1_next = op_origin_1->next;
     point_ptr<T> op_origin_2_next = op_origin_2->next;
@@ -313,6 +314,15 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
     op_origin_2->next = op_origin_1_next;
     op_origin_1_next->prev = op_origin_2;
     op_origin_2_next->prev = op_origin_1;
+
+    for (auto iRing : iList) {
+        mapbox::geometry::point<T> possible_rewind_point = find_rewind_point(iRing.second.op2);
+        if (possible_rewind_point.y > rewind_point.y || 
+            (possible_rewind_point.y == rewind_point.y && 
+            possible_rewind_point.x < rewind_point.x)) {
+            rewind_point = possible_rewind_point;
+        }
+    }
 
     for (auto iRing : iList) {
         point_ptr<T> op_search_1 = iRing.second.op1;
@@ -935,14 +945,20 @@ bool handle_collinear_edges(point_ptr<T> pt1,
     mapbox::geometry::point<T> rewind_2 = find_rewind_point(pt2);
 
     // The lower right of the two points is the rewind point.
+    mapbox::geometry::point<T> possible_rewind;
     if (rewind_1.y > rewind_2.y) {
-        rewind_point = rewind_2;
+        possible_rewind = rewind_2;
     } else if (rewind_1.y < rewind_2.y) {
-        rewind_point = rewind_1;
+        possible_rewind = rewind_1;
     } else if (rewind_1.x > rewind_2.x) {
-        rewind_point = rewind_1;
+        possible_rewind = rewind_1;
     } else {
-        rewind_point = rewind_2;
+        possible_rewind = rewind_2;
+    }
+    if (possible_rewind.y > rewind_point.y || 
+        (possible_rewind.y == rewind_point.y && 
+        possible_rewind.x < rewind_point.x)) {
+        rewind_point = possible_rewind;
     }
     
     // swap points
@@ -1141,6 +1157,7 @@ void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
     point_ptr<T> first_point = point_list.front();
     assert(first_point != nullptr);
     ring_ptr<T> r = first_point->ring;
+
     if (r == nullptr) {
         point_list.pop_front();
         return;
@@ -1241,10 +1258,12 @@ void process_repeated_points(std::size_t repeated_point_count,
 }
 
 template <typename T>
-void process_chains(std::size_t repeated_point_count,
+bool process_chains(std::size_t repeated_point_count,
                              std::size_t last_index,
                              std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring,
-                             ring_manager<T>& rings) {
+                             ring_manager<T>& rings,
+                             mapbox::geometry::point<T> & rewind_point) {
+    bool rewind = false;
     for (std::size_t j = (last_index - repeated_point_count - 1); j < last_index; ++j) {
         point_ptr<T> op_j = rings.all_points[j];
         if (!op_j->ring) {
@@ -1255,9 +1274,12 @@ void process_chains(std::size_t repeated_point_count,
             if (!op_k->ring || !op_j->ring) {
                 continue;
             }
-            fix_intersects(dupe_ring, op_j, op_k, op_j->ring, op_k->ring, rings);
+            if (fix_intersects(dupe_ring, op_j, op_k, op_j->ring, op_k->ring, rings, rewind_point)) {
+                rewind = true;
+            }
         }
     }
+    return rewind;
 }
 
 template <typename T>
@@ -1380,16 +1402,8 @@ bool process_collinear_edges(std::size_t repeated_point_count,
             if (!op_k->ring || !op_j->ring) {
                 continue;
             }
-            mapbox::geometry::point<T> possible_rewind_point;
-            if (handle_collinear_edges(op_j, op_k, dupe_ring, rings, possible_rewind_point)) {
-                if (rewind && (possible_rewind_point.y > rewind_point.y || 
-                    (possible_rewind_point.y == rewind_point.y && 
-                    possible_rewind_point.x < rewind_point.x))) {
-                    rewind_point = possible_rewind_point;
-                } else {
-                    rewind = true;
-                    rewind_point = possible_rewind_point;
-                }
+            if (handle_collinear_edges(op_j, op_k, dupe_ring, rings, rewind_point)) {
+                rewind = true;
             }
         }
     }
@@ -1449,9 +1463,15 @@ void do_simple_polygons(ring_manager<T>& rings) {
             continue;
         }
         process_repeated_points(count, i, dupe_ring, rings);
-        process_chains(count, i, dupe_ring, rings);
-        mapbox::geometry::point<T> rewind_point;
+        mapbox::geometry::point<T> rewind_point(std::numeric_limits<T>::min(), std::numeric_limits<T>::min());
+        bool do_rewind = false;
+        if (process_chains(count, i, dupe_ring, rings, rewind_point)) {
+            do_rewind = true;
+        }
         if (process_collinear_edges(count, i, dupe_ring, rings, rewind_point)) {
+            do_rewind = true;
+        }
+        if (do_rewind) {
             rewind_to_point(i, rewind_point, rings);
         }
         count = 0;
