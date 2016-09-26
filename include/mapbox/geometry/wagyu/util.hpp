@@ -110,6 +110,12 @@ inline double get_current_x(edge<T> const& edge, const T current_y) {
 }
 
 template <typename T>
+inline double get_current_x_double(edge<T> const& edge, const double current_y) {
+    return static_cast<double>(edge.bot.x) +
+           edge.dx * (current_y - static_cast<double>(edge.bot.y));
+}
+
+template <typename T>
 void swap_points(mapbox::geometry::point<T>& pt1, mapbox::geometry::point<T>& pt2) {
     mapbox::geometry::point<T> tmp = pt1;
     pt1 = pt2;

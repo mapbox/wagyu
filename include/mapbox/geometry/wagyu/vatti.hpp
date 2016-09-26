@@ -55,49 +55,40 @@ active_bound_list_itr<T> do_maxima(active_bound_list_itr<T> & bnd,
                                    active_bound_list<T>& active_bounds) {
     if (bndMaxPair == active_bounds.end()) {
         if ((*bnd)->ring) {
-            add_point_to_ring(bnd, (*bnd)->current_edge->top, rings);
+            add_point_to_ring(*(*bnd), (*bnd)->current_edge->top, rings);
         }
         return active_bounds.erase(bnd);
     }
-    auto bnd_prev = active_bound_list_rev_itr<T>(bnd);
-    if (bnd_prev != active_bounds.rend() &&
-        std::llround((*bnd_prev)->curr.x) == (*bnd)->current_edge->top.x &&
-        (*bnd_prev)->current_edge->top != (*bnd)->current_edge->top && (*bnd_prev)->ring &&
-        (*bnd_prev)->winding_delta != 0 && (*bnd)->ring && (*bnd)->winding_delta != 0) {
-        add_point_to_ring(bnd_prev, (*bnd)->current_edge->top, rings);
-    }
     auto bnd_next = std::next(bnd);
+    auto return_bnd = bnd_next;
+    bool skipped = false;
     while (bnd_next != active_bounds.end() && bnd_next != bndMaxPair) {
+        skipped = true;
         intersect_bounds(bnd, bnd_next, (*bnd)->current_edge->top, cliptype, subject_fill_type,
                          clip_fill_type, rings, active_bounds);
         swap_positions_in_ABL(bnd, bnd_next, active_bounds);
         bnd_next = std::next(bnd);
     }
-    bnd_next = std::next(bndMaxPair);
-    if (bnd_next != active_bounds.end() &&
-        std::llround((*bnd_next)->curr.x) == (*bnd)->current_edge->top.x &&
-        (*bnd_next)->current_edge->top != (*bnd)->current_edge->top && (*bnd_next)->ring &&
-        (*bnd_next)->winding_delta != 0 && (*bnd)->ring && (*bnd)->winding_delta != 0) {
-        add_point_to_ring(bnd_next, (*bnd)->current_edge->top, rings);
-    }
 
     if (!(*bnd)->ring && !(*bndMaxPair)->ring) {
         active_bounds.erase(bndMaxPair);
-        return active_bounds.erase(bnd);
     } else if ((*bnd)->ring && (*bndMaxPair)->ring) {
         add_local_maximum_point(bnd, bndMaxPair, (*bnd)->current_edge->top, rings, active_bounds);
         active_bounds.erase(bndMaxPair);
-        return active_bounds.erase(bnd);
     } else if ((*bnd)->winding_delta == 0 && (*bnd)->ring) {
-        add_point_to_ring(bnd, (*bnd)->current_edge->top, rings);
+        add_point_to_ring(*(*bnd),(*bnd)->current_edge->top, rings);
         active_bounds.erase(bndMaxPair);
-        return active_bounds.erase(bnd);
     } else if ((*bnd)->winding_delta == 0 && (*bndMaxPair)->ring) {
-        add_point_to_ring(bndMaxPair, (*bnd)->current_edge->top, rings);
+        add_point_to_ring(*(*bndMaxPair), (*bnd)->current_edge->top, rings);
         active_bounds.erase(bndMaxPair);
-        return active_bounds.erase(bnd);
     } else {
         throw clipper_exception("DoMaxima error");
+    }
+    auto prev_itr = active_bounds.erase(bnd);
+    if (skipped) {
+        return return_bnd;
+    } else {
+        return prev_itr;
     }
 }
 
@@ -112,7 +103,6 @@ void process_edges_at_top_of_scanbeam(T top_y,
                                       fill_type subject_fill_type,
                                       fill_type clip_fill_type) {
 
-    maxima_list<T> maxima;
     for (auto bnd = active_bounds.begin(); bnd != active_bounds.end();) {
         // 1. Process maxima, treating them as if they are "bent" horizontal edges,
         // but exclude maxima with horizontal edges.
@@ -128,92 +118,43 @@ void process_edges_at_top_of_scanbeam(T top_y,
         }
 
         if (is_maxima_edge) {
-            maxima.push_back((*bnd)->current_edge->top.x);
             bnd = do_maxima(bnd, bnd_max_pair, cliptype, subject_fill_type, clip_fill_type, rings,
                             active_bounds);
         } else {
             // 2. Promote horizontal edges.
-
             if (is_intermediate(bnd, top_y) && next_edge_is_horizontal<T>(bnd)) {
+                insert_hot_pixels_in_path(*(*bnd), (*bnd)->current_edge->top, rings);
                 next_edge_in_bound(bnd, scanbeam);
                 if ((*bnd)->ring) {
-                    add_point_to_ring(bnd, (*bnd)->current_edge->bot, rings);
-                    maxima.push_back((*bnd)->current_edge->top.x);
-                    maxima.push_back((*bnd)->current_edge->bot.x);
+                    add_point_to_ring(*(*bnd), (*bnd)->current_edge->bot, rings);
+                    mapbox::geometry::point<T> hp((*bnd)->current_edge->top.x, top_y); 
+                    add_to_hot_pixels(hp, rings);
                 }
             } else {
                 (*bnd)->curr.x = get_current_x(*((*bnd)->current_edge), top_y);
                 (*bnd)->curr.y = static_cast<double>(top_y);
             }
 
-            // When E is being touched by another edge, make sure both edges have a vertex here.
-            if ((*bnd)->ring && (*bnd)->winding_delta != 0) {
-                auto bnd_prev = active_bound_list_rev_itr<T>(bnd);
-                while (bnd_prev != active_bounds.rend() &&
-                       std::llround((*bnd_prev)->curr.x) == std::llround((*bnd)->curr.x)) {
-                    if ((*bnd_prev)->ring && (*bnd_prev)->winding_delta != 0 &&
-                        !((*bnd)->current_edge->bot == (*bnd_prev)->current_edge->bot &&
-                          (*bnd)->current_edge->top == (*bnd_prev)->current_edge->top)) {
-                        mapbox::geometry::point<T> pt(std::llround((*bnd)->curr.x),
-                                                      std::llround((*bnd)->curr.y));
-                        add_point_to_ring(bnd_prev, pt, rings);
-                        add_point_to_ring(bnd, pt, rings);
-                    }
-                    ++bnd_prev;
-                }
-            }
             ++bnd;
         }
     }
 
     insert_horizontal_local_minima_into_ABL(top_y, minima_sorted, current_lm, active_bounds, rings,
                                             scanbeam, cliptype, subject_fill_type,
-                                            clip_fill_type, maxima);
+                                            clip_fill_type);
 
-    auto lm = current_lm;
-    while (lm != minima_sorted.end() && (*lm)->y == top_y) {
-        if (!(*lm)->left_bound.edges.empty() && !(*lm)->right_bound.edges.empty()) {
-            maxima.push_back((*lm)->left_bound.edges.front().bot.x);
-        }
-        ++lm;
-    }
-
-    process_horizontals(top_y, maxima, active_bounds, rings, scanbeam, cliptype,
+    process_horizontals(top_y, active_bounds, rings, scanbeam, cliptype,
                         subject_fill_type, clip_fill_type);
 
     // 4. Promote intermediate vertices
 
     for (auto bnd = active_bounds.begin(); bnd != active_bounds.end(); ++bnd) {
         if (is_intermediate(bnd, top_y)) {
-            point_ptr<T> p1 = nullptr;
             if ((*bnd)->ring) {
-                p1 = add_point_to_ring(bnd, (*bnd)->current_edge->top, rings);
+                add_point_to_ring(*(*bnd), (*bnd)->current_edge->top, rings);
             }
+            insert_hot_pixels_in_path(*(*bnd), (*bnd)->current_edge->top, rings);
             next_edge_in_bound(bnd, scanbeam);
-
-            // If output polygons share an edge, they'll need to have points on
-            // both edges
-
-            if ((*bnd)->winding_delta != 0) {
-                auto bnd_prev = active_bound_list_rev_itr<T>(bnd);
-                auto bnd_next = std::next(bnd);
-
-                if (bnd_prev != active_bounds.rend() &&
-                    std::llround((*bnd_prev)->curr.x) == (*bnd)->current_edge->bot.x &&
-                    std::llround((*bnd_prev)->curr.y) == (*bnd)->current_edge->bot.y &&
-                    (*bnd_prev)->winding_delta != 0 && (*bnd_prev)->ring &&
-                    std::llround((*bnd_prev)->curr.y) > (*bnd_prev)->current_edge->top.y &&
-                    slopes_equal(*((*bnd)->current_edge), *((*bnd_prev)->current_edge))) {
-                    add_point_to_ring(bnd_prev, (*bnd)->current_edge->bot, rings);
-                } else if (bnd_next != active_bounds.end() &&
-                           std::llround((*bnd_next)->curr.x) == (*bnd)->current_edge->bot.x &&
-                           std::llround((*bnd_next)->curr.y) == (*bnd)->current_edge->bot.y &&
-                           (*bnd_next)->winding_delta != 0 && (*bnd_next)->ring &&
-                           std::llround((*bnd_next)->curr.y) > (*bnd_next)->current_edge->top.y &&
-                           slopes_equal(*((*bnd)->current_edge), *((*bnd_next)->current_edge))) {
-                    add_point_to_ring(bnd_next, (*bnd)->current_edge->bot, rings);
-                }
-            }
         }
     }
 }
@@ -316,6 +257,28 @@ void remove_spikes_in_polygons(ring_ptr<T> r, ring_manager<T> & rings) {
     }
 }
 
+
+template <typename T>
+void update_hotpixels_to_scanline(T scanline_y, 
+                                  active_bound_list<T> & active_bounds, 
+                                  ring_manager<T> & rings) {
+    for (auto bnd : active_bounds) {
+        mapbox::geometry::point<T> scanline_point(std::llround(get_current_x(*(bnd->current_edge), scanline_y)), scanline_y);
+        insert_hot_pixels_in_path(*bnd, scanline_point, rings); 
+    }
+}
+
+template <typename T>
+void clear_hot_pixels(T scanline_y, ring_manager<T> & rings) {
+    for (auto itr = rings.hot_pixels.begin(); itr != rings.hot_pixels.end(); ) {
+        if (itr->first != scanline_y) {
+            itr = rings.hot_pixels.erase(itr);
+        } else {
+            ++itr;
+        }
+    }
+}
+
 template <typename T>
 bool execute_vatti(local_minimum_list<T>& minima_list,
                    ring_manager<T>& rings,
@@ -331,7 +294,7 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         // This section in its own { } to limit memory scope of variables
         active_bound_list<T> active_bounds;
         scanbeam_list<T> scanbeam;
-        T scanline_y;
+        T scanline_y = std::numeric_limits<T>::max();
 
         local_minimum_ptr_list<T> minima_sorted;
         minima_sorted.reserve(minima_list.size());
@@ -346,7 +309,7 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
 
         while (pop_from_scanbeam(scanline_y, scanbeam) || current_lm != minima_sorted.end()) {
 
-            process_intersections(scanline_y, active_bounds, cliptype, subject_fill_type,
+            process_intersections(scanline_y, minima_sorted, current_lm, active_bounds, cliptype, subject_fill_type,
                                   clip_fill_type, rings);
 
             // First we process bounds that has already been added to the active bound list --
@@ -362,11 +325,16 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
             insert_local_minima_into_ABL(scanline_y, minima_sorted, current_lm, active_bounds,
                                          rings, scanbeam, cliptype, subject_fill_type,
                                          clip_fill_type);
+            
+            update_hotpixels_to_scanline(scanline_y, active_bounds, rings);
+            
+            clear_hot_pixels(scanline_y, rings);
         }
     }
 
     //std::clog << rings.all_rings << std::endl;
-    
+    //std::clog << output_as_polygon(rings.all_rings[0]);    
+
     // fix orientations ...
     for (auto & r :rings.all_rings) {
         if (!r->points || r->is_open) {
@@ -386,8 +354,15 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         if (!r->points || r->is_open) {
             continue;
         }
-        double area_diff = area(r) - area_from_point(r->points); 
-        assert(std::fabs(area_diff) <= 0.0);
+        double stored_area = area(r);
+        double calculated_area = area_from_point(r->points);
+        if (std::fabs(stored_area - calculated_area) > (5.0 * std::numeric_limits<double>::epsilon())) {
+            std::clog << "stored area: " << stored_area << std::endl;
+            std::clog << "calculated area: " << calculated_area << std::endl;
+            std::clog << "difference between the two of: " << std::fabs(stored_area - calculated_area) << std::endl;
+            std::clog << *r << std::endl;
+            throw std::runtime_error("Difference in stored area vs calculated area!");
+        }
     }
 #endif
 

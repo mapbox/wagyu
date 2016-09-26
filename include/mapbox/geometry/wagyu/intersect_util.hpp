@@ -4,7 +4,6 @@
 #include <mapbox/geometry/wagyu/bound.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/intersect.hpp>
-#include <mapbox/geometry/wagyu/intersect_point.hpp>
 #include <mapbox/geometry/wagyu/ring_util.hpp>
 #include <mapbox/geometry/wagyu/sorted_bound_list.hpp>
 #include <mapbox/geometry/wagyu/util.hpp>
@@ -42,7 +41,7 @@ inline void swap_sides(bound<T>& b1, bound<T>& b2) {
 }
 
 template <typename T1, typename T2>
-void get_edge_intersection(edge<T1> const& e1,
+bool get_edge_intersection(edge<T1> const& e1,
                            edge<T1> const& e2,
                            mapbox::geometry::point<T2>& pt) {
     T2 p0_x = static_cast<T2>(e1.bot.x);
@@ -66,11 +65,66 @@ void get_edge_intersection(edge<T1> const& e1,
     if (s >= 0.0 && s <= 1.0 && t >= 0.0 && t <= 1.0) {
         pt.x = p0_x + (t * s1_x);
         pt.y = p0_y + (t * s1_y);
+        return true;
     }
+    return false;
 }
 
 template <typename T>
-void build_intersect_list(sorting_bound_list<T>& sorted_bound_list, intersect_list<T>& intersects) {
+void add_extra_hot_pixels(T top_y, 
+                          local_minimum_ptr_list<T> const& minima_sorted,
+                          local_minimum_ptr_list_itr<T> const& current_lm,
+                          sorting_bound_list<T>& sorted_bound_list, 
+                          ring_manager<T>& rings) {
+    active_bound_list<T> tmp_abl;
+    auto lm = current_lm;
+    while (lm != minima_sorted.end() && (*lm)->y == top_y) {
+        if (!(*lm)->minimum_has_horizontal && !(*lm)->left_bound.edges.empty() && !(*lm)->right_bound.edges.empty()) {
+            mapbox::geometry::point<T> hp((*lm)->left_bound.edges.front().bot.x, top_y);
+            add_to_hot_pixels(hp, rings);
+        }
+        auto& left_bound = (*lm)->left_bound;
+        left_bound.current_edge = left_bound.edges.begin();
+        left_bound.curr.x = static_cast<double>(left_bound.current_edge->bot.x);
+        left_bound.curr.y = static_cast<double>(left_bound.current_edge->bot.y);
+        if (!left_bound.edges.empty()) {
+            insert_bound_into_SBL(left_bound, tmp_abl, sorted_bound_list);
+        }
+        auto& right_bound = (*lm)->right_bound;
+        right_bound.current_edge = right_bound.edges.begin();
+        right_bound.curr.x = static_cast<double>(right_bound.current_edge->bot.x);
+        right_bound.curr.y = static_cast<double>(right_bound.current_edge->bot.y);
+        if (!right_bound.edges.empty()) {
+            insert_bound_into_SBL(right_bound, tmp_abl, sorted_bound_list);
+        }
+        ++lm;
+    }
+    
+    // We now need to add hot pixels for intersections that might occur -0.5 below the top_y    
+    for (auto bnd_itr = sorted_bound_list.begin(); bnd_itr != sorted_bound_list.end();) {
+        bound_ptr<T> bnd = *(bnd_itr->bound);
+        if (bnd->current_edge->top.y == top_y) {
+            // Go to another edge or delete bnd_itr
+            auto edge_itr = bnd->current_edge;
+            while (edge_itr != bnd->edges.end() && edge_itr->top.y == top_y) {
+                ++edge_itr;
+            }
+            if (edge_itr == bnd->edges.end()) {
+                bnd_itr = sorted_bound_list.erase(bnd_itr);
+                continue;
+            }
+            bnd_itr->current_edge = &(*edge_itr);
+            bnd_itr->current_x = bnd_itr->current_edge->bot.x;
+        }    
+        ++bnd_itr;
+    }
+    
+    sorted_bound_list.sort(sorting_bound_current_sorter<T>());
+    
+    for (auto bnd_itr = sorted_bound_list.begin(); bnd_itr != sorted_bound_list.end(); ++bnd_itr) {
+        bnd_itr->current_x = get_current_x(*(bnd_itr->current_edge), top_y - 1);
+    }
+
     // bubblesort ...
     bool isModified;
     do {
@@ -78,11 +132,42 @@ void build_intersect_list(sorting_bound_list<T>& sorted_bound_list, intersect_li
         auto bnd = sorted_bound_list.begin();
         auto bnd_next = std::next(bnd);
         while (bnd_next != sorted_bound_list.end()) {
-            if ((*(bnd->bound))->curr.x > (*(bnd_next->bound))->curr.x) {
+            if (bnd->current_x > bnd_next->current_x) {
                 mapbox::geometry::point<double> pt;
-                get_edge_intersection<T, double>(*((*(bnd->bound))->current_edge),
-                                                 *((*(bnd_next->bound))->current_edge), pt);
+                if (get_edge_intersection<T, double>(*(bnd->current_edge), *(bnd_next->current_edge), pt)) {
+                    mapbox::geometry::point<T> hp(std::llround(pt.x), std::llround(pt.y));
+                    if (hp.y >= top_y) {
+                        add_to_hot_pixels(hp, rings);
+                    }
+                }
+                swap_positions_in_SBL(bnd, bnd_next, sorted_bound_list);
+                bnd_next = std::next(bnd);
+                isModified = true;
+            } else {
+                bnd = bnd_next;
+                ++bnd_next;
+            }
+        }
+    } while (isModified);
+}
+
+template <typename T>
+void build_intersect_list(sorting_bound_list<T>& sorted_bound_list, intersect_list<T>& intersects, ring_manager<T>& rings) {
+    // bubblesort ...
+    bool isModified;
+    do {
+        isModified = false;
+        auto bnd = sorted_bound_list.begin();
+        auto bnd_next = std::next(bnd);
+        while (bnd_next != sorted_bound_list.end()) {
+            if (bnd->current_x > bnd_next->current_x) {
+                mapbox::geometry::point<double> pt;
+                if (!get_edge_intersection<T, double>(*(bnd->current_edge), *(bnd_next->current_edge), pt)) {
+                    throw std::runtime_error("Trying to find intersection of lines that do not intersect");    
+                }
                 intersects.emplace_back(bnd, bnd_next, pt);
+                mapbox::geometry::point<T> hp(std::llround(pt.x), std::llround(pt.y));
+                add_to_hot_pixels(hp, rings);
                 swap_positions_in_SBL(bnd, bnd_next, sorted_bound_list);
                 bnd_next = std::next(bnd);
                 isModified = true;
@@ -107,7 +192,7 @@ void fixup_intersection_order(sorting_bound_list<T>& sorted_bound_list,
     // so reorder the intersections to ensure this if necessary.
 
     // resort sorted bound list to the same as the active bound list
-    sorted_bound_list.sort(sorting_bound_sorter<T>());
+    sorted_bound_list.sort(sorting_bound_index_sorter<T>());
 
     // Sort the intersection list
     std::stable_sort(intersects.begin(), intersects.end(), intersect_list_sorter<T>());
@@ -128,63 +213,6 @@ void fixup_intersection_order(sorting_bound_list<T>& sorted_bound_list,
         swap_positions_in_SBL(intersects[i].bound1, intersects[i].bound2, sorted_bound_list);
     }
     return;
-}
-
-template <typename T>
-inline T get_edge_min_x(edge<T> const& edge, const T current_y) {
-    if (is_horizontal(edge)) {
-        if (edge.bot.x < edge.top.x) {
-            return edge.bot.x;
-        } else {
-            return edge.top.x;
-        }
-    } else if (edge.dx > 0.0) {
-        if (current_y == edge.top.y) {
-            return edge.top.x;
-        } else {
-            double lower_range_y = static_cast<double>(current_y - edge.bot.y) - 0.5;
-            return edge.bot.x + static_cast<T>(std::round(edge.dx * lower_range_y));
-        }
-    } else {
-        if (current_y == edge.bot.y) {
-            return edge.bot.x;
-        } else {
-            return edge.bot.x + static_cast<T>(std::round(
-                                    edge.dx * (static_cast<double>(current_y - edge.bot.y) + 0.5)));
-        }
-    }
-}
-
-template <typename T>
-inline T get_edge_max_x(edge<T> const& edge, const T current_y) {
-    if (is_horizontal(edge)) {
-        if (edge.bot.x > edge.top.x) {
-            return edge.bot.x;
-        } else {
-            return edge.top.x;
-        }
-    } else if (edge.dx < 0.0) {
-        if (current_y == edge.top.y) {
-            return edge.top.x;
-        } else {
-            double lower_range_y = static_cast<double>(current_y - edge.bot.y) - 0.5;
-            return edge.bot.x + static_cast<T>(std::round(edge.dx * lower_range_y));
-        }
-    } else {
-        if (current_y == edge.bot.y) {
-            return edge.bot.x;
-        } else {
-            return edge.bot.x + static_cast<T>(std::round(
-                                    edge.dx * (static_cast<double>(current_y - edge.bot.y) + 0.5)));
-        }
-    }
-}
-
-template <typename T>
-bool edge_near_point(edge<T> const& edge, mapbox::geometry::point<T> pt) {
-    T min_x = get_edge_min_x(edge, pt.y);
-    T max_x = get_edge_max_x(edge, pt.y);
-    return (pt.x >= min_x) && (pt.x <= max_x);
 }
 
 template <typename T>
@@ -326,26 +354,16 @@ void intersect_bounds(active_bound_list_itr<T>& b1,
             swap_sides(*(*b1), *(*b2));
             swap_rings(*(*b1), *(*b2));
         }
-        auto bnd_prev = active_bound_list_rev_itr<T>(b1);
-        if (bnd_prev != active_bounds.rend() &&
-            (*bnd_prev)->ring && (*bnd_prev)->winding_delta != 0 && (*b1)->winding_delta != 0 &&
-            edge_near_point(*(*bnd_prev)->current_edge, pt)) {
-            add_point_to_ring(bnd_prev, pt, rings);
-        }
-        auto bnd_next = std::next(b2);
-        if (bnd_next != active_bounds.end() &&
-            (*bnd_next)->ring && (*bnd_next)->winding_delta != 0 && (*b2)->winding_delta != 0 && 
-            edge_near_point(*(*bnd_next)->current_edge, pt)) {
-            add_point_to_ring(bnd_next, pt, rings);
-        }
     } else if (b1Contributing) {
         if (b2Wc == 0 || b2Wc == 1) {
             add_point(b1, active_bounds, pt, rings);
+            (*b2)->last_point = pt;
             swap_sides(*(*b1), *(*b2));
             swap_rings(*(*b1), *(*b2));
         }
     } else if (b2Contributing) {
         if (b1Wc == 0 || b1Wc == 1) {
+            (*b1)->last_point = pt;
             add_point(b2, active_bounds, pt, rings);
             swap_sides(*(*b1), *(*b2));
             swap_rings(*(*b1), *(*b2));
@@ -410,23 +428,14 @@ void intersect_bounds(active_bound_list_itr<T>& b1,
 }
 
 template <typename T>
-void process_intersect_list(T top_y,
-                            intersect_list<T>& intersects,
+void process_intersect_list(intersect_list<T>& intersects,
                             clip_type cliptype,
                             fill_type subject_fill_type,
                             fill_type clip_fill_type,
                             ring_manager<T>& rings,
                             active_bound_list<T>& active_bounds) {
-    hot_pixel_set<T> hot_pixels;
     for (auto& node : intersects) {
-        mapbox::geometry::point<T> pt;
-        intersection_point(*(*(node.bound1->bound)), *(*(node.bound2->bound)), pt, hot_pixels, node.pt);
-        if (pt.y < top_y) {
-            pt = mapbox::geometry::point<T>(
-                std::llround(get_current_x(*((*(node.bound1->bound))->current_edge), top_y)),
-                top_y);
-        }
-        hot_pixels.insert(pt);
+        mapbox::geometry::point<T> pt(std::llround(node.pt.x), std::llround(node.pt.y));
         intersect_bounds(node.bound1->bound, node.bound2->bound, pt, cliptype, subject_fill_type,
                          clip_fill_type, rings, active_bounds);
         swap_positions_in_ABL(node.bound1->bound, node.bound2->bound, active_bounds);
@@ -435,31 +444,35 @@ void process_intersect_list(T top_y,
 
 template <typename T>
 void process_intersections(T top_y,
+                           local_minimum_ptr_list<T> const& minima_sorted,
+                           local_minimum_ptr_list_itr<T> const& current_lm,
                            active_bound_list<T>& active_bounds,
                            clip_type cliptype,
                            fill_type subject_fill_type,
                            fill_type clip_fill_type,
                            ring_manager<T>& rings) {
-    if (active_bounds.empty()) {
-        return;
-    }
     sorting_bound_list<T> sorted_bound_list;
     std::size_t index = 0;
     // create sorted edge list from AEL
     for (auto bnd_itr = active_bounds.begin(); bnd_itr != active_bounds.end(); ++bnd_itr) {
-        (*bnd_itr)->curr.x = get_current_x(*((*bnd_itr)->current_edge), top_y);
-        sorted_bound_list.emplace_back(bnd_itr, index);
+        double curr_x = get_current_x(*((*bnd_itr)->current_edge), top_y);
+        (*bnd_itr)->curr.x = curr_x;
+        sorted_bound_list.emplace_back(bnd_itr, &(*((*bnd_itr)->current_edge)), index, curr_x);
         ++index;
     }
     intersect_list<T> intersects;
-    build_intersect_list(sorted_bound_list, intersects);
+    build_intersect_list(sorted_bound_list, intersects, rings);
     if (intersects.empty()) {
+        add_extra_hot_pixels(top_y, minima_sorted, current_lm, sorted_bound_list, rings);
         return;
     }
+    sorting_bound_list<T> sorted_bound_list2 = sorted_bound_list;
     if (intersects.size() > 1) {
         fixup_intersection_order(sorted_bound_list, intersects);
     }
-    process_intersect_list(top_y, intersects, cliptype, subject_fill_type, clip_fill_type, rings,
+    add_extra_hot_pixels(top_y, minima_sorted, current_lm, sorted_bound_list2, rings);
+
+    process_intersect_list(intersects, cliptype, subject_fill_type, clip_fill_type, rings,
                            active_bounds);
     return;
 }

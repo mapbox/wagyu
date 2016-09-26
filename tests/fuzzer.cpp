@@ -122,55 +122,60 @@ int main() {
     for (size_t iteration = 0;; iteration++) {
         std::size_t len = std::rand() % 50 + 3;
 
-        for (auto fill_type : { mapbox::geometry::wagyu::fill_type_even_odd,
-                                mapbox::geometry::wagyu::fill_type_non_zero,
-                                mapbox::geometry::wagyu::fill_type_positive,
-                                mapbox::geometry::wagyu::fill_type_negative }) {
+        for (auto clip_type : { mapbox::geometry::wagyu::clip_type_union,
+                                mapbox::geometry::wagyu::clip_type_intersection,
+                                mapbox::geometry::wagyu::clip_type_difference,
+                                mapbox::geometry::wagyu::clip_type_x_or }) {
+            for (auto fill_type : { mapbox::geometry::wagyu::fill_type_even_odd,
+                                    mapbox::geometry::wagyu::fill_type_non_zero,
+                                    mapbox::geometry::wagyu::fill_type_positive,
+                                    mapbox::geometry::wagyu::fill_type_negative }) {
 
-            mapbox::geometry::wagyu::clipper<std::int64_t> clipper;
-            mapbox::geometry::polygon<std::int64_t> polygon;
+                mapbox::geometry::wagyu::clipper<std::int64_t> clipper;
+                mapbox::geometry::polygon<std::int64_t> polygon;
 
-            std::size_t num_rings = 1;
-            // num_rings += std::rand() % 5;
-            // std::clog << "rings: " << num_rings << std::endl;
-            // std::clog << "len: " << len << std::endl;
-            while (num_rings > 0) {
-                mapbox::geometry::linear_ring<std::int64_t> ring;
-                for (std::size_t i = 0; i < len; ++i) {
-                    std::int64_t x = std::rand() % 50;
-                    std::int64_t y = std::rand() % 50;
+                std::size_t num_rings = 1;
+                // num_rings += std::rand() % 5;
+                // std::clog << "rings: " << num_rings << std::endl;
+                // std::clog << "len: " << len << std::endl;
+                while (num_rings > 0) {
+                    mapbox::geometry::linear_ring<std::int64_t> ring;
+                    for (std::size_t i = 0; i < len; ++i) {
+                        std::int64_t x = std::rand() % 50;
+                        std::int64_t y = std::rand() % 50;
 
-                    ring.push_back({ x, y });
+                        ring.push_back({ x, y });
+                    }
+                    polygon.emplace_back(ring);
+                    --num_rings;
                 }
-                polygon.emplace_back(ring);
-                --num_rings;
-            }
 
-            std::clog << ".";
-            clipper.add_polygon(polygon, mapbox::geometry::wagyu::polygon_type_subject);
-            std::vector<mapbox::geometry::polygon<std::int64_t>> solution;
-            try {
-                clipper.execute(mapbox::geometry::wagyu::clip_type_union, solution, fill_type,
-                                mapbox::geometry::wagyu::fill_type_even_odd);
-            } catch (std::exception const& ex) {
-                create_test(polygon, seed, iteration);
-                std::clog << std::endl;
-                std::clog << ex.what() << std::endl;
-                return -1;
-            }
-
-            for (auto const& p : solution) {
-                std::string message;
-                if (!boost::geometry::is_valid(p, message)) {
-                    std::clog << std::endl;
-                    std::clog << message << std::endl;
-                    log_ring(p);
+                std::clog << ".";
+                clipper.add_polygon(polygon, mapbox::geometry::wagyu::polygon_type_subject);
+                std::vector<mapbox::geometry::polygon<std::int64_t>> solution;
+                try {
+                    clipper.execute(clip_type, solution, fill_type,
+                                    mapbox::geometry::wagyu::fill_type_even_odd);
+                } catch (std::exception const& ex) {
                     create_test(polygon, seed, iteration);
+                    std::clog << std::endl;
+                    std::clog << ex.what() << std::endl;
                     return -1;
                 }
-            }
 
-            check_cross_ring(solution);
+                for (auto const& p : solution) {
+                    std::string message;
+                    if (!boost::geometry::is_valid(p, message)) {
+                        std::clog << std::endl;
+                        std::clog << message << std::endl;
+                        log_ring(p);
+                        create_test(polygon, seed, iteration);
+                        return -1;
+                    }
+                }
+
+                check_cross_ring(solution);
+            }
         }
     }
 }

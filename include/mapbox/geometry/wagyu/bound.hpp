@@ -22,6 +22,7 @@ struct bound {
     edge_list<T> edges;
     edge_list_itr<T> current_edge;
     mapbox::geometry::point<double> curr;
+    mapbox::geometry::point<T> last_point;
     ring_ptr<T> ring;
     bound_ptr<T> maximum_bound; // the bound who's maximum connects with this bound
     std::int32_t winding_count;
@@ -34,6 +35,7 @@ struct bound {
         : edges(),
           current_edge(edges.end()),
           curr({ 0.0, 0.0 }),
+          last_point({ 0, 0 }),
           ring(nullptr),
           maximum_bound(nullptr),
           winding_count(0),
@@ -51,6 +53,7 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
                                                      const bound<T>& bnd) {
     out << "    Bound: " << &bnd << std::endl;
     out << "        curr: " << bnd.curr.x << ", " << bnd.curr.y << std::endl;
+    out << "        last_point: " << bnd.last_point.x << ", " << bnd.last_point.y << std::endl;
     out << *(bnd.current_edge);
     out << "        winding count: " << bnd.winding_count << std::endl;
     out << "        winding_count2: " << bnd.winding_count2 << std::endl;
@@ -62,9 +65,9 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
         out << "        side: right" << std::endl;
     }
     out << "        ring: " << bnd.ring << std::endl;
-    /*if (bnd.ring) {
-        out << *(bnd.ring) << std::endl;
-    }*/
+    if (bnd.ring) {
+        out << "        ring index: " << bnd.ring->ring_index << std::endl;
+    }
     return out;
 }
 

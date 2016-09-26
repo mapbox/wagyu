@@ -20,19 +20,22 @@ for filename in $(ls ./tests/geometry-test-data/input-polyjson)
 do
     for type in union difference x_or intersection
     do
-        $TESTER -t $type \
-            ./tests/fixtures/clip-clockwise-square.json \
-            ./tests/geometry-test-data/input-polyjson/$filename \
-            1>./tests/output-polyjson/$type-$filename;
+        for filltype in even_odd non_zero positive negative
+        do
+            $TESTER -t $type -f $filltype \
+                ./tests/fixtures/clip-clockwise-square.json \
+                ./tests/geometry-test-data/input-polyjson/$filename \
+                1>./tests/output-polyjson/$type-$filename;
 
-        # Check exit code of last command
-        if [ "$?" -eq "0" ]; then
-            PASSES=$((PASSES + 1))
-        else
-            echo --- Test failure: $type $filename
-            echo $TESTER -t $type ./tests/fixtures/clip-clockwise-square.json ./tests/geometry-test-data/input-polyjson/$filename
-            FAILS=$((FAILS + 1))
-        fi
+            # Check exit code of last command
+            if [ "$?" -eq "0" ]; then
+                PASSES=$((PASSES + 1))
+            else
+                echo --- Test failure: $type $filltype $filename
+                echo $TESTER -t $type -f $filltype ./tests/fixtures/clip-clockwise-square.json ./tests/geometry-test-data/input-polyjson/$filename
+                FAILS=$((FAILS + 1))
+            fi
+        done
     done
 done
 

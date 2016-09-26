@@ -2,6 +2,10 @@
 
 #include <mapbox/geometry/point.hpp>
 
+#ifdef DEBUG
+#include <iostream>
+#endif
+
 namespace mapbox {
 namespace geometry {
 namespace wagyu {
@@ -77,6 +81,24 @@ template <typename T>
 bool operator!=(point<T> const& lhs, mapbox::geometry::point<T> const& rhs) {
     return lhs.x != rhs.x || lhs.y != rhs.y;
 }
+
+#ifdef DEBUG
+
+template <class charT, class traits, typename T>
+inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
+                                                     const point<T>& p) {
+    out << "  point at: " << p.x << ", " << p.y;
+    return out;
+}
+
+template <class charT, class traits, typename T>
+inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
+                                                     const mapbox::geometry::point<T>& p) {
+    out << "  point at: " << p.x << ", " << p.y;
+    return out;
+}
+#endif
+
 }
 }
 }

@@ -3,6 +3,7 @@
 #include <mapbox/geometry/wagyu/point.hpp>
 
 #include <list>
+#include <map>
 #include <vector>
 
 #ifdef DEBUG
@@ -53,17 +54,25 @@ struct ring {
 };
 
 template <typename T>
+using hot_pixel_set = std::set<T>;
+
+template <typename T>
+using hot_pixel_map = std::map<T, std::set<T>, std::greater<T>>;
+
+template <typename T>
 struct ring_manager {
     std::size_t index;
     ring_vector<T> all_rings;
     ring_list<T> children;
     std::vector<point_ptr<T>> all_points;
+    hot_pixel_map<T> hot_pixels;
     
     ring_manager():
         index(0),
         all_rings(),
         children(),
-        all_points() {}
+        all_points(),
+        hot_pixels() {}
 };
 
 template <typename T>
@@ -282,31 +291,12 @@ double area_from_point(point_ptr<T> op) {
 
 template <typename T>
 double area(ring_ptr<T> r) {
+    assert(r != nullptr);
     if (std::isnan(r->area)) {
         r->area = area_from_point(r->points);
     }
     return r->area;
 }
-
-/*
-template <typename T>
-void area_and_count(point_ptr<T> op, std::size_t& count, double& area) {
-    point_ptr<T> startOp = op;
-    count = 0;
-    if (!op) {
-        area = 0.0;
-        return;
-    }
-    area = 0.0;
-    do {
-        ++count;
-        area += static_cast<double>(op->prev->x + op->x) * static_cast<double>(op->prev->y - op->y);
-        op = op->next;
-    } while (op != startOp);
-    area = area * 0.5;
-    return;
-}
-*/
 
 #ifdef DEBUG
 
@@ -406,6 +396,30 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
     return out;
 }
 
+template <class charT, class traits, typename T>
+inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
+                                                     const hot_pixel_set<T>& hp_set) {
+    bool first = true;
+    for (auto& hp : hp_set) {
+        if (first) {
+            out << hp;
+            first = false;
+        } else {
+            out << ", " << hp;
+        }
+    }
+    return out;
+}
+
+template <class charT, class traits, typename T>
+inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
+                                                     const hot_pixel_map<T>& hp_map) {
+    out << "Hot Pixels: " << std::endl;
+    for (auto& hp_set : hp_map) {
+        out << "     y: " << hp_set.first << " - x: " << hp_set.second << std::endl;
+    }
+    return out;
+}
 #endif
 }
 }

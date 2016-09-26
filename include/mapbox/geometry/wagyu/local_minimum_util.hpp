@@ -71,7 +71,6 @@ bound<T> create_bound_towards_minimum(edge_list<T>& edges) {
         bnd.edges.splice(bnd.edges.end(), edges, edges.begin(), edges.end());
         return bnd;
     }
-
     auto next_edge = edges.begin();
     auto edge = next_edge;
     ++next_edge;
