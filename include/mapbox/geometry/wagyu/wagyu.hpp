@@ -108,7 +108,7 @@ public:
                  std::vector<mapbox::geometry::polygon<value_type>>& solution,
                  fill_type subject_fill_type,
                  fill_type clip_fill_type) {
-        
+
         ring_manager<T> rings;
         bool worked =
             execute_vatti(minima_list, rings, cliptype, subject_fill_type, clip_fill_type);

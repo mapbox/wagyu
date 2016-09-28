@@ -71,15 +71,16 @@ bool get_edge_intersection(edge<T1> const& e1,
 }
 
 template <typename T>
-void add_extra_hot_pixels(T top_y, 
+void add_extra_hot_pixels(T top_y,
                           local_minimum_ptr_list<T> const& minima_sorted,
                           local_minimum_ptr_list_itr<T> const& current_lm,
-                          sorting_bound_list<T>& sorted_bound_list, 
+                          sorting_bound_list<T>& sorted_bound_list,
                           ring_manager<T>& rings) {
     active_bound_list<T> tmp_abl;
     auto lm = current_lm;
     while (lm != minima_sorted.end() && (*lm)->y == top_y) {
-        if (!(*lm)->minimum_has_horizontal && !(*lm)->left_bound.edges.empty() && !(*lm)->right_bound.edges.empty()) {
+        if (!(*lm)->minimum_has_horizontal && !(*lm)->left_bound.edges.empty() &&
+            !(*lm)->right_bound.edges.empty()) {
             mapbox::geometry::point<T> hp((*lm)->left_bound.edges.front().bot.x, top_y);
             add_to_hot_pixels(hp, rings);
         }
@@ -99,8 +100,8 @@ void add_extra_hot_pixels(T top_y,
         }
         ++lm;
     }
-    
-    // We now need to add hot pixels for intersections that might occur -0.5 below the top_y    
+
+    // We now need to add hot pixels for intersections that might occur -0.5 below the top_y
     for (auto bnd_itr = sorted_bound_list.begin(); bnd_itr != sorted_bound_list.end();) {
         bound_ptr<T> bnd = *(bnd_itr->bound);
         if (bnd->current_edge->top.y == top_y) {
@@ -115,12 +116,12 @@ void add_extra_hot_pixels(T top_y,
             }
             bnd_itr->current_edge = &(*edge_itr);
             bnd_itr->current_x = bnd_itr->current_edge->bot.x;
-        }    
+        }
         ++bnd_itr;
     }
-    
+
     sorted_bound_list.sort(sorting_bound_current_sorter<T>());
-    
+
     for (auto bnd_itr = sorted_bound_list.begin(); bnd_itr != sorted_bound_list.end(); ++bnd_itr) {
         bnd_itr->current_x = get_current_x(*(bnd_itr->current_edge), top_y - 1);
     }
@@ -134,7 +135,8 @@ void add_extra_hot_pixels(T top_y,
         while (bnd_next != sorted_bound_list.end()) {
             if (bnd->current_x > bnd_next->current_x) {
                 mapbox::geometry::point<double> pt;
-                if (get_edge_intersection<T, double>(*(bnd->current_edge), *(bnd_next->current_edge), pt)) {
+                if (get_edge_intersection<T, double>(*(bnd->current_edge),
+                                                     *(bnd_next->current_edge), pt)) {
                     mapbox::geometry::point<T> hp(std::llround(pt.x), std::llround(pt.y));
                     if (hp.y >= top_y) {
                         add_to_hot_pixels(hp, rings);
@@ -152,7 +154,9 @@ void add_extra_hot_pixels(T top_y,
 }
 
 template <typename T>
-void build_intersect_list(sorting_bound_list<T>& sorted_bound_list, intersect_list<T>& intersects, ring_manager<T>& rings) {
+void build_intersect_list(sorting_bound_list<T>& sorted_bound_list,
+                          intersect_list<T>& intersects,
+                          ring_manager<T>& rings) {
     // bubblesort ...
     bool isModified;
     do {
@@ -160,10 +164,13 @@ void build_intersect_list(sorting_bound_list<T>& sorted_bound_list, intersect_li
         auto bnd = sorted_bound_list.begin();
         auto bnd_next = std::next(bnd);
         while (bnd_next != sorted_bound_list.end()) {
-            if (bnd->current_x > bnd_next->current_x && !slopes_equal(*(bnd->current_edge), *(bnd_next->current_edge))) {
+            if (bnd->current_x > bnd_next->current_x &&
+                !slopes_equal(*(bnd->current_edge), *(bnd_next->current_edge))) {
                 mapbox::geometry::point<double> pt;
-                if (!get_edge_intersection<T, double>(*(bnd->current_edge), *(bnd_next->current_edge), pt)) {
-                    throw std::runtime_error("Trying to find intersection of lines that do not intersect");    
+                if (!get_edge_intersection<T, double>(*(bnd->current_edge),
+                                                      *(bnd_next->current_edge), pt)) {
+                    throw std::runtime_error(
+                        "Trying to find intersection of lines that do not intersect");
                 }
                 intersects.emplace_back(bnd, bnd_next, pt);
                 mapbox::geometry::point<T> hp(std::llround(pt.x), std::llround(pt.y));

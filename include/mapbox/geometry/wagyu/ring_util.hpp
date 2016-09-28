@@ -27,9 +27,9 @@ namespace geometry {
 namespace wagyu {
 
 template <typename T>
-void set_hole_state(active_bound_list_itr<T>& bnd, 
+void set_hole_state(active_bound_list_itr<T>& bnd,
                     active_bound_list<T>& active_bounds,
-                    ring_manager<T> & rings) {
+                    ring_manager<T>& rings) {
     auto bnd2 = active_bound_list_rev_itr<T>(bnd);
     bound_ptr<T> bndTmp = nullptr;
     // Find first non line ring to the left of current bound.
@@ -53,8 +53,9 @@ void set_hole_state(active_bound_list_itr<T>& bnd,
 }
 
 template <typename T>
-void set_hole_state(active_bound_list_rev_itr<T>& bnd, active_bound_list<T>& active_bounds,
-                    ring_manager<T> & rings) {
+void set_hole_state(active_bound_list_rev_itr<T>& bnd,
+                    active_bound_list<T>& active_bounds,
+                    ring_manager<T>& rings) {
     auto bnd2 = std::next(bnd);
     bound_ptr<T> bndTmp = nullptr;
     // Find first non line ring to the left of current bound.
@@ -115,7 +116,8 @@ inline T get_edge_min_x(edge<T> const& edge, const T current_y) {
         if (current_y == edge.bot.y) {
             return edge.bot.x;
         } else {
-            double return_val = static_cast<double>(edge.bot.x) + edge.dx * (static_cast<double>(current_y - edge.bot.y) + 0.5);
+            double return_val = static_cast<double>(edge.bot.x) +
+                                edge.dx * (static_cast<double>(current_y - edge.bot.y) + 0.5);
             T value = round_towards_max<T>(return_val);
             return value;
         }
@@ -143,7 +145,8 @@ inline T get_edge_max_x(edge<T> const& edge, const T current_y) {
         if (current_y == edge.bot.y) {
             return edge.bot.x;
         } else {
-            double return_val = static_cast<double>(edge.bot.x) + edge.dx * (static_cast<double>(current_y - edge.bot.y) + 0.5);
+            double return_val = static_cast<double>(edge.bot.x) +
+                                edge.dx * (static_cast<double>(current_y - edge.bot.y) + 0.5);
             T value = round_towards_min<T>(return_val);
             return value;
         }
@@ -151,12 +154,8 @@ inline T get_edge_max_x(edge<T> const& edge, const T current_y) {
 }
 
 template <typename T>
-void hot_pixel_set_left_to_right(T y, 
-                                 T start_x,
-                                 T end_x,
-                                 bound<T> & bnd,
-                                 ring_manager<T> & rings, 
-                                 hot_pixel_set<T>& set) {
+void hot_pixel_set_left_to_right(
+    T y, T start_x, T end_x, bound<T>& bnd, ring_manager<T>& rings, hot_pixel_set<T>& set) {
     T x_min = get_edge_min_x(*(bnd.current_edge), y);
     x_min = std::max(x_min, start_x);
     T x_max = get_edge_max_x(*(bnd.current_edge), y);
@@ -181,12 +180,8 @@ void hot_pixel_set_left_to_right(T y,
 }
 
 template <typename T>
-void hot_pixel_set_right_to_left(T y,
-                                 T start_x,
-                                 T end_x,
-                                 bound<T> & bnd,
-                                 ring_manager<T> & rings, 
-                                 hot_pixel_set<T>& set) {
+void hot_pixel_set_right_to_left(
+    T y, T start_x, T end_x, bound<T>& bnd, ring_manager<T>& rings, hot_pixel_set<T>& set) {
     T x_min = get_edge_min_x(*(bnd.current_edge), y);
     x_min = std::max(x_min, end_x);
     T x_max = get_edge_max_x(*(bnd.current_edge), y);
@@ -211,7 +206,7 @@ void hot_pixel_set_right_to_left(T y,
 }
 
 template <typename T>
-void insert_hot_pixels_in_path(bound<T> & bnd, 
+void insert_hot_pixels_in_path(bound<T>& bnd,
                                mapbox::geometry::point<T> const& end_pt,
                                ring_manager<T>& rings) {
     if (end_pt == bnd.last_point) {
@@ -247,7 +242,7 @@ void insert_hot_pixels_in_path(bound<T> & bnd,
 
 template <typename T>
 void add_to_hot_pixels(mapbox::geometry::point<T> const& pt, ring_manager<T>& rings) {
-    
+
     auto hp_itr = rings.hot_pixels.find(pt.y);
     if (hp_itr == rings.hot_pixels.end()) {
         hot_pixel_set<T> hp_set;
@@ -260,9 +255,9 @@ void add_to_hot_pixels(mapbox::geometry::point<T> const& pt, ring_manager<T>& ri
 
 template <typename T>
 void add_first_point(active_bound_list_itr<T>& bnd,
-                             active_bound_list<T>& active_bounds,
-                             mapbox::geometry::point<T> const& pt,
-                             ring_manager<T>& rings) {
+                     active_bound_list<T>& active_bounds,
+                     mapbox::geometry::point<T> const& pt,
+                     ring_manager<T>& rings) {
 
     ring_ptr<T> r = create_new_ring(rings);
     (*bnd)->ring = r;
@@ -277,9 +272,9 @@ void add_first_point(active_bound_list_itr<T>& bnd,
 
 template <typename T>
 void add_first_point(active_bound_list_rev_itr<T>& bnd,
-                             active_bound_list<T>& active_bounds,
-                             mapbox::geometry::point<T> const& pt,
-                             ring_manager<T>& rings) {
+                     active_bound_list<T>& active_bounds,
+                     mapbox::geometry::point<T> const& pt,
+                     ring_manager<T>& rings) {
     ring_ptr<T> r = create_new_ring(rings);
     // no ring currently set!
     (*bnd)->ring = r;
@@ -293,13 +288,13 @@ void add_first_point(active_bound_list_rev_itr<T>& bnd,
 }
 
 template <typename T>
-void add_point_to_ring(bound<T> & bnd,
-                               mapbox::geometry::point<T> const& pt,
-                               ring_manager<T>& rings) {
+void add_point_to_ring(bound<T>& bnd,
+                       mapbox::geometry::point<T> const& pt,
+                       ring_manager<T>& rings) {
     assert(bnd.ring);
     // Handle hot pixels
-    insert_hot_pixels_in_path(bnd, pt, rings); 
-    
+    insert_hot_pixels_in_path(bnd, pt, rings);
+
     // bnd.ring->points is the 'Left-most' point & bnd.ring->points->prev is the
     // 'Right-most'
     point_ptr<T> op = bnd.ring->points;
@@ -309,7 +304,7 @@ void add_point_to_ring(bound<T> & bnd,
     } else if (!to_front && (pt == *op->prev)) {
         return;
     }
-    
+
     point_ptr<T> new_point = create_new_point(bnd.ring, pt, bnd.ring->points, rings);
     if (to_front) {
         bnd.ring->points = new_point;
@@ -319,9 +314,9 @@ void add_point_to_ring(bound<T> & bnd,
 
 template <typename T>
 void add_point(active_bound_list_itr<T>& bnd,
-                       active_bound_list<T>& active_bounds,
-                       mapbox::geometry::point<T> const& pt,
-                       ring_manager<T>& rings) {
+               active_bound_list<T>& active_bounds,
+               mapbox::geometry::point<T> const& pt,
+               ring_manager<T>& rings) {
     if (!(*bnd)->ring) {
         add_first_point(bnd, active_bounds, pt, rings);
     } else {
@@ -331,9 +326,9 @@ void add_point(active_bound_list_itr<T>& bnd,
 
 template <typename T>
 void add_point(active_bound_list_rev_itr<T>& bnd,
-                       active_bound_list<T>& active_bounds,
-                       mapbox::geometry::point<T> const& pt,
-                       ring_manager<T>& rings) {
+               active_bound_list<T>& active_bounds,
+               mapbox::geometry::point<T> const& pt,
+               ring_manager<T>& rings) {
     if (!(*bnd)->ring) {
         add_first_point(bnd, active_bounds, pt, rings);
     } else {
@@ -343,10 +338,10 @@ void add_point(active_bound_list_rev_itr<T>& bnd,
 
 template <typename T>
 void add_local_minimum_point(active_bound_list_itr<T> b1,
-                                     active_bound_list_itr<T> b2,
-                                     active_bound_list<T>& active_bounds,
-                                     mapbox::geometry::point<T> const& pt,
-                                     ring_manager<T>& rings) {
+                             active_bound_list_itr<T> b2,
+                             active_bound_list<T>& active_bounds,
+                             mapbox::geometry::point<T> const& pt,
+                             ring_manager<T>& rings) {
     active_bound_list_itr<T> b;
     active_bound_list_rev_itr<T> prev_bound;
     active_bound_list_rev_itr<T> prev_b1(b1);
@@ -519,12 +514,11 @@ void update_points_ring(ring_ptr<T> ring) {
     } while (op != ring->points);
 }
 
-
 template <typename T>
 void append_ring(active_bound_list_itr<T>& b1,
                  active_bound_list_itr<T>& b2,
                  active_bound_list<T>& active_bounds,
-                 ring_manager<T> & manager) {
+                 ring_manager<T>& manager) {
     // get the start and ends of both output polygons ...
     ring_ptr<T> outRec1 = (*b1)->ring;
     ring_ptr<T> outRec2 = (*b2)->ring;
@@ -601,7 +595,7 @@ void append_ring(active_bound_list_itr<T>& b1,
     keep_ring->bottom_point = nullptr;
     bool keep_is_hole = ring_is_hole(keep_ring);
     bool remove_is_hole = ring_is_hole(remove_ring);
-    
+
     remove_ring->points = nullptr;
     remove_ring->bottom_point = nullptr;
     if (keep_is_hole != remove_is_hole) {
@@ -720,14 +714,16 @@ point_in_polygon_result point_in_polygon(point<T> const& pt, point_ptr<T> op) {
 }
 
 template <typename T>
-point_in_polygon_result point_in_polygon(mapbox::geometry::point<double> const& pt, point_ptr<T> op) {
+point_in_polygon_result point_in_polygon(mapbox::geometry::point<double> const& pt,
+                                         point_ptr<T> op) {
     // returns 0 if false, +1 if true, -1 if pt ON polygon boundary
     point_in_polygon_result result = point_outside_polygon;
     point_ptr<T> startOp = op;
     do {
         if (std::fabs(op->next->y - pt.y) < std::numeric_limits<double>::epsilon()) {
             if (std::fabs(op->next->x - pt.x) < std::numeric_limits<double>::epsilon() ||
-                (std::fabs(op->y - pt.y) < std::numeric_limits<double>::epsilon() && ((op->next->x > pt.x) == (op->x < pt.x)))) {
+                (std::fabs(op->y - pt.y) < std::numeric_limits<double>::epsilon() &&
+                 ((op->next->x > pt.x) == (op->x < pt.x)))) {
                 return point_on_polygon;
             }
         }
@@ -851,7 +847,7 @@ void dispose_out_points(point_ptr<T>& pp) {
         tmpPp->next = tmpPp;
         tmpPp->prev = tmpPp;
         tmpPp->ring = nullptr;
-        //delete tmpPp;
+        // delete tmpPp;
     }
 }
 }

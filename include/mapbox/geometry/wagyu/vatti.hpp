@@ -46,8 +46,8 @@ bool add_linear_ring(mapbox::geometry::linear_ring<T> const& path_geometry,
 }
 
 template <typename T>
-active_bound_list_itr<T> do_maxima(active_bound_list_itr<T> & bnd,
-                                   active_bound_list_itr<T> & bndMaxPair,
+active_bound_list_itr<T> do_maxima(active_bound_list_itr<T>& bnd,
+                                   active_bound_list_itr<T>& bndMaxPair,
                                    clip_type cliptype,
                                    fill_type subject_fill_type,
                                    fill_type clip_fill_type,
@@ -76,7 +76,7 @@ active_bound_list_itr<T> do_maxima(active_bound_list_itr<T> & bnd,
         add_local_maximum_point(bnd, bndMaxPair, (*bnd)->current_edge->top, rings, active_bounds);
         active_bounds.erase(bndMaxPair);
     } else if ((*bnd)->winding_delta == 0 && (*bnd)->ring) {
-        add_point_to_ring(*(*bnd),(*bnd)->current_edge->top, rings);
+        add_point_to_ring(*(*bnd), (*bnd)->current_edge->top, rings);
         active_bounds.erase(bndMaxPair);
     } else if ((*bnd)->winding_delta == 0 && (*bndMaxPair)->ring) {
         add_point_to_ring(*(*bndMaxPair), (*bnd)->current_edge->top, rings);
@@ -127,7 +127,7 @@ void process_edges_at_top_of_scanbeam(T top_y,
                 next_edge_in_bound(bnd, scanbeam);
                 if ((*bnd)->ring) {
                     add_point_to_ring(*(*bnd), (*bnd)->current_edge->bot, rings);
-                    mapbox::geometry::point<T> hp((*bnd)->current_edge->top.x, top_y); 
+                    mapbox::geometry::point<T> hp((*bnd)->current_edge->top.x, top_y);
                     add_to_hot_pixels(hp, rings);
                 }
             } else {
@@ -140,11 +140,10 @@ void process_edges_at_top_of_scanbeam(T top_y,
     }
 
     insert_horizontal_local_minima_into_ABL(top_y, minima_sorted, current_lm, active_bounds, rings,
-                                            scanbeam, cliptype, subject_fill_type,
-                                            clip_fill_type);
+                                            scanbeam, cliptype, subject_fill_type, clip_fill_type);
 
-    process_horizontals(top_y, active_bounds, rings, scanbeam, cliptype,
-                        subject_fill_type, clip_fill_type);
+    process_horizontals(top_y, active_bounds, rings, scanbeam, cliptype, subject_fill_type,
+                        clip_fill_type);
 
     // 4. Promote intermediate vertices
 
@@ -160,7 +159,7 @@ void process_edges_at_top_of_scanbeam(T top_y,
 }
 
 template <typename T>
-void fixup_out_polyline(ring<T>& ring, ring_manager<T> & rings) {
+void fixup_out_polyline(ring<T>& ring, ring_manager<T>& rings) {
     point_ptr<T> pp = ring.points;
     point_ptr<T> lastPP = pp->prev;
     while (pp != lastPP) {
@@ -171,7 +170,7 @@ void fixup_out_polyline(ring<T>& ring, ring_manager<T> & rings) {
             point_ptr<T> tmpPP = pp->prev;
             tmpPP->next = pp->next;
             pp->next->prev = tmpPP;
-            //delete pp;
+            // delete pp;
             pp->next = pp;
             pp->prev = pp;
             pp->ring = nullptr;
@@ -188,7 +187,7 @@ void fixup_out_polyline(ring<T>& ring, ring_manager<T> & rings) {
 }
 
 template <typename T>
-void fixup_out_polygon(ring<T>& ring, ring_manager<T> & rings, bool simple) {
+void fixup_out_polygon(ring<T>& ring, ring_manager<T>& rings, bool simple) {
     // FixupOutPolygon() - removes duplicate points and simplifies consecutive
     // parallel edges by removing the middle vertex.
     point_ptr<T> lastOK = nullptr;
@@ -231,7 +230,7 @@ void fixup_out_polygon(ring<T>& ring, ring_manager<T> & rings, bool simple) {
 }
 
 template <typename T>
-void remove_spikes_in_polygons(ring_ptr<T> r, ring_manager<T> & rings) {
+void remove_spikes_in_polygons(ring_ptr<T> r, ring_manager<T>& rings) {
 
     point_ptr<T> first_point = r->points;
     remove_spikes(first_point);
@@ -257,20 +256,20 @@ void remove_spikes_in_polygons(ring_ptr<T> r, ring_manager<T> & rings) {
     }
 }
 
-
 template <typename T>
-void update_hotpixels_to_scanline(T scanline_y, 
-                                  active_bound_list<T> & active_bounds, 
-                                  ring_manager<T> & rings) {
+void update_hotpixels_to_scanline(T scanline_y,
+                                  active_bound_list<T>& active_bounds,
+                                  ring_manager<T>& rings) {
     for (auto bnd : active_bounds) {
-        mapbox::geometry::point<T> scanline_point(std::llround(get_current_x(*(bnd->current_edge), scanline_y)), scanline_y);
-        insert_hot_pixels_in_path(*bnd, scanline_point, rings); 
+        mapbox::geometry::point<T> scanline_point(
+            std::llround(get_current_x(*(bnd->current_edge), scanline_y)), scanline_y);
+        insert_hot_pixels_in_path(*bnd, scanline_point, rings);
     }
 }
 
 template <typename T>
-void clear_hot_pixels(T scanline_y, ring_manager<T> & rings) {
-    for (auto itr = rings.hot_pixels.begin(); itr != rings.hot_pixels.end(); ) {
+void clear_hot_pixels(T scanline_y, ring_manager<T>& rings) {
+    for (auto itr = rings.hot_pixels.begin(); itr != rings.hot_pixels.end();) {
         if (itr->first != scanline_y) {
             itr = rings.hot_pixels.erase(itr);
         } else {
@@ -303,14 +302,14 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         }
         std::stable_sort(minima_sorted.begin(), minima_sorted.end(), local_minimum_sorter<T>());
         local_minimum_ptr_list_itr<T> current_lm = minima_sorted.begin();
-        //std::clog << output_all_edges(minima_sorted) << std::endl;
+        // std::clog << output_all_edges(minima_sorted) << std::endl;
 
         setup_scanbeam(minima_list, scanbeam);
 
         while (pop_from_scanbeam(scanline_y, scanbeam) || current_lm != minima_sorted.end()) {
 
-            process_intersections(scanline_y, minima_sorted, current_lm, active_bounds, cliptype, subject_fill_type,
-                                  clip_fill_type, rings);
+            process_intersections(scanline_y, minima_sorted, current_lm, active_bounds, cliptype,
+                                  subject_fill_type, clip_fill_type, rings);
 
             // First we process bounds that has already been added to the active bound list --
             // if the active bound list is empty local minima that are at this scanline_y and
@@ -325,18 +324,18 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
             insert_local_minima_into_ABL(scanline_y, minima_sorted, current_lm, active_bounds,
                                          rings, scanbeam, cliptype, subject_fill_type,
                                          clip_fill_type);
-            
+
             update_hotpixels_to_scanline(scanline_y, active_bounds, rings);
-            
+
             clear_hot_pixels(scanline_y, rings);
         }
     }
 
-    //std::clog << rings.all_rings << std::endl;
-    //std::clog << output_as_polygon(rings.all_rings[0]);    
+    // std::clog << rings.all_rings << std::endl;
+    // std::clog << output_as_polygon(rings.all_rings[0]);
 
     // fix orientations ...
-    for (auto & r :rings.all_rings) {
+    for (auto& r : rings.all_rings) {
         if (!r->points || r->is_open) {
             continue;
         }
@@ -346,9 +345,9 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         remove_spikes_in_polygons(r, rings);
         r->area = std::numeric_limits<double>::quiet_NaN();
     }
-    
+
     do_simple_polygons(rings);
-    
+
 #if DEBUG
     for (auto& r : rings.all_rings) {
         if (!r->points || r->is_open) {
@@ -356,10 +355,12 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         }
         double stored_area = area(r);
         double calculated_area = area_from_point(r->points);
-        if (std::fabs(stored_area - calculated_area) > (5.0 * std::numeric_limits<double>::epsilon())) {
+        if (std::fabs(stored_area - calculated_area) >
+            (5.0 * std::numeric_limits<double>::epsilon())) {
             std::clog << "stored area: " << stored_area << std::endl;
             std::clog << "calculated area: " << calculated_area << std::endl;
-            std::clog << "difference between the two of: " << std::fabs(stored_area - calculated_area) << std::endl;
+            std::clog << "difference between the two of: "
+                      << std::fabs(stored_area - calculated_area) << std::endl;
             std::clog << *r << std::endl;
             throw std::runtime_error("Difference in stored area vs calculated area!");
         }
@@ -370,14 +371,14 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         if (!r->points || r->is_open) {
             continue;
         }
-        //fix_hole_linkage(r);
+        // fix_hole_linkage(r);
         fixup_out_polygon(*r, rings, false);
         if (ring_is_hole(r) == (area(r) > 0)) {
             reverse_ring(r->points);
             r->area = std::numeric_limits<double>::quiet_NaN();
         }
     }
-    
+
     return true;
 }
 }

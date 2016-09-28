@@ -5,8 +5,8 @@
 
 #include <algorithm>
 #include <list>
-#include <set>
 #include <map>
+#include <set>
 #include <unordered_map>
 #include <utility>
 
@@ -31,11 +31,12 @@ struct point_ptr_pair {
 #ifdef DEBUG
 
 template <class charT, class traits, typename T>
-inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
-                                                     const std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring) {
-    
+inline std::basic_ostream<charT, traits>&
+operator<<(std::basic_ostream<charT, traits>& out,
+           const std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring) {
+
     out << " BEGIN CONNECTIONS: " << std::endl;
-    for (auto & r : dupe_ring) {
+    for (auto& r : dupe_ring) {
         out << "  Ring: ";
         if (r.second.op1->ring) {
             out << r.second.op1->ring->ring_index;
@@ -56,7 +57,6 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
 
 #endif
 
-
 template <typename T>
 bool find_intersect_loop(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring,
                          std::list<std::pair<ring_ptr<T>, point_ptr_pair<T>>>& iList,
@@ -72,7 +72,8 @@ bool find_intersect_loop(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>
     for (auto it = range.first; it != range.second;) {
         ring_ptr<T> it_ring1 = it->second.op1->ring;
         ring_ptr<T> it_ring2 = it->second.op2->ring;
-        if (!it_ring1 || !it_ring2 || it_ring1 != ring_search || (!ring_is_hole(it_ring1) && !ring_is_hole(it_ring2))) {
+        if (!it_ring1 || !it_ring2 || it_ring1 != ring_search ||
+            (!ring_is_hole(it_ring1) && !ring_is_hole(it_ring2))) {
             it = dupe_ring.erase(it);
             continue;
         }
@@ -90,7 +91,7 @@ bool find_intersect_loop(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>
     for (auto it = range.first;
          it != range.second && it != dupe_ring.end() && it->first == ring_search; ++it) {
         ring_ptr<T> it_ring = it->second.op2->ring;
-        if (visited.count(it_ring) > 0 || it_ring == nullptr || 
+        if (visited.count(it_ring) > 0 || it_ring == nullptr ||
             (ring_parent != it_ring && ring_parent != it_ring->parent) ||
             std::fabs(area(it_ring)) < std::numeric_limits<double>::epsilon() ||
             *prev_pt == *it->second.op2) {
@@ -106,7 +107,7 @@ bool find_intersect_loop(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>
 }
 
 template <typename T>
-void remove_spikes(point_ptr<T> & pt) {
+void remove_spikes(point_ptr<T>& pt) {
     ring_ptr<T> r = pt->ring;
     while (true) {
         if (pt->next == pt) {
@@ -163,8 +164,7 @@ void fixup_children(ring_ptr<T> old_ring, ring_ptr<T> new_ring) {
     for (auto r = old_ring->children.begin(); r != old_ring->children.end();) {
         assert((*r)->points);
         assert((*r) != old_ring);
-        if ((*r) != new_ring && 
-            !ring1_right_of_ring2(new_ring, (*r)) && 
+        if ((*r) != new_ring && !ring1_right_of_ring2(new_ring, (*r)) &&
             poly2_contains_poly1((*r)->points, new_ring->points)) {
             (*r)->parent = new_ring;
             new_ring->children.push_back((*r));
@@ -182,7 +182,7 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
                     ring_ptr<T> ring_j,
                     ring_ptr<T> ring_k,
                     ring_manager<T>& rings,
-                    mapbox::geometry::point<T> & rewind_point) {
+                    mapbox::geometry::point<T>& rewind_point) {
     if (ring_j == ring_k) {
         return false;
     }
@@ -241,11 +241,11 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
         if (!it->second.op1->ring) {
             it = dupe_ring.erase(it);
             continue;
-        } 
+        }
         if (!it->second.op2->ring) {
             it = dupe_ring.erase(it);
             continue;
-        } 
+        }
         ring_ptr<T> it_ring2 = it->second.op2->ring;
         if (it_ring2 == ring_origin) {
             found = true;
@@ -306,7 +306,6 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
         }
     }
 
-    
     // Switch
     point_ptr<T> op_origin_1_next = op_origin_1->next;
     point_ptr<T> op_origin_2_next = op_origin_2->next;
@@ -317,9 +316,9 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
 
     for (auto iRing : iList) {
         mapbox::geometry::point<T> possible_rewind_point = find_rewind_point(iRing.second.op2);
-        if (possible_rewind_point.y > rewind_point.y || 
-            (possible_rewind_point.y == rewind_point.y && 
-            possible_rewind_point.x < rewind_point.x)) {
+        if (possible_rewind_point.y > rewind_point.y ||
+            (possible_rewind_point.y == rewind_point.y &&
+             possible_rewind_point.x < rewind_point.x)) {
             rewind_point = possible_rewind_point;
         }
     }
@@ -453,7 +452,7 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
             dupe_ring.erase(iRing.first);
         }
     }
-    
+
     auto range_itr = dupe_ring.equal_range(ring_origin);
     for (auto it = range_itr.first; it != range_itr.second;) {
         ring_ptr<T> it_ring = it->second.op1->ring;
@@ -570,7 +569,9 @@ bool parent_in_tree(ring_ptr<T> r, ring_ptr<T> possible_parent) {
 }
 
 template <typename T>
-void fixup_children_new_interior_ring(ring_ptr<T> old_ring, ring_ptr<T> new_ring, ring_manager<T> & rings) {
+void fixup_children_new_interior_ring(ring_ptr<T> old_ring,
+                                      ring_ptr<T> new_ring,
+                                      ring_manager<T>& rings) {
     // The only rings that could possibly be a child to a new interior ring are those
     // child rings that have the same sign of their area as the old ring.
     bool old_ring_area_is_positive = area(old_ring) > 0.0;
@@ -579,8 +580,7 @@ void fixup_children_new_interior_ring(ring_ptr<T> old_ring, ring_ptr<T> new_ring
         assert((*r)->points);
         assert((*r) != old_ring);
         bool ring_area_is_positive = area((*r)) > 0.0;
-        if ((*r) != new_ring &&
-            ring_area_is_positive == old_ring_area_is_positive && 
+        if ((*r) != new_ring && ring_area_is_positive == old_ring_area_is_positive &&
             poly2_contains_poly1((*r)->points, new_ring->points)) {
             (*r)->parent = new_ring;
             new_ring->children.push_back((*r));
@@ -597,8 +597,7 @@ void fixup_children_new_interior_ring(ring_ptr<T> old_ring, ring_ptr<T> new_ring
         for (auto r = rings.children.begin(); r != rings.children.end();) {
             assert((*r)->points);
             bool ring_area_is_positive = area((*r)) > 0.0;
-            if ((*r) != new_ring &&
-                ring_area_is_positive == old_ring_area_is_positive && 
+            if ((*r) != new_ring && ring_area_is_positive == old_ring_area_is_positive &&
                 poly2_contains_poly1((*r)->points, new_ring->points)) {
                 (*r)->parent = new_ring;
                 new_ring->children.push_back((*r));
@@ -613,8 +612,7 @@ void fixup_children_new_interior_ring(ring_ptr<T> old_ring, ring_ptr<T> new_ring
             assert((*r)->points);
             assert((*r) != parent);
             bool ring_area_is_positive = area((*r)) > 0.0;
-            if ((*r) != new_ring &&
-                ring_area_is_positive == old_ring_area_is_positive && 
+            if ((*r) != new_ring && ring_area_is_positive == old_ring_area_is_positive &&
                 poly2_contains_poly1((*r)->points, new_ring->points)) {
                 (*r)->parent = new_ring;
                 new_ring->children.push_back((*r));
@@ -656,10 +654,14 @@ bool intersections_cross(point_ptr<T> p1, point_ptr<T> p2) {
         }
         p2_prev = p2_prev->prev;
     }
-    double a1_p1 = std::atan2(static_cast<double>(p1_prev->y - p1->y), static_cast<double>(p1_prev->x - p1->x));
-    double a2_p1 = std::atan2(static_cast<double>(p1_next->y - p1->y), static_cast<double>(p1_next->x - p1->x));
-    double a1_p2 = std::atan2(static_cast<double>(p2_prev->y - p2->y), static_cast<double>(p2_prev->x - p2->x));
-    double a2_p2 = std::atan2(static_cast<double>(p2_next->y - p2->y), static_cast<double>(p2_next->x - p2->x));
+    double a1_p1 = std::atan2(static_cast<double>(p1_prev->y - p1->y),
+                              static_cast<double>(p1_prev->x - p1->x));
+    double a2_p1 = std::atan2(static_cast<double>(p1_next->y - p1->y),
+                              static_cast<double>(p1_next->x - p1->x));
+    double a1_p2 = std::atan2(static_cast<double>(p2_prev->y - p2->y),
+                              static_cast<double>(p2_prev->x - p2->x));
+    double a2_p2 = std::atan2(static_cast<double>(p2_next->y - p2->y),
+                              static_cast<double>(p2_next->x - p2->x));
     double min_p1 = std::min(a1_p1, a2_p1);
     double max_p1 = std::max(a1_p1, a2_p1);
     double min_p2 = std::min(a1_p2, a2_p2);
@@ -697,7 +699,7 @@ void handle_self_intersections(point_ptr<T> op,
     } else if (pt1 != op) {
         op = pt1;
     }
-    
+
     point_ptr<T> pt2 = op2;
     remove_spikes(pt2);
     if (pt2 == nullptr) {
@@ -713,12 +715,12 @@ void handle_self_intersections(point_ptr<T> op,
     } else if (pt2 != op2) {
         op2 = pt2;
     }
-    
+
     if (op == op2) {
         ring->area = std::numeric_limits<double>::quiet_NaN();
         return;
     }
-    
+
     double original_area = area(ring);
     bool original_is_positive = (original_area > 0.0);
 #ifdef DEBUG
@@ -733,7 +735,7 @@ void handle_self_intersections(point_ptr<T> op,
     op4->next = op;
     op2->prev = op3;
     op3->next = op2;
-    
+
     remove_spikes(op);
     remove_spikes(op2);
 
@@ -763,9 +765,9 @@ void handle_self_intersections(point_ptr<T> op,
     bool area_2_is_positive = (area_2 > 0.0);
     bool area_1_is_zero = std::fabs(area_1) < std::numeric_limits<double>::epsilon();
     bool area_2_is_zero = std::fabs(area_2) < std::numeric_limits<double>::epsilon();
-    
+
     // Situation # 1 - Orientations are NOT the same:
-    // - One ring contains the other and MUST be a child of that ring 
+    // - One ring contains the other and MUST be a child of that ring
     // - The one that changed orientation is the child of the other ring
     //
     // Situation # 2 - Orientations are the same
@@ -827,7 +829,7 @@ void handle_self_intersections(point_ptr<T> op,
             }
             fixup_children(ring, new_ring);
         } else {
-            // Polygons are completely seperate 
+            // Polygons are completely seperate
             new_ring->parent = ring->parent;
             if (new_ring->parent == nullptr) {
                 rings.children.push_back(new_ring);
@@ -841,9 +843,8 @@ void handle_self_intersections(point_ptr<T> op,
 }
 
 template <typename T>
-void handle_collinear_rings(point_ptr<T> pt1, point_ptr<T> pt2, 
-                            ring_manager<T> & rings) {
-    
+void handle_collinear_rings(point_ptr<T> pt1, point_ptr<T> pt2, ring_manager<T>& rings) {
+
     ring_ptr<T> ring1 = pt1->ring;
     ring_ptr<T> ring2 = pt2->ring;
     if (!ring1 || !ring2) {
@@ -868,7 +869,7 @@ void handle_collinear_rings(point_ptr<T> pt1, point_ptr<T> pt2,
     pt4->next = pt1;
     pt2->prev = pt3;
     pt3->next = pt2;
-    
+
     ring1->area = std::numeric_limits<double>::quiet_NaN();
     ring2->area = std::numeric_limits<double>::quiet_NaN();
 
@@ -913,7 +914,7 @@ mapbox::geometry::point<T> find_rewind_point(point_ptr<T> pt) {
     rewind.y = pt->y;
     point_ptr<T> itr = pt->next;
     while (pt != itr) {
-        if (itr->y > rewind.y || (itr->y == rewind.y  && itr->x < rewind.x)) {
+        if (itr->y > rewind.y || (itr->y == rewind.y && itr->x < rewind.x)) {
             rewind.x = itr->x;
             rewind.y = itr->y;
         }
@@ -923,11 +924,11 @@ mapbox::geometry::point<T> find_rewind_point(point_ptr<T> pt) {
 }
 
 template <typename T>
-bool handle_collinear_edges(point_ptr<T> pt1, 
-                            point_ptr<T> pt2, 
+bool handle_collinear_edges(point_ptr<T> pt1,
+                            point_ptr<T> pt2,
                             std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring,
-                            ring_manager<T> & rings,
-                            mapbox::geometry::point<T> & rewind_point) {
+                            ring_manager<T>& rings,
+                            mapbox::geometry::point<T>& rewind_point) {
     ring_ptr<T> ring1 = pt1->ring;
     ring_ptr<T> ring2 = pt2->ring;
     if (ring1 == ring2) {
@@ -955,12 +956,11 @@ bool handle_collinear_edges(point_ptr<T> pt1,
     } else {
         possible_rewind = rewind_2;
     }
-    if (possible_rewind.y > rewind_point.y || 
-        (possible_rewind.y == rewind_point.y && 
-        possible_rewind.x < rewind_point.x)) {
+    if (possible_rewind.y > rewind_point.y ||
+        (possible_rewind.y == rewind_point.y && possible_rewind.x < rewind_point.x)) {
         rewind_point = possible_rewind;
     }
-    
+
     // swap points
     point_ptr<T> pt3 = pt1->prev;
     point_ptr<T> pt4 = pt2->prev;
@@ -1000,7 +1000,7 @@ bool handle_collinear_edges(point_ptr<T> pt1,
     ring2->area = std::numeric_limits<double>::quiet_NaN();
     ring1_replaces_ring2(ring1, ring2, rings);
     update_points_ring(ring1);
-    
+
     update_duplicate_point_entries(ring2, dupe_ring);
 
     return true;
@@ -1015,7 +1015,8 @@ double calculate_segment_angle_next(point_ptr<T> pt) {
         }
         pt_next = pt_next->next;
     }
-    return std::atan2(static_cast<double>(pt_next->y - pt->y), static_cast<double>(pt_next->x - pt->x));
+    return std::atan2(static_cast<double>(pt_next->y - pt->y),
+                      static_cast<double>(pt_next->x - pt->x));
 }
 
 template <typename T>
@@ -1027,13 +1028,13 @@ double calculate_segment_angle_prev(point_ptr<T> pt) {
         }
         pt_prev = pt_prev->prev;
     }
-    return std::atan2(static_cast<double>(pt_prev->y - pt->y), static_cast<double>(pt_prev->x - pt->x));
+    return std::atan2(static_cast<double>(pt_prev->y - pt->y),
+                      static_cast<double>(pt_prev->x - pt->x));
 }
 
 template <typename T>
-std::list<point_ptr<T>> build_point_list(std::size_t repeated_point_count,
-                                         std::size_t last_index,
-                                         ring_manager<T>& rings) {
+std::list<point_ptr<T>>
+build_point_list(std::size_t repeated_point_count, std::size_t last_index, ring_manager<T>& rings) {
     std::list<point_ptr<T>> point_list;
     T original_x = rings.all_points[last_index - repeated_point_count - 1]->x;
     T original_y = rings.all_points[last_index - repeated_point_count - 1]->y;
@@ -1057,21 +1058,15 @@ std::list<point_ptr<T>> build_point_list(std::size_t repeated_point_count,
 
 template <typename T>
 struct angle_point {
-    
+
     double angle;
     double distance;
     point_ptr<T> pt;
     bool away;
-    
-    angle_point(double angle_,
-                double distance_,
-                point_ptr<T> pt_,
-                bool away_)
-        : angle(angle_),
-          distance(distance_),
-          pt(pt_),
-          away(away_) {}
 
+    angle_point(double angle_, double distance_, point_ptr<T> pt_, bool away_)
+        : angle(angle_), distance(distance_), pt(pt_), away(away_) {
+    }
 };
 
 template <typename T>
@@ -1086,7 +1081,7 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
     if (x.away) {
         out << " - away";
     } else {
-        out << " - towards";    
+        out << " - towards";
     }
     out << " - " << x.distance << std::endl;
     return out;
@@ -1116,7 +1111,10 @@ struct segment_angle_sorter {
 };
 
 template <typename T>
-void build_angle_vector(angle_point_vector<T>& angle_points, ring_ptr<T> expected_ring, std::list<point_ptr<T>>& point_list, ring_manager<T>& rings) {
+void build_angle_vector(angle_point_vector<T>& angle_points,
+                        ring_ptr<T> expected_ring,
+                        std::list<point_ptr<T>>& point_list,
+                        ring_manager<T>& rings) {
     for (auto p = point_list.begin(); p != point_list.end();) {
         if ((*p)->ring == nullptr || (expected_ring && (*p)->ring != expected_ring)) {
             ++p;
@@ -1136,7 +1134,7 @@ void build_angle_vector(angle_point_vector<T>& angle_points, ring_ptr<T> expecte
             if (spike == nullptr) {
                 spike_ring->area = std::numeric_limits<double>::quiet_NaN();
                 remove_ring(spike_ring, rings);
-            } 
+            }
         } else {
             double dist_next_to_prev;
             double dist_prev_to_next;
@@ -1156,18 +1154,21 @@ void build_angle_vector(angle_point_vector<T>& angle_points, ring_ptr<T> expecte
 }
 
 template <typename T>
-void find_repeated_point_pair(angle_point_vector<T> & angle_points,
+void find_repeated_point_pair(angle_point_vector<T>& angle_points,
                               point_ptr<T> first_point,
-                              point_ptr<T> & point_1,
-                              point_ptr<T> & point_2) {
+                              point_ptr<T>& point_1,
+                              point_ptr<T>& point_2) {
 
     angle_point_vector<T> possible_match;
     auto search_itr = angle_points.begin();
-    
+
     // Find if any angles that overlap perfectly - if so process them.
-    for (auto next_itr = std::next(search_itr); next_itr != angle_points.end(); ++next_itr, ++search_itr) {
-        if (std::fabs(next_itr->angle - search_itr->angle) < std::numeric_limits<double>::epsilon() &&
-            std::fabs(next_itr->distance - search_itr->distance) < std::numeric_limits<double>::epsilon()) {
+    for (auto next_itr = std::next(search_itr); next_itr != angle_points.end();
+         ++next_itr, ++search_itr) {
+        if (std::fabs(next_itr->angle - search_itr->angle) <
+                std::numeric_limits<double>::epsilon() &&
+            std::fabs(next_itr->distance - search_itr->distance) <
+                std::numeric_limits<double>::epsilon()) {
             while (next_itr->away == search_itr->away) {
                 ++next_itr;
             }
@@ -1183,7 +1184,7 @@ void find_repeated_point_pair(angle_point_vector<T> & angle_points,
     while (search_itr->pt != first_point) {
         ++search_itr;
     }
-    
+
     angle_point<T> angle_1 = *search_itr;
 
     // Now find next angle for the match
@@ -1193,7 +1194,8 @@ void find_repeated_point_pair(angle_point_vector<T> & angle_points,
     }
 
     // It is possible that we have the same angle here..
-    while (std::fabs(angle_1.angle - search_itr->angle) < std::numeric_limits<double>::epsilon() && angle_1.away == search_itr->away) {
+    while (std::fabs(angle_1.angle - search_itr->angle) < std::numeric_limits<double>::epsilon() &&
+           angle_1.away == search_itr->away) {
         ++search_itr;
         if (search_itr == angle_points.end()) {
             search_itr = angle_points.begin();
@@ -1214,7 +1216,7 @@ void find_repeated_point_pair(angle_point_vector<T> & angle_points,
     if (angle_1.away == angle_2.away) {
         throw std::runtime_error("Segments are found to be crossing");
     }
-    
+
     point_1 = angle_1.pt;
     point_2 = angle_2.pt;
 }
@@ -1222,7 +1224,7 @@ void find_repeated_point_pair(angle_point_vector<T> & angle_points,
 template <typename T>
 void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
                                  std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring,
-                                 ring_manager<T> & rings) {
+                                 ring_manager<T>& rings) {
     angle_point_vector<T> angle_points;
     point_ptr<T> first_point = point_list.front();
     assert(first_point != nullptr);
@@ -1234,7 +1236,7 @@ void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
     }
 
     build_angle_vector(angle_points, r, point_list, rings);
-    
+
     if (first_point->ring == nullptr) {
         return;
     }
@@ -1243,12 +1245,11 @@ void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
         point_list.pop_front();
         return;
     }
-    
+
     point_ptr<T> point_1 = nullptr;
     point_ptr<T> point_2 = nullptr;
     find_repeated_point_pair(angle_points, first_point, point_1, point_2);
-    handle_self_intersections(point_1, point_2, dupe_ring,
-                              rings);
+    handle_self_intersections(point_1, point_2, dupe_ring, rings);
 }
 
 template <typename T>
@@ -1260,7 +1261,7 @@ void process_repeated_points(std::size_t repeated_point_count,
     while (point_list.size() > 1) {
         process_front_of_point_list(point_list, dupe_ring, rings);
     }
-    
+
 #ifdef DEBUG
     for (std::size_t j = (last_index - repeated_point_count - 1); j < last_index; ++j) {
         point_ptr<T> op_j = rings.all_points[j];
@@ -1274,9 +1275,11 @@ void process_repeated_points(std::size_t repeated_point_count,
             if (op_j->ring->parent) {
                 double parent_area = area(op_j->ring->parent);
                 bool parent_is_positive = parent_area > 0.0;
-                bool parent_is_zero = std::fabs(parent_area) < std::numeric_limits<double>::epsilon();
+                bool parent_is_zero =
+                    std::fabs(parent_area) < std::numeric_limits<double>::epsilon();
                 if (!parent_is_zero && ring_is_positive == parent_is_positive) {
-                    throw std::runtime_error("Created a ring with a parent having the same orientation (sign of area)");
+                    throw std::runtime_error(
+                        "Created a ring with a parent having the same orientation (sign of area)");
                 }
             }
             for (auto c : op_j->ring->children) {
@@ -1284,7 +1287,8 @@ void process_repeated_points(std::size_t repeated_point_count,
                 bool c_is_positive = c_area > 0.0;
                 bool c_is_zero = std::fabs(c_area) < std::numeric_limits<double>::epsilon();
                 if (!c_is_zero && ring_is_positive == c_is_positive) {
-                    throw std::runtime_error("Created a ring with a child having the same orientation (sign of area)");
+                    throw std::runtime_error(
+                        "Created a ring with a child having the same orientation (sign of area)");
                 }
             }
         }
@@ -1294,10 +1298,10 @@ void process_repeated_points(std::size_t repeated_point_count,
 
 template <typename T>
 bool process_chains(std::size_t repeated_point_count,
-                             std::size_t last_index,
-                             std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring,
-                             ring_manager<T>& rings,
-                             mapbox::geometry::point<T> & rewind_point) {
+                    std::size_t last_index,
+                    std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring,
+                    ring_manager<T>& rings,
+                    mapbox::geometry::point<T>& rewind_point) {
     bool rewind = false;
     for (std::size_t j = (last_index - repeated_point_count - 1); j < last_index; ++j) {
         point_ptr<T> op_j = rings.all_points[j];
@@ -1309,7 +1313,8 @@ bool process_chains(std::size_t repeated_point_count,
             if (!op_k->ring || !op_j->ring) {
                 continue;
             }
-            if (fix_intersects(dupe_ring, op_j, op_k, op_j->ring, op_k->ring, rings, rewind_point)) {
+            if (fix_intersects(dupe_ring, op_j, op_k, op_j->ring, op_k->ring, rings,
+                               rewind_point)) {
                 rewind = true;
             }
         }
@@ -1318,18 +1323,19 @@ bool process_chains(std::size_t repeated_point_count,
 }
 
 template <typename T>
-void handle_collinear_rings_point_list(std::list<point_ptr<T>> & point_list, ring_manager<T>& rings) {
-    
+void handle_collinear_rings_point_list(std::list<point_ptr<T>>& point_list,
+                                       ring_manager<T>& rings) {
+
     if (point_list.size() == 1) {
         handle_collinear_rings(point_list.front(), point_list.back(), rings);
         return;
     }
-    
+
     angle_point_vector<T> angle_points;
 
     ring_ptr<T> is_null = nullptr;
     build_angle_vector(angle_points, is_null, point_list, rings);
-    
+
     if (angle_points.size() <= 2) {
         return;
     }
@@ -1338,8 +1344,7 @@ void handle_collinear_rings_point_list(std::list<point_ptr<T>> & point_list, rin
     auto p_next = std::next(p);
     while (p_next != angle_points.end()) {
         if (std::fabs(p->angle - p_next->angle) < std::numeric_limits<double>::epsilon() &&
-            p->away != p_next->away && 
-            p->pt->ring != p_next->pt->ring) {
+            p->away != p_next->away && p->pt->ring != p_next->pt->ring) {
             handle_collinear_rings(p->pt, p_next->pt, rings);
         }
         p = p_next;
@@ -1389,7 +1394,7 @@ bool process_collinear_edges(std::size_t repeated_point_count,
                              std::size_t last_index,
                              std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring,
                              ring_manager<T>& rings,
-                             mapbox::geometry::point<T> & rewind_point) {
+                             mapbox::geometry::point<T>& rewind_point) {
     bool rewind = false;
     for (std::size_t j = (last_index - repeated_point_count - 1); j < last_index; ++j) {
         point_ptr<T> op_j = rings.all_points[j];
@@ -1410,7 +1415,9 @@ bool process_collinear_edges(std::size_t repeated_point_count,
 }
 
 template <typename T>
-bool index_is_after_point(std::size_t const& i, mapbox::geometry::point<T> const& pt, ring_manager<T> const& rings) {
+bool index_is_after_point(std::size_t const& i,
+                          mapbox::geometry::point<T> const& pt,
+                          ring_manager<T> const& rings) {
     if (i == 0) {
         return false;
     }
@@ -1426,10 +1433,10 @@ bool index_is_after_point(std::size_t const& i, mapbox::geometry::point<T> const
 }
 
 template <typename T>
-void rewind_to_point(std::size_t & i, mapbox::geometry::point<T> & pt, ring_manager<T> const& rings) {
+void rewind_to_point(std::size_t& i, mapbox::geometry::point<T>& pt, ring_manager<T> const& rings) {
     while (index_is_after_point(i, pt, rings)) {
         --i;
-    }   
+    }
 }
 
 template <typename T>
@@ -1449,7 +1456,7 @@ void do_simple_polygons(ring_manager<T>& rings) {
         if (count == 0) {
             continue;
         }
-        process_collinear_rings(count, i, rings); 
+        process_collinear_rings(count, i, rings);
         count = 0;
     }
     count = 0;
@@ -1462,7 +1469,8 @@ void do_simple_polygons(ring_manager<T>& rings) {
             continue;
         }
         process_repeated_points(count, i, dupe_ring, rings);
-        mapbox::geometry::point<T> rewind_point(std::numeric_limits<T>::min(), std::numeric_limits<T>::min());
+        mapbox::geometry::point<T> rewind_point(std::numeric_limits<T>::min(),
+                                                std::numeric_limits<T>::min());
         bool do_rewind = false;
         if (process_chains(count, i, dupe_ring, rings, rewind_point)) {
             do_rewind = true;

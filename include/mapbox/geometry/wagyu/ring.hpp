@@ -7,8 +7,8 @@
 #include <vector>
 
 #ifdef DEBUG
-#include <iostream>
 #include <execinfo.h>
+#include <iostream>
 #include <stdio.h>
 //
 // void* callstack[128];
@@ -66,13 +66,9 @@ struct ring_manager {
     ring_list<T> children;
     std::vector<point_ptr<T>> all_points;
     hot_pixel_map<T> hot_pixels;
-    
-    ring_manager():
-        index(0),
-        all_rings(),
-        children(),
-        all_points(),
-        hot_pixels() {}
+
+    ring_manager() : index(0), all_rings(), children(), all_points(), hot_pixels() {
+    }
 };
 
 template <typename T>
@@ -84,15 +80,16 @@ ring_ptr<T> create_new_ring(ring_manager<T>& rings) {
 }
 
 template <typename T>
-point_ptr<T> create_new_point(ring_ptr<T> r, mapbox::geometry::point<T> const& pt, ring_manager<T>& rings) {
+point_ptr<T>
+create_new_point(ring_ptr<T> r, mapbox::geometry::point<T> const& pt, ring_manager<T>& rings) {
     point_ptr<T> point = new wagyu::point<T>(r, pt);
     rings.all_points.push_back(point);
     return point;
 }
 
 template <typename T>
-point_ptr<T> create_new_point(ring_ptr<T> r, 
-                              mapbox::geometry::point<T> const& pt, 
+point_ptr<T> create_new_point(ring_ptr<T> r,
+                              mapbox::geometry::point<T> const& pt,
                               point_ptr<T> before_this_point,
                               ring_manager<T>& rings) {
     point_ptr<T> point = new wagyu::point<T>(r, pt, before_this_point);
@@ -100,9 +97,8 @@ point_ptr<T> create_new_point(ring_ptr<T> r,
     return point;
 }
 
-
 template <typename T>
-void ring1_child_of_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2, ring_manager<T> & manager) {
+void ring1_child_of_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2, ring_manager<T>& manager) {
     assert(ring1 != ring2);
     if (ring1->parent == ring2) {
         return;
@@ -122,7 +118,7 @@ void ring1_child_of_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2, ring_manager<T> 
 }
 
 template <typename T>
-void ring1_sibling_of_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2, ring_manager<T> & manager) {
+void ring1_sibling_of_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2, ring_manager<T>& manager) {
     assert(ring1 != ring2);
     if (ring1->parent == ring2->parent) {
         return;
@@ -141,14 +137,14 @@ void ring1_sibling_of_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2, ring_manager<T
 }
 
 template <typename T>
-void ring1_replaces_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2, ring_manager<T> & manager) {
+void ring1_replaces_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2, ring_manager<T>& manager) {
     assert(ring1 != ring2);
     if (ring2->parent == nullptr) {
         manager.children.remove(ring2);
     } else {
         ring2->parent->children.remove(ring2);
     }
-    for (auto & c : ring2->children) {
+    for (auto& c : ring2->children) {
         c->parent = ring1;
     }
     if (ring1 == nullptr) {
@@ -160,16 +156,16 @@ void ring1_replaces_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2, ring_manager<T> 
 }
 
 template <typename T>
-void remove_ring(ring_ptr<T> r, ring_manager<T> & manager) {
+void remove_ring(ring_ptr<T> r, ring_manager<T>& manager) {
     if (r->parent == nullptr) {
         manager.children.remove(r);
-        for (auto & c : r->children) {
+        for (auto& c : r->children) {
             c->parent = nullptr;
         }
         manager.children.merge(r->children);
     } else {
         r->parent->children.remove(r);
-        for (auto & c : r->children) {
+        for (auto& c : r->children) {
             c->parent = r->parent;
         }
         r->parent->children.merge(r->children);
@@ -305,10 +301,10 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
                                                      const ring<T>& r) {
     out << "  ring_index: " << r.ring_index << std::endl;
     if (!r.parent) {
-        //out << "  parent_ring ptr: nullptr" << std::endl;
+        // out << "  parent_ring ptr: nullptr" << std::endl;
         out << "  parent_index: -----" << std::endl;
     } else {
-        //out << "  parent_ring ptr: " << r.parent << std::endl;
+        // out << "  parent_ring ptr: " << r.parent << std::endl;
         out << "  parent_ring idx: " << r.parent->ring_index << std::endl;
     }
     ring_ptr<T> n = const_cast<ring_ptr<T>>(&r);

@@ -16,7 +16,7 @@ namespace wagyu {
 
 template <typename T>
 active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
-                                                          active_bound_list_itr<T> & horz_bound,
+                                                          active_bound_list_itr<T>& horz_bound,
                                                           active_bound_list<T>& active_bounds,
                                                           ring_manager<T>& rings,
                                                           scanbeam_list<T>& scanbeam,
@@ -49,8 +49,9 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
         //'simplifying' polygons (ie if the Simplify property is set).
         while (hp_itr != hot_pixels.end() && *hp_itr < std::llround((*bnd)->curr.x)) {
             if ((*horz_bound)->ring && !is_open) {
-                add_point_to_ring(*(*horz_bound), mapbox::geometry::point<T>(
-                                                  *hp_itr, (*horz_bound)->current_edge->bot.y), rings);
+                add_point_to_ring(
+                    *(*horz_bound),
+                    mapbox::geometry::point<T>(*hp_itr, (*horz_bound)->current_edge->bot.y), rings);
             }
             ++hp_itr;
         }
@@ -69,9 +70,10 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
 
         // note: may be done multiple times
         if ((*horz_bound)->ring && !is_open) {
-            add_point_to_ring(*(*horz_bound), 
-                                   mapbox::geometry::point<T>(std::llround((*bnd)->curr.x),
-                                                              std::llround((*bnd)->curr.y)), rings);
+            add_point_to_ring(*(*horz_bound),
+                              mapbox::geometry::point<T>(std::llround((*bnd)->curr.x),
+                                                         std::llround((*bnd)->curr.y)),
+                              rings);
         }
 
         // OK, so far we're still in range of the horizontal Edge  but make sure
@@ -105,8 +107,9 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
     if ((*horz_bound)->ring && !is_open) {
         while (hp_itr != hot_pixels.end() &&
                *hp_itr < std::llround((*horz_bound)->current_edge->top.x)) {
-            add_point_to_ring(*(*horz_bound), mapbox::geometry::point<T>(
-                                              *hp_itr, (*horz_bound)->current_edge->bot.y), rings);
+            add_point_to_ring(
+                *(*horz_bound),
+                mapbox::geometry::point<T>(*hp_itr, (*horz_bound)->current_edge->bot.y), rings);
             ++hp_itr;
         }
     }
@@ -146,7 +149,7 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
 
 template <typename T>
 active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
-                                                          active_bound_list_itr<T> & horz_bound,
+                                                          active_bound_list_itr<T>& horz_bound,
                                                           active_bound_list<T>& active_bounds,
                                                           ring_manager<T>& rings,
                                                           scanbeam_list<T>& scanbeam,
@@ -159,13 +162,13 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
     if (is_maxima_edge) {
         bound_max_pair = get_maxima_pair<T>(horz_bound, active_bounds);
     }
-    
+
     auto hot_pixels_itr = rings.hot_pixels.find(scanline_y);
     hot_pixel_set<T> hot_pixels;
     if (hot_pixels_itr != rings.hot_pixels.end()) {
         hot_pixels = hot_pixels_itr->second;
     }
-    
+
     auto hp_itr = hot_pixels.rbegin();
     while (hp_itr != hot_pixels.rend() && *hp_itr > (*horz_bound)->current_edge->bot.x) {
         ++hp_itr;
@@ -178,8 +181,9 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
         //'simplifying' polygons (ie if the Simplify property is set).
         while (hp_itr != hot_pixels.rend() && *hp_itr > std::llround((*bnd)->curr.x)) {
             if ((*horz_bound)->ring && !is_open) {
-                add_point_to_ring(*(*horz_bound), mapbox::geometry::point<T>(
-                                                  *hp_itr, (*horz_bound)->current_edge->bot.y), rings);
+                add_point_to_ring(
+                    *(*horz_bound),
+                    mapbox::geometry::point<T>(*hp_itr, (*horz_bound)->current_edge->bot.y), rings);
             }
             ++hp_itr;
         }
@@ -199,8 +203,9 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
         // note: may be done multiple times
         if ((*horz_bound)->ring && !is_open) {
             add_point_to_ring(*(*horz_bound),
-                                   mapbox::geometry::point<T>(std::llround((*bnd)->curr.x),
-                                                              std::llround((*bnd)->curr.y)), rings);
+                              mapbox::geometry::point<T>(std::llround((*bnd)->curr.x),
+                                                         std::llround((*bnd)->curr.y)),
+                              rings);
         }
         auto bnd_forward = --(bnd.base());
 
@@ -222,14 +227,16 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
         swap_positions_in_ABL(horz_bound, bnd_forward, active_bounds);
         // Why are we not incrementing the bnd iterator here:
         // It is because reverse iterators point to a `base()` iterator that is a forward
-        // iterator that is one ahead of the reverse bound. This will always be the horizontal bound, 
+        // iterator that is one ahead of the reverse bound. This will always be the horizontal
+        // bound,
         // so what the reverse bound points to will have changed.
     } // end while (bnd != active_bounds.rend())
 
     if ((*horz_bound)->ring && !is_open) {
         while (hp_itr != hot_pixels.rend() && *hp_itr > (*horz_bound)->current_edge->top.x) {
-            add_point_to_ring(*(*horz_bound), mapbox::geometry::point<T>(
-                                              *hp_itr, (*horz_bound)->current_edge->bot.y), rings);
+            add_point_to_ring(
+                *(*horz_bound),
+                mapbox::geometry::point<T>(*hp_itr, (*horz_bound)->current_edge->bot.y), rings);
             ++hp_itr;
         }
     }
@@ -256,7 +263,7 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
 
 template <typename T>
 active_bound_list_itr<T> process_horizontal(T scanline_y,
-                                            active_bound_list_itr<T> & horz_bound,
+                                            active_bound_list_itr<T>& horz_bound,
                                             active_bound_list<T>& active_bounds,
                                             ring_manager<T>& rings,
                                             scanbeam_list<T>& scanbeam,
@@ -264,12 +271,12 @@ active_bound_list_itr<T> process_horizontal(T scanline_y,
                                             fill_type subject_fill_type,
                                             fill_type clip_fill_type) {
     if ((*horz_bound)->current_edge->bot.x < (*horz_bound)->current_edge->top.x) {
-        return process_horizontal_left_to_right(scanline_y, horz_bound, active_bounds,
-                                                rings, scanbeam, cliptype, subject_fill_type,
+        return process_horizontal_left_to_right(scanline_y, horz_bound, active_bounds, rings,
+                                                scanbeam, cliptype, subject_fill_type,
                                                 clip_fill_type);
     } else {
-        return process_horizontal_right_to_left(scanline_y, horz_bound, active_bounds,
-                                                rings, scanbeam, cliptype, subject_fill_type,
+        return process_horizontal_right_to_left(scanline_y, horz_bound, active_bounds, rings,
+                                                scanbeam, cliptype, subject_fill_type,
                                                 clip_fill_type);
     }
 }
@@ -284,8 +291,8 @@ void process_horizontals(T scanline_y,
                          fill_type clip_fill_type) {
     for (auto bnd_itr = active_bounds.begin(); bnd_itr != active_bounds.end();) {
         if (current_edge_is_horizontal<T>(bnd_itr)) {
-            bnd_itr = process_horizontal(scanline_y, bnd_itr, active_bounds, rings,
-                                         scanbeam, cliptype, subject_fill_type, clip_fill_type);
+            bnd_itr = process_horizontal(scanline_y, bnd_itr, active_bounds, rings, scanbeam,
+                                         cliptype, subject_fill_type, clip_fill_type);
         } else {
             ++bnd_itr;
         }

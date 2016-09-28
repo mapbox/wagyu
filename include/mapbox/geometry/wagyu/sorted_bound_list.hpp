@@ -19,9 +19,10 @@ struct sorting_bound {
     std::size_t index;
     double current_x;
 
-    sorting_bound(active_bound_list_itr<T> bound_, 
+    sorting_bound(active_bound_list_itr<T> bound_,
                   edge_ptr<T> current_edge_,
-                  std::size_t index_, double current_x_)
+                  std::size_t index_,
+                  double current_x_)
         : bound(bound_), current_edge(current_edge_), index(index_), current_x(current_x_) {
     }
 };
@@ -63,7 +64,9 @@ inline void swap_positions_in_SBL(sorting_bound_list_itr<T>& bnd1,
 }
 
 template <typename T>
-sorting_bound_list_itr<T> insert_bound_into_SBL(bound<T>& bnd, active_bound_list<T>& temp_active_bounds, sorting_bound_list<T> & sorted_bound_list) {
+sorting_bound_list_itr<T> insert_bound_into_SBL(bound<T>& bnd,
+                                                active_bound_list<T>& temp_active_bounds,
+                                                sorting_bound_list<T>& sorted_bound_list) {
     auto ab_itr = temp_active_bounds.insert(temp_active_bounds.end(), &bnd);
     auto itr = sorted_bound_list.begin();
     while (itr != sorted_bound_list.end() && !bound2_inserts_before_bound1(*(*(itr->bound)), bnd)) {
@@ -81,7 +84,7 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
     out << "    index: " << s.index << std::endl;
     out << "    current_x : " << s.current_x << std::endl;
     out << "    edge: " << std::endl;
-    out << *s.current_edge << std::endl;    
+    out << *s.current_edge << std::endl;
     return out;
 }
 
