@@ -1056,7 +1056,23 @@ std::list<point_ptr<T>> build_point_list(std::size_t repeated_point_count,
 }
 
 template <typename T>
-using angle_point = std::tuple<double, point_ptr<T>, bool, double>;
+struct angle_point {
+    
+    double angle;
+    double distance;
+    point_ptr<T> pt;
+    bool away;
+    
+    angle_point(double angle_,
+                double distance_,
+                point_ptr<T> pt_,
+                bool away_)
+        : angle(angle_),
+          distance(distance_),
+          pt(pt_),
+          away(away_) {}
+
+};
 
 template <typename T>
 using angle_point_vector = std::vector<angle_point<T>>;
@@ -1066,13 +1082,13 @@ using angle_point_vector = std::vector<angle_point<T>>;
 template <class charT, class traits, typename T>
 inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
                                                      const angle_point<T>& x) {
-    out << "   ap: " << std::get<0>(x) << " - " << std::get<1>(x);
-    if (std::get<2>(x)) {
+    out << "   ap: " << x.angle << " - " << x.pt;
+    if (x.away) {
         out << " - away";
     } else {
         out << " - towards";    
     }
-    out << " - " << std::get<3>(x) << std::endl;
+    out << " - " << x.distance << std::endl;
     return out;
 }
 
@@ -1090,81 +1106,19 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
 
 template <typename T>
 struct segment_angle_sorter {
-
     inline bool operator()(angle_point<T> const& p1, angle_point<T> const& p2) {
-        if (std::fabs(std::get<0>(p1) - std::get<0>(p2)) < std::numeric_limits<double>::epsilon()) {
-            return std::get<3>(p1) > std::get<3>(p2);
+        if (std::fabs(p1.angle - p2.angle) < std::numeric_limits<double>::epsilon()) {
+            return p1.distance > p2.distance;
         } else {
-            return std::get<0>(p1) < std::get<0>(p2);
+            return p1.angle < p2.angle;
         }
     }
 };
 
 template <typename T>
-void find_repeated_point_pair(angle_point_vector<T> & angle_points,
-                              point_ptr<T> first_point,
-                              point_ptr<T> & point_1,
-                              point_ptr<T> & point_2) {
-
-    angle_point_vector<T> possible_match;
-    auto search_itr = angle_points.begin();
-    
-    // Move itr to "first point"
-    while (std::get<1>(*search_itr) != first_point) {
-        ++search_itr;
-    }
-    
-    angle_point<T> angle_1 = *search_itr;
-
-    // Now find next angle for the match
-    ++search_itr;
-    if (search_itr == angle_points.end()) {
-        search_itr = angle_points.begin();
-    }
-
-    // It is possible that we have the same angle here..
-    while (std::fabs(std::get<0>(angle_1) - std::get<0>(*search_itr)) < std::numeric_limits<double>::epsilon() && std::get<2>(angle_1) == std::get<2>(*search_itr)) {
-        ++search_itr;
-        if (search_itr == angle_points.end()) {
-            search_itr = angle_points.begin();
-        }
-    }
-
-    // Find next point that is not the same
-    while (std::get<1>(angle_1) == std::get<1>(*search_itr)) {
-        angle_1 = *search_itr;
-        ++search_itr;
-        if (search_itr == angle_points.end()) {
-            search_itr = angle_points.begin();
-        }
-    }
-
-    angle_point<T> angle_2 = *search_itr;
-
-    if (std::get<2>(angle_1) == std::get<2>(angle_2)) {
-        throw std::runtime_error("Segments are found to be crossing");
-    }
-    
-    point_1 = std::get<1>(angle_1);
-    point_2 = std::get<1>(angle_2);
-}
-
-template <typename T>
-void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
-                                 std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring,
-                                 ring_manager<T> & rings) {
-    angle_point_vector<T> angle_points;
-    point_ptr<T> first_point = point_list.front();
-    assert(first_point != nullptr);
-    ring_ptr<T> r = first_point->ring;
-
-    if (r == nullptr) {
-        point_list.pop_front();
-        return;
-    }
-    
+void build_angle_vector(angle_point_vector<T>& angle_points, ring_ptr<T> expected_ring, std::list<point_ptr<T>>& point_list, ring_manager<T>& rings) {
     for (auto p = point_list.begin(); p != point_list.end();) {
-        if ((*p)->ring != nullptr && (*p)->ring != r) {
+        if ((*p)->ring == nullptr || (expected_ring && (*p)->ring != expected_ring)) {
             ++p;
             continue;
         }
@@ -1193,11 +1147,94 @@ void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
                 dist_next_to_prev = prev_angle - next_angle;
                 dist_prev_to_next = (2.0 * M_PI) - dist_next_to_prev;
             }
-            angle_points.emplace_back(next_angle, *p, true, dist_next_to_prev);
-            angle_points.emplace_back(prev_angle, *p, false, dist_prev_to_next);
+            angle_points.emplace_back(next_angle, dist_next_to_prev, *p, true);
+            angle_points.emplace_back(prev_angle, dist_prev_to_next, *p, false);
             ++p;
         }
     }
+    std::stable_sort(angle_points.begin(), angle_points.end(), segment_angle_sorter<T>());
+}
+
+template <typename T>
+void find_repeated_point_pair(angle_point_vector<T> & angle_points,
+                              point_ptr<T> first_point,
+                              point_ptr<T> & point_1,
+                              point_ptr<T> & point_2) {
+
+    angle_point_vector<T> possible_match;
+    auto search_itr = angle_points.begin();
+    
+    // Find if any angles that overlap perfectly - if so process them.
+    for (auto next_itr = std::next(search_itr); next_itr != angle_points.end(); ++next_itr, ++search_itr) {
+        if (std::fabs(next_itr->angle - search_itr->angle) < std::numeric_limits<double>::epsilon() &&
+            std::fabs(next_itr->distance - search_itr->distance) < std::numeric_limits<double>::epsilon()) {
+            while (next_itr->away == search_itr->away) {
+                ++next_itr;
+            }
+            point_1 = search_itr->pt;
+            point_2 = next_itr->pt;
+            return;
+        }
+    }
+
+    search_itr = angle_points.begin();
+
+    // Move itr to "first point"
+    while (search_itr->pt != first_point) {
+        ++search_itr;
+    }
+    
+    angle_point<T> angle_1 = *search_itr;
+
+    // Now find next angle for the match
+    ++search_itr;
+    if (search_itr == angle_points.end()) {
+        search_itr = angle_points.begin();
+    }
+
+    // It is possible that we have the same angle here..
+    while (std::fabs(angle_1.angle - search_itr->angle) < std::numeric_limits<double>::epsilon() && angle_1.away == search_itr->away) {
+        ++search_itr;
+        if (search_itr == angle_points.end()) {
+            search_itr = angle_points.begin();
+        }
+    }
+
+    // Find next point that is not the same
+    while (angle_1.pt == search_itr->pt) {
+        angle_1 = *search_itr;
+        ++search_itr;
+        if (search_itr == angle_points.end()) {
+            search_itr = angle_points.begin();
+        }
+    }
+
+    angle_point<T> angle_2 = *search_itr;
+
+    if (angle_1.away == angle_2.away) {
+        throw std::runtime_error("Segments are found to be crossing");
+    }
+    
+    point_1 = angle_1.pt;
+    point_2 = angle_2.pt;
+}
+
+template <typename T>
+void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
+                                 std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring,
+                                 ring_manager<T> & rings) {
+    angle_point_vector<T> angle_points;
+    point_ptr<T> first_point = point_list.front();
+    assert(first_point != nullptr);
+    ring_ptr<T> r = first_point->ring;
+
+    if (r == nullptr) {
+        point_list.pop_front();
+        return;
+    }
+
+    build_angle_vector(angle_points, r, point_list, rings);
+    
     if (first_point->ring == nullptr) {
         return;
     }
@@ -1207,8 +1244,6 @@ void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
         return;
     }
     
-    // Search forward
-    std::stable_sort(angle_points.begin(), angle_points.end(), segment_angle_sorter<T>());
     point_ptr<T> point_1 = nullptr;
     point_ptr<T> point_2 = nullptr;
     find_repeated_point_pair(angle_points, first_point, point_1, point_2);
@@ -1290,58 +1325,22 @@ void handle_collinear_rings_point_list(std::list<point_ptr<T>> & point_list, rin
         return;
     }
     
-    point_ptr<T> first_point = point_list.front();
     angle_point_vector<T> angle_points;
-    ring_ptr<T> r = first_point->ring;    
 
-    for (auto p = point_list.begin(); p != point_list.end();) {
-        if ((*p)->ring != nullptr && (*p)->ring != r) {
-            ++p;
-            continue;
-        }
-        double next_angle = calculate_segment_angle_next(*p);
-        double prev_angle = calculate_segment_angle_prev(*p);
-        if (std::isnan(next_angle) || std::isnan(prev_angle)) {
-            ++p;
-            continue;
-        }
-        if (std::fabs(next_angle - prev_angle) < std::numeric_limits<double>::epsilon()) {
-            point_ptr<T> spike = *p;
-            ring_ptr<T> spike_ring = spike->ring;
-            remove_spikes(spike);
-            p = point_list.erase(p);
-            if (spike == nullptr) {
-                spike_ring->area = std::numeric_limits<double>::quiet_NaN();
-                remove_ring(spike_ring, rings);
-            }
-        } else {
-            double dist_next_to_prev;
-            double dist_prev_to_next;
-            if (next_angle > prev_angle) {
-                dist_prev_to_next = next_angle - prev_angle;
-                dist_next_to_prev = (2.0 * M_PI) - dist_prev_to_next;
-            } else {
-                dist_next_to_prev = prev_angle - next_angle;
-                dist_prev_to_next = (2.0 * M_PI) - dist_next_to_prev;
-            }
-            angle_points.emplace_back(next_angle, *p, true, dist_next_to_prev);
-            angle_points.emplace_back(prev_angle, *p, false, dist_prev_to_next);
-            ++p;
-        }
-    }
+    ring_ptr<T> is_null = nullptr;
+    build_angle_vector(angle_points, is_null, point_list, rings);
     
     if (angle_points.size() <= 2) {
         return;
     }
 
-    std::stable_sort(angle_points.begin(), angle_points.end(), segment_angle_sorter<T>());
     auto p = angle_points.begin();
     auto p_next = std::next(p);
     while (p_next != angle_points.end()) {
-        if (std::fabs(std::get<0>(*p) - std::get<0>(*p_next)) < std::numeric_limits<double>::epsilon() &&
-            std::get<2>(*p) != std::get<2>(*p_next) && 
-            std::get<1>(*p)->ring != std::get<1>(*p_next)->ring) {
-            handle_collinear_rings(std::get<1>(*p), std::get<1>(*p_next), rings);
+        if (std::fabs(p->angle - p_next->angle) < std::numeric_limits<double>::epsilon() &&
+            p->away != p_next->away && 
+            p->pt->ring != p_next->pt->ring) {
+            handle_collinear_rings(p->pt, p_next->pt, rings);
         }
         p = p_next;
         ++p_next;
@@ -1450,7 +1449,7 @@ void do_simple_polygons(ring_manager<T>& rings) {
         if (count == 0) {
             continue;
         }
-        process_collinear_rings(count, i, rings); //dupe_ring, rings);
+        process_collinear_rings(count, i, rings); 
         count = 0;
     }
     count = 0;
