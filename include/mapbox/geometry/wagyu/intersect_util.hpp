@@ -160,7 +160,7 @@ void build_intersect_list(sorting_bound_list<T>& sorted_bound_list, intersect_li
         auto bnd = sorted_bound_list.begin();
         auto bnd_next = std::next(bnd);
         while (bnd_next != sorted_bound_list.end()) {
-            if (bnd->current_x > bnd_next->current_x) {
+            if (bnd->current_x > bnd_next->current_x && !slopes_equal(*(bnd->current_edge), *(bnd_next->current_edge))) {
                 mapbox::geometry::point<double> pt;
                 if (!get_edge_intersection<T, double>(*(bnd->current_edge), *(bnd_next->current_edge), pt)) {
                     throw std::runtime_error("Trying to find intersection of lines that do not intersect");    
