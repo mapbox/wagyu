@@ -624,33 +624,35 @@ void fixup_children_new_interior_ring(ring_ptr<T> old_ring,
     }
 }
 
+#ifdef DEBUG
+
 template <typename T>
-bool intersections_cross(point_ptr<T> p1, point_ptr<T> p2) {
+void check_if_intersections_cross(point_ptr<T> p1, point_ptr<T> p2) {
     point_ptr<T> p1_next = p1->next;
     point_ptr<T> p2_next = p2->next;
     point_ptr<T> p1_prev = p1->prev;
     point_ptr<T> p2_prev = p2->prev;
     while (*p1_next == *p1) {
         if (p1_next == p1) {
-            return false;
+            return;
         }
         p1_next = p1_next->next;
     }
     while (*p2_next == *p2) {
         if (p2_next == p2) {
-            return false;
+            return;
         }
         p2_next = p2_next->next;
     }
     while (*p1_prev == *p1) {
         if (p1_prev == p1) {
-            return false;
+            return;
         }
         p1_prev = p1_prev->prev;
     }
     while (*p2_prev == *p2) {
         if (p2_prev == p2) {
-            return false;
+            return;
         }
         p2_prev = p2_prev->prev;
     }
@@ -666,14 +668,12 @@ bool intersections_cross(point_ptr<T> p1, point_ptr<T> p2) {
     double max_p1 = std::max(a1_p1, a2_p1);
     double min_p2 = std::min(a1_p2, a2_p2);
     double max_p2 = std::max(a1_p2, a2_p2);
-    if (min_p1 < max_p2 && min_p1 > min_p2 && max_p1 > max_p2) {
-        return true;
-    } else if (min_p2 < max_p1 && min_p2 > min_p1 && max_p2 > max_p1) {
-        return true;
-    } else {
-        return false;
+    if ((min_p1 < max_p2 && min_p1 > min_p2 && max_p1 > max_p2) || (min_p2 < max_p1 && min_p2 > min_p1 && max_p2 > max_p1)) {
+        throw std::runtime_error("Paths are found to be crossing");
     }
 }
+
+#endif
 
 template <typename T>
 void handle_self_intersections(point_ptr<T> op,
@@ -724,8 +724,7 @@ void handle_self_intersections(point_ptr<T> op,
     double original_area = area(ring);
     bool original_is_positive = (original_area > 0.0);
 #ifdef DEBUG
-    bool crossing = intersections_cross(op, op2);
-    assert(!crossing);
+    check_if_intersections_cross(op, op2);
 #endif
 
     // split the polygon into two ...
@@ -1434,6 +1433,9 @@ bool index_is_after_point(std::size_t const& i,
 
 template <typename T>
 void rewind_to_point(std::size_t& i, mapbox::geometry::point<T>& pt, ring_manager<T> const& rings) {
+    if (i <= rings.all_rings.size()) {
+        i = rings.all_rings.size() - 1;
+    }
     while (index_is_after_point(i, pt, rings)) {
         --i;
     }
