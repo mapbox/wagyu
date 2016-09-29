@@ -1214,10 +1214,6 @@ void find_repeated_point_pair(angle_point_vector<T>& angle_points,
     angle_point<T> angle_2 = *search_itr;
 
     if (angle_1.away == angle_2.away) {
-        std::clog << angle_1 << std::endl;
-        std::clog << angle_2 << std::endl;
-        std::clog << angle_points << std::endl;
-        std::clog << *first_point << std::endl;
         throw std::runtime_error("Paths would be crossing after self intersection processing");
     }
 
@@ -1232,7 +1228,6 @@ void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
     angle_point_vector<T> angle_points;
     point_ptr<T> first_point = point_list.front();
     assert(first_point != nullptr);
-    bool debug = (first_point->x == 1763 && first_point->y == 918);
     ring_ptr<T> r = first_point->ring;
 
     if (r == nullptr) {
@@ -1241,9 +1236,6 @@ void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
     }
 
     build_angle_vector(angle_points, r, point_list, rings);
-
-    if (debug)
-        std::clog << angle_points << std::endl;
 
     if (first_point->ring == nullptr) {
         return;
