@@ -47,7 +47,8 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
         // this code block inserts extra coords into horizontal edges (in output
         // polygons) wherever hot pixels touch these horizontal edges. This helps
         //'simplifying' polygons (ie if the Simplify property is set).
-        while (hp_itr != hot_pixels.end() && *hp_itr < std::llround((*bnd)->curr.x)) {
+        while (hp_itr != hot_pixels.end() && *hp_itr < std::llround((*bnd)->curr.x) &&
+               *hp_itr < (*horz_bound)->current_edge->top.x) {
             if ((*horz_bound)->ring && !is_open) {
                 add_point_to_ring(
                     *(*horz_bound),
@@ -163,6 +164,8 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
         bound_max_pair = get_maxima_pair<T>(horz_bound, active_bounds);
     }
 
+    bool debug = (scanline_y == 918);
+
     auto hot_pixels_itr = rings.hot_pixels.find(scanline_y);
     hot_pixel_set<T> hot_pixels;
     if (hot_pixels_itr != rings.hot_pixels.end()) {
@@ -175,11 +178,15 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
     }
 
     auto bnd = active_bound_list_rev_itr<T>(horz_bound);
+    if (debug)
+        std::clog << *(*horz_bound) << std::endl;
     while (bnd != active_bounds.rend()) {
+        if (debug)
+            std::clog << *(*bnd) << std::endl;
         // this code block inserts extra coords into horizontal edges (in output
-        // polygons) wherever hot pixels touch these horizontal edges. This helps
-        //'simplifying' polygons (ie if the Simplify property is set).
-        while (hp_itr != hot_pixels.rend() && *hp_itr > std::llround((*bnd)->curr.x)) {
+        // polygons) wherever hot pixels touch these horizontal edges.
+        while (hp_itr != hot_pixels.rend() && *hp_itr > std::llround((*bnd)->curr.x) &&
+               *hp_itr > (*horz_bound)->current_edge->top.x) {
             if ((*horz_bound)->ring && !is_open) {
                 add_point_to_ring(
                     *(*horz_bound),

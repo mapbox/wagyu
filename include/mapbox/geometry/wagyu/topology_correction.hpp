@@ -1214,7 +1214,11 @@ void find_repeated_point_pair(angle_point_vector<T>& angle_points,
     angle_point<T> angle_2 = *search_itr;
 
     if (angle_1.away == angle_2.away) {
-        throw std::runtime_error("Segments are found to be crossing");
+        std::clog << angle_1 << std::endl;
+        std::clog << angle_2 << std::endl;
+        std::clog << angle_points << std::endl;
+        std::clog << *first_point << std::endl;
+        throw std::runtime_error("Paths would be crossing after self intersection processing");
     }
 
     point_1 = angle_1.pt;
@@ -1228,6 +1232,7 @@ void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
     angle_point_vector<T> angle_points;
     point_ptr<T> first_point = point_list.front();
     assert(first_point != nullptr);
+    bool debug = (first_point->x == 1763 && first_point->y == 918);
     ring_ptr<T> r = first_point->ring;
 
     if (r == nullptr) {
@@ -1236,6 +1241,9 @@ void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
     }
 
     build_angle_vector(angle_points, r, point_list, rings);
+
+    if (debug)
+        std::clog << angle_points << std::endl;
 
     if (first_point->ring == nullptr) {
         return;
@@ -1451,7 +1459,11 @@ void do_simple_polygons(ring_manager<T>& rings) {
     for (std::size_t i = 1; i < rings.all_points.size(); ++i) {
         if (*rings.all_points[i] == *rings.all_points[i - 1]) {
             ++count;
-            continue;
+            if (i < (rings.all_points.size() - 1)) {
+                continue;
+            } else {
+                ++i;
+            }
         }
         if (count == 0) {
             continue;
@@ -1463,8 +1475,13 @@ void do_simple_polygons(ring_manager<T>& rings) {
     for (std::size_t i = 1; i < rings.all_points.size(); ++i) {
         if (*rings.all_points[i] == *rings.all_points[i - 1]) {
             ++count;
-            continue;
+            if (i < (rings.all_points.size() - 1)) {
+                continue;
+            } else {
+                ++i;
+            }
         }
+
         if (count == 0) {
             continue;
         }
