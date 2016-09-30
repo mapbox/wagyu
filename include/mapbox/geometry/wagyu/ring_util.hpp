@@ -17,6 +17,7 @@
 
 #include <queue>
 
+#include <mapbox/geometry/wagyu/active_bound_list.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/edge.hpp>
 #include <mapbox/geometry/wagyu/ring.hpp>
@@ -419,13 +420,11 @@ bool first_is_bottom_point(const_point_ptr<T> btmPt1, const_point_ptr<T> btmPt2)
     }
     double dx2n = std::fabs(get_dx(*btmPt2, *p));
 
-    if (std::fabs(std::max(dx1p, dx1n) - std::max(dx2p, dx2n)) <
-            std::numeric_limits<double>::epsilon() &&
-        std::fabs(std::min(dx1p, dx1n) - std::min(dx2p, dx2n)) <
-            std::numeric_limits<double>::epsilon()) {
-        return area_from_point(btmPt1) > 0; // if otherwise identical use orientation
+    if (values_are_equal(std::max(dx1p, dx1n), std::max(dx2p, dx2n)) &&
+        values_are_equal(std::min(dx1p, dx1n), std::min(dx2p, dx2n))) {
+        return area_from_point(btmPt1) > 0.0; // if otherwise identical use orientation
     } else {
-        return (dx1p >= dx2p && dx1p >= dx2n) || (dx1n >= dx2p && dx1n >= dx2n);
+        return (greater_than_or_equal(dx1p, dx2p) && greater_than_or_equal(dx1p,dx2n)) || (greater_than_or_equal(dx1n,dx2p) && greater_than_or_equal(dx1n, dx2n));
     }
 }
 
@@ -674,7 +673,7 @@ point_in_polygon_result point_in_polygon(point<T> const& pt, point_ptr<T> op) {
                         static_cast<double>(op->x - pt.x) *
                             static_cast<double>(op->next->y - pt.y) -
                         static_cast<double>(op->next->x - pt.x) * static_cast<double>(op->y - pt.y);
-                    if (std::fabs(d) <= 0) {
+                    if (value_is_zero(d)) {
                         return point_on_polygon;
                     }
                     if ((d > 0) == (op->next->y > op->y)) {
@@ -693,7 +692,7 @@ point_in_polygon_result point_in_polygon(point<T> const& pt, point_ptr<T> op) {
                         static_cast<double>(op->x - pt.x) *
                             static_cast<double>(op->next->y - pt.y) -
                         static_cast<double>(op->next->x - pt.x) * static_cast<double>(op->y - pt.y);
-                    if (std::fabs(d) <= 0) {
+                    if (value_is_zero(d)) {
                         return point_on_polygon;
                     }
                     if ((d > 0) == (op->next->y > op->y)) {
@@ -720,16 +719,20 @@ point_in_polygon_result point_in_polygon(mapbox::geometry::point<double> const& 
     point_in_polygon_result result = point_outside_polygon;
     point_ptr<T> startOp = op;
     do {
-        if (std::fabs(op->next->y - pt.y) < std::numeric_limits<double>::epsilon()) {
-            if (std::fabs(op->next->x - pt.x) < std::numeric_limits<double>::epsilon() ||
-                (std::fabs(op->y - pt.y) < std::numeric_limits<double>::epsilon() &&
-                 ((op->next->x > pt.x) == (op->x < pt.x)))) {
+        double op_x = static_cast<double>(op->x);
+        double op_y = static_cast<double>(op->y);
+        double op_next_x = static_cast<double>(op->next->x);
+        double op_next_y = static_cast<double>(op->next->y);
+        if (values_are_equal(op_next_y, pt.y)) {
+            if (values_are_equal(op_next_x, pt.x) ||
+                (values_are_equal(op_y,pt.y) &&
+                 ((op_next_x > pt.x) == (op_x < pt.x)))) {
                 return point_on_polygon;
             }
         }
-        if ((op->y < pt.y) != (op->next->y < pt.y)) {
-            if (op->x >= pt.x) {
-                if (op->next->x > pt.x) {
+        if ((op_y < pt.y) != (op_next_y < pt.y)) {
+            if (greater_than_or_equal(op_x,pt.x)) {
+                if (op_next_x > pt.x) {
                     // Switch between point outside polygon and point inside
                     // polygon
                     if (result == point_outside_polygon) {
@@ -738,14 +741,11 @@ point_in_polygon_result point_in_polygon(mapbox::geometry::point<double> const& 
                         result = point_outside_polygon;
                     }
                 } else {
-                    double d =
-                        static_cast<double>(op->x - pt.x) *
-                            static_cast<double>(op->next->y - pt.y) -
-                        static_cast<double>(op->next->x - pt.x) * static_cast<double>(op->y - pt.y);
-                    if (std::fabs(d) <= 0) {
+                    double d = (op_x - pt.x) * (op_next_y - pt.y) - (op_next_x - pt.x) * (op_y - pt.y);
+                    if (value_is_zero(d)) {
                         return point_on_polygon;
                     }
-                    if ((d > 0) == (op->next->y > op->y)) {
+                    if ((d > 0.0) == (op_next_y > op->y)) {
                         // Switch between point outside polygon and point inside
                         // polygon
                         if (result == point_outside_polygon) {
@@ -756,15 +756,12 @@ point_in_polygon_result point_in_polygon(mapbox::geometry::point<double> const& 
                     }
                 }
             } else {
-                if (op->next->x > pt.x) {
-                    double d =
-                        static_cast<double>(op->x - pt.x) *
-                            static_cast<double>(op->next->y - pt.y) -
-                        static_cast<double>(op->next->x - pt.x) * static_cast<double>(op->y - pt.y);
-                    if (std::fabs(d) <= 0) {
+                if (op_next_x > pt.x) {
+                    double d = (op_x - pt.x) * (op_next_y - pt.y) - (op_next_x - pt.x) * (op_y - pt.y);
+                    if (value_is_zero(d)) {
                         return point_on_polygon;
                     }
-                    if ((d > 0) == (op->next->y > op->y)) {
+                    if ((d > 0.0) == (op_next_y > op->y)) {
                         // Switch between point outside polygon and point inside
                         // polygon
                         if (result == point_outside_polygon) {
@@ -784,10 +781,10 @@ point_in_polygon_result point_in_polygon(mapbox::geometry::point<double> const& 
 template <typename T>
 point_in_polygon_result inside_or_outside_special(point_ptr<T> first_pt, point_ptr<T> other_poly) {
 
-    if (std::fabs(area(first_pt->ring)) < std::numeric_limits<double>::epsilon()) {
+    if (value_is_zero(area(first_pt->ring))) {
         return point_inside_polygon;
     }
-    if (std::fabs(area(other_poly->ring)) < std::numeric_limits<double>::epsilon()) {
+    if (value_is_zero(area(other_poly->ring))) {
         return point_outside_polygon;
     }
     point_ptr<T> pt = first_pt;

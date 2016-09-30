@@ -187,6 +187,19 @@ void fixup_out_polyline(ring<T>& ring, ring_manager<T>& rings) {
 }
 
 template <typename T>
+bool point_2_is_between_point_1_and_point_3(mapbox::geometry::wagyu::point<T> pt1,
+                                            mapbox::geometry::wagyu::point<T> pt2,
+                                            mapbox::geometry::wagyu::point<T> pt3) {
+    if ((pt1 == pt3) || (pt1 == pt2) || (pt3 == pt2)) {
+        return false;
+    } else if (pt1.x != pt3.x) {
+        return (pt2.x > pt1.x) == (pt2.x < pt3.x);
+    } else {
+        return (pt2.y > pt1.y) == (pt2.y < pt3.y);
+    }
+}
+
+template <typename T>
 void fixup_out_polygon(ring<T>& ring, ring_manager<T>& rings, bool simple) {
     // FixupOutPolygon() - removes duplicate points and simplifies consecutive
     // parallel edges by removing the middle vertex.
@@ -355,13 +368,7 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         }
         double stored_area = area(r);
         double calculated_area = area_from_point(r->points);
-        if (std::fabs(stored_area - calculated_area) >
-            (5.0 * std::numeric_limits<double>::epsilon())) {
-            std::clog << "stored area: " << stored_area << std::endl;
-            std::clog << "calculated area: " << calculated_area << std::endl;
-            std::clog << "difference between the two of: "
-                      << std::fabs(stored_area - calculated_area) << std::endl;
-            std::clog << *r << std::endl;
+        if (values_near_equal(stored_area, calculated_area)) {
             throw std::runtime_error("Difference in stored area vs calculated area!");
         }
     }

@@ -1,6 +1,7 @@
 #pragma once
 
-#include <mapbox/geometry/wagyu/util.hpp>
+#include <mapbox/geometry/wagyu/ring.hpp>
+#include <mapbox/geometry/wagyu/ring_util.hpp>
 
 namespace mapbox {
 namespace geometry {

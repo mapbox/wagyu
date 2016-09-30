@@ -93,7 +93,7 @@ bool find_intersect_loop(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>
         ring_ptr<T> it_ring = it->second.op2->ring;
         if (visited.count(it_ring) > 0 || it_ring == nullptr ||
             (ring_parent != it_ring && ring_parent != it_ring->parent) ||
-            std::fabs(area(it_ring)) < std::numeric_limits<double>::epsilon() ||
+            value_is_zero(area(it_ring)) ||
             *prev_pt == *it->second.op2) {
             continue;
         }
@@ -266,7 +266,7 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
             ring_ptr<T> it_ring = it->second.op2->ring;
             if (it_ring != ring_search && *op_origin_2 != *it->second.op2 && it_ring != nullptr &&
                 (ring_parent == it_ring || ring_parent == it_ring->parent) &&
-                std::fabs(area(it_ring)) > 0.0 &&
+                !value_is_zero(area(it_ring)) &&
                 find_intersect_loop(dupe_ring, iList, ring_parent, ring_origin, it_ring, visited,
                                     op_origin_2, it->second.op2, rings)) {
                 found = true;
@@ -762,8 +762,8 @@ void handle_self_intersections(point_ptr<T> op,
     double area_2 = area_from_point(op2);
     bool area_1_is_positive = (area_1 > 0.0);
     bool area_2_is_positive = (area_2 > 0.0);
-    bool area_1_is_zero = std::fabs(area_1) < std::numeric_limits<double>::epsilon();
-    bool area_2_is_zero = std::fabs(area_2) < std::numeric_limits<double>::epsilon();
+    bool area_1_is_zero = value_is_zero(area_1);
+    bool area_2_is_zero = value_is_zero(area_2);
 
     // Situation # 1 - Orientations are NOT the same:
     // - One ring contains the other and MUST be a child of that ring
@@ -841,6 +841,7 @@ void handle_self_intersections(point_ptr<T> op,
     update_duplicate_point_entries(ring, dupe_ring);
 }
 
+/*
 template <typename T>
 void handle_collinear_rings(point_ptr<T> pt1, point_ptr<T> pt2, ring_manager<T>& rings) {
 
@@ -905,7 +906,7 @@ void handle_collinear_rings(point_ptr<T> pt1, point_ptr<T> pt2, ring_manager<T>&
     ring1_replaces_ring2(ring1, ring2, rings);
     update_points_ring(ring1);
 }
-
+*/
 template <typename T>
 mapbox::geometry::point<T> find_rewind_point(point_ptr<T> pt) {
     mapbox::geometry::point<T> rewind;
@@ -1101,7 +1102,7 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
 template <typename T>
 struct segment_angle_sorter {
     inline bool operator()(angle_point<T> const& p1, angle_point<T> const& p2) {
-        if (std::fabs(p1.angle - p2.angle) < std::numeric_limits<double>::epsilon()) {
+        if (values_are_equal(p1.angle, p2.angle)) {
             return p1.distance > p2.distance;
         } else {
             return p1.angle < p2.angle;
@@ -1125,7 +1126,7 @@ void build_angle_vector(angle_point_vector<T>& angle_points,
             ++p;
             continue;
         }
-        if (std::fabs(next_angle - prev_angle) < std::numeric_limits<double>::epsilon()) {
+        if (values_are_equal(next_angle, prev_angle)) {
             point_ptr<T> spike = *p;
             ring_ptr<T> spike_ring = spike->ring;
             remove_spikes(spike);
@@ -1164,10 +1165,8 @@ void find_repeated_point_pair(angle_point_vector<T>& angle_points,
     // Find if any angles that overlap perfectly - if so process them.
     for (auto next_itr = std::next(search_itr); next_itr != angle_points.end();
          ++next_itr, ++search_itr) {
-        if (std::fabs(next_itr->angle - search_itr->angle) <
-                std::numeric_limits<double>::epsilon() &&
-            std::fabs(next_itr->distance - search_itr->distance) <
-                std::numeric_limits<double>::epsilon()) {
+        if (values_are_equal(next_itr->angle, search_itr->angle) &&
+            values_are_equal(next_itr->distance, search_itr->distance)) {
             while (next_itr->away == search_itr->away) {
                 ++next_itr;
             }
@@ -1193,7 +1192,7 @@ void find_repeated_point_pair(angle_point_vector<T>& angle_points,
     }
 
     // It is possible that we have the same angle here..
-    while (std::fabs(angle_1.angle - search_itr->angle) < std::numeric_limits<double>::epsilon() &&
+    while (values_are_equal(angle_1.angle, search_itr->angle) &&
            angle_1.away == search_itr->away) {
         ++search_itr;
         if (search_itr == angle_points.end()) {
@@ -1269,13 +1268,12 @@ void process_repeated_points(std::size_t repeated_point_count,
         }
         double ring_area = area(op_j->ring);
         bool ring_is_positive = ring_area > 0.0;
-        bool ring_is_zero = std::fabs(ring_area) < std::numeric_limits<double>::epsilon();
+        bool ring_is_zero = value_is_zero(ring_area);
         if (!ring_is_zero) {
             if (op_j->ring->parent) {
                 double parent_area = area(op_j->ring->parent);
                 bool parent_is_positive = parent_area > 0.0;
-                bool parent_is_zero =
-                    std::fabs(parent_area) < std::numeric_limits<double>::epsilon();
+                bool parent_is_zero = value_is_zero(parent_area);
                 if (!parent_is_zero && ring_is_positive == parent_is_positive) {
                     throw std::runtime_error(
                         "Created a ring with a parent having the same orientation (sign of area)");
@@ -1284,7 +1282,7 @@ void process_repeated_points(std::size_t repeated_point_count,
             for (auto c : op_j->ring->children) {
                 double c_area = area(c);
                 bool c_is_positive = c_area > 0.0;
-                bool c_is_zero = std::fabs(c_area) < std::numeric_limits<double>::epsilon();
+                bool c_is_zero = value_is_zero(c_area);
                 if (!c_is_zero && ring_is_positive == c_is_positive) {
                     throw std::runtime_error(
                         "Created a ring with a child having the same orientation (sign of area)");
@@ -1319,73 +1317,6 @@ bool process_chains(std::size_t repeated_point_count,
         }
     }
     return rewind;
-}
-
-template <typename T>
-void handle_collinear_rings_point_list(std::list<point_ptr<T>>& point_list,
-                                       ring_manager<T>& rings) {
-
-    if (point_list.size() == 1) {
-        handle_collinear_rings(point_list.front(), point_list.back(), rings);
-        return;
-    }
-
-    angle_point_vector<T> angle_points;
-
-    ring_ptr<T> is_null = nullptr;
-    build_angle_vector(angle_points, is_null, point_list, rings);
-
-    if (angle_points.size() <= 2) {
-        return;
-    }
-
-    auto p = angle_points.begin();
-    auto p_next = std::next(p);
-    while (p_next != angle_points.end()) {
-        if (std::fabs(p->angle - p_next->angle) < std::numeric_limits<double>::epsilon() &&
-            p->away != p_next->away && p->pt->ring != p_next->pt->ring) {
-            handle_collinear_rings(p->pt, p_next->pt, rings);
-        }
-        p = p_next;
-        ++p_next;
-    }
-}
-
-template <typename T>
-void process_collinear_rings(std::size_t repeated_point_count,
-                             std::size_t last_index,
-                             ring_manager<T>& rings) {
-    for (std::size_t j = (last_index - repeated_point_count - 1); j < last_index; ++j) {
-        point_ptr<T> op_j = rings.all_points[j];
-        ring_ptr<T> ring_j = op_j->ring;
-        if (!ring_j) {
-            continue;
-        }
-        std::list<point_ptr<T>> point_list;
-        point_list.emplace_back(op_j);
-        bool has_different_ring = false;
-        for (std::size_t k = j + 1; k < last_index; ++k) {
-            point_ptr<T> op_k = rings.all_points[k];
-            ring_ptr<T> ring_k = op_k->ring;
-            if (!ring_k) {
-                continue;
-            }
-            if (ring_k->parent != ring_j->parent) {
-                continue;
-            }
-            if (*(op_j->next) != *(op_k->prev) && *(op_k->next) != *(op_j->prev)) {
-                continue;
-            }
-            if (ring_k != ring_j) {
-                has_different_ring = true;
-            }
-            point_list.emplace_back(op_k);
-        }
-        if (!has_different_ring) {
-            continue;
-        }
-        handle_collinear_rings_point_list(point_list, rings);
-    }
 }
 
 template <typename T>
@@ -1450,22 +1381,6 @@ void do_simple_polygons(ring_manager<T>& rings) {
 
     // Find sets of repeated points and process them
     std::size_t count = 0;
-    for (std::size_t i = 1; i < rings.all_points.size(); ++i) {
-        if (*rings.all_points[i] == *rings.all_points[i - 1]) {
-            ++count;
-            if (i < (rings.all_points.size() - 1)) {
-                continue;
-            } else {
-                ++i;
-            }
-        }
-        if (count == 0) {
-            continue;
-        }
-        process_collinear_rings(count, i, rings);
-        count = 0;
-    }
-    count = 0;
     for (std::size_t i = 1; i < rings.all_points.size(); ++i) {
         if (*rings.all_points[i] == *rings.all_points[i - 1]) {
             ++count;

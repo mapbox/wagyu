@@ -6,6 +6,7 @@
 
 #include <mapbox/geometry/point.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
+#include <mapbox/geometry/wagyu/util.hpp>
 
 #ifdef DEBUG
 #include <iostream>
@@ -36,7 +37,7 @@ struct edge {
             bot = next_pt;
         }
         double dy = static_cast<double>(top.y - bot.y);
-        if (std::fabs(dy) < std::numeric_limits<double>::epsilon()) {
+        if (value_is_zero(dy)) {
             dx = std::numeric_limits<double>::infinity();
         } else {
             dx = static_cast<double>(top.x - bot.x) / dy;
@@ -52,6 +53,27 @@ using edge_list = std::list<edge<T>>;
 
 template <typename T>
 using edge_list_itr = typename edge_list<T>::iterator;
+
+template <typename T>
+bool slopes_equal(edge<T> const& e1, edge<T> const& e2) {
+    return (e1.top.y - e1.bot.y) * (e2.top.x - e2.bot.x) ==
+           (e1.top.x - e1.bot.x) * (e2.top.y - e2.bot.y);
+}
+
+template <typename T>
+inline bool is_horizontal(edge<T> const& e) {
+    return std::isinf(e.dx);
+}
+
+template <typename T>
+inline double get_current_x(edge<T> const& edge, const T current_y) {
+    if (current_y == edge.top.y) {
+        return static_cast<double>(edge.top.x);
+    } else {
+        return static_cast<double>(edge.bot.x) +
+               edge.dx * static_cast<double>(current_y - edge.bot.y);
+    }
+}
 
 #ifdef DEBUG
 

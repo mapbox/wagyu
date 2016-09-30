@@ -15,7 +15,7 @@ namespace wagyu {
 template <typename T>
 struct intersect_list_sorter {
     inline bool operator()(intersect_node<T> const& node1, intersect_node<T> const& node2) {
-        if (std::fabs(node2.pt.y - node1.pt.y) > 0.0) {
+        if (!values_are_equal(node2.pt.y, node1.pt.y)) {
             return node2.pt.y < node1.pt.y;
         } else {
             return ((*node2.bound1->bound)->winding_count2 +

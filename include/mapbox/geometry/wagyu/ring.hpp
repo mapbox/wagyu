@@ -1,10 +1,11 @@
 #pragma once
 
-#include <mapbox/geometry/wagyu/point.hpp>
-
+#include <assert.h>
 #include <list>
 #include <map>
 #include <vector>
+
+#include <mapbox/geometry/wagyu/point.hpp>
 
 #ifdef DEBUG
 #include <execinfo.h>

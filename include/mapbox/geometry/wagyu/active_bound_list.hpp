@@ -61,8 +61,30 @@ std::string output_edges(active_bound_list<T> const& bnds) {
 #endif
 
 template <typename T>
+bool is_even_odd_fill_type(bound<T> const& bound,
+                           fill_type subject_fill_type,
+                           fill_type clip_fill_type) {
+    if (bound.poly_type == polygon_type_subject) {
+        return subject_fill_type == fill_type_even_odd;
+    } else {
+        return clip_fill_type == fill_type_even_odd;
+    }
+}
+
+template <typename T>
+bool is_even_odd_alt_fill_type(bound<T> const& bound,
+                               fill_type subject_fill_type,
+                               fill_type clip_fill_type) {
+    if (bound.poly_type == polygon_type_subject) {
+        return clip_fill_type == fill_type_even_odd;
+    } else {
+        return subject_fill_type == fill_type_even_odd;
+    }
+}
+
+template <typename T>
 inline bool bound2_inserts_before_bound1(bound<T> const& bound1, bound<T> const& bound2) {
-    if (std::fabs(bound2.curr.x - bound1.curr.x) <= 0.0) {
+    if (values_are_equal(bound2.curr.x, bound1.curr.x)) {
         if (bound2.current_edge->top.y > bound1.current_edge->top.y) {
             return bound2.current_edge->top.x <
                    get_current_x(*(bound1.current_edge), bound2.current_edge->top.y);
