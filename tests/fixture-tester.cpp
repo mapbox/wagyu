@@ -45,7 +45,7 @@ void log_ring(mapbox::geometry::polygon<std::int64_t> const& p) {
     std::clog << "]" << std::endl;
 }
 
-void parse_file(const char* file_path, clipper<value_type>& clipper, polygon_type polytype) {
+void parse_file(const char* file_path, wagyu<value_type>& clipper, polygon_type polytype) {
     // todo safety checks opening files
     FILE* file = fopen(file_path, "r");
     char read_buffer[65536];
@@ -158,7 +158,7 @@ int main(int argc, char* const argv[]) {
     }
     parse_options(argc, argv);
 
-    clipper<value_type> clipper;
+    wagyu<value_type> clipper;
     parse_file(options.subject_file, clipper, polygon_type_subject);
     parse_file(options.clip_file, clipper, polygon_type_clip);
 

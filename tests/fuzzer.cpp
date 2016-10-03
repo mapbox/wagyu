@@ -167,7 +167,7 @@ int main() {
                                     mapbox::geometry::wagyu::fill_type_positive,
                                     mapbox::geometry::wagyu::fill_type_negative }) {
 
-                mapbox::geometry::wagyu::clipper<std::int64_t> clipper;
+                mapbox::geometry::wagyu::wagyu<std::int64_t> clipper;
                 mapbox::geometry::polygon<std::int64_t> polygon;
 
                 std::size_t num_rings = 1;

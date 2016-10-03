@@ -16,7 +16,7 @@ namespace geometry {
 namespace wagyu {
 
 template <typename T>
-class clipper {
+class wagyu {
 private:
     using value_type = T;
 
@@ -24,10 +24,10 @@ private:
     bool has_open_paths;
 
 public:
-    clipper() : minima_list(), has_open_paths(false) {
+    wagyu() : minima_list(), has_open_paths(false) {
     }
 
-    ~clipper() {
+    ~wagyu() {
         clear();
     }
 

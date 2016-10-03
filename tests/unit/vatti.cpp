@@ -9,7 +9,7 @@ using T = std::int64_t;
 
 TEST_CASE("simple test of entire vatti") {
 
-    mapbox::geometry::wagyu::clipper<T> clipper;
+    mapbox::geometry::wagyu::wagyu<T> clipper;
     mapbox::geometry::polygon<T> polygon0;
     mapbox::geometry::linear_ring<T> ring0_0;
     ring0_0.push_back({ -79102, 0 });

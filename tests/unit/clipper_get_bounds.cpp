@@ -6,7 +6,7 @@ using namespace mapbox::geometry::wagyu;
 using T = std::int64_t;
 
 TEST_CASE("test returns zero with no data provided - int64") {
-    mapbox::geometry::wagyu::clipper<T> clipper;
+    mapbox::geometry::wagyu::wagyu<T> clipper;
     auto bounds = clipper.get_bounds();
     CHECK(bounds.min.x == 0);
     CHECK(bounds.min.y == 0);
@@ -23,7 +23,7 @@ TEST_CASE("test returns simple box - int64") {
     ring.push_back({ 5, 0 });
     ring.push_back({ 0, 0 });
     polygon.push_back(ring);
-    mapbox::geometry::wagyu::clipper<T> clipper;
+    mapbox::geometry::wagyu::wagyu<T> clipper;
     CHECK(clipper.add_polygon(polygon));
     auto bounds = clipper.get_bounds();
     CHECK(bounds.min.x == 0);
@@ -41,7 +41,7 @@ TEST_CASE("test returns simple box negative - int64") {
     ring.push_back({ -5, 0 });
     ring.push_back({ 0, 0 });
     polygon.push_back(ring);
-    mapbox::geometry::wagyu::clipper<T> clipper;
+    mapbox::geometry::wagyu::wagyu<T> clipper;
     CHECK(clipper.add_polygon(polygon));
     auto bounds = clipper.get_bounds();
     CHECK(bounds.min.x == -5);
@@ -51,7 +51,7 @@ TEST_CASE("test returns simple box negative - int64") {
 }
 
 TEST_CASE("two polygons - int64") {
-    mapbox::geometry::wagyu::clipper<T> clipper;
+    mapbox::geometry::wagyu::wagyu<T> clipper;
     // Polygon 1
     mapbox::geometry::polygon<T> polygon;
     mapbox::geometry::linear_ring<T> ring;
