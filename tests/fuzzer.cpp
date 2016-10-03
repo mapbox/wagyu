@@ -117,37 +117,37 @@ void create_test(mapbox::geometry::polygon<std::int64_t> const& polygon,
 
 void print_clip_type(mapbox::geometry::wagyu::clip_type ct) {
     switch (ct) {
-        default:
-        case mapbox::geometry::wagyu::clip_type_union:
-            std::clog << "Union Clip Type" << std::endl;
-            break;
-        case mapbox::geometry::wagyu::clip_type_intersection:
-            std::clog << "Intersection Clip Type" << std::endl;
-            break;
-        case mapbox::geometry::wagyu::clip_type_difference:
-            std::clog << "Difference Clip Type" << std::endl;
-            break;
-        case mapbox::geometry::wagyu::clip_type_x_or:
-            std::clog << "X OR Clip Type" << std::endl;
-            break;
+    default:
+    case mapbox::geometry::wagyu::clip_type_union:
+        std::clog << "Union Clip Type" << std::endl;
+        break;
+    case mapbox::geometry::wagyu::clip_type_intersection:
+        std::clog << "Intersection Clip Type" << std::endl;
+        break;
+    case mapbox::geometry::wagyu::clip_type_difference:
+        std::clog << "Difference Clip Type" << std::endl;
+        break;
+    case mapbox::geometry::wagyu::clip_type_x_or:
+        std::clog << "X OR Clip Type" << std::endl;
+        break;
     }
 }
 
 void print_fill_type(mapbox::geometry::wagyu::fill_type ft) {
     switch (ft) {
-        default:
-        case mapbox::geometry::wagyu::fill_type_even_odd:
-            std::clog << "Even Odd Fill Type" << std::endl;
-            break;
-        case mapbox::geometry::wagyu::fill_type_non_zero:
-            std::clog << "Non Zero Fill Type" << std::endl;
-            break;
-        case mapbox::geometry::wagyu::fill_type_positive:
-            std::clog << "Positive Fill Type" << std::endl;
-            break;
-        case mapbox::geometry::wagyu::fill_type_negative:
-            std::clog << "Negative Fill Type" << std::endl;
-            break;
+    default:
+    case mapbox::geometry::wagyu::fill_type_even_odd:
+        std::clog << "Even Odd Fill Type" << std::endl;
+        break;
+    case mapbox::geometry::wagyu::fill_type_non_zero:
+        std::clog << "Non Zero Fill Type" << std::endl;
+        break;
+    case mapbox::geometry::wagyu::fill_type_positive:
+        std::clog << "Positive Fill Type" << std::endl;
+        break;
+    case mapbox::geometry::wagyu::fill_type_negative:
+        std::clog << "Negative Fill Type" << std::endl;
+        break;
     }
 }
 

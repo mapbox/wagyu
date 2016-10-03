@@ -49,7 +49,32 @@ operator<<(std::basic_ostream<charT, traits>& out,
         } else {
             out << "---";
         }
-        out << "  ( at " << r.second.op1->x << ", " << r.second.op1->y << " )" << std::endl;
+        out << "  ( at " << r.second.op1->x << ", " << r.second.op1->y << " )";
+        out << "  Ring1 ( ";
+        if (r.second.op1->ring) {
+            out << "area: " << r.second.op1->ring->area << " parent: ";
+            if (r.second.op1->ring->parent) {
+                out << r.second.op1->ring->parent->ring_index;
+            } else {
+                out << "---";
+            }
+        } else {
+            out << "---";
+        }
+        out << " )";
+        out << "  Ring2 ( ";
+        if (r.second.op2->ring) {
+            out << "area: " << r.second.op2->ring->area << " parent: ";
+            if (r.second.op2->ring->parent) {
+                out << r.second.op2->ring->parent->ring_index;
+            } else {
+                out << "---";
+            }
+        } else {
+            out << "---";
+        }
+        out << " )";
+        out << std::endl;
     }
     out << " END CONNECTIONS: " << std::endl;
     return out;
@@ -93,8 +118,7 @@ bool find_intersect_loop(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>
         ring_ptr<T> it_ring = it->second.op2->ring;
         if (visited.count(it_ring) > 0 || it_ring == nullptr ||
             (ring_parent != it_ring && ring_parent != it_ring->parent) ||
-            value_is_zero(area(it_ring)) ||
-            *prev_pt == *it->second.op2) {
+            value_is_zero(area(it_ring)) || *prev_pt == *it->second.op2) {
             continue;
         }
         if (find_intersect_loop(dupe_ring, iList, ring_parent, ring_origin, it_ring, visited,
@@ -183,6 +207,7 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
                     ring_ptr<T> ring_k,
                     ring_manager<T>& rings,
                     mapbox::geometry::point<T>& rewind_point) {
+
     if (ring_j == ring_k) {
         return false;
     }
@@ -433,19 +458,7 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
                 if (it_ring == nullptr || it_ring2 == nullptr || it_ring == it_ring2) {
                     continue;
                 }
-                ring_ptr<T> fl_ring;
-                ring_ptr<T> fl_ring2;
-                if (ring_is_hole(it_ring)) {
-                    fl_ring = it_ring->parent;
-                } else {
-                    fl_ring = it_ring;
-                }
-                if (ring_is_hole(it_ring2)) {
-                    fl_ring2 = it_ring2->parent;
-                } else {
-                    fl_ring2 = it_ring2;
-                }
-                if ((ring_is_hole(it_ring) || ring_is_hole(it_ring2)) && (fl_ring == fl_ring2)) {
+                if ((ring_is_hole(it_ring) || ring_is_hole(it_ring2))) {
                     move_list.emplace_back(it_ring, it->second);
                 }
             }
@@ -461,25 +474,13 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
             it = dupe_ring.erase(it);
             continue;
         }
-        ring_ptr<T> fl_ring;
-        ring_ptr<T> fl_ring2;
-        if (ring_is_hole(it_ring)) {
-            fl_ring = it_ring->parent;
-        } else {
-            fl_ring = it_ring;
-        }
-        if (ring_is_hole(it_ring2)) {
-            fl_ring2 = it_ring2->parent;
-        } else {
-            fl_ring2 = it_ring2;
-        }
         if (it_ring != ring_origin) {
-            if ((ring_is_hole(it_ring) || ring_is_hole(it_ring2)) && (fl_ring == fl_ring2)) {
+            if ((ring_is_hole(it_ring) || ring_is_hole(it_ring2))) {
                 move_list.emplace_back(it_ring, it->second);
             }
             it = dupe_ring.erase(it);
         } else {
-            if ((ring_is_hole(it_ring) || ring_is_hole(it_ring2)) && (fl_ring == fl_ring2)) {
+            if ((ring_is_hole(it_ring) || ring_is_hole(it_ring2))) {
                 ++it;
             } else {
                 it = dupe_ring.erase(it);
@@ -525,25 +526,13 @@ void update_duplicate_point_entries(
             it = dupe_ring.erase(it);
             continue;
         }
-        ring_ptr<T> fl_ring;
-        ring_ptr<T> fl_ring_2;
-        if (ring_is_hole(it_ring)) {
-            fl_ring = it_ring->parent;
-        } else {
-            fl_ring = it_ring;
-        }
-        if (ring_is_hole(it_ring_2)) {
-            fl_ring_2 = it_ring_2->parent;
-        } else {
-            fl_ring_2 = it_ring_2;
-        }
         if (it_ring != ring) {
-            if ((ring_is_hole(it_ring) || ring_is_hole(it_ring_2)) && (fl_ring == fl_ring_2)) {
+            if ((ring_is_hole(it_ring) || ring_is_hole(it_ring_2))) {
                 move_list.emplace_back(it_ring, it->second);
             }
             it = dupe_ring.erase(it);
         } else {
-            if ((ring_is_hole(it_ring) || ring_is_hole(it_ring_2)) && (fl_ring == fl_ring_2)) {
+            if ((ring_is_hole(it_ring) || ring_is_hole(it_ring_2))) {
                 ++it;
             } else {
                 it = dupe_ring.erase(it);
@@ -668,7 +657,8 @@ void check_if_intersections_cross(point_ptr<T> p1, point_ptr<T> p2) {
     double max_p1 = std::max(a1_p1, a2_p1);
     double min_p2 = std::min(a1_p2, a2_p2);
     double max_p2 = std::max(a1_p2, a2_p2);
-    if ((min_p1 < max_p2 && min_p1 > min_p2 && max_p1 > max_p2) || (min_p2 < max_p1 && min_p2 > min_p1 && max_p2 > max_p1)) {
+    if ((min_p1 < max_p2 && min_p1 > min_p2 && max_p1 > max_p2) ||
+        (min_p2 < max_p1 && min_p2 > min_p1 && max_p2 > max_p1)) {
         throw std::runtime_error("Paths are found to be crossing");
     }
 }
@@ -841,72 +831,6 @@ void handle_self_intersections(point_ptr<T> op,
     update_duplicate_point_entries(ring, dupe_ring);
 }
 
-/*
-template <typename T>
-void handle_collinear_rings(point_ptr<T> pt1, point_ptr<T> pt2, ring_manager<T>& rings) {
-
-    ring_ptr<T> ring1 = pt1->ring;
-    ring_ptr<T> ring2 = pt2->ring;
-    if (!ring1 || !ring2) {
-        return;
-    }
-
-    if (ring1 == ring2) {
-        return;
-    }
-    if (ring1->parent != ring2->parent) {
-        return;
-    }
-
-    if (*(pt1->next) != *(pt2->prev) && *(pt2->next) != *(pt1->prev)) {
-        return;
-    }
-
-    // swap points
-    point_ptr<T> pt3 = pt1->prev;
-    point_ptr<T> pt4 = pt2->prev;
-    pt1->prev = pt4;
-    pt4->next = pt1;
-    pt2->prev = pt3;
-    pt3->next = pt2;
-
-    ring1->area = std::numeric_limits<double>::quiet_NaN();
-    ring2->area = std::numeric_limits<double>::quiet_NaN();
-
-    // remove spikes
-    remove_spikes(pt1);
-    if (!pt1) {
-        // rings self destructed
-        ring1->points = nullptr;
-        ring1->area = std::numeric_limits<double>::quiet_NaN();
-        remove_ring(ring1, rings);
-        ring2->points = nullptr;
-        ring2->area = std::numeric_limits<double>::quiet_NaN();
-        remove_ring(ring2, rings);
-        return;
-    }
-    if (pt2->ring) {
-        remove_spikes(pt2);
-        if (!pt2) {
-            // rings self destructed
-            ring1->points = nullptr;
-            ring1->area = std::numeric_limits<double>::quiet_NaN();
-            remove_ring(ring1, rings);
-            ring2->points = nullptr;
-            ring2->area = std::numeric_limits<double>::quiet_NaN();
-            remove_ring(ring2, rings);
-            return;
-        }
-        if (!pt1->ring) {
-            pt1 = pt2;
-        }
-    }
-    ring1->points = pt1;
-    ring2->points = nullptr;
-    ring1_replaces_ring2(ring1, ring2, rings);
-    update_points_ring(ring1);
-}
-*/
 template <typename T>
 mapbox::geometry::point<T> find_rewind_point(point_ptr<T> pt) {
     mapbox::geometry::point<T> rewind;
@@ -1192,8 +1116,7 @@ void find_repeated_point_pair(angle_point_vector<T>& angle_points,
     }
 
     // It is possible that we have the same angle here..
-    while (values_are_equal(angle_1.angle, search_itr->angle) &&
-           angle_1.away == search_itr->away) {
+    while (values_are_equal(angle_1.angle, search_itr->angle) && angle_1.away == search_itr->away) {
         ++search_itr;
         if (search_itr == angle_points.end()) {
             search_itr = angle_points.begin();

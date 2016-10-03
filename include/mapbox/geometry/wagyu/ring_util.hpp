@@ -424,7 +424,8 @@ bool first_is_bottom_point(const_point_ptr<T> btmPt1, const_point_ptr<T> btmPt2)
         values_are_equal(std::min(dx1p, dx1n), std::min(dx2p, dx2n))) {
         return area_from_point(btmPt1) > 0.0; // if otherwise identical use orientation
     } else {
-        return (greater_than_or_equal(dx1p, dx2p) && greater_than_or_equal(dx1p,dx2n)) || (greater_than_or_equal(dx1n,dx2p) && greater_than_or_equal(dx1n, dx2n));
+        return (greater_than_or_equal(dx1p, dx2p) && greater_than_or_equal(dx1p, dx2n)) ||
+               (greater_than_or_equal(dx1n, dx2p) && greater_than_or_equal(dx1n, dx2n));
     }
 }
 
@@ -725,13 +726,12 @@ point_in_polygon_result point_in_polygon(mapbox::geometry::point<double> const& 
         double op_next_y = static_cast<double>(op->next->y);
         if (values_are_equal(op_next_y, pt.y)) {
             if (values_are_equal(op_next_x, pt.x) ||
-                (values_are_equal(op_y,pt.y) &&
-                 ((op_next_x > pt.x) == (op_x < pt.x)))) {
+                (values_are_equal(op_y, pt.y) && ((op_next_x > pt.x) == (op_x < pt.x)))) {
                 return point_on_polygon;
             }
         }
         if ((op_y < pt.y) != (op_next_y < pt.y)) {
-            if (greater_than_or_equal(op_x,pt.x)) {
+            if (greater_than_or_equal(op_x, pt.x)) {
                 if (op_next_x > pt.x) {
                     // Switch between point outside polygon and point inside
                     // polygon
@@ -741,7 +741,8 @@ point_in_polygon_result point_in_polygon(mapbox::geometry::point<double> const& 
                         result = point_outside_polygon;
                     }
                 } else {
-                    double d = (op_x - pt.x) * (op_next_y - pt.y) - (op_next_x - pt.x) * (op_y - pt.y);
+                    double d =
+                        (op_x - pt.x) * (op_next_y - pt.y) - (op_next_x - pt.x) * (op_y - pt.y);
                     if (value_is_zero(d)) {
                         return point_on_polygon;
                     }
@@ -757,7 +758,8 @@ point_in_polygon_result point_in_polygon(mapbox::geometry::point<double> const& 
                 }
             } else {
                 if (op_next_x > pt.x) {
-                    double d = (op_x - pt.x) * (op_next_y - pt.y) - (op_next_x - pt.x) * (op_y - pt.y);
+                    double d =
+                        (op_x - pt.x) * (op_next_y - pt.y) - (op_next_x - pt.x) * (op_y - pt.y);
                     if (value_is_zero(d)) {
                         return point_on_polygon;
                     }
