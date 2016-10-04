@@ -1,6 +1,7 @@
 #include <mapbox/geometry/line_string.hpp>
 #include <mapbox/geometry/point.hpp>
 #include <mapbox/geometry/polygon.hpp>
+#include <mapbox/geometry/multi_polygon.hpp>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
@@ -124,6 +125,12 @@ struct interior_rings<mapbox::geometry::polygon<CoordinateType>> {
         return boost::make_iterator_range(p.begin() + 1, p.end());
     }
 };
+
+template <typename CoordinateType>
+struct tag<mapbox::geometry::multi_polygon<CoordinateType>> {
+    using type = multi_polygon_tag;
+};
+
 }
 }
 }

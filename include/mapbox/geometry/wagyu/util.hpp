@@ -10,6 +10,26 @@ namespace mapbox {
 namespace geometry {
 namespace wagyu {
 
+template <typename T>
+double area(mapbox::geometry::linear_ring<T> const& poly) {
+    std::size_t size = poly.size();
+    if (size < 3) {
+        return 0.0;
+    }
+
+    double a = 0.0;
+    auto itr = poly.begin();
+    auto itr_prev = poly.end();
+    --itr_prev;
+    a += static_cast<double>(itr_prev->x + itr->x) * static_cast<double>(itr_prev->y - itr->y);
+    ++itr;
+    itr_prev = poly.begin();
+    for (; itr != poly.end(); ++itr, ++itr_prev) {
+        a += static_cast<double>(itr_prev->x + itr->x) * static_cast<double>(itr_prev->y - itr->y);
+    }
+    return -a * 0.5;
+}
+
 inline bool value_is_zero(double val) {
     return std::fabs(val) < std::numeric_limits<double>::epsilon();
 }

@@ -5,6 +5,7 @@
 #include <mapbox/geometry/box.hpp>
 #include <mapbox/geometry/line_string.hpp>
 #include <mapbox/geometry/polygon.hpp>
+#include <mapbox/geometry/multi_polygon.hpp>
 
 #include <mapbox/geometry/wagyu/build_result.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
@@ -105,7 +106,7 @@ public:
     }
 
     bool execute(clip_type cliptype,
-                 std::vector<mapbox::geometry::polygon<value_type>>& solution,
+                 mapbox::geometry::multi_polygon<value_type>& solution,
                  fill_type subject_fill_type,
                  fill_type clip_fill_type) {
 

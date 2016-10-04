@@ -1,5 +1,6 @@
 #include "util/boost_geometry_adapters.hpp"
 #include <mapbox/geometry/polygon.hpp>
+#include <mapbox/geometry/multi_polygon.hpp>
 #include <mapbox/geometry/wagyu/wagyu.hpp>
 
 #include <cstdlib>
@@ -28,6 +29,41 @@ void log_ring(mapbox::geometry::polygon<std::int64_t> const& p) {
                 std::clog << ",[";
             }
             std::clog << pt.x << "," << pt.y << "]";
+        }
+        std::clog << "]";
+    }
+    std::clog << "]" << std::endl;
+}
+
+void log_ring(mapbox::geometry::multi_polygon<std::int64_t> const& mp) {
+    bool first_p = true;
+    std::clog << "[";
+    for (auto const& p : mp) {
+        bool first = true;
+        if (first_p) {
+            std::clog << "[";
+            first_p = false;
+        } else {
+            std::clog << ",[";
+        }
+        for (auto const& r : p) {
+            if (first) {
+                std::clog << "[";
+                first = false;
+            } else {
+                std::clog << ",[";
+            }
+            bool first2 = true;
+            for (auto const& pt : r) {
+                if (first2) {
+                    std::clog << "[";
+                    first2 = false;
+                } else {
+                    std::clog << ",[";
+                }
+                std::clog << pt.x << "," << pt.y << "]";
+            }
+            std::clog << "]";
         }
         std::clog << "]";
     }
@@ -188,7 +224,7 @@ int main() {
 
                 std::clog << ".";
                 clipper.add_polygon(polygon, mapbox::geometry::wagyu::polygon_type_subject);
-                std::vector<mapbox::geometry::polygon<std::int64_t>> solution;
+                mapbox::geometry::multi_polygon<std::int64_t> solution;
                 try {
                     clipper.execute(clip_type, solution, fill_type,
                                     mapbox::geometry::wagyu::fill_type_even_odd);
@@ -210,6 +246,17 @@ int main() {
                         create_test(polygon, seed, iteration);
                         return -1;
                     }
+                }
+                std::string message;
+                if (!boost::geometry::is_valid(solution, message)) {
+                    std::clog << std::endl;
+                    std::clog << "Multipolygon failure case:" << std::endl;
+                    std::clog << message << std::endl;
+                    print_clip_type(clip_type);
+                    print_fill_type(fill_type);
+                    log_ring(solution);
+                    create_test(polygon, seed, iteration);
+                    return -1;
                 }
 
                 check_cross_ring(solution);

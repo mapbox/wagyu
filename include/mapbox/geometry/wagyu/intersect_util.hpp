@@ -105,6 +105,8 @@ void add_extra_hot_pixels(T top_y,
     for (auto bnd_itr = sorted_bound_list.begin(); bnd_itr != sorted_bound_list.end();) {
         bound_ptr<T> bnd = *(bnd_itr->bound);
         if (bnd->current_edge->top.y == top_y) {
+            // Add a hot pixel at the top
+            add_to_hot_pixels(bnd->current_edge->top, rings);
             // Go to another edge or delete bnd_itr
             auto edge_itr = bnd->current_edge;
             while (edge_itr != bnd->edges.end() && edge_itr->top.y == top_y) {

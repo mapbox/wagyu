@@ -51,6 +51,6 @@ TEST_CASE("simple test of entire vatti") {
 
     clipper.add_polygon(polygon2, polygon_type::polygon_type_subject);
 
-    std::vector<mapbox::geometry::polygon<T>> solution;
+    mapbox::geometry::multi_polygon<T> solution;
     clipper.execute(clip_type_union, solution, fill_type_even_odd, fill_type_even_odd);
 }

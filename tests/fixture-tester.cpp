@@ -45,6 +45,41 @@ void log_ring(mapbox::geometry::polygon<std::int64_t> const& p) {
     std::clog << "]" << std::endl;
 }
 
+void log_ring(mapbox::geometry::multi_polygon<std::int64_t> const& mp) {
+    bool first_p = true;
+    std::clog << "[";
+    for (auto const& p : mp) {
+        bool first = true;
+        if (first_p) {
+            std::clog << "[";
+            first_p = false;
+        } else {
+            std::clog << ",[";
+        }
+        for (auto const& r : p) {
+            if (first) {
+                std::clog << "[";
+                first = false;
+            } else {
+                std::clog << ",[";
+            }
+            bool first2 = true;
+            for (auto const& pt : r) {
+                if (first2) {
+                    std::clog << "[";
+                    first2 = false;
+                } else {
+                    std::clog << ",[";
+                }
+                std::clog << pt.x << "," << pt.y << "]";
+            }
+            std::clog << "]";
+        }
+        std::clog << "]";
+    }
+    std::clog << "]" << std::endl;
+}
+
 void parse_file(const char* file_path, wagyu<value_type>& clipper, polygon_type polytype) {
     // todo safety checks opening files
     FILE* file = fopen(file_path, "r");
@@ -162,7 +197,7 @@ int main(int argc, char* const argv[]) {
     parse_file(options.subject_file, clipper, polygon_type_subject);
     parse_file(options.clip_file, clipper, polygon_type_clip);
 
-    std::vector<mapbox::geometry::polygon<value_type>> solution;
+    mapbox::geometry::multi_polygon<value_type> solution;
     clipper.execute(options.operation, solution, options.fill, fill_type_even_odd);
 
     Document output;
@@ -176,6 +211,14 @@ int main(int argc, char* const argv[]) {
             log_ring(p);
             return -1;
         }
+    }
+    std::string message;
+    if (!boost::geometry::is_valid(solution, message)) {
+        std::clog << std::endl;
+        std::clog << "Error: multi geometry not valid" << std::endl;
+        std::clog << message << std::endl;
+        log_ring(solution);
+        return -1;
     }
 
     char write_buffer[65536];
