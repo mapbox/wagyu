@@ -4,8 +4,8 @@
 
 #include <mapbox/geometry/box.hpp>
 #include <mapbox/geometry/line_string.hpp>
-#include <mapbox/geometry/polygon.hpp>
 #include <mapbox/geometry/multi_polygon.hpp>
+#include <mapbox/geometry/polygon.hpp>
 
 #include <mapbox/geometry/wagyu/build_result.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>

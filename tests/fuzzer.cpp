@@ -1,6 +1,6 @@
 #include "util/boost_geometry_adapters.hpp"
-#include <mapbox/geometry/polygon.hpp>
 #include <mapbox/geometry/multi_polygon.hpp>
+#include <mapbox/geometry/polygon.hpp>
 #include <mapbox/geometry/wagyu/wagyu.hpp>
 
 #include <cstdlib>

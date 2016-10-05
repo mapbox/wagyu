@@ -110,6 +110,23 @@ void add_extra_hot_pixels(T top_y,
             // Go to another edge or delete bnd_itr
             auto edge_itr = bnd->current_edge;
             while (edge_itr != bnd->edges.end() && edge_itr->top.y == top_y) {
+                if (is_horizontal(*edge_itr)) {
+                    T starting_x = edge_itr->bot.x;
+                    T ending_x = edge_itr->top.x;
+                    T min_x = std::min(starting_x, ending_x);
+                    T max_x = std::max(starting_x, ending_x);
+                    for (auto bnd_itr2 = sorted_bound_list.begin();
+                         bnd_itr2 != sorted_bound_list.end(); ++bnd_itr2) {
+                        bound_ptr<T> bnd2 = *(bnd_itr2->bound);
+                        if (bnd == bnd2 || bnd_itr2->current_x < min_x ||
+                            bnd_itr2->current_x > max_x || bnd2->current_edge->top.y == top_y ||
+                            bnd2->current_edge->bot.y == top_y) {
+                            continue;
+                        }
+                        mapbox::geometry::point<T> hp(std::llround(bnd_itr2->current_x), top_y);
+                        add_to_hot_pixels(hp, rings);
+                    }
+                }
                 ++edge_itr;
             }
             if (edge_itr == bnd->edges.end()) {
