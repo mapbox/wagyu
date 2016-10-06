@@ -207,14 +207,15 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
                     ring_ptr<T> ring_k,
                     ring_manager<T>& rings,
                     mapbox::geometry::point<T>& rewind_point) {
-
     if (ring_j == ring_k) {
         return false;
     }
+
     if (!ring_is_hole(ring_j) && !ring_is_hole(ring_k)) {
         // Both are not holes, return nothing to do.
         return false;
     }
+
     ring_ptr<T> ring_origin;
     ring_ptr<T> ring_search;
     ring_ptr<T> ring_parent;
@@ -855,15 +856,27 @@ bool handle_collinear_edges(point_ptr<T> pt1,
                             mapbox::geometry::point<T>& rewind_point) {
     ring_ptr<T> ring1 = pt1->ring;
     ring_ptr<T> ring2 = pt2->ring;
+    
     if (ring1 == ring2) {
         return false;
     }
-    if (ring1->parent != ring2->parent) {
+
+    bool valid = (ring1 != ring2 && 
+                  (ring1->parent == ring2->parent || 
+                  ring2->parent == ring1 ||
+                  ring1->parent == ring2));
+    if (!valid) {
         return false;
     }
 
     if (*(pt1->next) != *(pt2->prev) && *(pt2->next) != *(pt1->prev)) {
         return false;
+    }
+
+    if (ring1->parent == ring2) {
+        // switch ring1 and ring2
+        std::swap(pt1, pt2);
+        std::swap(ring1, ring2);
     }
 
     mapbox::geometry::point<T> rewind_1 = find_rewind_point(pt1);
