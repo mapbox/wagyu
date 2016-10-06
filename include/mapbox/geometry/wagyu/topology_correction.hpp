@@ -935,7 +935,11 @@ bool handle_collinear_edges(point_ptr<T> pt1,
     ring2->points = nullptr;
     ring1->area = std::numeric_limits<double>::quiet_NaN();
     ring2->area = std::numeric_limits<double>::quiet_NaN();
-    ring1_replaces_ring2(ring1, ring2, rings);
+    if (ring2->parent == ring1) {
+        ring1_replaces_ring2(ring1->parent, ring2, rings);
+    } else {
+        ring1_replaces_ring2(ring1, ring2, rings);
+    }
     update_points_ring(ring1);
 
     update_duplicate_point_entries(ring2, dupe_ring);
