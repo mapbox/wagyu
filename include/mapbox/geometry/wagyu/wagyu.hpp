@@ -23,9 +23,10 @@ private:
 
     local_minimum_list<value_type> minima_list;
     bool has_open_paths;
+    bool reverse_output;
 
 public:
-    wagyu() : minima_list(), has_open_paths(false) {
+    wagyu() : minima_list(), has_open_paths(false), reverse_output(false) {
     }
 
     ~wagyu() {
@@ -54,6 +55,10 @@ public:
             }
         }
         return result;
+    }
+
+    void reverse_rings(bool value) {
+        reverse_output = value;
     }
 
     void clear() {
@@ -114,7 +119,7 @@ public:
         bool worked =
             execute_vatti(minima_list, rings, cliptype, subject_fill_type, clip_fill_type);
 
-        build_result(solution, rings);
+        build_result(solution, rings, reverse_output);
 
         for (auto& p : rings.all_points) {
             delete p;

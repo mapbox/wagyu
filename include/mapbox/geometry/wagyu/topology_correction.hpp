@@ -856,15 +856,13 @@ bool handle_collinear_edges(point_ptr<T> pt1,
                             mapbox::geometry::point<T>& rewind_point) {
     ring_ptr<T> ring1 = pt1->ring;
     ring_ptr<T> ring2 = pt2->ring;
-    
+
     if (ring1 == ring2) {
         return false;
     }
 
-    bool valid = (ring1 != ring2 && 
-                  (ring1->parent == ring2->parent || 
-                  ring2->parent == ring1 ||
-                  ring1->parent == ring2));
+    bool valid = (ring1 != ring2 && (ring1->parent == ring2->parent || ring2->parent == ring1 ||
+                                     ring1->parent == ring2));
     if (!valid) {
         return false;
     }
