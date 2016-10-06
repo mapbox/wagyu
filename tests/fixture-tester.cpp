@@ -212,6 +212,8 @@ int main(int argc, char* const argv[]) {
             return -1;
         }
     }
+    /*
+     * uncomment once https://svn.boost.org/trac/boost/ticket/12503 is resolved
     std::string message;
     if (!boost::geometry::is_valid(solution, message)) {
         std::clog << std::endl;
@@ -220,7 +222,7 @@ int main(int argc, char* const argv[]) {
         log_ring(solution);
         return -1;
     }
-
+    */
     char write_buffer[65536];
     FileWriteStream out_stream(stdout, write_buffer, sizeof(write_buffer));
     Writer<FileWriteStream> writer(out_stream);

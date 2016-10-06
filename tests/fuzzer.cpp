@@ -247,6 +247,8 @@ int main() {
                         return -1;
                     }
                 }
+                /*
+                 * uncomment once https://svn.boost.org/trac/boost/ticket/12503 is resolved
                 std::string message;
                 if (!boost::geometry::is_valid(solution, message)) {
                     std::clog << std::endl;
@@ -258,7 +260,7 @@ int main() {
                     create_test(polygon, seed, iteration);
                     return -1;
                 }
-
+                */
                 check_cross_ring(solution);
             }
         }
