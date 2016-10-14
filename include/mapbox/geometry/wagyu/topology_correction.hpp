@@ -946,260 +946,625 @@ bool handle_collinear_edges(point_ptr<T> pt1,
 }
 
 template <typename T>
-double calculate_segment_angle_next(point_ptr<T> pt) {
-    point_ptr<T> pt_next = pt->next;
-    while (*pt_next == *pt) {
-        if (pt_next == pt) {
-            return std::numeric_limits<double>::quiet_NaN();
-        }
-        pt_next = pt_next->next;
+bool point_2_is_between_point_1_and_point_3(point_ptr<T> pt1,
+                                            point_ptr<T> pt2,
+                                            point_ptr<T> pt3) {
+    if ((*pt1 == *pt3) || (*pt1 == *pt2) || (*pt3 == *pt2)) {
+        return false;
+    } else if (pt1->x != pt3->x) {
+        return (pt2->x > pt1->x) == (pt2->x < pt3->x);
+    } else {
+        return (pt2->y > pt1->y) == (pt2->y < pt3->y);
     }
-    return std::atan2(static_cast<double>(pt_next->y - pt->y),
-                      static_cast<double>(pt_next->x - pt->x));
 }
 
-template <typename T>
-double calculate_segment_angle_prev(point_ptr<T> pt) {
-    point_ptr<T> pt_prev = pt->prev;
-    while (*pt_prev == *pt) {
-        if (pt_prev == pt) {
-            return std::numeric_limits<double>::quiet_NaN();
-        }
-        pt_prev = pt_prev->prev;
-    }
-    return std::atan2(static_cast<double>(pt_prev->y - pt->y),
-                      static_cast<double>(pt_prev->x - pt->x));
-}
-
-template <typename T>
-std::list<point_ptr<T>>
-build_point_list(std::size_t repeated_point_count, std::size_t last_index, ring_manager<T>& rings) {
-    std::list<point_ptr<T>> point_list;
-    T original_x = rings.all_points[last_index - repeated_point_count - 1]->x;
-    T original_y = rings.all_points[last_index - repeated_point_count - 1]->y;
-    for (std::size_t j = (last_index - repeated_point_count - 1); j < last_index; ++j) {
-        point_ptr<T> op_j = rings.all_points[j];
-        if (op_j->ring) {
-            ring_ptr<T> r = op_j->ring;
-            remove_spikes(op_j);
-            if (op_j == nullptr) {
-                r->area = std::numeric_limits<double>::quiet_NaN();
-                remove_ring(r, rings);
-                continue;
-            }
-        }
-        if (op_j && op_j->x == original_x && op_j->y == original_y) {
-            point_list.push_back(op_j);
-        }
-    }
-    return point_list;
-}
-
-template <typename T>
-struct angle_point {
-
-    double angle;
-    double distance;
-    point_ptr<T> pt;
-    bool away;
-
-    angle_point(double angle_, double distance_, point_ptr<T> pt_, bool away_)
-        : angle(angle_), distance(distance_), pt(pt_), away(away_) {
-    }
+enum orientation_type : std::uint8_t {
+    orientation_collinear_spike = 0,
+    orientation_clockwise,
+    orientation_collinear_line,
+    orientation_counter_clockwise
 };
 
+// To find orientation of ordered triplet (p, q, r)
+// Orientation between q and r with respect to p.
 template <typename T>
-using angle_point_vector = std::vector<angle_point<T>>;
+inline orientation_type orientation_of_points(point_ptr<T> p, point_ptr<T> q, point_ptr<T> r) {
+    T val = (q->y - p->y) * (r->x - q->x) - (q->x - p->x) * (r->y - q->y);
+    if (val == 0) {
+        if (point_2_is_between_point_1_and_point_3(q, p, r)) {
+            return orientation_collinear_line;
+        } else {
+            return orientation_collinear_spike;
+        }
+    }
+    return (val > 0) ? orientation_clockwise : orientation_counter_clockwise;
+}
+
+// Self intersection point vector
+template <typename T>
+using si_point_vector = std::vector<std::pair<point_ptr<T>, bool>>;
 
 #ifdef DEBUG
 
-template <class charT, class traits, typename T>
-inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
-                                                     const angle_point<T>& x) {
-    out << "   ap: " << x.angle << " - " << x.pt;
-    if (x.away) {
-        out << " - away";
-    } else {
-        out << " - towards";
+template <typename T>
+std::string output_si_angles(point_ptr<T> pt) {
+    std::ostringstream out;
+    double prev_angle = std::atan2(static_cast<double>(pt->prev->y - pt->y),
+                              static_cast<double>(pt->prev->x - pt->x));
+    prev_angle = (180.0 / M_PI) * prev_angle;
+    if (prev_angle < 0.0) {
+        prev_angle += 360.0;
     }
-    out << " - " << x.distance << std::endl;
-    return out;
+    double next_angle = std::atan2(static_cast<double>(pt->next->y - pt->y),
+                              static_cast<double>(pt->next->x - pt->x));
+    next_angle = (180.0 / M_PI) * next_angle;
+    if (next_angle < 0.0) {
+        next_angle += 360.0;
+    }
+    out << " angles: " << prev_angle << " , " << next_angle;
+    out << " - [[" << pt->prev->x << "," << pt->prev->y << "],[";
+    out << pt->x << "," << pt->y << "],[";
+    out << pt->next->x << "," << pt->next->y << "]]";
+    return out.str();
 }
+
+template <typename T>
+std::string output_compare_si_angles(point_ptr<T> pt, point_ptr<T> compare) {
+    std::ostringstream out;
+    double cmp_prev_angle = std::atan2(static_cast<double>(compare->prev->y - compare->y),
+                              static_cast<double>(compare->prev->x - compare->x));
+    double prev_angle = std::atan2(static_cast<double>(pt->prev->y - pt->y),
+                              static_cast<double>(pt->prev->x - pt->x));
+    prev_angle = (180.0 / M_PI) * prev_angle;
+    if (prev_angle < 0.0) {
+        prev_angle += 360.0;
+    }
+    cmp_prev_angle = (180.0 / M_PI) * cmp_prev_angle;
+    if (cmp_prev_angle < 0.0) {
+        cmp_prev_angle += 360.0;
+    }
+    double cmp_next_angle = std::atan2(static_cast<double>(compare->next->y - compare->y),
+                              static_cast<double>(compare->next->x - compare->x));
+    double next_angle = std::atan2(static_cast<double>(pt->next->y - pt->y),
+                              static_cast<double>(pt->next->x - pt->x));
+    next_angle = (180.0 / M_PI) * next_angle;
+    if (next_angle < 0.0) {
+        next_angle += 360.0;
+    }
+    cmp_next_angle = (180.0 / M_PI) * cmp_next_angle;
+    if (cmp_next_angle < 0.0) {
+        cmp_next_angle += 360.0;
+    }
+    out << " compared to prev: " << prev_angle - cmp_prev_angle << ", " << next_angle - cmp_prev_angle << std::endl;
+    out << " compared to next: " << prev_angle - cmp_next_angle << ", " << next_angle - cmp_next_angle << std::endl;
+    return out.str();
+}
+
 
 template <class charT, class traits, typename T>
 inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
-                                                     const angle_point_vector<T>& angles) {
-    out << "Angle Point Vector:" << std::endl;
-    for (auto& x : angles) {
-        out << x;
+                                                     const si_point_vector<T>& pts) {
+    out << "Self Intersection Point Vector:" << std::endl;
+    for (auto& pt : pts) {
+        out << output_si_angles(pt.first);
+        if (pt.second) {
+            out << " - clockwise" << std::endl;
+        } else {
+            out << " - counter clockwise" << std::endl;
+        }
     }
+    return out;
+}
+
+template <class charT, class traits>
+inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
+                                                     const orientation_type & ot) {
+    switch (ot) {
+        case orientation_collinear_spike:
+            out << "collinear - spike";
+            break;
+        case orientation_clockwise: 
+            out << "clockwise";
+            break;
+        case orientation_collinear_line:
+            out << "collinear - line";
+            break;
+        case orientation_counter_clockwise:
+            out << "counter clockwise";
+            break;
+    };
     return out;
 }
 
 #endif
 
 template <typename T>
-struct segment_angle_sorter {
-    inline bool operator()(angle_point<T> const& p1, angle_point<T> const& p2) {
-        if (values_are_equal(p1.angle, p2.angle)) {
-            return p1.distance > p2.distance;
+bool clockwise_of_next(point_ptr<T> const& origin, point_ptr<T> pt) {
+
+    // Determine if the prev and next of pt is either clockwise of next from
+    // origin (and therefore ccw of previous) or if it is ccw of next and clockwise
+    // of previous
+
+    // First inspect orientation of points, keep in mind this is the orientations of
+    // the three points
+    orientation_type ot_origin = orientation_of_points(origin, origin->next, origin->prev);
+    if (ot_origin == orientation_collinear_spike) {
+        return true;   
+    } else if (ot_origin == orientation_clockwise) {
+        orientation_type ot_prev_next = orientation_of_points(origin, origin->next, pt->prev);
+        if (ot_prev_next == orientation_collinear_spike) {
+            orientation_type ot_next_next = orientation_of_points(origin, origin->next, pt->next);
+            if (ot_next_next == orientation_collinear_spike) {
+                // Pt forms a spike on origin next
+                // so lets assume it is CW.
+                return true;
+            } else if (ot_next_next == orientation_clockwise) {
+                // We need to check which is after "origin->next" traveling
+                // clockwise -- origin->prev or pt->next
+                orientation_type ot_next_prev = orientation_of_points(origin, origin->prev, pt->next);
+                if (ot_next_prev == orientation_collinear_spike) {
+                    // Both origin and pt follow the same paths.
+                    // so we will call this clockwise
+                    return true;   
+                } else if (ot_next_prev == orientation_clockwise) {
+                    // pt->next is clockwise of prev
+                    return false;
+                } else if (ot_next_prev == orientation_collinear_line) {
+                    // This shouldn't happen?
+                    return false;
+                } else {
+                    // Pt next is counter clockwise of origin prev
+                    return true;
+                }
+            } else {
+                // ot_next_next == orientation_collinear_line
+                // ot_next_next == orientation_counter_clockwise
+                return false;
+            }
+        } else if (ot_prev_next == orientation_clockwise) {
+            // We need to check which is after "origin->next" traveling
+            // clockwise -- origin->prev or pt->prev
+            orientation_type ot_prev_prev = orientation_of_points(origin, origin->prev, pt->prev);
+            if (ot_prev_prev == orientation_clockwise) {
+                // pt->prev is before this, so.. between the two.
+                return false;   
+            } else {
+                // ot_prev_prev == orientation_collinear_spike
+                // ot_prev_prev == orientation_clockwise
+                // ot_prev_prev == orientation_collinear_line
+                return true;
+            }
         } else {
-            return p1.angle < p2.angle;
+            // ot_prev_next == orientation_collinear_line
+            // ot_prev_next == orientation_counter_clockwise
+            return false;
+        }
+    } else if (ot_origin == orientation_collinear_line) {
+        orientation_type ot_prev_next = orientation_of_points(origin, origin->next, pt->prev);
+        if (ot_prev_next == orientation_collinear_spike || ot_prev_next == orientation_collinear_line) {
+            // prev and next on top of each other
+            orientation_type ot_next_next = orientation_of_points(origin, origin->next, pt->next);
+            if (ot_next_next == orientation_counter_clockwise) {
+                return false;
+            } else {
+                // ot_next_next == orientation_collinear_spike
+                // ot_next_next == orientation_clockwise
+                // ot_next_next == orientation_collinear_line
+                return true;
+            }
+        } else if (ot_prev_next == orientation_clockwise) {
+            return true;
+        } else {
+            // ot_prev_next == orientation_counter_clockwise
+            return false;
+        }
+    } else {
+        // orientation_counter_clockwise
+        orientation_type ot_prev_next = orientation_of_points(origin, origin->next, pt->prev);
+        if (ot_prev_next == orientation_collinear_spike) {
+            orientation_type ot_next_next = orientation_of_points(origin, origin->next, pt->next);
+            if (ot_next_next == orientation_collinear_spike) {
+                // Pt forms a spike on origin next
+                // so lets assume it is CW.
+                return true;
+            } else if (ot_next_next == orientation_counter_clockwise) {
+                // We need to check which is after "origin->next" traveling
+                // counter clockwise -- origin->prev or pt->next
+                orientation_type ot_next_prev = orientation_of_points(origin, origin->prev, pt->next);
+                if (ot_next_prev == orientation_collinear_spike) {
+                    // Both origin and pt follow the same paths.
+                    // so we will call this clockwise
+                    return true;   
+                } else if (ot_next_prev == orientation_clockwise) {
+                    // pt->next is clockwise of prev
+                    return false;
+                } else if (ot_next_prev == orientation_collinear_line) {
+                    // This shouldn't happen?
+                    return true;
+                } else {
+                    // Pt next is counter clockwise of origin prev
+                    return true;
+                }
+            } else {
+                // ot_next_next == orientation_clockwise
+                // ot_next_next == orientation_collinear_line
+                return true;
+            }
+        } else if (ot_prev_next == orientation_counter_clockwise) {
+            // We need to check which is after "origin->next" traveling
+            // counter clockwise -- origin->prev or pt->prev
+            orientation_type ot_prev_prev = orientation_of_points(origin, origin->prev, pt->prev);
+            if (ot_prev_prev == orientation_clockwise) {
+                // pt->prev is before this, so.. between the two.
+                return false;   
+            } else {
+                // ot_prev_prev == orientation_collinear_spike
+                // ot_prev_prev == orientation_counter_clockwise
+                // ot_prev_prev == orientation_collinear_line
+                return true;
+            }
+        } else {
+            // ot_prev_next == orientation_collinear_line
+            // ot_prev_next == orientation_clockwise
+            return true;
+        }
+    }
+}
+
+template <typename T>
+inline bool cw_p1p2_prev_collinear_spike(point_ptr<T> const& origin, 
+                                         point_ptr<T> const& next, 
+                                         point_ptr<T> const& p1, 
+                                         point_ptr<T> const& p2) {
+
+    // we must compare the nexts to determine the order between the two.
+    orientation_type ot_p1_next = orientation_of_points(origin, next, p1->next);
+    orientation_type ot_p2_next = orientation_of_points(origin, next, p2->next);
+    if (ot_p1_next == orientation_collinear_spike) {
+        // p1 is a spike on origin next
+        if (ot_p2_next == orientation_collinear_spike) {
+            return true;
+        } else {
+            return false;
+        }
+    } else if (ot_p1_next == orientation_clockwise) {
+        if (ot_p2_next == orientation_collinear_spike) {
+            return true;
+        } else if (ot_p2_next == orientation_clockwise) {
+            // Both are clockwise we have to compare.
+            orientation_type ot = orientation_of_points(origin, p1->next, p2->next);
+            if (ot == orientation_collinear_spike) {
+                return true;
+            } else if (ot == orientation_clockwise) {
+                return false;
+            } else if (ot == orientation_collinear_line) {
+                return false;
+            } else  {
+                return true;
+            }
+        } else {
+            // ot_p2_next == orienation_collinear_line
+            // ot_p2_next == orienation_counter_clockwise
+            return false;
+        }
+    } else if (ot_p1_next == orientation_collinear_line) {
+        if (ot_p2_next == orientation_counter_clockwise) {
+            return false;
+        } else {
+            // ot_p2_next == orienation_collinear_spike
+            // ot_p2_next == orienation_clockwise
+            // ot_p2_next == orienation_collinear_line
+            return true;
+        }
+    } else {
+        // ot_p1_next == orientation_counter_clockwise
+        if (ot_p2_next == orientation_counter_clockwise) {
+            // Both are counter clockwise we have to compare.
+            orientation_type ot = orientation_of_points(origin, p1->next, p2->next);
+            if (ot == orientation_collinear_spike) {
+                return true;
+            } else if (ot == orientation_clockwise) {
+                return false;
+            } else if (ot == orientation_collinear_line) {
+                return false;
+            } else  {
+                return true;
+            }
+        } else {
+            // ot_p2_next == orienation_collinear_spike
+            // ot_p2_next == orienation_clockwise
+            // ot_p2_next == orienation_collinear_line
+            return true;
+        }
+    }
+}
+
+template <typename T>
+inline bool ccw_p1p2_prev_collinear_spike(point_ptr<T> const& origin, 
+                                          point_ptr<T> const& next, 
+                                          point_ptr<T> const& p1, 
+                                          point_ptr<T> const& p2) {
+
+    // we must compare the nexts to determine the order between the two.
+    orientation_type ot_p1_next = orientation_of_points(origin, next, p1->next);
+    orientation_type ot_p2_next = orientation_of_points(origin, next, p2->next);
+    if (ot_p1_next == orientation_collinear_spike) {
+        // p1 is a spike on origin next
+        if (ot_p2_next == orientation_collinear_spike) {
+            return true;
+        } else {
+            return false;
+        }
+    } else if (ot_p1_next == orientation_clockwise) {
+        if (ot_p2_next == orientation_collinear_spike) {
+            return false;
+        } else if (ot_p2_next == orientation_clockwise) {
+            // Both are clockwise we have to compare.
+            orientation_type ot = orientation_of_points(origin, p1->next, p2->next);
+            if (ot == orientation_collinear_spike) {
+                return true;
+            } else if (ot == orientation_clockwise) {
+                return true;
+            } else if (ot == orientation_collinear_line) {
+                return true;
+            } else  {
+                return false;
+            }
+        } else {
+            // ot_p2_next == orienation_collinear_line
+            // ot_p2_next == orienation_counter_clockwise
+            return true;
+        }
+    } else if (ot_p1_next == orientation_collinear_line) {
+        if (ot_p2_next == orientation_clockwise) {
+            return false;
+        } else {
+            // ot_p2_next == orienation_collinear_spike
+            // ot_p2_next == orienation_counter_clockwise
+            // ot_p2_next == orienation_collinear_line
+            return true;
+        }
+    } else {
+        // ot_p1_next == orientation_counter_clockwise
+        if (ot_p2_next == orientation_counter_clockwise) {
+            // Both are counter clockwise we have to compare.
+            orientation_type ot = orientation_of_points(origin, p1->next, p2->next);
+            if (ot == orientation_collinear_spike) {
+                return true;
+            } else if (ot == orientation_clockwise) {
+                return true;
+            } else if (ot == orientation_collinear_line) {
+                return true;
+            } else  {
+                return false;
+            }
+        } else {
+            // ot_p2_next == orienation_collinear_spike
+            // ot_p2_next == orienation_clockwise
+            // ot_p2_next == orienation_collinear_line
+            return false;
+        }
+    }
+}
+
+template <typename T>
+struct si_point_sorter {
+
+    point_ptr<T> origin;
+    point_ptr<T> next;
+    
+    si_point_sorter(point_ptr<T> origin_) : 
+        origin(origin_), 
+        next(origin_->next) {}
+
+    // Sorting order
+    //
+    // Primary Sort:
+    // * Left of next, right of previous
+    // * Right of next, left of previous
+    //
+    // Secondary Sort:
+    // * Magnitude of angle (direction based on primary sort)
+    //   between item's previous and origin's next
+
+    inline bool operator()(std::pair<point_ptr<T>,bool> const& pp1, std::pair<point_ptr<T>,bool> const& pp2) {
+        // Because a next must be paired with a previous, we are only
+        // caring first about previous segments for ordering
+        point_ptr<T> p1 = pp1.first;
+        point_ptr<T> p2 = pp2.first;
+        if (pp1.second != pp2.second) {
+            return pp2.second;
+        }
+
+        orientation_type ot_p1 = orientation_of_points(origin, next, p1->prev);
+        orientation_type ot_p2 = orientation_of_points(origin, next, p2->prev);
+        if (pp1.second) {
+            if (ot_p1 == orientation_collinear_spike) {
+                // p1 prev lines up with origin next
+                if (ot_p2 != orientation_collinear_spike) {
+                    // ot_p2 == orienation_clockwise
+                    // ot_p2 == orienation_collinear_line
+                    // ot_p2 == orienation_counter_clockwise
+                    return true;
+                } else {
+                    // ot_p2 == orientation_collinear_spike
+                    return cw_p1p2_prev_collinear_spike(origin, next, p1, p2);
+                }
+            } else if (ot_p1 == orientation_clockwise) {
+                if (ot_p2 == orientation_collinear_spike) {
+                    return false;
+                } else if (ot_p2 == orientation_clockwise) {
+                    orientation_type ot_p1p2 = orientation_of_points(origin, p1->prev, p2->prev);
+                    if (ot_p1p2 == orientation_collinear_spike) {
+                        // Both p1 prev and p2 prev are on top of each other
+                        return cw_p1p2_prev_collinear_spike(origin, next, p1, p2);
+                    } else if (ot_p1p2 == orientation_clockwise) {
+                        return true;
+                    } else {
+                        // ot_p1p2 == orientation_counter_clockwise
+                        // ot_p1p2 == orientation_collinear_line
+                        return false;
+                    }
+                } else {
+                    // ot_p2 == orientation_collinear_line
+                    // ot_p2 == orientation_counter_clockwise
+                    return true;
+                }
+            } else if (ot_p1 == orientation_collinear_line) {
+                if (ot_p2 == orientation_collinear_spike || ot_p2 == orientation_clockwise) {
+                    return false;
+                } else if (ot_p2 == orientation_collinear_line) {
+                    return cw_p1p2_prev_collinear_spike(origin, next, p1, p2);
+                } else {
+                    // ot_p2 == orientation_counter_clockwise
+                    return true;
+                }
+            } else {
+                // ot_p1 == orientation_counter_clockwise
+                if (ot_p2 == orientation_counter_clockwise) {
+                    orientation_type ot_p1p2 = orientation_of_points(origin, p1->prev, p2->prev);
+                    if (ot_p1p2 == orientation_collinear_spike) {
+                        // Both p1 prev and p2 prev are on top of each other
+                        return cw_p1p2_prev_collinear_spike(origin, next, p1, p2);
+                    } else if (ot_p1p2 == orientation_clockwise) {
+                        return true;
+                    } else {
+                        // ot_p1p2 == orientation_counter_clockwise
+                        // ot_p1p2 == orientation_collinear_line
+                        return false;
+                    }
+                } else {
+                    // ot_p2 == orientation_collinear_spike
+                    // ot_p2 == orientation_counter_clockwise
+                    // ot_p2 == orientation_collinear_line
+                    return false;
+                }
+            }
+        } else {
+            if (ot_p1 == orientation_collinear_spike) {
+                // p1 prev lines up with origin next
+                if (ot_p2 != orientation_collinear_spike) {
+                    // ot_p2 == orienation_clockwise
+                    // ot_p2 == orienation_collinear_line
+                    // ot_p2 == orienation_counter_clockwise
+                    return true;
+                } else {
+                    // ot_p2 == orientation_collinear_spike
+                    return ccw_p1p2_prev_collinear_spike(origin, next, p1, p2);
+                }
+            } else if (ot_p1 == orientation_clockwise) {
+                if (ot_p2 == orientation_collinear_spike) {
+                    return false;
+                } else if (ot_p2 == orientation_clockwise) {
+                    orientation_type ot_p1p2 = orientation_of_points(origin, p1->prev, p2->prev);
+                    if (ot_p1p2 == orientation_collinear_spike) {
+                        // Both p1 prev and p2 prev are on top of each other
+                        return ccw_p1p2_prev_collinear_spike(origin, next, p1, p2);
+                    } else if (ot_p1p2 == orientation_counter_clockwise) {
+                        return true;
+                    } else {
+                        // ot_p1p2 == orientation_clockwise
+                        // ot_p1p2 == orientation_collinear_line
+                        return false;
+                    }
+                } else {
+                    // ot_p2 == orientation_collinear_line
+                    // ot_p2 == orientation_counter_clockwise
+                    return false;
+                }
+            } else if (ot_p1 == orientation_collinear_line) {
+                if (ot_p2 == orientation_collinear_spike || ot_p2 == orientation_counter_clockwise) {
+                    return false;
+                } else if (ot_p2 == orientation_collinear_line) {
+                    return ccw_p1p2_prev_collinear_spike(origin, next, p1, p2);
+                } else {
+                    // ot_p2 == orientation_clockwise
+                    return true;
+                }
+            } else {
+                // ot_p1 == orientation_counter_clockwise
+                if (ot_p2 == orientation_collinear_spike) {
+                    return false;
+                } else if (ot_p2 == orientation_counter_clockwise) {
+                    orientation_type ot_p1p2 = orientation_of_points(origin, p1->prev, p2->prev);
+                    if (ot_p1p2 == orientation_collinear_spike) {
+                        // Both p1 prev and p2 prev are on top of each other
+                        return ccw_p1p2_prev_collinear_spike(origin, next, p1, p2);
+                    } else if (ot_p1p2 == orientation_counter_clockwise) {
+                        return true;
+                    } else {
+                        // ot_p1p2 == orientation_clockwise
+                        // ot_p1p2 == orientation_collinear_line
+                        return false;
+                    }
+                } else {
+                    // ot_p2 == orientation_clockwise
+                    // ot_p2 == orientation_collinear_line
+                    return true;
+                }
+            }
         }
     }
 };
 
 template <typename T>
-void build_angle_vector(angle_point_vector<T>& angle_points,
-                        ring_ptr<T> expected_ring,
-                        std::list<point_ptr<T>>& point_list,
-                        ring_manager<T>& rings) {
-    for (auto p = point_list.begin(); p != point_list.end();) {
-        if ((*p)->ring == nullptr || (expected_ring && (*p)->ring != expected_ring)) {
-            ++p;
+si_point_vector<T> build_si_point_vector(std::size_t first_index, 
+                                         std::size_t last_index,
+                                         std::size_t current_index,
+                                         ring_ptr<T> match_ring,
+                                         ring_manager<T>& rings) {
+    si_point_vector<T> point_vec;
+    point_ptr<T> origin = rings.all_points[current_index];
+    for (std::size_t j = first_index; j <= last_index; ++j) {
+        if (j == current_index) {
             continue;
         }
-        double next_angle = calculate_segment_angle_next(*p);
-        double prev_angle = calculate_segment_angle_prev(*p);
-        if (std::isnan(next_angle) || std::isnan(prev_angle)) {
-            ++p;
-            continue;
-        }
-        if (values_are_equal(next_angle, prev_angle)) {
-            point_ptr<T> spike = *p;
-            ring_ptr<T> spike_ring = spike->ring;
-            remove_spikes(spike);
-            p = point_list.erase(p);
-            if (spike == nullptr) {
-                spike_ring->area = std::numeric_limits<double>::quiet_NaN();
-                remove_ring(spike_ring, rings);
-            }
-        } else {
-            double dist_next_to_prev;
-            double dist_prev_to_next;
-            if (next_angle > prev_angle) {
-                dist_prev_to_next = next_angle - prev_angle;
-                dist_next_to_prev = (2.0 * M_PI) - dist_prev_to_next;
-            } else {
-                dist_next_to_prev = prev_angle - next_angle;
-                dist_prev_to_next = (2.0 * M_PI) - dist_next_to_prev;
-            }
-            angle_points.emplace_back(next_angle, dist_next_to_prev, *p, true);
-            angle_points.emplace_back(prev_angle, dist_prev_to_next, *p, false);
-            ++p;
+        point_ptr<T> op_j = rings.all_points[j];
+        if (op_j->ring == match_ring) {
+            bool clockwise = clockwise_of_next(origin, op_j);
+            point_vec.emplace_back(op_j, clockwise);
         }
     }
-    std::stable_sort(angle_points.begin(), angle_points.end(), segment_angle_sorter<T>());
+    return point_vec;
 }
 
 template <typename T>
-void find_repeated_point_pair(angle_point_vector<T>& angle_points,
-                              point_ptr<T> first_point,
-                              point_ptr<T>& point_1,
-                              point_ptr<T>& point_2) {
-
-    angle_point_vector<T> possible_match;
-    auto search_itr = angle_points.begin();
-
-    // Find if any angles that overlap perfectly - if so process them.
-    for (auto next_itr = std::next(search_itr); next_itr != angle_points.end();
-         ++next_itr, ++search_itr) {
-        if (values_are_equal(next_itr->angle, search_itr->angle) &&
-            values_are_equal(next_itr->distance, search_itr->distance)) {
-            while (next_itr->away == search_itr->away) {
-                ++next_itr;
-            }
-            point_1 = search_itr->pt;
-            point_2 = next_itr->pt;
-            return;
-        }
-    }
-
-    search_itr = angle_points.begin();
-
-    // Move itr to "first point"
-    while (search_itr->pt != first_point) {
-        ++search_itr;
-    }
-
-    angle_point<T> angle_1 = *search_itr;
-
-    // Now find next angle for the match
-    ++search_itr;
-    if (search_itr == angle_points.end()) {
-        search_itr = angle_points.begin();
-    }
-
-    // It is possible that we have the same angle here..
-    while (values_are_equal(angle_1.angle, search_itr->angle) && angle_1.away == search_itr->away) {
-        ++search_itr;
-        if (search_itr == angle_points.end()) {
-            search_itr = angle_points.begin();
-        }
-    }
-
-    // Find next point that is not the same
-    while (angle_1.pt == search_itr->pt) {
-        angle_1 = *search_itr;
-        ++search_itr;
-        if (search_itr == angle_points.end()) {
-            search_itr = angle_points.begin();
-        }
-    }
-
-    angle_point<T> angle_2 = *search_itr;
-
-    if (angle_1.away == angle_2.away) {
-        throw std::runtime_error("Paths would be crossing after self intersection processing");
-    }
-
-    point_1 = angle_1.pt;
-    point_2 = angle_2.pt;
-}
-
-template <typename T>
-void process_front_of_point_list(std::list<point_ptr<T>>& point_list,
-                                 std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring,
-                                 ring_manager<T>& rings) {
-    angle_point_vector<T> angle_points;
-    point_ptr<T> first_point = point_list.front();
-    assert(first_point != nullptr);
-    ring_ptr<T> r = first_point->ring;
-
-    if (r == nullptr) {
-        point_list.pop_front();
+void process_repeated_point_set(std::size_t first_index,
+                                std::size_t last_index,
+                                std::size_t current_index,
+                                std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring,
+                                ring_manager<T>& rings) {
+    point_ptr<T> point_1 = rings.all_points[current_index];
+    if (!point_1->ring) {
         return;
     }
 
-    build_angle_vector(angle_points, r, point_list, rings);
+    // Build point vector
+    si_point_vector<T> vec = build_si_point_vector(first_index, last_index, current_index, point_1->ring, rings);
 
-    if (first_point->ring == nullptr) {
+    if (vec.empty()) {
         return;
     }
-
-    if (angle_points.size() <= 2) {
-        point_list.pop_front();
-        return;
-    }
-
-    point_ptr<T> point_1 = nullptr;
-    point_ptr<T> point_2 = nullptr;
-    find_repeated_point_pair(angle_points, first_point, point_1, point_2);
+    
+    // Sort points in vector
+    std::stable_sort(vec.begin(), vec.end(), si_point_sorter<T>(point_1));
+    
+    point_ptr<T> point_2 = vec.front().first;
     handle_self_intersections(point_1, point_2, dupe_ring, rings);
 }
 
 template <typename T>
-void process_repeated_points(std::size_t repeated_point_count,
+void process_repeated_points(std::size_t first_index,
                              std::size_t last_index,
                              std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring,
                              ring_manager<T>& rings) {
-    std::list<point_ptr<T>> point_list = build_point_list(repeated_point_count, last_index, rings);
-    while (point_list.size() > 1) {
-        process_front_of_point_list(point_list, dupe_ring, rings);
+
+    for (std::size_t j = first_index; j <= last_index; ++j) {
+        process_repeated_point_set(first_index, last_index, j, dupe_ring, rings);      
     }
 
 #ifdef DEBUG
-    for (std::size_t j = (last_index - repeated_point_count - 1); j < last_index; ++j) {
+    for (std::size_t j = first_index; j <= last_index; ++j) {
         point_ptr<T> op_j = rings.all_points[j];
         if (!op_j->ring) {
             continue;
@@ -1232,18 +1597,18 @@ void process_repeated_points(std::size_t repeated_point_count,
 }
 
 template <typename T>
-bool process_chains(std::size_t repeated_point_count,
+bool process_chains(std::size_t first_index,
                     std::size_t last_index,
                     std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring,
                     ring_manager<T>& rings,
                     mapbox::geometry::point<T>& rewind_point) {
     bool rewind = false;
-    for (std::size_t j = (last_index - repeated_point_count - 1); j < last_index; ++j) {
+    for (std::size_t j = first_index; j <= last_index; ++j) {
         point_ptr<T> op_j = rings.all_points[j];
         if (!op_j->ring) {
             continue;
         }
-        for (std::size_t k = j + 1; k < last_index; ++k) {
+        for (std::size_t k = j + 1; k <= last_index; ++k) {
             point_ptr<T> op_k = rings.all_points[k];
             if (!op_k->ring || !op_j->ring) {
                 continue;
@@ -1258,18 +1623,18 @@ bool process_chains(std::size_t repeated_point_count,
 }
 
 template <typename T>
-bool process_collinear_edges(std::size_t repeated_point_count,
+bool process_collinear_edges(std::size_t first_index,
                              std::size_t last_index,
                              std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring,
                              ring_manager<T>& rings,
                              mapbox::geometry::point<T>& rewind_point) {
     bool rewind = false;
-    for (std::size_t j = (last_index - repeated_point_count - 1); j < last_index; ++j) {
+    for (std::size_t j = first_index; j <= last_index; ++j) {
         point_ptr<T> op_j = rings.all_points[j];
         if (!op_j->ring) {
             continue;
         }
-        for (std::size_t k = j + 1; k < last_index; ++k) {
+        for (std::size_t k = j + 1; k <= last_index; ++k) {
             point_ptr<T> op_k = rings.all_points[k];
             if (!op_k->ring || !op_j->ring) {
                 continue;
@@ -1332,14 +1697,16 @@ void do_simple_polygons(ring_manager<T>& rings) {
         if (count == 0) {
             continue;
         }
-        process_repeated_points(count, i, dupe_ring, rings);
+        std::size_t first_index = i - count - 1;
+        std::size_t last_index = i - 1;
+        process_repeated_points(first_index, last_index, dupe_ring, rings);
         mapbox::geometry::point<T> rewind_point(std::numeric_limits<T>::min(),
                                                 std::numeric_limits<T>::min());
         bool do_rewind = false;
-        if (process_chains(count, i, dupe_ring, rings, rewind_point)) {
+        if (process_chains(first_index, last_index, dupe_ring, rings, rewind_point)) {
             do_rewind = true;
         }
-        if (process_collinear_edges(count, i, dupe_ring, rings, rewind_point)) {
+        if (process_collinear_edges(first_index, last_index, dupe_ring, rings, rewind_point)) {
             do_rewind = true;
         }
         if (do_rewind) {
