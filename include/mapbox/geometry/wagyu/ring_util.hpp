@@ -224,14 +224,14 @@ void insert_hot_pixels_in_path(bound<T>& bnd,
     T end_x = end_pt.x;
 
     if (start_x > end_x) {
-        for (auto hp : rings.hot_pixels) {
+        for (auto & hp : rings.hot_pixels) {
             if (hp.first > start_y || hp.first < end_y) {
                 continue;
             }
             hot_pixel_set_right_to_left(hp.first, start_x, end_x, bnd, rings, hp.second);
         }
     } else {
-        for (auto hp : rings.hot_pixels) {
+        for (auto & hp : rings.hot_pixels) {
             if (hp.first > start_y || hp.first < end_y) {
                 continue;
             }

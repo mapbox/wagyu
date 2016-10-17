@@ -94,7 +94,7 @@ bool find_intersect_loop(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>
                          ring_manager<T>& rings) {
     auto range = dupe_ring.equal_range(ring_search);
     // Check for direct connection
-    for (auto it = range.first; it != range.second;) {
+    for (auto& it = range.first; it != range.second;) {
         ring_ptr<T> it_ring1 = it->second.op1->ring;
         ring_ptr<T> it_ring2 = it->second.op2->ring;
         if (!it_ring1 || !it_ring2 || it_ring1 != ring_search ||
@@ -113,7 +113,7 @@ bool find_intersect_loop(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>
     range = dupe_ring.equal_range(ring_search);
     visited.insert(ring_search);
     // Check for connection through chain of other intersections
-    for (auto it = range.first;
+    for (auto& it = range.first;
          it != range.second && it != dupe_ring.end() && it->first == ring_search; ++it) {
         ring_ptr<T> it_ring = it->second.op2->ring;
         if (visited.count(it_ring) > 0 || it_ring == nullptr ||
@@ -203,10 +203,10 @@ template <typename T>
 bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring,
                     point_ptr<T> op_j,
                     point_ptr<T> op_k,
-                    ring_ptr<T> ring_j,
-                    ring_ptr<T> ring_k,
                     ring_manager<T>& rings,
                     mapbox::geometry::point<T>& rewind_point) {
+    ring_ptr<T> ring_j = op_j->ring;
+    ring_ptr<T> ring_k = op_k->ring;
     if (ring_j == ring_k) {
         return false;
     }
@@ -263,7 +263,7 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
     std::list<std::pair<ring_ptr<T>, point_ptr_pair<T>>> iList;
     auto range = dupe_ring.equal_range(ring_search);
     // Check for direct connection
-    for (auto it = range.first; it != range.second;) {
+    for (auto& it = range.first; it != range.second;) {
         if (!it->second.op1->ring) {
             it = dupe_ring.erase(it);
             continue;
@@ -287,7 +287,7 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
         std::set<ring_ptr<T>> visited;
         visited.insert(ring_search);
         // Check for connection through chain of other intersections
-        for (auto it = range.first;
+        for (auto& it = range.first;
              it != range.second && it != dupe_ring.end() && it->first == ring_search; ++it) {
             ring_ptr<T> it_ring = it->second.op2->ring;
             if (it_ring != ring_search && *op_origin_2 != *it->second.op2 && it_ring != nullptr &&
@@ -340,16 +340,17 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
     op_origin_1_next->prev = op_origin_2;
     op_origin_2_next->prev = op_origin_1;
 
-    for (auto iRing : iList) {
+    for (auto & iRing : iList) {
         mapbox::geometry::point<T> possible_rewind_point = find_rewind_point(iRing.second.op2);
         if (possible_rewind_point.y > rewind_point.y ||
             (possible_rewind_point.y == rewind_point.y &&
              possible_rewind_point.x < rewind_point.x)) {
-            rewind_point = possible_rewind_point;
+            rewind_point.x = possible_rewind_point.x;
+            rewind_point.y = possible_rewind_point.y;
         }
     }
 
-    for (auto iRing : iList) {
+    for (auto & iRing : iList) {
         point_ptr<T> op_search_1 = iRing.second.op1;
         point_ptr<T> op_search_2 = iRing.second.op2;
         point_ptr<T> op_search_1_next = op_search_1->next;
@@ -450,10 +451,10 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
 
     std::list<std::pair<ring_ptr<T>, point_ptr_pair<T>>> move_list;
 
-    for (auto iRing : iList) {
+    for (auto& iRing : iList) {
         auto range_itr = dupe_ring.equal_range(iRing.first);
         if (range_itr.first != range_itr.second) {
-            for (auto it = range_itr.first; it != range_itr.second; ++it) {
+            for (auto& it = range_itr.first; it != range_itr.second; ++it) {
                 ring_ptr<T> it_ring = it->second.op1->ring;
                 ring_ptr<T> it_ring2 = it->second.op2->ring;
                 if (it_ring == nullptr || it_ring2 == nullptr || it_ring == it_ring2) {
@@ -468,7 +469,7 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
     }
 
     auto range_itr = dupe_ring.equal_range(ring_origin);
-    for (auto it = range_itr.first; it != range_itr.second;) {
+    for (auto& it = range_itr.first; it != range_itr.second;) {
         ring_ptr<T> it_ring = it->second.op1->ring;
         ring_ptr<T> it_ring2 = it->second.op2->ring;
         if (it_ring == nullptr || it_ring2 == nullptr || it_ring == it_ring2) {
@@ -516,7 +517,7 @@ void update_duplicate_point_entries(
     ring_ptr<T> ring, std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring) {
     auto range = dupe_ring.equal_range(ring);
     std::list<std::pair<ring_ptr<T>, point_ptr_pair<T>>> move_list;
-    for (auto it = range.first; it != range.second;) {
+    for (auto& it = range.first; it != range.second;) {
         ring_ptr<T> it_ring = it->second.op1->ring;
         ring_ptr<T> it_ring_2 = it->second.op2->ring;
         if (it_ring == nullptr || it_ring_2 == nullptr) {
@@ -889,7 +890,8 @@ bool handle_collinear_edges(point_ptr<T> pt1,
     }
     if (possible_rewind.y > rewind_point.y ||
         (possible_rewind.y == rewind_point.y && possible_rewind.x < rewind_point.x)) {
-        rewind_point = possible_rewind;
+        rewind_point.x = possible_rewind.x;
+        rewind_point.y = possible_rewind.y;
     }
 
     // swap points
@@ -1582,7 +1584,7 @@ void process_repeated_points(std::size_t first_index,
                         "Created a ring with a parent having the same orientation (sign of area)");
                 }
             }
-            for (auto c : op_j->ring->children) {
+            for (auto& c : op_j->ring->children) {
                 double c_area = area(c);
                 bool c_is_positive = c_area > 0.0;
                 bool c_is_zero = value_is_zero(c_area);
@@ -1613,7 +1615,7 @@ bool process_chains(std::size_t first_index,
             if (!op_k->ring || !op_j->ring) {
                 continue;
             }
-            if (fix_intersects(dupe_ring, op_j, op_k, op_j->ring, op_k->ring, rings,
+            if (fix_intersects(dupe_ring, op_j, op_k, rings,
                                rewind_point)) {
                 rewind = true;
             }
@@ -1654,6 +1656,7 @@ bool index_is_after_point(std::size_t const& i,
     if (i == 0) {
         return false;
     }
+
     if (rings.all_points[i]->y < pt.y) {
         return true;
     } else if (rings.all_points[i]->y > pt.y) {
@@ -1666,8 +1669,8 @@ bool index_is_after_point(std::size_t const& i,
 }
 
 template <typename T>
-void rewind_to_point(std::size_t& i, mapbox::geometry::point<T>& pt, ring_manager<T> const& rings) {
-    if (i <= rings.all_rings.size()) {
+void rewind_to_point(std::size_t& i, mapbox::geometry::point<T> const& pt, ring_manager<T> const& rings) {
+    if (i >= rings.all_rings.size()) {
         i = rings.all_rings.size() - 1;
     }
     while (index_is_after_point(i, pt, rings)) {
