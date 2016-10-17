@@ -378,7 +378,6 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         if (!r->points || r->is_open) {
             continue;
         }
-        // fix_hole_linkage(r);
         fixup_out_polygon(*r, rings, false);
         if (ring_is_hole(r) == (area(r) > 0.0)) {
             reverse_ring(r->points);

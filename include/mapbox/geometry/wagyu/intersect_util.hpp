@@ -135,6 +135,8 @@ void add_extra_hot_pixels(T top_y,
             }
             bnd_itr->current_edge = &(*edge_itr);
             bnd_itr->current_x = bnd_itr->current_edge->bot.x;
+            mapbox::geometry::point<T> hp(bnd_itr->current_edge->bot.x, top_y);
+            add_to_hot_pixels(hp, rings);
         }
         ++bnd_itr;
     }

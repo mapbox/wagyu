@@ -180,6 +180,9 @@ bool ring_is_hole(ring_ptr<T> r) {
     while (r->parent) {
         depth++;
         r = r->parent;
+        if (depth > 10000) {
+            throw std::runtime_error("Well this sucks");
+        }
     }
     return depth & 1;
 }
