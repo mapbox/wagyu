@@ -48,7 +48,7 @@ script:
    else
      make test
    fi
-- |
+ - |
    if [[ ${COVERAGE} == 'true' ]]; then
      which llvm-cov
      curl -S -f https://codecov.io/bash -o codecov
