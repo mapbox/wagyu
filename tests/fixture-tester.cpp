@@ -1,13 +1,19 @@
-#include "rapidjson/writer.h"
 #include "util/boost_geometry_adapters.hpp"
 #include <cstdio>
 #include <iostream>
 #include <mapbox/geometry/polygon.hpp>
 #include <mapbox/geometry/wagyu/wagyu.hpp>
 #include <ostream>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunknown-pragmas" // clang+gcc
+#pragma GCC diagnostic ignored "-Wpragmas" // gcc
+#pragma GCC diagnostic ignored "-Wexpansion-to-defined"
+#include "rapidjson/writer.h"
 #include <rapidjson/document.h>
 #include <rapidjson/filereadstream.h>
 #include <rapidjson/filewritestream.h>
+#pragma GCC diagnostic pop
 
 using namespace rapidjson;
 using namespace mapbox::geometry::wagyu;
