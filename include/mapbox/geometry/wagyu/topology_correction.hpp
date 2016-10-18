@@ -1123,11 +1123,10 @@ bool clockwise_of_next(point_ptr<T> const& origin, point_ptr<T> pt) {
             // We need to check which is after "origin->next" traveling
             // clockwise -- origin->prev or pt->prev
             orientation_type ot_prev_prev = orientation_of_points(origin, origin->prev, pt->prev);
-            if (ot_prev_prev == orientation_clockwise) {
+            if (ot_prev_prev == orientation_clockwise || ot_prev_prev == orientation_collinear_spike) {
                 // pt->prev is before this, so.. between the two.
                 return false;   
             } else {
-                // ot_prev_prev == orientation_collinear_spike
                 // ot_prev_prev == orientation_clockwise
                 // ot_prev_prev == orientation_collinear_line
                 return true;
@@ -1536,7 +1535,7 @@ void process_repeated_point_set(std::size_t first_index,
         return;
     }
 
-    //std::clog << "-----------------------" << std::endl;
+    // std::clog << "-----------------------" << std::endl;
     // Build point vector
     si_point_vector<T> vec = build_si_point_vector(first_index, last_index, current_index, point_1->ring, rings);
 
@@ -1544,12 +1543,12 @@ void process_repeated_point_set(std::size_t first_index,
         return;
     }
     
-    //std::clog << "----------" << std::endl;
+    // std::clog << "----------" << std::endl;
     // Sort points in vector
     std::stable_sort(vec.begin(), vec.end(), si_point_sorter<T>(point_1));
     
-    //std::clog << output_si_angles(point_1) << std::endl;
-    //std::clog << vec << std::endl;
+    // std::clog << output_si_angles(point_1) << std::endl;
+    // std::clog << vec << std::endl;
 
     point_ptr<T> point_2 = vec.front().first;
     handle_self_intersections(point_1, point_2, dupe_ring, rings);

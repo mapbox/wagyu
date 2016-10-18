@@ -156,13 +156,16 @@ inline T get_edge_max_x(edge<T> const& edge, const T current_y) {
 
 template <typename T>
 void hot_pixel_set_left_to_right(
-    T y, T start_x, T end_x, bound<T>& bnd, ring_manager<T>& rings, hot_pixel_set<T>& set) {
+    T y, T start_x, T end_x, bound<T>& bnd, ring_manager<T>& rings, hot_pixel_set<T>& set, bool add_end_point) {
     T x_min = get_edge_min_x(*(bnd.current_edge), y);
     x_min = std::max(x_min, start_x);
     T x_max = get_edge_max_x(*(bnd.current_edge), y);
     x_max = std::min(x_max, end_x);
     for (auto itr = set.begin(); itr != set.end(); ++itr) {
         if (*itr > x_max || *itr < x_min) {
+            continue;
+        }
+        if (!add_end_point && *itr == end_x) {
             continue;
         }
         mapbox::geometry::point<T> pt(*itr, y);
@@ -182,13 +185,17 @@ void hot_pixel_set_left_to_right(
 
 template <typename T>
 void hot_pixel_set_right_to_left(
-    T y, T start_x, T end_x, bound<T>& bnd, ring_manager<T>& rings, hot_pixel_set<T>& set) {
+    T y, T start_x, T end_x, bound<T>& bnd, ring_manager<T>& rings, hot_pixel_set<T>& set,
+    bool add_end_point) {
     T x_min = get_edge_min_x(*(bnd.current_edge), y);
     x_min = std::max(x_min, end_x);
     T x_max = get_edge_max_x(*(bnd.current_edge), y);
     x_max = std::min(x_max, start_x);
     for (auto itr = set.rbegin(); itr != set.rend(); ++itr) {
         if (*itr > x_max || *itr < x_min) {
+            continue;
+        }
+        if (!add_end_point && *itr == end_x) {
             continue;
         }
         mapbox::geometry::point<T> pt(*itr, y);
@@ -209,7 +216,8 @@ void hot_pixel_set_right_to_left(
 template <typename T>
 void insert_hot_pixels_in_path(bound<T>& bnd,
                                mapbox::geometry::point<T> const& end_pt,
-                               ring_manager<T>& rings) {
+                               ring_manager<T>& rings,
+                               bool add_end_point) {
     if (end_pt == bnd.last_point) {
         return;
     }
@@ -228,14 +236,16 @@ void insert_hot_pixels_in_path(bound<T>& bnd,
             if (hp.first > start_y || hp.first < end_y) {
                 continue;
             }
-            hot_pixel_set_right_to_left(hp.first, start_x, end_x, bnd, rings, hp.second);
+            bool add_end_point_itr = (hp.first != end_pt.y || add_end_point);
+            hot_pixel_set_right_to_left(hp.first, start_x, end_x, bnd, rings, hp.second, add_end_point_itr);
         }
     } else {
         for (auto & hp : rings.hot_pixels) {
             if (hp.first > start_y || hp.first < end_y) {
                 continue;
             }
-            hot_pixel_set_left_to_right(hp.first, start_x, end_x, bnd, rings, hp.second);
+            bool add_end_point_itr = (hp.first != end_pt.y || add_end_point);
+            hot_pixel_set_left_to_right(hp.first, start_x, end_x, bnd, rings, hp.second, add_end_point_itr);
         }
     }
     bnd.last_point = end_pt;
@@ -294,7 +304,7 @@ void add_point_to_ring(bound<T>& bnd,
                        ring_manager<T>& rings) {
     assert(bnd.ring);
     // Handle hot pixels
-    insert_hot_pixels_in_path(bnd, pt, rings);
+    insert_hot_pixels_in_path(bnd, pt, rings, false);
 
     // bnd.ring->points is the 'Left-most' point & bnd.ring->points->prev is the
     // 'Right-most'
@@ -305,7 +315,6 @@ void add_point_to_ring(bound<T>& bnd,
     } else if (!to_front && (pt == *op->prev)) {
         return;
     }
-
     point_ptr<T> new_point = create_new_point(bnd.ring, pt, bnd.ring->points, rings);
     if (to_front) {
         bnd.ring->points = new_point;
@@ -371,16 +380,6 @@ void add_local_minimum_point(active_bound_list_itr<T> b1,
             prev_bound = prev_b1;
         } else {
             prev_bound = prev_b2;
-        }
-    }
-
-    if (prev_bound != active_bounds.rend() && (*prev_bound)->ring) {
-        T x_prev = std::llround(get_current_x(*((*prev_bound)->current_edge), pt.y));
-        T x_bound = std::llround(get_current_x(*((*b)->current_edge), pt.y));
-        if (x_prev == x_bound && (*b)->winding_delta != 0 && (*prev_bound)->winding_delta != 0 &&
-            slopes_equal(mapbox::geometry::point<T>(x_prev, pt.y), (*prev_bound)->current_edge->top,
-                         mapbox::geometry::point<T>(x_bound, pt.y), (*b)->current_edge->top)) {
-            add_point(prev_bound, active_bounds, pt, rings);
         }
     }
 }
@@ -625,7 +624,7 @@ void add_local_maximum_point(active_bound_list_itr<T>& b1,
                              mapbox::geometry::point<T> const& pt,
                              ring_manager<T>& rings,
                              active_bound_list<T>& active_bounds) {
-    insert_hot_pixels_in_path(*(*b2), pt, rings);
+    insert_hot_pixels_in_path(*(*b2), pt, rings, false);
     add_point(b1, active_bounds, pt, rings);
     if ((*b2)->winding_delta == 0) {
         add_point(b2, active_bounds, pt, rings);

@@ -23,8 +23,8 @@ do
         for filltype in even_odd non_zero positive negative
         do
             $TESTER -t $type -f $filltype \
-                ./tests/fixtures/clip-clockwise-square.json \
                 ./tests/geometry-test-data/input-polyjson/$filename \
+                ./tests/fixtures/clip-clockwise-square.json \
                 1>./tests/output-polyjson/$type-$filename;
 
             # Check exit code of last command
@@ -32,7 +32,7 @@ do
                 PASSES=$((PASSES + 1))
             else
                 echo --- Test failure: $type $filltype $filename
-                echo $TESTER -t $type -f $filltype ./tests/fixtures/clip-clockwise-square.json ./tests/geometry-test-data/input-polyjson/$filename
+                echo $TESTER -t $type -f $filltype ./tests/geometry-test-data/input-polyjson/$filename ./tests/fixtures/clip-clockwise-square.json 
                 FAILS=$((FAILS + 1))
             fi
         done

@@ -49,8 +49,8 @@ public:
     bool add_polygon(mapbox::geometry::polygon<value_type> const& ppg,
                      polygon_type p_type = polygon_type_subject) {
         bool result = false;
-        for (std::size_t i = 0; i < ppg.size(); ++i) {
-            if (add_ring(ppg[i], p_type)) {
+        for (auto const& r : ppg) {
+            if (add_ring(r, p_type)) {
                 result = true;
             }
         }

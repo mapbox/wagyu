@@ -123,7 +123,7 @@ void process_edges_at_top_of_scanbeam(T top_y,
         } else {
             // 2. Promote horizontal edges.
             if (is_intermediate(bnd, top_y) && next_edge_is_horizontal<T>(bnd)) {
-                insert_hot_pixels_in_path(*(*bnd), (*bnd)->current_edge->top, rings);
+                insert_hot_pixels_in_path(*(*bnd), (*bnd)->current_edge->top, rings, false);
                 next_edge_in_bound(bnd, scanbeam);
                 if ((*bnd)->ring) {
                     add_point_to_ring(*(*bnd), (*bnd)->current_edge->bot, rings);
@@ -152,7 +152,7 @@ void process_edges_at_top_of_scanbeam(T top_y,
             if ((*bnd)->ring) {
                 add_point_to_ring(*(*bnd), (*bnd)->current_edge->top, rings);
             }
-            insert_hot_pixels_in_path(*(*bnd), (*bnd)->current_edge->top, rings);
+            insert_hot_pixels_in_path(*(*bnd), (*bnd)->current_edge->top, rings, false);
             next_edge_in_bound(bnd, scanbeam);
         }
     }
@@ -276,7 +276,7 @@ void update_hotpixels_to_scanline(T scanline_y,
     for (auto bnd : active_bounds) {
         mapbox::geometry::point<T> scanline_point(
             std::llround(get_current_x(*(bnd->current_edge), scanline_y)), scanline_y);
-        insert_hot_pixels_in_path(*bnd, scanline_point, rings);
+        insert_hot_pixels_in_path(*bnd, scanline_point, rings, true);
     }
 }
 

@@ -98,6 +98,7 @@ void parse_file(const char* file_path, wagyu<value_type>& clipper, polygon_type 
         throw std::runtime_error(("Input file (" + std::string(file_path) + ") is not valid json"));
     }
     // todo catch parsing errors
+    mapbox::geometry::polygon<value_type> poly;
     for (SizeType i = 0; i < document.Size(); ++i) {
         mapbox::geometry::linear_ring<value_type> lr;
 
@@ -108,8 +109,9 @@ void parse_file(const char* file_path, wagyu<value_type>& clipper, polygon_type 
         for (SizeType j = 0; j < document[i].Size(); ++j) {
             lr.push_back({ document[i][j][0].GetInt(), document[i][j][1].GetInt() });
         }
-        clipper.add_ring(lr, polytype);
+        poly.emplace_back(lr);
     }
+    clipper.add_polygon(poly, polytype);
 
     fclose(file);
 }
@@ -201,7 +203,9 @@ int main(int argc, char* const argv[]) {
 
     wagyu<value_type> clipper;
     parse_file(options.subject_file, clipper, polygon_type_subject);
-    parse_file(options.clip_file, clipper, polygon_type_clip);
+    if (options.clip_file != NULL) {
+        parse_file(options.clip_file, clipper, polygon_type_clip);
+    }
 
     mapbox::geometry::multi_polygon<value_type> solution;
     clipper.execute(options.operation, solution, options.fill, fill_type_even_odd);
