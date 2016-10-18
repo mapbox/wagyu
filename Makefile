@@ -47,6 +47,7 @@ fuzzer: build-fuzzer
 
 clean:
 	rm -f test
+	rm -f fuzzer
 	rm -f fixture-tester
 	rm -rf ./mason_packages
 
