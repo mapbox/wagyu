@@ -853,7 +853,6 @@ bool handle_collinear_edges(point_ptr<T> pt1,
                             mapbox::geometry::point<T>& rewind_point) {
     ring_ptr<T> ring1 = pt1->ring;
     ring_ptr<T> ring2 = pt2->ring;
-
     if (ring1 == ring2) {
         return false;
     }
@@ -926,6 +925,11 @@ bool handle_collinear_edges(point_ptr<T> pt1,
             remove_ring(ring2, rings);
             return false;
         }
+        // We could have removed pt1 during this process..
+        // if we did we need to reassign pt2 to pt1
+        if (!pt1->ring) {
+            pt1 = pt2;
+        }
     }
     ring1->points = pt1;
     ring2->points = nullptr;
@@ -937,7 +941,6 @@ bool handle_collinear_edges(point_ptr<T> pt1,
         ring1_replaces_ring2(ring1, ring2, rings);
     }
     update_points_ring(ring1);
-
     update_duplicate_point_entries(ring2, dupe_ring);
 
     return true;
