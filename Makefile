@@ -46,6 +46,7 @@ fuzzer: build-fuzzer
 	./fuzzer
 
 clean:
+	rm -rf *dSYM
 	rm -f test
 	rm -f fuzzer
 	rm -f fixture-tester
