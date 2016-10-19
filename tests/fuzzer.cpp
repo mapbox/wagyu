@@ -189,8 +189,10 @@ void print_fill_type(mapbox::geometry::wagyu::fill_type ft) {
 
 int main() {
     unsigned seed = time(0);
+    std::size_t count = 0;
     srand(seed);
-
+    
+    std::clog << std::endl;
     for (size_t iteration = 0;; iteration++) {
         std::size_t len = std::rand() % 50 + 3;
 
@@ -221,8 +223,8 @@ int main() {
                     polygon.emplace_back(ring);
                     --num_rings;
                 }
-
-                std::clog << ".";
+                ++count;
+                std::clog << "\r Number of Tests: " << count << std::flush;
                 clipper.add_polygon(polygon, mapbox::geometry::wagyu::polygon_type_subject);
                 mapbox::geometry::multi_polygon<std::int64_t> solution;
                 try {
