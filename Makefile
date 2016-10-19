@@ -49,6 +49,8 @@ clean:
 	rm -f test
 	rm -f fuzzer
 	rm -f fixture-tester
+
+distclean: clean
 	rm -rf ./mason_packages
 
 indent:
