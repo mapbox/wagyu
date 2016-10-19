@@ -48,6 +48,9 @@ coverage: Makefile
 fuzzer: build-fuzzer
 	./fuzzer
 
+# avoids fuzzer getting deleted by make when it fails
+.PRECIOUS: fuzzer
+
 clean:
 	rm -rf *dSYM
 	rm -f test
