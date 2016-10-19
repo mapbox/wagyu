@@ -129,12 +129,12 @@ void ring1_sibling_of_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2, ring_manager<T
     } else {
         ring1->parent->children.remove(ring1);
     }
-    ring1->parent = ring2->parent;
-    if (ring1->parent == nullptr) {
+    if (ring2->parent == nullptr) {
         manager.children.push_back(ring1);
     } else {
         ring2->parent->children.push_back(ring1);
     }
+    ring1->parent = ring2->parent;
 }
 
 template <typename T>
@@ -180,9 +180,6 @@ bool ring_is_hole(ring_ptr<T> r) {
     while (r->parent) {
         depth++;
         r = r->parent;
-        if (depth > 10000) {
-            throw std::runtime_error("Well this sucks");
-        }
     }
     return depth & 1;
 }
