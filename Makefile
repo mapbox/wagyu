@@ -42,6 +42,9 @@ debug: build-debug build-fixture-tester
 	./test
 	./tests/run-geometry-tests.sh ./fixture-tester
 
+coverage: Makefile
+	./scripts/coverage.sh
+
 fuzzer: build-fuzzer
 	./fuzzer
 
