@@ -151,6 +151,20 @@ bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry, edge
     if (edges.size() < 3) {
         return false;
     }
+    auto & f = edges.front();
+    auto & b = edges.back();
+    if (slopes_equal(f, b)) {
+        if (f.bot == b.top) {
+            f.bot = b.bot;
+        } else {
+            // f.top == b.bot
+            f.top = b.top;
+        }
+        edges.pop_back();
+    }
+    if (edges.size() < 3) {
+        return false;
+    }
     return true;
 }
 }
