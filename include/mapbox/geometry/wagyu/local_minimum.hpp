@@ -65,11 +65,10 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
     } else {
         out << "    minimum_has_horizontal: false" << std::endl;
     }
-    /*out << "   left_bound: " << std::endl;
+    out << "   left_bound: " << std::endl;
     out << lm.left_bound << std::endl;
     out << "   right_bound: " << std::endl;
     out << lm.right_bound << std::endl;
-    */
     return out;
 }
 

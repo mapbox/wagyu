@@ -89,11 +89,18 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
 template <class charT, class traits, typename T>
 inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
                                                      edge_list<T> const& edges) {
-    std::size_t c = 0;
+    out << "[";
+    bool first = true;
     for (auto const& e : edges) {
-        out << "Index: " << c++ << std::endl;
-        out << e;
+        if (first) {
+            first = false;
+        } else {
+            out << ",";
+        }
+        out << "[[" << e.bot.x << "," << e.bot.y << "],[";
+        out << e.top.x << "," << e.top.y << "]]";
     }
+    out << "]";
     return out;
 }
 
