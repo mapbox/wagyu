@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <list>
 #include <map>
+#include <set>
 #include <vector>
 
 #include <mapbox/geometry/wagyu/point.hpp>
