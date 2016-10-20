@@ -149,9 +149,9 @@ void ring1_replaces_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2, ring_manager<T>&
         c->parent = ring1;
     }
     if (ring1 == nullptr) {
-        manager.children.merge(ring2->children);
+        manager.children.splice(manager.children.end(), ring2->children);
     } else {
-        ring1->children.merge(ring2->children);
+        ring1->children.splice(ring1->children.end(), ring2->children);
     }
     ring2->parent = nullptr;
 }
@@ -163,13 +163,13 @@ void remove_ring(ring_ptr<T> r, ring_manager<T>& manager) {
         for (auto& c : r->children) {
             c->parent = nullptr;
         }
-        manager.children.merge(r->children);
+        manager.children.splice(manager.children.end(), r->children);
     } else {
         r->parent->children.remove(r);
         for (auto& c : r->children) {
             c->parent = r->parent;
         }
-        r->parent->children.merge(r->children);
+        r->parent->children.splice(r->parent->children.end(), r->children);
         r->parent = nullptr;
     }
 }
