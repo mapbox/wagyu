@@ -17,5 +17,5 @@ A self intersection is an instance where two points belong to the same ring. Eac
 
 Example of a self intersection:
 
-![Simple self Intersection](/images/simple_self_intersection.png)
+![Simple self Intersection](/docs/images/simple_self_intersection.png)
 
