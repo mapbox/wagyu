@@ -16,14 +16,12 @@ struct sorting_bound {
 
     active_bound_list_itr<T> bound;
     edge_ptr<T> current_edge;
-    std::size_t index;
     double current_x;
 
     sorting_bound(active_bound_list_itr<T> bound_,
                   edge_ptr<T> current_edge_,
-                  std::size_t index_,
                   double current_x_)
-        : bound(bound_), current_edge(current_edge_), index(index_), current_x(current_x_) {
+        : bound(bound_), current_edge(current_edge_), current_x(current_x_) {
     }
 };
 
@@ -32,13 +30,6 @@ using sorting_bound_list = std::list<sorting_bound<T>>;
 
 template <typename T>
 using sorting_bound_list_itr = typename sorting_bound_list<T>::iterator;
-
-template <typename T>
-struct sorting_bound_index_sorter {
-    inline bool operator()(sorting_bound<T> const& bound1, sorting_bound<T> const& bound2) {
-        return bound2.index > bound1.index;
-    }
-};
 
 template <typename T>
 struct sorting_bound_current_sorter {
@@ -73,7 +64,7 @@ sorting_bound_list_itr<T> insert_bound_into_SBL(bound<T>& bnd,
         ++itr;
     }
     edge_ptr<T> e = &*(bnd.current_edge);
-    return sorted_bound_list.insert(itr, sorting_bound<T>(ab_itr, e, 0, e->bot.x));
+    return sorted_bound_list.insert(itr, sorting_bound<T>(ab_itr, e, e->bot.x));
 }
 
 #ifdef DEBUG

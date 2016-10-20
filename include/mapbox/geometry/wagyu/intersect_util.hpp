@@ -18,10 +18,10 @@ struct intersect_list_sorter {
         if (!values_are_equal(node2.pt.y, node1.pt.y)) {
             return node2.pt.y < node1.pt.y;
         } else {
-            return ((*node2.bound1->bound)->winding_count2 +
-                    (*node2.bound2->bound)->winding_count2) >
-                   ((*node1.bound1->bound)->winding_count2 +
-                    (*node1.bound2->bound)->winding_count2);
+            return ((*node2.bound1)->winding_count2 +
+                    (*node2.bound2)->winding_count2) >
+                   ((*node1.bound1)->winding_count2 +
+                    (*node1.bound2)->winding_count2);
         }
     }
 };
@@ -192,7 +192,7 @@ void build_intersect_list(sorting_bound_list<T>& sorted_bound_list,
                     throw std::runtime_error(
                         "Trying to find intersection of lines that do not intersect");
                 }
-                intersects.emplace_back(bnd, bnd_next, pt);
+                intersects.emplace_back(bnd->bound, bnd_next->bound, pt);
                 mapbox::geometry::point<T> hp(std::llround(pt.x), std::llround(pt.y));
                 add_to_hot_pixels(hp, rings);
                 swap_positions_in_SBL(bnd, bnd_next, sorted_bound_list);
@@ -204,42 +204,6 @@ void build_intersect_list(sorting_bound_list<T>& sorted_bound_list,
             }
         }
     } while (isModified);
-}
-
-template <typename T>
-bool bounds_adjacent(intersect_node<T> const& inode) {
-    return (std::next(inode.bound1) == inode.bound2) || (std::next(inode.bound2) == inode.bound1);
-}
-
-template <typename T>
-void fixup_intersection_order(sorting_bound_list<T>& sorted_bound_list,
-                              intersect_list<T>& intersects) {
-    // Precondition: Intersections are sorted bottom-most first.
-    // It's crucial that intersections are only made between adjacent bounds,
-    // so reorder the intersections to ensure this if necessary.
-
-    // resort sorted bound list to the same as the active bound list
-    sorted_bound_list.sort(sorting_bound_index_sorter<T>());
-
-    // Sort the intersection list
-    std::stable_sort(intersects.begin(), intersects.end(), intersect_list_sorter<T>());
-
-    std::size_t n = intersects.size();
-    for (std::size_t i = 0; i < n; ++i) {
-        if (!bounds_adjacent(intersects[i])) {
-            std::size_t j = i + 1;
-            while (j < n && !bounds_adjacent(intersects[j])) {
-                j++;
-            }
-            if (j == n) {
-                // Intersection could not be made adjacent
-                throw clipper_exception("Unable to fixup intersection order!");
-            }
-            std::swap(intersects[i], intersects[j]);
-        }
-        swap_positions_in_SBL(intersects[i].bound1, intersects[i].bound2, sorted_bound_list);
-    }
-    return;
 }
 
 template <typename T>
@@ -463,9 +427,9 @@ void process_intersect_list(intersect_list<T>& intersects,
                             active_bound_list<T>& active_bounds) {
     for (auto& node : intersects) {
         mapbox::geometry::point<T> pt(std::llround(node.pt.x), std::llround(node.pt.y));
-        intersect_bounds(node.bound1->bound, node.bound2->bound, pt, cliptype, subject_fill_type,
+        intersect_bounds(node.bound1, node.bound2, pt, cliptype, subject_fill_type,
                          clip_fill_type, rings, active_bounds);
-        swap_positions_in_ABL(node.bound1->bound, node.bound2->bound, active_bounds);
+        swap_positions_in_ABL(node.bound1, node.bound2, active_bounds);
     }
 }
 
@@ -479,25 +443,25 @@ void process_intersections(T top_y,
                            fill_type clip_fill_type,
                            ring_manager<T>& rings) {
     sorting_bound_list<T> sorted_bound_list;
-    std::size_t index = 0;
     // create sorted edge list from AEL
     for (auto bnd_itr = active_bounds.begin(); bnd_itr != active_bounds.end(); ++bnd_itr) {
         double curr_x = get_current_x(*((*bnd_itr)->current_edge), top_y);
         (*bnd_itr)->curr.x = curr_x;
-        sorted_bound_list.emplace_back(bnd_itr, &(*((*bnd_itr)->current_edge)), index, curr_x);
-        ++index;
+        sorted_bound_list.emplace_back(bnd_itr, &(*((*bnd_itr)->current_edge)), curr_x);
     }
+
     intersect_list<T> intersects;
     build_intersect_list(sorted_bound_list, intersects, rings);
+
     if (intersects.empty()) {
         add_extra_hot_pixels(top_y, minima_sorted, current_lm, sorted_bound_list, rings);
         return;
     }
-    sorting_bound_list<T> sorted_bound_list2 = sorted_bound_list;
-    if (intersects.size() > 1) {
-        fixup_intersection_order(sorted_bound_list, intersects);
-    }
-    add_extra_hot_pixels(top_y, minima_sorted, current_lm, sorted_bound_list2, rings);
+
+    // Sort the intersection list
+    std::stable_sort(intersects.begin(), intersects.end(), intersect_list_sorter<T>());
+    
+    add_extra_hot_pixels(top_y, minima_sorted, current_lm, sorted_bound_list, rings);
 
     process_intersect_list(intersects, cliptype, subject_fill_type, clip_fill_type, rings,
                            active_bounds);

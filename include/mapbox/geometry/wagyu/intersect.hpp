@@ -4,7 +4,7 @@
 
 #include <mapbox/geometry/point.hpp>
 
-#include <mapbox/geometry/wagyu/sorted_bound_list.hpp>
+#include <mapbox/geometry/wagyu/active_bound_list.hpp>
 
 #ifdef DEBUG
 #include <iostream>
@@ -17,12 +17,12 @@ namespace wagyu {
 template <typename T>
 struct intersect_node {
 
-    sorting_bound_list_itr<T> bound1;
-    sorting_bound_list_itr<T> bound2;
+    active_bound_list_itr<T> bound1;
+    active_bound_list_itr<T> bound2;
     mapbox::geometry::point<double> pt;
 
-    intersect_node(sorting_bound_list_itr<T> const& bound1_,
-                   sorting_bound_list_itr<T> const& bound2_,
+    intersect_node(active_bound_list_itr<T> const& bound1_,
+                   active_bound_list_itr<T> const& bound2_,
                    mapbox::geometry::point<double> const& pt_)
         : bound1(bound1_), bound2(bound2_), pt(pt_) {
     }

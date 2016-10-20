@@ -58,7 +58,7 @@ template <typename T>
 using hot_pixel_set = std::set<T>;
 
 template <typename T>
-using hot_pixel_map = std::map<T, std::set<T>, std::greater<T>>;
+using hot_pixel_map = std::map<T, hot_pixel_set<T>, std::greater<T>>;
 
 template <typename T>
 struct ring_manager {
