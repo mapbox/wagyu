@@ -191,7 +191,7 @@ int main() {
     unsigned seed = time(0);
     std::size_t count = 0;
     srand(seed);
-    
+
     std::clog << std::endl;
     for (size_t iteration = 0;; iteration++) {
         std::size_t len = std::rand() % 50 + 3;

@@ -79,8 +79,7 @@ void add_extra_hot_pixels(T top_y,
     active_bound_list<T> tmp_abl;
     auto lm = current_lm;
     while (lm != minima_sorted.end() && (*lm)->y == top_y) {
-        if (!(*lm)->left_bound.edges.empty() &&
-            !(*lm)->right_bound.edges.empty()) {
+        if (!(*lm)->left_bound.edges.empty() && !(*lm)->right_bound.edges.empty()) {
             mapbox::geometry::point<T> hp((*lm)->left_bound.edges.front().bot.x, top_y);
             add_to_hot_pixels(hp, rings);
         }

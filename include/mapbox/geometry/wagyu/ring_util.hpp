@@ -155,8 +155,13 @@ inline T get_edge_max_x(edge<T> const& edge, const T current_y) {
 }
 
 template <typename T>
-void hot_pixel_set_left_to_right(
-    T y, T start_x, T end_x, bound<T>& bnd, ring_manager<T>& rings, hot_pixel_set<T>& set, bool add_end_point) {
+void hot_pixel_set_left_to_right(T y,
+                                 T start_x,
+                                 T end_x,
+                                 bound<T>& bnd,
+                                 ring_manager<T>& rings,
+                                 hot_pixel_set<T>& set,
+                                 bool add_end_point) {
     T x_min = get_edge_min_x(*(bnd.current_edge), y);
     x_min = std::max(x_min, start_x);
     T x_max = get_edge_max_x(*(bnd.current_edge), y);
@@ -184,9 +189,13 @@ void hot_pixel_set_left_to_right(
 }
 
 template <typename T>
-void hot_pixel_set_right_to_left(
-    T y, T start_x, T end_x, bound<T>& bnd, ring_manager<T>& rings, hot_pixel_set<T>& set,
-    bool add_end_point) {
+void hot_pixel_set_right_to_left(T y,
+                                 T start_x,
+                                 T end_x,
+                                 bound<T>& bnd,
+                                 ring_manager<T>& rings,
+                                 hot_pixel_set<T>& set,
+                                 bool add_end_point) {
     T x_min = get_edge_min_x(*(bnd.current_edge), y);
     x_min = std::max(x_min, end_x);
     T x_max = get_edge_max_x(*(bnd.current_edge), y);
@@ -232,20 +241,22 @@ void insert_hot_pixels_in_path(bound<T>& bnd,
     T end_x = end_pt.x;
 
     if (start_x > end_x) {
-        for (auto & hp : rings.hot_pixels) {
+        for (auto& hp : rings.hot_pixels) {
             if (hp.first > start_y || hp.first < end_y) {
                 continue;
             }
             bool add_end_point_itr = (hp.first != end_pt.y || add_end_point);
-            hot_pixel_set_right_to_left(hp.first, start_x, end_x, bnd, rings, hp.second, add_end_point_itr);
+            hot_pixel_set_right_to_left(hp.first, start_x, end_x, bnd, rings, hp.second,
+                                        add_end_point_itr);
         }
     } else {
-        for (auto & hp : rings.hot_pixels) {
+        for (auto& hp : rings.hot_pixels) {
             if (hp.first > start_y || hp.first < end_y) {
                 continue;
             }
             bool add_end_point_itr = (hp.first != end_pt.y || add_end_point);
-            hot_pixel_set_left_to_right(hp.first, start_x, end_x, bnd, rings, hp.second, add_end_point_itr);
+            hot_pixel_set_left_to_right(hp.first, start_x, end_x, bnd, rings, hp.second,
+                                        add_end_point_itr);
         }
     }
     bnd.last_point = end_pt;
