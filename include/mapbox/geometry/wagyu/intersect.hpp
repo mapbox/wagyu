@@ -38,9 +38,9 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
                                                      const intersect_node<T>& e) {
     out << " point x: " << e.pt.x << " y: " << e.pt.y << std::endl;
     out << " bound 1: " << std::endl;
-    out << *(e.bound1) << std::endl;
+    out << *(*e.bound1) << std::endl;
     out << " bound 2: " << std::endl;
-    out << *(e.bound2) << std::endl;
+    out << *(*e.bound2) << std::endl;
     return out;
 }
 

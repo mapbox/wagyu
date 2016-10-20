@@ -368,7 +368,7 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         }
         double stored_area = area(r);
         double calculated_area = area_from_point(r->points);
-        if (values_near_equal(stored_area, calculated_area)) {
+        if (!values_near_equal(stored_area, calculated_area)) {
             throw std::runtime_error("Difference in stored area vs calculated area!");
         }
     }

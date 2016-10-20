@@ -419,17 +419,32 @@ void intersect_bounds(active_bound_list_itr<T>& b1,
 }
 
 template <typename T>
+bool bounds_adjacent(intersect_node<T> const& inode) {
+    return (std::next(inode.bound1) == inode.bound2) || (std::next(inode.bound2) == inode.bound1);
+}
+
+template <typename T>
 void process_intersect_list(intersect_list<T>& intersects,
                             clip_type cliptype,
                             fill_type subject_fill_type,
                             fill_type clip_fill_type,
                             ring_manager<T>& rings,
                             active_bound_list<T>& active_bounds) {
-    for (auto& node : intersects) {
-        mapbox::geometry::point<T> pt(std::llround(node.pt.x), std::llround(node.pt.y));
-        intersect_bounds(node.bound1, node.bound2, pt, cliptype, subject_fill_type,
+    for (auto node_itr = intersects.begin(); node_itr != intersects.end(); ++node_itr) {
+        if (!bounds_adjacent(*node_itr)) {
+            auto next_itr = std::next(node_itr);
+            while (next_itr != intersects.end() && !bounds_adjacent(*next_itr)) {
+                ++next_itr;
+            }
+            if (next_itr == intersects.end()) {
+                throw std::runtime_error("Could not properly correct intersection order.");
+            }
+            std::iter_swap(node_itr, next_itr);
+        }
+        mapbox::geometry::point<T> pt(std::llround(node_itr->pt.x), std::llround(node_itr->pt.y));
+        intersect_bounds(node_itr->bound1, node_itr->bound2, pt, cliptype, subject_fill_type,
                          clip_fill_type, rings, active_bounds);
-        swap_positions_in_ABL(node.bound1, node.bound2, active_bounds);
+        swap_positions_in_ABL(node_itr->bound1, node_itr->bound2, active_bounds);
     }
 }
 
@@ -449,7 +464,6 @@ void process_intersections(T top_y,
         (*bnd_itr)->curr.x = curr_x;
         sorted_bound_list.emplace_back(bnd_itr, &(*((*bnd_itr)->current_edge)), curr_x);
     }
-
     intersect_list<T> intersects;
     build_intersect_list(sorted_bound_list, intersects, rings);
 
@@ -457,7 +471,7 @@ void process_intersections(T top_y,
         add_extra_hot_pixels(top_y, minima_sorted, current_lm, sorted_bound_list, rings);
         return;
     }
-
+    
     // Sort the intersection list
     std::stable_sort(intersects.begin(), intersects.end(), intersect_list_sorter<T>());
     
