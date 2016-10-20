@@ -313,20 +313,18 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
     if (iList.empty()) {
         // The situation where both origin and search are holes might have a missing
         // search condition, we must check if a new pair must be added.
-        if (ring_origin != ring_parent && ring_search != ring_parent) {
-            bool missing = true;
-            auto rng = dupe_ring.equal_range(ring_origin);
-            // Check for direct connection
-            for (auto& it = rng.first; it != rng.second; ++it) {
-                ring_ptr<T> it_ring2 = it->second.op2->ring;
-                if (it_ring2 == ring_search) {
-                    missing = false;
-                }
+        bool missing = true;
+        auto rng = dupe_ring.equal_range(ring_origin);
+        // Check for direct connection
+        for (auto& it = rng.first; it != rng.second; ++it) {
+            ring_ptr<T> it_ring2 = it->second.op2->ring;
+            if (it_ring2 == ring_search) {
+                missing = false;
             }
-            if (missing) {
-                point_ptr_pair<T> intPt_origin = { op_origin_1, op_origin_2 };
-                dupe_ring.emplace(ring_origin, intPt_origin);
-            }
+        }
+        if (missing) {
+            point_ptr_pair<T> intPt_origin = { op_origin_1, op_origin_2 };
+            dupe_ring.emplace(ring_origin, intPt_origin);
         }
         return false;
     }
