@@ -72,7 +72,6 @@ sorting_bound_list_itr<T> insert_bound_into_SBL(bound<T>& bnd,
 template <class charT, class traits, typename T>
 inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
                                                      const sorting_bound<T>& s) {
-    out << "    index: " << s.index << std::endl;
     out << "    current_x : " << s.current_x << std::endl;
     out << "    edge: " << std::endl;
     out << *s.current_edge << std::endl;
