@@ -27,6 +27,16 @@ struct intersect_list_sorter {
 };
 
 template <typename T>
+inline mapbox::geometry::point<T> round_point_intersection(mapbox::geometry::point<double> pt, 
+                                                           edge<T> const& e1,
+                                                           edge<T> const& e2) {
+    // Always round normally for y
+    T y = std::llround(pt.y);
+    T x = (e1.dx < 0.0 && e2.dx < 0.0) ? round_towards_min<T>(pt.x) : round_towards_max<T>(pt.x);
+    return mapbox::geometry::point<T>(x, y);
+}
+
+template <typename T>
 inline void swap_rings(bound<T>& b1, bound<T>& b2) {
     ring_ptr<T> ring = b1.ring;
     b1.ring = b2.ring;
@@ -157,7 +167,8 @@ void add_extra_hot_pixels(T top_y,
                 mapbox::geometry::point<double> pt;
                 if (get_edge_intersection<T, double>(*(bnd->current_edge),
                                                      *(bnd_next->current_edge), pt)) {
-                    mapbox::geometry::point<T> hp(std::llround(pt.x), std::llround(pt.y));
+
+                    mapbox::geometry::point<T> hp = round_point_intersection(pt, *(bnd->current_edge), *(bnd_next->current_edge));
                     if (hp.y >= top_y) {
                         add_to_hot_pixels(hp, rings);
                     }
@@ -193,7 +204,7 @@ void build_intersect_list(sorting_bound_list<T>& sorted_bound_list,
                         "Trying to find intersection of lines that do not intersect");
                 }
                 intersects.emplace_back(bnd->bound, bnd_next->bound, pt);
-                mapbox::geometry::point<T> hp(std::llround(pt.x), std::llround(pt.y));
+                mapbox::geometry::point<T> hp = round_point_intersection(pt, *(bnd->current_edge), *(bnd_next->current_edge));
                 add_to_hot_pixels(hp, rings);
                 swap_positions_in_SBL(bnd, bnd_next, sorted_bound_list);
                 bnd_next = std::next(bnd);
@@ -441,7 +452,9 @@ void process_intersect_list(intersect_list<T>& intersects,
             }
             std::iter_swap(node_itr, next_itr);
         }
-        mapbox::geometry::point<T> pt(std::llround(node_itr->pt.x), std::llround(node_itr->pt.y));
+        mapbox::geometry::point<T> pt = round_point_intersection(node_itr->pt, 
+                                                                 *((*node_itr->bound1)->current_edge), 
+                                                                 *((*node_itr->bound2)->current_edge));
         intersect_bounds(node_itr->bound1, node_itr->bound2, pt, cliptype, subject_fill_type,
                          clip_fill_type, rings, active_bounds);
         swap_positions_in_ABL(node_itr->bound1, node_itr->bound2, active_bounds);

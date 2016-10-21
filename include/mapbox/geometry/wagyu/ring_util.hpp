@@ -167,8 +167,11 @@ void hot_pixel_set_left_to_right(T y,
     T x_max = get_edge_max_x(*(bnd.current_edge), y);
     x_max = std::min(x_max, end_x);
     for (auto itr = set.begin(); itr != set.end(); ++itr) {
-        if (*itr > x_max || *itr < x_min) {
+        if (*itr < x_min) {
             continue;
+        }
+        if (*itr > x_max) {
+            break;
         }
         if (!add_end_point && *itr == end_x) {
             continue;
@@ -201,8 +204,11 @@ void hot_pixel_set_right_to_left(T y,
     T x_max = get_edge_max_x(*(bnd.current_edge), y);
     x_max = std::min(x_max, start_x);
     for (auto itr = set.rbegin(); itr != set.rend(); ++itr) {
-        if (*itr > x_max || *itr < x_min) {
+        if (*itr > x_max) {
             continue;
+        }
+        if (*itr < x_min) {
+            break;
         }
         if (!add_end_point && *itr == end_x) {
             continue;
@@ -242,8 +248,11 @@ void insert_hot_pixels_in_path(bound<T>& bnd,
 
     if (start_x > end_x) {
         for (auto& hp : rings.hot_pixels) {
-            if (hp.first > start_y || hp.first < end_y) {
+            if (hp.first > start_y) {
                 continue;
+            }
+            if (hp.first < end_y) {
+                break;
             }
             bool add_end_point_itr = (hp.first != end_pt.y || add_end_point);
             hot_pixel_set_right_to_left(hp.first, start_x, end_x, bnd, rings, hp.second,
@@ -251,8 +260,11 @@ void insert_hot_pixels_in_path(bound<T>& bnd,
         }
     } else {
         for (auto& hp : rings.hot_pixels) {
-            if (hp.first > start_y || hp.first < end_y) {
+            if (hp.first > start_y) {
                 continue;
+            }
+            if (hp.first < end_y) {
+                break;
             }
             bool add_end_point_itr = (hp.first != end_pt.y || add_end_point);
             hot_pixel_set_left_to_right(hp.first, start_x, end_x, bnd, rings, hp.second,
