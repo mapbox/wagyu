@@ -176,13 +176,21 @@ void remove_ring(ring_ptr<T> r, ring_manager<T>& manager) {
 }
 
 template <typename T>
-bool ring_is_hole(ring_ptr<T> r) {
+inline std::size_t ring_depth(ring_ptr<T> r) {
     std::size_t depth = 0;
+    if (!r) {
+        return depth;
+    }
     while (r->parent) {
         depth++;
         r = r->parent;
     }
-    return depth & 1;
+    return depth;
+}
+
+template <typename T>
+inline bool ring_is_hole(ring_ptr<T> r) {
+    return ring_depth(r) & 1;
 }
 
 template <typename T>

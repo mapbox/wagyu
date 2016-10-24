@@ -516,15 +516,24 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
 template <typename T>
 struct point_ptr_cmp {
     inline bool operator()(point_ptr<T> op1, point_ptr<T> op2) {
-        if (op1->y > op2->y) {
-            return true;
-        } else if (op1->y < op2->y) {
-            return false;
-        } else if (op1->x < op2->x) {
-            return true;
+        if (op1->y != op2->y) {
+            return (op1->y > op2->y);
+        } else if (op1->x != op2->x) {
+            return (op1->x < op2->x);
         } else {
-            return op1->x < op2->x;
+            std::size_t depth_1 = ring_depth(op1->ring);
+            std::size_t depth_2 = ring_depth(op2->ring);
+            return depth_1 > depth_2;
         }
+    }
+};
+
+template <typename T>
+struct point_ptr_depth_cmp {
+    inline bool operator()(point_ptr<T> op1, point_ptr<T> op2) {
+        std::size_t depth_1 = ring_depth(op1->ring);
+        std::size_t depth_2 = ring_depth(op2->ring);
+        return depth_1 > depth_2;
     }
 };
 
@@ -1784,6 +1793,11 @@ void do_simple_polygons(ring_manager<T>& rings) {
         }
         std::size_t first_index = i - count - 1;
         std::size_t last_index = i - 1;
+        auto sort_begin = rings.all_points.begin();
+        std::advance(sort_begin, first_index);
+        auto sort_end = rings.all_points.begin();
+        std::advance(sort_end, i);
+        std::stable_sort(sort_begin, sort_end, point_ptr_depth_cmp<T>());
         process_repeated_points(first_index, last_index, dupe_ring, rings);
         mapbox::geometry::point<T> rewind_point(std::numeric_limits<T>::min(),
                                                 std::numeric_limits<T>::min());
