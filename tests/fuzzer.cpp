@@ -263,7 +263,7 @@ int main() {
                     return -1;
                 }
                 */
-                //check_cross_ring(solution);
+                // check_cross_ring(solution);
             }
         }
     }

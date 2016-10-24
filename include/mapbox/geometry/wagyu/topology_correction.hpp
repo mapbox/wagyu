@@ -917,7 +917,7 @@ bool handle_collinear_edges(point_ptr<T> pt1,
         rewind_point.x = possible_rewind.x;
         rewind_point.y = possible_rewind.y;
     }
-    
+
     // swap points
     point_ptr<T> pt3 = pt1->prev;
     point_ptr<T> pt4 = pt2->prev;
@@ -1564,7 +1564,7 @@ bool process_repeated_point_set(std::size_t first_index,
                                 std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dupe_ring,
                                 ring_manager<T>& rings) {
     point_ptr<T> point_1 = rings.all_points[current_index];
-    
+
     if (point_1->ring == nullptr) {
         return false;
     }
@@ -1579,7 +1579,7 @@ bool process_repeated_point_set(std::size_t first_index,
 
     // Sort points in vector
     std::stable_sort(vec.begin(), vec.end(), si_point_sorter<T>(point_1));
-    
+
     auto vec_itr = vec.begin();
     point_ptr<T> point_2 = vec_itr->first;
 

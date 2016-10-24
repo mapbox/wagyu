@@ -18,9 +18,7 @@ struct sorting_bound {
     edge_ptr<T> current_edge;
     double current_x;
 
-    sorting_bound(active_bound_list_itr<T> bound_,
-                  edge_ptr<T> current_edge_,
-                  double current_x_)
+    sorting_bound(active_bound_list_itr<T> bound_, edge_ptr<T> current_edge_, double current_x_)
         : bound(bound_), current_edge(current_edge_), current_x(current_x_) {
     }
 };

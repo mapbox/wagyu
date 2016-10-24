@@ -18,10 +18,8 @@ struct intersect_list_sorter {
         if (!values_are_equal(node2.pt.y, node1.pt.y)) {
             return node2.pt.y < node1.pt.y;
         } else {
-            return ((*node2.bound1)->winding_count2 +
-                    (*node2.bound2)->winding_count2) >
-                   ((*node1.bound1)->winding_count2 +
-                    (*node1.bound2)->winding_count2);
+            return ((*node2.bound1)->winding_count2 + (*node2.bound2)->winding_count2) >
+                   ((*node1.bound1)->winding_count2 + (*node1.bound2)->winding_count2);
         }
     }
 };
@@ -477,10 +475,10 @@ void process_intersections(T top_y,
         add_extra_hot_pixels(top_y, minima_sorted, current_lm, sorted_bound_list, rings);
         return;
     }
-    
+
     // Sort the intersection list
     std::stable_sort(intersects.begin(), intersects.end(), intersect_list_sorter<T>());
-    
+
     add_extra_hot_pixels(top_y, minima_sorted, current_lm, sorted_bound_list, rings);
 
     process_intersect_list(intersects, cliptype, subject_fill_type, clip_fill_type, rings,
