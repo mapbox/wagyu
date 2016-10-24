@@ -1592,15 +1592,6 @@ bool process_repeated_point_set(std::size_t first_index,
         if (ot_next == orientation_collinear_spike) {
             orientation_type ot_prev = orientation_of_points(point_2, point_2->prev, point_3->prev);
             if (ot_prev == orientation_collinear_spike) {
-                orientation_type ot_next_1 =
-                    orientation_of_points(point_1, point_1->next, point_2->prev);
-                orientation_type ot_prev_1 =
-                    orientation_of_points(point_1, point_1->prev, point_2->next);
-                if (ot_next_1 == orientation_collinear_spike &&
-                    ot_prev_1 == orientation_collinear_spike) {
-                    handle_self_intersections(point_1, point_2, dupe_ring, rings);
-                    return true;
-                }
                 // Lines follow the same path.
                 // Now we need to make a list of all the points that follow the same path BUT
                 // travel in the opposite direction.
@@ -1620,6 +1611,15 @@ bool process_repeated_point_set(std::size_t first_index,
                     ++vec_itr;
                 }
                 if (search_points.empty()) {
+                    orientation_type ot_next_1 =
+                        orientation_of_points(point_1, point_1->next, point_2->prev);
+                    orientation_type ot_prev_1 =
+                        orientation_of_points(point_1, point_1->prev, point_2->next);
+                    if (ot_next_1 == orientation_collinear_spike &&
+                        ot_prev_1 == orientation_collinear_spike) {
+                        handle_self_intersections(point_1, point_2, dupe_ring, rings);
+                        return true;
+                    }
                     throw std::runtime_error(
                         "Collinear paths do not have path in opposite direction");
                 }
