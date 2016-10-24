@@ -85,7 +85,7 @@ T round_towards_min(double val) {
     // 0.5 rounds to 0
     // 0.0 rounds to 0
     // -0.5 rounds to -1
-    return static_cast<T>(std::ceil(val - 0.5));
+    return static_cast<T>(std::ceil(val - 0.5 - 1e-14));
 }
 
 template <typename T>
@@ -93,7 +93,7 @@ T round_towards_max(double val) {
     // 0.5 rounds to 1
     // 0.0 rounds to 0
     // -0.5 rounds to 0
-    return static_cast<T>(std::floor(val + 0.5));
+    return static_cast<T>(std::floor(val + 0.5 + 1e-14));
 }
 
 template <typename T>
