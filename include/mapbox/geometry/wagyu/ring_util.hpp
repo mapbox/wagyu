@@ -118,7 +118,7 @@ inline T get_edge_min_x(edge<T> const& edge, const T current_y) {
             return edge.bot.x;
         } else {
             double return_val = static_cast<double>(edge.bot.x) +
-                                edge.dx * (static_cast<double>(current_y - edge.bot.y) + 0.5);
+                                edge.dx * (static_cast<double>(current_y - edge.bot.y) + 0.5 - 1e-13);
             T value = round_towards_min<T>(return_val);
             return value;
         }
@@ -147,7 +147,7 @@ inline T get_edge_max_x(edge<T> const& edge, const T current_y) {
             return edge.bot.x;
         } else {
             double return_val = static_cast<double>(edge.bot.x) +
-                                edge.dx * (static_cast<double>(current_y - edge.bot.y) + 0.5);
+                                edge.dx * (static_cast<double>(current_y - edge.bot.y) + 0.5 - 1e-13);
             T value = round_towards_max<T>(return_val);
             return value;
         }
