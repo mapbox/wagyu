@@ -1656,6 +1656,7 @@ void process_repeated_points(std::size_t first_index,
     }
 
 #ifdef DEBUG
+    // LCOV_EXCL_START
     for (std::size_t j = first_index; j <= last_index; ++j) {
         point_ptr<T> op_j = rings.all_points[j];
         if (!op_j->ring) {
@@ -1685,6 +1686,7 @@ void process_repeated_points(std::size_t first_index,
             }
         }
     }
+    // LCOV_EXCL_STOP
 #endif
 }
 
