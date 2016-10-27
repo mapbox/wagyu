@@ -247,14 +247,11 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
         // The two holes do not have the same parent, do not add them
         // simply return!
         if (ring_parent->parent != ring_search &&
-            poly2_contains_poly1(ring_search->points, ring_parent->points)) {
+            poly2_contains_poly1(ring_search->points, ring_parent->points) && 
+            !ring1_right_of_ring2(ring_search, ring_parent)) {
             ring_ptr<T> old_parent = ring_search->parent;
             ring_search->parent = ring_parent;
-            if (old_parent) {
-                old_parent->children.remove(ring_search);
-            } else {
-                rings.children.remove(ring_search);
-            }
+            old_parent->children.remove(ring_search);
             ring_parent->children.push_back(ring_search);
         } else {
             return false;
@@ -447,11 +444,7 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
         }
         if (ring_is_hole(ring_origin)) {
             ring_new->parent = ring_origin;
-            if (ring_new->parent == nullptr) {
-                rings.children.push_back(ring_new);
-            } else {
-                ring_new->parent->children.push_back(ring_new);
-            }
+            ring_new->parent->children.push_back(ring_new);
             fixup_children(ring_origin, ring_new);
             fixup_children(ring_parent, ring_new);
         } else {
@@ -584,24 +577,7 @@ template <typename T>
 void fixup_children_new_interior_ring(ring_ptr<T> old_ring,
                                       ring_ptr<T> new_ring,
                                       ring_manager<T>& rings) {
-    // The only rings that could possibly be a child to a new interior ring are those
-    // child rings that have the same sign of their area as the old ring.
     bool old_ring_area_is_positive = area(old_ring) > 0.0;
-    assert(old_ring != new_ring);
-    for (auto r = old_ring->children.begin(); r != old_ring->children.end();) {
-        assert((*r)->points);
-        assert((*r) != old_ring);
-        bool ring_area_is_positive = area((*r)) > 0.0;
-        if ((*r) != new_ring && ring_area_is_positive == old_ring_area_is_positive &&
-            poly2_contains_poly1((*r)->points, new_ring->points)) {
-            (*r)->parent = new_ring;
-            new_ring->children.push_back((*r));
-            r = old_ring->children.erase(r);
-        } else {
-            ++r;
-        }
-    }
-
     // Now we must search the siblings of the old ring
     // This is slow, but there is no other way I know of currently
     // to solve these problems.
@@ -640,6 +616,7 @@ void fixup_children_new_interior_ring(ring_ptr<T> old_ring,
 
 template <typename T>
 void check_if_intersections_cross(point_ptr<T> p1, point_ptr<T> p2) {
+    // LCOV_EXCL_START
     point_ptr<T> p1_next = p1->next;
     point_ptr<T> p2_next = p2->next;
     point_ptr<T> p1_prev = p1->prev;
@@ -684,6 +661,7 @@ void check_if_intersections_cross(point_ptr<T> p1, point_ptr<T> p2) {
         (min_p2 < max_p1 && min_p2 > min_p1 && max_p2 > max_p1)) {
         throw std::runtime_error("Paths are found to be crossing");
     }
+    // LCOV_EXCL_END
 }
 
 #endif
@@ -696,44 +674,6 @@ void handle_self_intersections(point_ptr<T> op,
     // Check that are same ring
     assert(op->ring == op2->ring);
     ring_ptr<T> ring = op->ring;
-
-    point_ptr<T> pt1 = op;
-    remove_spikes(pt1);
-    if (pt1 == nullptr) {
-        ring->points = nullptr;
-        ring->area = std::numeric_limits<double>::quiet_NaN();
-        remove_ring(ring, rings);
-        update_duplicate_point_entries(ring, dupe_ring);
-        return;
-    } else if (*pt1 != *op) {
-        ring->area = std::numeric_limits<double>::quiet_NaN();
-        update_duplicate_point_entries(ring, dupe_ring);
-        return;
-    } else if (pt1 != op) {
-        op = pt1;
-    }
-
-    point_ptr<T> pt2 = op2;
-    remove_spikes(pt2);
-    if (pt2 == nullptr) {
-        ring->points = nullptr;
-        ring->area = std::numeric_limits<double>::quiet_NaN();
-        remove_ring(ring, rings);
-        update_duplicate_point_entries(ring, dupe_ring);
-        return;
-    } else if (*pt2 != *op2) {
-        ring->area = std::numeric_limits<double>::quiet_NaN();
-        update_duplicate_point_entries(ring, dupe_ring);
-        return;
-    } else if (pt2 != op2) {
-        op2 = pt2;
-    }
-
-    if (op == op2) {
-        ring->area = std::numeric_limits<double>::quiet_NaN();
-        return;
-    }
-
     double original_area = area(ring);
     bool original_is_positive = (original_area > 0.0);
 #ifdef DEBUG
@@ -753,6 +693,8 @@ void handle_self_intersections(point_ptr<T> op,
 
     if (op == nullptr && op2 == nullptr) {
         // Self destruction!
+        // I am not positive that it could ever reach this point -- but leaving
+        // the logic in here for now.
         ring->points = nullptr;
         ring->area = std::numeric_limits<double>::quiet_NaN();
         remove_ring(ring, rings);
@@ -806,11 +748,7 @@ void handle_self_intersections(point_ptr<T> op,
         update_points_ring(ring);
         update_points_ring(new_ring);
         new_ring->parent = ring;
-        if (new_ring->parent == nullptr) {
-            rings.children.push_back(new_ring);
-        } else {
-            new_ring->parent->children.push_back(new_ring);
-        }
+        new_ring->parent->children.push_back(new_ring);
         fixup_children_new_interior_ring(ring, new_ring, rings);
     } else {
         // Situation #2 - create new ring
@@ -834,11 +772,7 @@ void handle_self_intersections(point_ptr<T> op,
             // as child of a newly created hole. However, we should check existing
             // holes of this polygon to see if they might belong inside this polygon.
             new_ring->parent = ring;
-            if (new_ring->parent == nullptr) {
-                rings.children.push_back(new_ring);
-            } else {
-                new_ring->parent->children.push_back(new_ring);
-            }
+            new_ring->parent->children.push_back(new_ring);
             fixup_children(ring, new_ring);
         } else {
             // Polygons are completely seperate
@@ -942,6 +876,7 @@ bool handle_collinear_edges(point_ptr<T> pt1,
         remove_spikes(pt2);
         if (!pt2) {
             // rings self destructed
+            // Not sure this logic is reachable, but leaving it in for now.
             ring1->points = nullptr;
             ring1->area = std::numeric_limits<double>::quiet_NaN();
             remove_ring(ring1, rings);
@@ -1012,6 +947,7 @@ using si_point_vector = std::vector<std::pair<point_ptr<T>, bool>>;
 
 template <typename T>
 std::string output_si_angles(point_ptr<T> pt) {
+    // LCOV_EXCL_START
     std::ostringstream out;
     double prev_angle = std::atan2(static_cast<double>(pt->prev->y - pt->y),
                                    static_cast<double>(pt->prev->x - pt->x));
@@ -1030,6 +966,7 @@ std::string output_si_angles(point_ptr<T> pt) {
     out << pt->x << "," << pt->y << "],[";
     out << pt->next->x << "," << pt->next->y << "]]";
     return out.str();
+    // LCOV_EXCL_END
 }
 
 template <typename T>
@@ -1122,6 +1059,8 @@ bool clockwise_of_next(point_ptr<T> const& origin, point_ptr<T> pt) {
             if (ot_next_next == orientation_collinear_spike) {
                 // Pt forms a spike on origin next
                 // so lets assume it is CW.
+                // I am not sure that we would ever encounter a spike so this will
+                // be missing from coverage, but left in code.
                 return true;
             } else if (ot_next_next == orientation_clockwise) {
                 // We need to check which is after "origin->next" traveling
@@ -1136,8 +1075,10 @@ bool clockwise_of_next(point_ptr<T> const& origin, point_ptr<T> pt) {
                     // pt->next is clockwise of prev
                     return false;
                 } else if (ot_next_prev == orientation_collinear_line) {
-                    // This shouldn't happen?
-                    return false;
+                    // This shouldn't happen
+                    // LCOV_EXCL_START
+                    throw std::runtime_error("Impossible situation reached in clockwise_of_next");
+                    // LCOV_EXCL_END
                 } else {
                     // Pt next is counter clockwise of origin prev
                     return true;
@@ -1193,6 +1134,8 @@ bool clockwise_of_next(point_ptr<T> const& origin, point_ptr<T> pt) {
             if (ot_next_next == orientation_collinear_spike) {
                 // Pt forms a spike on origin next
                 // so lets assume it is CW.
+                // I am not sure that we would ever encounter a spike so this will
+                // be missing from coverage, but left in code.
                 return true;
             } else if (ot_next_next == orientation_counter_clockwise) {
                 // We need to check which is after "origin->next" traveling
@@ -1208,7 +1151,9 @@ bool clockwise_of_next(point_ptr<T> const& origin, point_ptr<T> pt) {
                     return false;
                 } else if (ot_next_prev == orientation_collinear_line) {
                     // This shouldn't happen?
-                    return true;
+                    // LCOV_EXCL_START
+                    throw std::runtime_error("Impossible situation reached in clockwise_of_next - 2");
+                    // LCOV_EXCL_END
                 } else {
                     // Pt next is counter clockwise of origin prev
                     return true;
@@ -1251,6 +1196,7 @@ inline bool cw_p1p2_prev_collinear_spike(point_ptr<T> const& origin,
     if (ot_p1_next == orientation_collinear_spike) {
         // p1 is a spike on origin next
         if (ot_p2_next == orientation_collinear_spike) {
+            // I am not sure that a spike will ever occur at this point in the processing!
             return true;
         } else {
             return false;
@@ -1592,51 +1538,40 @@ bool process_repeated_point_set(std::size_t first_index,
         if (ot_next == orientation_collinear_spike) {
             orientation_type ot_prev = orientation_of_points(point_2, point_2->prev, point_3->prev);
             if (ot_prev == orientation_collinear_spike) {
-                // Lines follow the same path.
-                // Now we need to make a list of all the points that follow the same path BUT
-                // travel in the opposite direction.
-                ++vec_itr;
-                std::vector<point_ptr<T>> search_points;
-                while (vec_itr != vec.end()) {
-                    point_ptr<T> current_point = vec_itr->first;
-                    orientation_type ot_next_prev =
-                        orientation_of_points(point_2, point_2->next, current_point->prev);
-                    if (ot_next_prev == orientation_collinear_spike) {
-                        orientation_type ot_prev_next =
-                            orientation_of_points(point_2, point_2->prev, current_point->next);
-                        if (ot_prev_next == orientation_collinear_spike) {
-                            search_points.push_back(current_point);
+                // Start at point_1 and we will travel around the circle until we find another point at
+                // the same location. We will measure its area, and then continue till the next point at
+                // the same location. The smallest absolute value of area is the one we will use.
+                point_ptr<T> point_a = point_1;
+                point_ptr<T> min_a = nullptr;
+                point_ptr<T> min_b = nullptr;
+                point_ptr<T> pt = point_1->next;
+                double area = 0.0;
+                double min_area = std::numeric_limits<double>::max();
+                while (pt != point_1) {
+                    area += static_cast<double>(pt->prev->x + pt->x) * static_cast<double>(pt->prev->y - pt->y);
+                    if (*pt == *point_1) {
+                        if (std::fabs(area) < min_area) {
+                            min_area = std::fabs(area);
+                            min_a = point_a;
+                            min_b = pt;
                         }
-                    }
-                    ++vec_itr;
-                }
-                if (search_points.empty()) {
-                    orientation_type ot_next_1 =
-                        orientation_of_points(point_1, point_1->next, point_2->prev);
-                    orientation_type ot_prev_1 =
-                        orientation_of_points(point_1, point_1->prev, point_2->next);
-                    if (ot_next_1 == orientation_collinear_spike &&
-                        ot_prev_1 == orientation_collinear_spike) {
-                        handle_self_intersections(point_1, point_2, dupe_ring, rings);
-                        return true;
-                    }
-                    throw std::runtime_error(
-                        "Collinear paths do not have path in opposite direction");
-                }
-                // Find next search_point that point_2 runs into.
-                point_ptr<T> pt = point_2->next;
-                while (pt != point_2) {
-                    if (*pt == *point_2 &&
-                        search_points.end() !=
-                            std::find(search_points.begin(), search_points.end(), pt)) {
-                        break;
+                        point_a = pt;
+                        area = 0.0;
                     }
                     pt = pt->next;
                 }
-                if (pt == point_2) {
-                    throw std::runtime_error("Could not find search point");
+                if (point_a == point_1) {
+                    // LCOV_EXCL_START
+                    throw std::runtime_error("No other point was between point_1 on the path");
+                    // LCOV_EXCL_END
                 }
-                handle_self_intersections(point_2, pt, dupe_ring, rings);
+                area += static_cast<double>(pt->prev->x + pt->x) * static_cast<double>(pt->prev->y - pt->y);
+                if (std::fabs(area) < min_area) {
+                    min_area = std::fabs(area);
+                    min_a = point_a;
+                    min_b = pt;
+                }
+                handle_self_intersections(min_a, min_b, dupe_ring, rings);
                 return true;
             }
         }
