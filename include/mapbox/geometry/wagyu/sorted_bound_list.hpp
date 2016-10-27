@@ -42,13 +42,8 @@ inline void swap_positions_in_SBL(sorting_bound_list_itr<T>& bnd1,
                                   sorting_bound_list<T>& sorting_bounds) {
     if (std::next(bnd2) == bnd1) {
         sorting_bounds.splice(bnd2, sorting_bounds, bnd1);
-    } else if (std::next(bnd1) == bnd2) {
-        sorting_bounds.splice(bnd1, sorting_bounds, bnd2);
     } else {
-        auto next_bnd1 = std::next(bnd1);
-        auto next_bnd2 = std::next(bnd2);
-        sorting_bounds.splice(next_bnd1, sorting_bounds, bnd2);
-        sorting_bounds.splice(next_bnd2, sorting_bounds, bnd1);
+        sorting_bounds.splice(bnd1, sorting_bounds, bnd2);
     }
 }
 

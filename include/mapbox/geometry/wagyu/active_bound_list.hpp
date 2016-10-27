@@ -144,14 +144,9 @@ inline void swap_positions_in_ABL(active_bound_list_itr<T>& bnd1,
                                   active_bound_list<T>& active_bounds) {
     if (std::next(bnd2) == bnd1) {
         active_bounds.splice(bnd2, active_bounds, bnd1);
-    } else if (std::next(bnd1) == bnd2) {
+    } else { 
         active_bounds.splice(bnd1, active_bounds, bnd2);
-    } else {
-        auto next_bnd1 = std::next(bnd1);
-        auto next_bnd2 = std::next(bnd2);
-        active_bounds.splice(next_bnd1, active_bounds, bnd2);
-        active_bounds.splice(next_bnd2, active_bounds, bnd1);
-    }
+    } 
 }
 
 template <typename T>
@@ -167,9 +162,6 @@ void next_edge_in_bound(active_bound_list_itr<T>& bnd, scanbeam_list<T>& scanbea
 template <typename T>
 active_bound_list_itr<T> get_maxima_pair(active_bound_list_itr<T> bnd,
                                          active_bound_list<T>& active_bounds) {
-    if ((*bnd)->maximum_bound == nullptr) {
-        return active_bounds.end();
-    }
     auto bnd_itr = active_bounds.begin();
     while (bnd_itr != active_bounds.end()) {
         if (*bnd_itr == (*bnd)->maximum_bound) {

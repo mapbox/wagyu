@@ -187,20 +187,7 @@ void fixup_out_polyline(ring<T>& ring, ring_manager<T>& rings) {
 }
 
 template <typename T>
-bool point_2_is_between_point_1_and_point_3(mapbox::geometry::wagyu::point<T> pt1,
-                                            mapbox::geometry::wagyu::point<T> pt2,
-                                            mapbox::geometry::wagyu::point<T> pt3) {
-    if ((pt1 == pt3) || (pt1 == pt2) || (pt3 == pt2)) {
-        return false;
-    } else if (pt1.x != pt3.x) {
-        return (pt2.x > pt1.x) == (pt2.x < pt3.x);
-    } else {
-        return (pt2.y > pt1.y) == (pt2.y < pt3.y);
-    }
-}
-
-template <typename T>
-void fixup_out_polygon(ring<T>& ring, ring_manager<T>& rings, bool simple) {
+void fixup_out_polygon(ring<T>& ring, ring_manager<T>& rings) {
     // FixupOutPolygon() - removes duplicate points and simplifies consecutive
     // parallel edges by removing the middle vertex.
     point_ptr<T> lastOK = nullptr;
@@ -220,8 +207,7 @@ void fixup_out_polygon(ring<T>& ring, ring_manager<T>& rings, bool simple) {
 
         // test for duplicate points and collinear edges ...
         if ((*pp == *pp->next) || (*pp == *pp->prev) ||
-            (slopes_equal(*pp->prev, *pp, *pp->next) &&
-             (!simple || !point_2_is_between_point_1_and_point_3(*pp->prev, *pp, *pp->next)))) {
+            (slopes_equal(*pp->prev, *pp, *pp->next))) {
             lastOK = nullptr;
             point_ptr<T> tmp = pp;
             pp->prev->next = pp->next;
@@ -362,6 +348,7 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
     do_simple_polygons(rings);
 
 #if DEBUG
+    // LCOV_EXCL_START
     for (auto& r : rings.all_rings) {
         if (!r->points || r->is_open) {
             continue;
@@ -372,13 +359,14 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
             throw std::runtime_error("Difference in stored area vs calculated area!");
         }
     }
+    // LCOV_EXCL_END
 #endif
 
     for (auto& r : rings.all_rings) {
         if (!r->points || r->is_open) {
             continue;
         }
-        fixup_out_polygon(*r, rings, false);
+        fixup_out_polygon(*r, rings);
         if (ring_is_hole(r) == (area(r) > 0.0)) {
             reverse_ring(r->points);
             r->area = std::numeric_limits<double>::quiet_NaN();
