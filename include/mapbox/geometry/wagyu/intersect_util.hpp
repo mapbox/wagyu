@@ -462,13 +462,14 @@ void process_intersections(T top_y,
                            fill_type clip_fill_type,
                            ring_manager<T>& rings) {
     sorting_bound_list<T> sorted_bound_list;
-    // create sorted edge list from AEL
+    // create sorted edge list from ABL
     for (auto bnd_itr = active_bounds.begin(); bnd_itr != active_bounds.end(); ++bnd_itr) {
         double curr_x = get_current_x(*((*bnd_itr)->current_edge), top_y);
         (*bnd_itr)->curr.x = curr_x;
         sorted_bound_list.emplace_back(bnd_itr, &(*((*bnd_itr)->current_edge)), curr_x);
     }
     intersect_list<T> intersects;
+    intersects.reserve(sorted_bound_list.size());
     build_intersect_list(sorted_bound_list, intersects, rings);
 
     if (intersects.empty()) {
