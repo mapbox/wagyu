@@ -268,13 +268,11 @@ void update_hotpixels_to_scanline(T scanline_y,
 
 template <typename T>
 void clear_hot_pixels(T scanline_y, ring_manager<T>& rings) {
-    for (auto itr = rings.hot_pixels.begin(); itr != rings.hot_pixels.end();) {
-        if (itr->first != scanline_y) {
-            itr = rings.hot_pixels.erase(itr);
-        } else {
-            ++itr;
-        }
-    }
+
+    auto end = std::remove_if(rings.hot_pixels.begin(), rings.hot_pixels.end(),
+                                  [scanline_y](const mapbox::geometry::point<T> & pt)
+                                   { return pt.y != scanline_y; });
+    rings.hot_pixels.erase(end, rings.hot_pixels.end());
 }
 
 template <typename T>
@@ -304,7 +302,7 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         // std::clog << output_all_edges(minima_sorted) << std::endl;
 
         setup_scanbeam(minima_list, scanbeam);
-
+    
         while (pop_from_scanbeam(scanline_y, scanbeam) || current_lm != minima_sorted.end()) {
 
             process_intersections(scanline_y, minima_sorted, current_lm, active_bounds, cliptype,

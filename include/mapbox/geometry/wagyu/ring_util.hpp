@@ -81,6 +81,17 @@ void set_hole_state(active_bound_list_rev_itr<T>& bnd,
 }
 
 template <typename T>
+struct hot_pixel_sorter {
+    inline bool operator()(mapbox::geometry::point<T> const& pt1, mapbox::geometry::point<T> const& pt2) {
+        if (pt1.y == pt2.y) {
+            return pt1.x < pt2.x;
+        } else {
+            return pt1.y > pt2.y;
+        }
+    }
+};
+
+template <typename T>
 T round_towards_min(double val) {
     // 0.5 rounds to 0
     // 0.0 rounds to 0
@@ -160,31 +171,31 @@ void hot_pixel_set_left_to_right(T y,
                                  T end_x,
                                  bound<T>& bnd,
                                  ring_manager<T>& rings,
-                                 hot_pixel_set<T>& set,
+                                 hot_pixel_itr<T> & itr,
+                                 hot_pixel_itr<T> & end,
                                  bool add_end_point) {
     T x_min = get_edge_min_x(*(bnd.current_edge), y);
     x_min = std::max(x_min, start_x);
     T x_max = get_edge_max_x(*(bnd.current_edge), y);
     x_max = std::min(x_max, end_x);
-    for (auto itr = set.begin(); itr != set.end(); ++itr) {
-        if (*itr < x_min) {
+    for (;itr != end; ++itr) {
+        if (itr->x < x_min) {
             continue;
         }
-        if (*itr > x_max) {
+        if (itr->x > x_max) {
             break;
         }
-        if (!add_end_point && *itr == end_x) {
+        if (!add_end_point && itr->x == end_x) {
             continue;
         }
-        mapbox::geometry::point<T> pt(*itr, y);
         point_ptr<T> op = bnd.ring->points;
         bool to_front = (bnd.side == edge_left);
-        if (to_front && (pt == *op)) {
+        if (to_front && (*itr == *op)) {
             continue;
-        } else if (!to_front && (pt == *op->prev)) {
+        } else if (!to_front && (*itr == *op->prev)) {
             continue;
         }
-        point_ptr<T> new_point = create_new_point(bnd.ring, pt, op, rings);
+        point_ptr<T> new_point = create_new_point(bnd.ring, *itr, op, rings);
         if (to_front) {
             bnd.ring->points = new_point;
         }
@@ -197,34 +208,44 @@ void hot_pixel_set_right_to_left(T y,
                                  T end_x,
                                  bound<T>& bnd,
                                  ring_manager<T>& rings,
-                                 hot_pixel_set<T>& set,
+                                 hot_pixel_rev_itr<T> & itr,
+                                 hot_pixel_rev_itr<T> & end,
                                  bool add_end_point) {
     T x_min = get_edge_min_x(*(bnd.current_edge), y);
     x_min = std::max(x_min, end_x);
     T x_max = get_edge_max_x(*(bnd.current_edge), y);
     x_max = std::min(x_max, start_x);
-    for (auto itr = set.rbegin(); itr != set.rend(); ++itr) {
-        if (*itr > x_max) {
-            continue;
+    for (;itr != end; ++itr) {
+        if (itr->x > x_max) {
+            continue;   
         }
-        if (*itr < x_min) {
+        if (itr->x < x_min) {
             break;
         }
-        if (!add_end_point && *itr == end_x) {
+        if (!add_end_point && itr->x == end_x) {
             continue;
         }
-        mapbox::geometry::point<T> pt(*itr, y);
         point_ptr<T> op = bnd.ring->points;
         bool to_front = (bnd.side == edge_left);
-        if (to_front && (pt == *op)) {
+        if (to_front && (*itr == *op)) {
             continue;
-        } else if (!to_front && (pt == *op->prev)) {
+        } else if (!to_front && (*itr == *op->prev)) {
             continue;
         }
-        point_ptr<T> new_point = create_new_point(bnd.ring, pt, op, rings);
+        point_ptr<T> new_point = create_new_point(bnd.ring, *itr, op, rings);
         if (to_front) {
             bnd.ring->points = new_point;
         }
+    }
+}
+
+template <typename T>
+void sort_hot_pixels(ring_manager<T>& rings) {
+    if (!rings.hot_pixels_sorted) {
+        std::sort(rings.hot_pixels.begin(), rings.hot_pixels.end(), hot_pixel_sorter<T>());
+        auto last = std::unique(rings.hot_pixels.begin(), rings.hot_pixels.end());
+        rings.hot_pixels.erase(last, rings.hot_pixels.end());
+        rings.hot_pixels_sorted = true;
     }
 }
 
@@ -246,28 +267,44 @@ void insert_hot_pixels_in_path(bound<T>& bnd,
     T end_y = end_pt.y;
     T end_x = end_pt.x;
 
+    sort_hot_pixels(rings);
+
     if (start_x > end_x) {
-        for (auto& hp : rings.hot_pixels) {
-            if (hp.first > start_y) {
+        for (auto itr = rings.hot_pixels.begin(); itr != rings.hot_pixels.end();) {
+            if (itr->y > start_y) {
+                ++itr;
                 continue;
             }
-            if (hp.first < end_y) {
+            if (itr->y < end_y) {
                 break;
             }
-            bool add_end_point_itr = (hp.first != end_pt.y || add_end_point);
-            hot_pixel_set_right_to_left(hp.first, start_x, end_x, bnd, rings, hp.second,
+            T y = itr->y;
+            auto last_itr = hot_pixel_rev_itr<T>(itr);
+            while (itr != rings.hot_pixels.end() && itr->y == y) {
+                ++itr;
+            }
+            auto first_itr = hot_pixel_rev_itr<T>(itr);
+            bool add_end_point_itr = (y != end_pt.y || add_end_point);
+            hot_pixel_set_right_to_left(y, start_x, end_x, bnd, rings, first_itr, last_itr,
                                         add_end_point_itr);
         }
     } else {
-        for (auto& hp : rings.hot_pixels) {
-            if (hp.first > start_y) {
+        for (auto itr = rings.hot_pixels.begin(); itr != rings.hot_pixels.end();) {
+            if (itr->y > start_y) {
+                ++itr;
                 continue;
             }
-            if (hp.first < end_y) {
+            if (itr->y < end_y) {
                 break;
             }
-            bool add_end_point_itr = (hp.first != end_pt.y || add_end_point);
-            hot_pixel_set_left_to_right(hp.first, start_x, end_x, bnd, rings, hp.second,
+            T y = itr->y;
+            auto first_itr = itr;
+            while (itr != rings.hot_pixels.end() && itr->y == y) {
+                ++itr;
+            }
+            auto last_itr = itr;
+            bool add_end_point_itr = (y != end_pt.y || add_end_point);
+            hot_pixel_set_left_to_right(y, start_x, end_x, bnd, rings, first_itr, last_itr,
                                         add_end_point_itr);
         }
     }
@@ -276,15 +313,8 @@ void insert_hot_pixels_in_path(bound<T>& bnd,
 
 template <typename T>
 void add_to_hot_pixels(mapbox::geometry::point<T> const& pt, ring_manager<T>& rings) {
-
-    auto hp_itr = rings.hot_pixels.find(pt.y);
-    if (hp_itr == rings.hot_pixels.end()) {
-        hot_pixel_set<T> hp_set;
-        hp_set.emplace(pt.x);
-        rings.hot_pixels.emplace(pt.y, hp_set);
-    } else {
-        hp_itr->second.insert(pt.x);
-    }
+    rings.hot_pixels_sorted = false;
+    rings.hot_pixels.push_back(pt);
 }
 
 template <typename T>
@@ -301,7 +331,6 @@ void add_first_point(active_bound_list_itr<T>& bnd,
         set_hole_state(bnd, active_bounds, rings);
     }
     (*bnd)->last_point = pt;
-    add_to_hot_pixels(pt, rings);
 }
 
 template <typename T>
@@ -318,7 +347,6 @@ void add_first_point(active_bound_list_rev_itr<T>& bnd,
         set_hole_state(bnd, active_bounds, rings);
     }
     (*bnd)->last_point = pt;
-    add_to_hot_pixels(pt, rings);
 }
 
 template <typename T>
@@ -342,7 +370,6 @@ void add_point_to_ring(bound<T>& bnd,
     if (to_front) {
         bnd.ring->points = new_point;
     }
-    add_to_hot_pixels(pt, rings);
 }
 
 template <typename T>

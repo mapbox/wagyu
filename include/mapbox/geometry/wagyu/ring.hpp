@@ -56,10 +56,13 @@ struct ring {
 };
 
 template <typename T>
-using hot_pixel_set = std::set<T>;
+using hot_pixel_vector = std::vector<mapbox::geometry::point<T>>;
 
 template <typename T>
-using hot_pixel_map = std::map<T, hot_pixel_set<T>, std::greater<T>>;
+using hot_pixel_itr = typename hot_pixel_vector<T>::iterator;
+
+template <typename T>
+using hot_pixel_rev_itr = typename hot_pixel_vector<T>::reverse_iterator;
 
 template <typename T>
 struct ring_manager {
@@ -67,9 +70,10 @@ struct ring_manager {
     ring_vector<T> all_rings;
     ring_list<T> children;
     std::vector<point_ptr<T>> all_points;
-    hot_pixel_map<T> hot_pixels;
+    hot_pixel_vector<T> hot_pixels;
+    bool hot_pixels_sorted;
 
-    ring_manager() : index(0), all_rings(), children(), all_points(), hot_pixels() {
+    ring_manager() : index(0), all_rings(), children(), all_points(), hot_pixels(), hot_pixels_sorted(false) {
     }
 };
 
@@ -404,25 +408,10 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
 
 template <class charT, class traits, typename T>
 inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
-                                                     const hot_pixel_set<T>& hp_set) {
-    bool first = true;
-    for (auto& hp : hp_set) {
-        if (first) {
-            out << hp;
-            first = false;
-        } else {
-            out << ", " << hp;
-        }
-    }
-    return out;
-}
-
-template <class charT, class traits, typename T>
-inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
-                                                     const hot_pixel_map<T>& hp_map) {
+                                                     const hot_pixel_vector<T>& hp_vec) {
     out << "Hot Pixels: " << std::endl;
-    for (auto& hp_set : hp_map) {
-        out << "     y: " << hp_set.first << " - x: " << hp_set.second << std::endl;
+    for (auto& hp : hp_vec) {
+        out << hp << std::endl;
     }
     return out;
 }
