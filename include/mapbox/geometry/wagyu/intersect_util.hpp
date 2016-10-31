@@ -26,7 +26,7 @@ struct intersect_list_sorter {
 
 template <typename T>
 inline mapbox::geometry::point<T> round_point(mapbox::geometry::point<double> const& pt) {
-    return mapbox::geometry::point<T>(std::llround(pt.x), std::llround(pt.y));
+    return mapbox::geometry::point<T>(round_towards_max<T>(pt.x), round_towards_max<T>(pt.y));
 }
 
 template <typename T>
