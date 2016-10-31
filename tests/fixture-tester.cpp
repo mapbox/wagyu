@@ -86,7 +86,8 @@ void log_ring(mapbox::geometry::multi_polygon<std::int64_t> const& mp) {
     std::clog << "]" << std::endl;
 }
 
-void parse_file(const char* file_path, wagyu<value_type>& clipper, polygon_type polytype) {
+mapbox::geometry::polygon<value_type> parse_file(const char* file_path)
+{
     // todo safety checks opening files
     FILE* file = fopen(file_path, "r");
     char read_buffer[65536];
@@ -111,9 +112,8 @@ void parse_file(const char* file_path, wagyu<value_type>& clipper, polygon_type 
         }
         poly.emplace_back(lr);
     }
-    clipper.add_polygon(poly, polytype);
-
     fclose(file);
+    return poly;
 }
 
 void polys_to_json(Document& output, std::vector<mapbox::geometry::polygon<value_type>>& solution) {
@@ -201,12 +201,11 @@ int main(int argc, char* const argv[]) {
     }
     parse_options(argc, argv);
 
+    auto poly_subject = parse_file(options.subject_file);
+    auto poly_clip = parse_file(options.clip_file);
     wagyu<value_type> clipper;
-    parse_file(options.subject_file, clipper, polygon_type_subject);
-    if (options.clip_file != NULL) {
-        parse_file(options.clip_file, clipper, polygon_type_clip);
-    }
-
+    clipper.add_polygon(poly_subject, polygon_type_subject);
+    clipper.add_polygon(poly_clip, polygon_type_clip);
     mapbox::geometry::multi_polygon<value_type> solution;
     clipper.execute(options.operation, solution, options.fill, fill_type_even_odd);
 
