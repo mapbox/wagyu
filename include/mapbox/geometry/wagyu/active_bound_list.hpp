@@ -84,7 +84,7 @@ bool is_even_odd_alt_fill_type(bound<T> const& bound,
 
 template <typename T>
 inline bool bound2_inserts_before_bound1(bound<T> const& bound1, bound<T> const& bound2) {
-    if (values_are_equal(bound2.curr.x, bound1.curr.x)) {
+    if (values_are_equal(bound2.current_x, bound1.current_x)) {
         if (bound2.current_edge->top.y > bound1.current_edge->top.y) {
             return bound2.current_edge->top.x <
                    get_current_x(*(bound1.current_edge), bound2.current_edge->top.y);
@@ -93,7 +93,7 @@ inline bool bound2_inserts_before_bound1(bound<T> const& bound1, bound<T> const&
                    get_current_x(*(bound2.current_edge), bound1.current_edge->top.y);
         }
     } else {
-        return bound2.curr.x < bound1.curr.x;
+        return bound2.current_x < bound1.current_x;
     }
 }
 
@@ -152,10 +152,11 @@ inline void swap_positions_in_ABL(active_bound_list_itr<T>& bnd1,
 template <typename T>
 void next_edge_in_bound(active_bound_list_itr<T>& bnd, scanbeam_list<T>& scanbeam) {
     ++((*bnd)->current_edge);
-    (*bnd)->curr.x = static_cast<double>((*bnd)->current_edge->bot.x);
-    (*bnd)->curr.y = static_cast<double>((*bnd)->current_edge->bot.y);
-    if (!current_edge_is_horizontal<T>(bnd)) {
-        scanbeam.push((*bnd)->current_edge->top.y);
+    if ((*bnd)->current_edge != (*bnd)->edges.end()) {
+        (*bnd)->current_x = static_cast<double>((*bnd)->current_edge->bot.x);
+        if (!current_edge_is_horizontal<T>(bnd)) {
+            scanbeam.push((*bnd)->current_edge->top.y);
+        }
     }
 }
 

@@ -11,6 +11,7 @@
 #include <mapbox/geometry/wagyu/build_local_minima_list.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
+#include <mapbox/geometry/wagyu/snap_rounding.hpp>
 #include <mapbox/geometry/wagyu/topology_correction.hpp>
 #include <mapbox/geometry/wagyu/vatti.hpp>
 
@@ -118,6 +119,9 @@ public:
                  fill_type clip_fill_type) {
 
         ring_manager<T> rings;
+        
+        build_hot_pixels(minima_list, rings);
+
         if (!execute_vatti(minima_list, rings, cliptype, subject_fill_type, clip_fill_type)) {
             return false;
         }

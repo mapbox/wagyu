@@ -401,8 +401,7 @@ template <typename T>
 void initialize_lm(local_minimum_ptr_list_itr<T>& lm) {
     if (!(*lm)->left_bound.edges.empty()) {
         (*lm)->left_bound.current_edge = (*lm)->left_bound.edges.begin();
-        (*lm)->left_bound.curr.x = static_cast<double>((*lm)->left_bound.current_edge->bot.x);
-        (*lm)->left_bound.curr.y = static_cast<double>((*lm)->left_bound.current_edge->bot.y);
+        (*lm)->left_bound.current_x = static_cast<double>((*lm)->left_bound.current_edge->bot.x);
         (*lm)->left_bound.winding_count = 0;
         (*lm)->left_bound.winding_count2 = 0;
         (*lm)->left_bound.side = edge_left;
@@ -410,8 +409,7 @@ void initialize_lm(local_minimum_ptr_list_itr<T>& lm) {
     }
     if (!(*lm)->right_bound.edges.empty()) {
         (*lm)->right_bound.current_edge = (*lm)->right_bound.edges.begin();
-        (*lm)->right_bound.curr.x = static_cast<double>((*lm)->right_bound.current_edge->bot.x);
-        (*lm)->right_bound.curr.y = static_cast<double>((*lm)->right_bound.current_edge->bot.y);
+        (*lm)->right_bound.current_x = static_cast<double>((*lm)->right_bound.current_edge->bot.x);
         (*lm)->right_bound.winding_count = 0;
         (*lm)->right_bound.winding_count2 = 0;
         (*lm)->right_bound.side = edge_right;

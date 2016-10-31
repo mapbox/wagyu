@@ -21,10 +21,10 @@ struct bound {
 
     edge_list<T> edges;
     edge_list_itr<T> current_edge;
-    mapbox::geometry::point<double> curr;
     mapbox::geometry::point<T> last_point;
     ring_ptr<T> ring;
     bound_ptr<T> maximum_bound; // the bound who's maximum connects with this bound
+    double current_x;
     std::int32_t winding_count;
     std::int32_t winding_count2; // winding count of the opposite polytype
     std::int8_t winding_delta;   // 1 or -1 depending on winding direction - 0 for linestrings
@@ -34,10 +34,10 @@ struct bound {
     bound()
         : edges(),
           current_edge(edges.end()),
-          curr({ 0.0, 0.0 }),
           last_point({ 0, 0 }),
           ring(nullptr),
           maximum_bound(nullptr),
+          current_x(0.0),
           winding_count(0),
           winding_count2(0),
           winding_delta(0),
@@ -52,7 +52,7 @@ template <class charT, class traits, typename T>
 inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
                                                      const bound<T>& bnd) {
     out << "    Bound: " << &bnd << std::endl;
-    out << "        curr: " << bnd.curr.x << ", " << bnd.curr.y << std::endl;
+    out << "        current_x: " << bnd.current_x << std::endl;
     out << "        last_point: " << bnd.last_point.x << ", " << bnd.last_point.y << std::endl;
     out << *(bnd.current_edge);
     out << "        winding count: " << bnd.winding_count << std::endl;
