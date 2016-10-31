@@ -8,7 +8,6 @@
 #include <mapbox/geometry/wagyu/intersect_util.hpp>
 #include <mapbox/geometry/wagyu/ring.hpp>
 #include <mapbox/geometry/wagyu/ring_util.hpp>
-#include <mapbox/geometry/wagyu/sorted_bound_list.hpp>
 #include <mapbox/geometry/wagyu/util.hpp>
 
 namespace mapbox {

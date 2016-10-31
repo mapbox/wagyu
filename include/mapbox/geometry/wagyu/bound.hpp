@@ -25,6 +25,7 @@ struct bound {
     ring_ptr<T> ring;
     bound_ptr<T> maximum_bound; // the bound who's maximum connects with this bound
     double current_x;
+    std::size_t pos;
     std::int32_t winding_count;
     std::int32_t winding_count2; // winding count of the opposite polytype
     std::int8_t winding_delta;   // 1 or -1 depending on winding direction - 0 for linestrings
@@ -38,6 +39,7 @@ struct bound {
           ring(nullptr),
           maximum_bound(nullptr),
           current_x(0.0),
+          pos(0),
           winding_count(0),
           winding_count2(0),
           winding_delta(0),

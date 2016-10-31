@@ -5,7 +5,6 @@
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/intersect.hpp>
 #include <mapbox/geometry/wagyu/ring_util.hpp>
-#include <mapbox/geometry/wagyu/sorted_bound_list.hpp>
 #include <mapbox/geometry/wagyu/util.hpp>
 
 namespace mapbox {
@@ -74,25 +73,25 @@ bool get_edge_intersection(edge<T1> const& e1,
 }
 
 template <typename T>
-void build_intersect_list(sorting_bound_list<T>& sorted_bound_list,
+void build_intersect_list(active_bound_list<T>& active_bounds,
                           intersect_list<T>& intersects) {
     // bubblesort ...
-    bool isModified;
+    bool isModified = false;
     do {
         isModified = false;
-        auto bnd = sorted_bound_list.begin();
+        auto bnd = active_bounds.begin();
         auto bnd_next = std::next(bnd);
-        while (bnd_next != sorted_bound_list.end()) {
-            if (bnd->current_x > bnd_next->current_x &&
-                !slopes_equal(*(bnd->current_edge), *(bnd_next->current_edge))) {
+        while (bnd_next != active_bounds.end()) {
+            if ((*bnd)->current_x > (*bnd_next)->current_x &&
+                !slopes_equal(*((*bnd)->current_edge), *((*bnd_next)->current_edge))) {
                 mapbox::geometry::point<double> pt;
-                if (!get_edge_intersection<T, double>(*(bnd->current_edge),
-                                                      *(bnd_next->current_edge), pt)) {
+                if (!get_edge_intersection<T, double>(*((*bnd)->current_edge),
+                                                      *((*bnd_next)->current_edge), pt)) {
                     throw std::runtime_error(
                         "Trying to find intersection of lines that do not intersect");
                 }
-                intersects.emplace_back(bnd->bound, bnd_next->bound, pt);
-                swap_positions_in_SBL(bnd, bnd_next, sorted_bound_list);
+                intersects.emplace_back(bnd, bnd_next, pt);
+                swap_positions_in_ABL(bnd, bnd_next, active_bounds);
                 bnd_next = std::next(bnd);
                 isModified = true;
             } else {
@@ -347,7 +346,9 @@ void process_intersect_list(intersect_list<T>& intersects,
 
 template <typename T>
 void update_current_x(active_bound_list<T>& active_bounds, T top_y) {
+    std::size_t pos = 0;
     for (auto & bnd : active_bounds) {
+        bnd->pos = pos++;
         bnd->current_x = get_current_x(*bnd->current_edge, top_y);
     }
 }
@@ -359,20 +360,20 @@ void process_intersections(T top_y,
                            fill_type subject_fill_type,
                            fill_type clip_fill_type,
                            ring_manager<T>& rings) {
-    sorting_bound_list<T> sorted_bound_list;
-    // create sorted edge list from ABL
-    for (auto bnd_itr = active_bounds.begin(); bnd_itr != active_bounds.end(); ++bnd_itr) {
-        double curr_x = get_current_x(*((*bnd_itr)->current_edge), top_y);
-        (*bnd_itr)->current_x = curr_x;
-        sorted_bound_list.emplace_back(bnd_itr, &(*((*bnd_itr)->current_edge)), curr_x);
-    }
+    update_current_x(active_bounds, top_y);
+    
     intersect_list<T> intersects;
-    intersects.reserve(sorted_bound_list.size());
-    build_intersect_list(sorted_bound_list, intersects);
+    intersects.reserve(active_bounds.size());
+    build_intersect_list(active_bounds, intersects);
 
     if (intersects.empty()) {
         return;
     }
+
+    // Restore order of active bounds list
+    active_bounds.sort([] (bound_ptr<T> const& b1, bound_ptr<T> const& b2) {
+        return b1->pos < b2->pos;
+    });
 
     // Sort the intersection list
     std::stable_sort(intersects.begin(), intersects.end(), intersect_list_sorter<T>());
