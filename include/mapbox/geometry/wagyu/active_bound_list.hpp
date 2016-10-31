@@ -499,24 +499,12 @@ void insert_horizontal_local_minima_into_ABL(T const top_y,
         if (left_bound.edges.empty() && !right_bound.edges.empty()) {
             insert_lm_only_one_bound(right_bound, active_bounds, rings, scanbeam, cliptype,
                                      subject_fill_type, clip_fill_type);
-            if (right_bound.ring) {
-                mapbox::geometry::point<T> hp(right_bound.current_edge->top.x, top_y);
-                mapbox::geometry::point<T> hp2(right_bound.current_edge->bot.x, top_y);
-                add_to_hot_pixels(hp, rings);
-                add_to_hot_pixels(hp2, rings);
-            }
         } else if (right_bound.edges.empty() && !left_bound.edges.empty()) {
             throw clipper_exception(
                 "There should only be horizontal local minimum on right bounds!");
         } else {
             insert_lm_left_and_right_bound(left_bound, right_bound, active_bounds, rings, scanbeam,
                                            cliptype, subject_fill_type, clip_fill_type);
-            if (right_bound.ring) {
-                mapbox::geometry::point<T> hp(right_bound.current_edge->top.x, top_y);
-                mapbox::geometry::point<T> hp2(right_bound.current_edge->bot.x, top_y);
-                add_to_hot_pixels(hp, rings);
-                add_to_hot_pixels(hp2, rings);
-            }
         }
         ++current_lm;
     }

@@ -1707,7 +1707,118 @@ void rewind_to_point(std::size_t& i,
 }
 
 template <typename T>
+void remove_spikes_in_polygons(ring_ptr<T> r, ring_manager<T>& rings) {
+
+    point_ptr<T> first_point = r->points;
+    remove_spikes(first_point);
+    if (!first_point) {
+        r->points = nullptr;
+        r->area = std::numeric_limits<double>::quiet_NaN();
+        remove_ring(r, rings);
+        return;
+    }
+    point_ptr<T> p = first_point->next;
+    while (p != first_point) {
+        remove_spikes(p);
+        if (!p) {
+            r->points = nullptr;
+            r->area = std::numeric_limits<double>::quiet_NaN();
+            remove_ring(r, rings);
+            return;
+        }
+        if (p->ring && !first_point->ring) {
+            first_point = p;
+        }
+        p = p->next;
+    }
+}
+
+template <typename T>
+void fixup_out_polyline(ring<T>& ring, ring_manager<T>& rings) {
+    point_ptr<T> pp = ring.points;
+    point_ptr<T> lastPP = pp->prev;
+    while (pp != lastPP) {
+        pp = pp->next;
+        if (*pp == *pp->prev) {
+            if (pp == lastPP)
+                lastPP = pp->prev;
+            point_ptr<T> tmpPP = pp->prev;
+            tmpPP->next = pp->next;
+            pp->next->prev = tmpPP;
+            // delete pp;
+            pp->next = pp;
+            pp->prev = pp;
+            pp->ring = nullptr;
+            pp = tmpPP;
+        }
+    }
+
+    if (pp == pp->prev) {
+        remove_ring(&ring, rings);
+        dispose_out_points(pp);
+        ring.points = nullptr;
+        return;
+    }
+}
+
+
+template <typename T>
+void fixup_out_polygon(ring<T>& ring, ring_manager<T>& rings) {
+    // FixupOutPolygon() - removes duplicate points and simplifies consecutive
+    // parallel edges by removing the middle vertex.
+    point_ptr<T> lastOK = nullptr;
+    ring.bottom_point = nullptr;
+    point_ptr<T> pp = ring.points;
+
+    for (;;) {
+        if (pp->prev == pp || pp->prev == pp->next) {
+            // We now need to make sure any children rings to this are promoted and their hole
+            // status is changed
+            // promote_children_of_removed_ring(&ring, rings);
+            remove_ring(&ring, rings);
+            dispose_out_points(pp);
+            ring.points = nullptr;
+            return;
+        }
+
+        // test for duplicate points and collinear edges ...
+        if ((*pp == *pp->next) || (*pp == *pp->prev) ||
+            (slopes_equal(*pp->prev, *pp, *pp->next))) {
+            lastOK = nullptr;
+            point_ptr<T> tmp = pp;
+            pp->prev->next = pp->next;
+            pp->next->prev = pp->prev;
+            pp = pp->prev;
+            tmp->ring = nullptr;
+            tmp->next = tmp;
+            tmp->prev = tmp;
+        } else if (pp == lastOK) {
+            break;
+        } else {
+            if (!lastOK) {
+                lastOK = pp;
+            }
+            pp = pp->next;
+        }
+    }
+    ring.points = pp;
+}
+
+
+template <typename T>
 void do_simple_polygons(ring_manager<T>& rings) {
+
+    // fix orientations ...
+    for (auto& r : rings.all_rings) {
+        if (!r->points || r->is_open) {
+            continue;
+        }
+        if (ring_is_hole(r) == (area_from_point(r->points) > 0)) {
+            reverse_ring(r->points);
+        }
+        remove_spikes_in_polygons(r, rings);
+        r->area = std::numeric_limits<double>::quiet_NaN();
+    }
 
     std::stable_sort(rings.all_points.begin(), rings.all_points.end(), point_ptr_cmp<T>());
     std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>> dupe_ring;
@@ -1749,6 +1860,32 @@ void do_simple_polygons(ring_manager<T>& rings) {
             rewind_to_point(i, rewind_point, rings);
         }
         count = 0;
+    }
+
+#if DEBUG
+    // LCOV_EXCL_START
+    for (auto& r : rings.all_rings) {
+        if (!r->points || r->is_open) {
+            continue;
+        }
+        double stored_area = area(r);
+        double calculated_area = area_from_point(r->points);
+        if (!values_near_equal(stored_area, calculated_area)) {
+            throw std::runtime_error("Difference in stored area vs calculated area!");
+        }
+    }
+    // LCOV_EXCL_END
+#endif
+
+    for (auto& r : rings.all_rings) {
+        if (!r->points || r->is_open) {
+            continue;
+        }
+        fixup_out_polygon(*r, rings);
+        if (ring_is_hole(r) == (area(r) > 0.0)) {
+            reverse_ring(r->points);
+            r->area = std::numeric_limits<double>::quiet_NaN();
+        }
     }
 }
 }

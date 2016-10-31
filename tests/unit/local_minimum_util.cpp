@@ -3,7 +3,7 @@
 #include <mapbox/geometry/point.hpp>
 #include <mapbox/geometry/polygon.hpp>
 #include <mapbox/geometry/wagyu/local_minimum_util.hpp>
-#include <mapbox/geometry/wagyu/vatti.hpp>
+#include <mapbox/geometry/wagyu/build_local_minima_list.hpp>
 
 using namespace mapbox::geometry::wagyu;
 using T = std::int64_t;
