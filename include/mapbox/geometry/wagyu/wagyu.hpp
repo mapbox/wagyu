@@ -121,13 +121,6 @@ public:
 
         build_result(solution, rings, reverse_output);
 
-        for (auto& p : rings.all_points) {
-            delete p;
-        }
-        for (auto& r : rings.all_rings) {
-            delete r;
-        }
-
         return worked;
     }
 };

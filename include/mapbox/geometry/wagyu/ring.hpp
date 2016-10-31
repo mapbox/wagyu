@@ -5,7 +5,7 @@
 #include <map>
 #include <set>
 #include <vector>
-
+#include <deque>
 #include <mapbox/geometry/wagyu/point.hpp>
 
 #ifdef DEBUG
@@ -72,14 +72,18 @@ struct ring_manager {
     std::vector<point_ptr<T>> all_points;
     hot_pixel_vector<T> hot_pixels;
     bool hot_pixels_sorted;
+    std::deque<point<T>> points;
+    std::deque<ring<T>> rings;
 
-    ring_manager() : index(0), all_rings(), children(), all_points(), hot_pixels(), hot_pixels_sorted(false) {
+    ring_manager()
+        : index(0), all_rings(), children(), all_points(), hot_pixels(), hot_pixels_sorted(false) {
     }
 };
 
 template <typename T>
 ring_ptr<T> create_new_ring(ring_manager<T>& rings) {
-    ring_ptr<T> result = new ring<T>();
+    rings.rings.emplace_back();
+    ring_ptr<T> result = &rings.rings.back();
     result->ring_index = rings.index++;
     rings.all_rings.push_back(result);
     return result;
@@ -88,7 +92,8 @@ ring_ptr<T> create_new_ring(ring_manager<T>& rings) {
 template <typename T>
 point_ptr<T>
 create_new_point(ring_ptr<T> r, mapbox::geometry::point<T> const& pt, ring_manager<T>& rings) {
-    point_ptr<T> point = new wagyu::point<T>(r, pt);
+    rings.points.emplace_back(r, pt);
+    point_ptr<T> point = &rings.points.back();
     rings.all_points.push_back(point);
     return point;
 }
@@ -98,7 +103,8 @@ point_ptr<T> create_new_point(ring_ptr<T> r,
                               mapbox::geometry::point<T> const& pt,
                               point_ptr<T> before_this_point,
                               ring_manager<T>& rings) {
-    point_ptr<T> point = new wagyu::point<T>(r, pt, before_this_point);
+    rings.points.emplace_back(r, pt, before_this_point);
+    point_ptr<T> point = &rings.points.back();
     rings.all_points.push_back(point);
     return point;
 }

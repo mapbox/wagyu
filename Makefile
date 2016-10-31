@@ -28,13 +28,16 @@ build-test: tests/* include/mapbox/geometry/* deps Makefile
 build-debug: tests/* include/mapbox/geometry/* deps Makefile
 	$(CXX) $(DEBUG_FLAGS) tests/test.cpp tests/unit/*.cpp $(WARNING_FLAGS) $(CXXFLAGS) -I./tests -o test
 
+build-fixture-tester-r:
+	$(CXX) $(RELEASE_FLAGS) tests/fixture-tester.cpp $(WARNING_FLAGS) $(CXXFLAGS)  -o fixture-tester
+
 build-fixture-tester:
 	$(CXX) $(DEBUG_FLAGS) tests/fixture-tester.cpp $(WARNING_FLAGS) $(CXXFLAGS)  -o fixture-tester
 
 build-fuzzer:
 	$(CXX) $(DEBUG_FLAGS) tests/fuzzer.cpp $(WARNING_FLAGS) $(CXXFLAGS) -o fuzzer
 
-test: build-test build-fixture-tester
+test: build-test build-fixture-tester-r
 	./test
 	./tests/run-geometry-tests.sh ./fixture-tester
 
