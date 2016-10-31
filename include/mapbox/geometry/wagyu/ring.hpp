@@ -73,7 +73,13 @@ struct ring_manager {
     hot_pixel_vector<T> hot_pixels;
     bool hot_pixels_sorted;
 
-    ring_manager() : index(0), all_rings(), children(), all_points(), hot_pixels(), hot_pixels_sorted(false) {
+    ring_manager()
+        : index(0), all_rings(), children(), all_points(), hot_pixels(), hot_pixels_sorted(false) {
+    }
+    ~ring_manager()
+    {
+        for (auto& p : all_points) delete p;
+        for (auto& r : all_rings) delete r;
     }
 };
 
