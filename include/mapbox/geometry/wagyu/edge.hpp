@@ -29,7 +29,7 @@ struct edge {
     double dx;
     bound_ptr<T> bound; // the bound to which an edge belongs
 
-    edge(mapbox::geometry::point<T> current, mapbox::geometry::point<T> next_pt)
+    edge(mapbox::geometry::point<T> const& current, mapbox::geometry::point<T> const& next_pt)
         : bot(current), top(current), dx(0.0) {
         if (current.y >= next_pt.y) {
             top = next_pt;
