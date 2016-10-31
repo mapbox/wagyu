@@ -1,4 +1,4 @@
-## Intersections
+## Point Intersections
 
 Intersections of points will be found after the vatti processing. Every point will be part of a ring at this point and no ring will overlap another ring. It is the job of the topology correction code to take the existing rings and handle the different intersections to make valid and simple polygons.
 
@@ -6,7 +6,7 @@ Intersections of points will be found after the vatti processing. Every point wi
 
 The following are the types of intersections that can occur
 
-* Intersection of points on the same ring
+* Intersection of points on the same ring (Self Intersections)
 * Intersetion of an exterior ring with another exterior ring
 * Intersection of an exterior ring with an interior ring
 * Intersection of an interior ring with another interior ring
@@ -15,7 +15,7 @@ The following are the types of intersections that can occur
 
 A self intersection is an instance where two points belong to the same ring. Each time this occurs a section of the ring will become a new ring.
 
-#### The Fundamental Assumption of Intersections
+#### The Fundamental Assumption of Self Intersections
 
 The resulting rings from the vatti processing are **guaranteed** to never result in the path of a ring crossing with itself. While the path might be collinear or share intersection points that need to be cleaned up, it does not ever result in an "crossing intersection".
 

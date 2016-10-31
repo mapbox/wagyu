@@ -1,0 +1,20 @@
+## Wagyu Documentation
+
+Welcome to the Wagyu documentation, the purpose of this documentation is to explain the concepts
+and algorithm used within Wagyu. 
+
+### Origins of Wagyu
+
+Wagyu originated as a fork of the [Angus Johnson Clipper Library](http://www.angusj.com/delphi/clipper.php) and still
+shares some of the same code, however, some of the algorithm has been changed. Both libraries still utilize the [Vatti Clipping Algorithm](https://en.wikipedia.org/wiki/Vatti_clipping_algorithm). Wagyu, however, follows this clipping algorithm up with a topology correction algorithm. This is used to garuantee that all geometry created by the Vatti clipping is returned as being Valid and Simple as per the OGC specification. 
+
+### Documentation Map
+
+* [Vatti Algorithm](vatti.md)
+    * [Bounds and Edges](bounds_and_edges.md)
+    * [Vatti Intersections](vatti_intersections.md)
+    * [Snap Rounding](snap_rounding.md)
+* [Topology Correction](topology_correction.md)
+    * [Point Intersections](point_intersections.md)
+    * [Intersection Chains](intersections_chains.md)
+
