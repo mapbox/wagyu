@@ -66,17 +66,16 @@ using hot_pixel_rev_itr = typename hot_pixel_vector<T>::reverse_iterator;
 
 template <typename T>
 struct ring_manager {
-    std::size_t index;
-    ring_vector<T> all_rings;
     ring_list<T> children;
-    std::vector<point_ptr<T>> all_points;
     hot_pixel_vector<T> hot_pixels;
-    bool hot_pixels_sorted;
+    std::vector<point_ptr<T>> all_points;
     std::deque<point<T>> points;
     std::deque<ring<T>> rings;
+    std::size_t index;
+    bool hot_pixels_sorted;
 
     ring_manager()
-        : index(0), all_rings(), children(), all_points(), hot_pixels(), hot_pixels_sorted(false) {
+        : children(), hot_pixels(), all_points(), points(), rings(), index(0), hot_pixels_sorted(false) {
     }
 };
 
@@ -85,7 +84,6 @@ ring_ptr<T> create_new_ring(ring_manager<T>& rings) {
     rings.rings.emplace_back();
     ring_ptr<T> result = &rings.rings.back();
     result->ring_index = rings.index++;
-    rings.all_rings.push_back(result);
     return result;
 }
 
@@ -94,7 +92,6 @@ point_ptr<T>
 create_new_point(ring_ptr<T> r, mapbox::geometry::point<T> const& pt, ring_manager<T>& rings) {
     rings.points.emplace_back(r, pt);
     point_ptr<T> point = &rings.points.back();
-    rings.all_points.push_back(point);
     return point;
 }
 
@@ -105,7 +102,6 @@ point_ptr<T> create_new_point(ring_ptr<T> r,
                               ring_manager<T>& rings) {
     rings.points.emplace_back(r, pt, before_this_point);
     point_ptr<T> point = &rings.points.back();
-    rings.all_points.push_back(point);
     return point;
 }
 
