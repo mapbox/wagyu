@@ -151,8 +151,6 @@ void build_hot_pixels(local_minimum_list<T>& minima_list,
 
         process_hot_pixel_intersections(scanline_y, active_bounds, rings);
 
-        process_hot_pixel_edges_at_top_of_scanbeam(scanline_y, scanbeam, active_bounds, rings);
-        
         insert_local_minima_into_ABL_hot_pixel(scanline_y, minima_sorted, current_lm, active_bounds,
                                      rings, scanbeam);
         
