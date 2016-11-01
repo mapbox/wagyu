@@ -72,6 +72,7 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
 
     setup_scanbeam(minima_list, scanbeam);
     rings.current_hp_itr = rings.hot_pixels.begin();
+    preallocate_point_memory(rings, rings.hot_pixels.size());
 
     while (pop_from_scanbeam(scanline_y, scanbeam) || current_lm != minima_sorted.end()) {
 

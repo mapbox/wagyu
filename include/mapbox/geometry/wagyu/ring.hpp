@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <list>
 #include <map>
+#include <memory>
 #include <set>
 #include <vector>
 #include <deque>
@@ -66,34 +67,67 @@ using hot_pixel_rev_itr = typename hot_pixel_vector<T>::reverse_iterator;
 
 template <typename T>
 struct ring_manager {
-    std::size_t index;
-    ring_vector<T> all_rings;
+    
     ring_list<T> children;
     std::vector<point_ptr<T>> all_points;
     hot_pixel_vector<T> hot_pixels;
     hot_pixel_itr<T> current_hp_itr;
     std::deque<point<T>> points;
     std::deque<ring<T>> rings;
+    
+    std::allocator<point<T>> storage;
+    std::size_t index;
+    std::size_t storage_max_size;
+    std::size_t storage_size;
+    point_ptr<T> s;
 
     ring_manager()
-        : index(0), all_rings(), children(), all_points(), hot_pixels(), current_hp_itr(hot_pixels.end()) {
+        : children(),
+          all_points(),
+          hot_pixels(),
+          current_hp_itr(hot_pixels.end()),
+          points(),
+          rings(),
+          storage(),
+          index(0),
+          storage_max_size(0),
+          storage_size(0),
+          s(nullptr) {
+    }
+
+    ~ring_manager() {
+        if (storage_max_size != 0 && s != nullptr) {
+            storage.deallocate(s, storage_max_size);
+        }
     }
 };
+
+template <typename T>
+void preallocate_point_memory(ring_manager<T>& rings, std::size_t size) {
+    rings.storage_max_size = size;
+    rings.s = rings.storage.allocate(rings.storage_max_size);
+}
 
 template <typename T>
 ring_ptr<T> create_new_ring(ring_manager<T>& rings) {
     rings.rings.emplace_back();
     ring_ptr<T> result = &rings.rings.back();
     result->ring_index = rings.index++;
-    rings.all_rings.push_back(result);
     return result;
 }
 
 template <typename T>
 point_ptr<T>
 create_new_point(ring_ptr<T> r, mapbox::geometry::point<T> const& pt, ring_manager<T>& rings) {
-    rings.points.emplace_back(r, pt);
-    point_ptr<T> point = &rings.points.back();
+    using allocator_type = std::allocator<point<T>>;
+    point_ptr<T> point;
+    if (rings.storage_size < rings.storage_max_size) {
+        point = rings.s + rings.storage_size++;
+        std::allocator_traits<allocator_type>::construct(rings.storage, point, r, pt);
+    } else {
+        rings.points.emplace_back(r, pt);
+        point = &rings.points.back();
+    }
     rings.all_points.push_back(point);
     return point;
 }
@@ -103,8 +137,15 @@ point_ptr<T> create_new_point(ring_ptr<T> r,
                               mapbox::geometry::point<T> const& pt,
                               point_ptr<T> before_this_point,
                               ring_manager<T>& rings) {
-    rings.points.emplace_back(r, pt, before_this_point);
-    point_ptr<T> point = &rings.points.back();
+    using allocator_type = std::allocator<point<T>>;
+    point_ptr<T> point;
+    if (rings.storage_size < rings.storage_max_size) {
+        point = rings.s + rings.storage_size++;
+        std::allocator_traits<allocator_type>::construct(rings.storage, point, r, pt, before_this_point);
+    } else {
+        rings.points.emplace_back(r, pt, before_this_point);
+        point = &rings.points.back();
+    }
     rings.all_points.push_back(point);
     return point;
 }

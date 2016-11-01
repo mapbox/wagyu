@@ -1698,8 +1698,8 @@ template <typename T>
 void rewind_to_point(std::size_t& i,
                      mapbox::geometry::point<T> const& pt,
                      ring_manager<T> const& rings) {
-    if (i >= rings.all_rings.size()) {
-        i = rings.all_rings.size() - 1;
+    if (i >= rings.rings.size()) {
+        i = rings.rings.size() - 1;
     }
     while (index_is_after_point(i, pt, rings)) {
         --i;
@@ -1809,20 +1809,20 @@ template <typename T>
 void do_simple_polygons(ring_manager<T>& rings) {
 
     // fix orientations ...
-    for (auto& r : rings.all_rings) {
-        if (!r->points || r->is_open) {
+    for (auto& r : rings.rings) {
+        if (!r.points || r.is_open) {
             continue;
         }
-        if (ring_is_hole(r) == (area_from_point(r->points) > 0)) {
-            reverse_ring(r->points);
+        if (ring_is_hole(&r) == (area_from_point(r.points) > 0)) {
+            reverse_ring(r.points);
         }
-        remove_spikes_in_polygons(r, rings);
-        r->area = std::numeric_limits<double>::quiet_NaN();
+        remove_spikes_in_polygons(&r, rings);
+        r.area = std::numeric_limits<double>::quiet_NaN();
     }
 
     std::stable_sort(rings.all_points.begin(), rings.all_points.end(), point_ptr_cmp<T>());
     std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>> dupe_ring;
-    dupe_ring.reserve(rings.all_rings.size());
+    dupe_ring.reserve(rings.rings.size());
 
     // Find sets of repeated points and process them
     std::size_t count = 0;
@@ -1864,12 +1864,12 @@ void do_simple_polygons(ring_manager<T>& rings) {
 
 #if DEBUG
     // LCOV_EXCL_START
-    for (auto& r : rings.all_rings) {
-        if (!r->points || r->is_open) {
+    for (auto& r : rings.rings) {
+        if (!r.points || r.is_open) {
             continue;
         }
-        double stored_area = area(r);
-        double calculated_area = area_from_point(r->points);
+        double stored_area = area(&r);
+        double calculated_area = area_from_point(r.points);
         if (!values_near_equal(stored_area, calculated_area)) {
             throw std::runtime_error("Difference in stored area vs calculated area!");
         }
@@ -1877,14 +1877,14 @@ void do_simple_polygons(ring_manager<T>& rings) {
     // LCOV_EXCL_END
 #endif
 
-    for (auto& r : rings.all_rings) {
-        if (!r->points || r->is_open) {
+    for (auto& r : rings.rings) {
+        if (!r.points || r.is_open) {
             continue;
         }
-        fixup_out_polygon(*r, rings);
-        if (ring_is_hole(r) == (area(r) > 0.0)) {
-            reverse_ring(r->points);
-            r->area = std::numeric_limits<double>::quiet_NaN();
+        fixup_out_polygon(r, rings);
+        if (ring_is_hole(&r) == (area(&r) > 0.0)) {
+            reverse_ring(r.points);
+            r.area = std::numeric_limits<double>::quiet_NaN();
         }
     }
 }
