@@ -106,6 +106,7 @@ template <typename T>
 void preallocate_point_memory(ring_manager<T>& rings, std::size_t size) {
     rings.storage_max_size = size;
     rings.s = rings.storage.allocate(rings.storage_max_size);
+    rings.all_points.reserve(size);
 }
 
 template <typename T>
