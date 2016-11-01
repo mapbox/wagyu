@@ -21,10 +21,6 @@ void process_hot_pixel_intersections(T top_y,
     if (active_bounds.empty()) {
         return;
     }
-    /*
-    active_bounds.sort([](bound_ptr<T> const& b1, bound_ptr<T> const& b2) {
-        return b1->current_x < b2->current_x;
-    });*/
 
     update_current_x(active_bounds, top_y);
     // bubblesort ...
@@ -148,7 +144,6 @@ void build_hot_pixels(local_minimum_list<T>& minima_list,
     }
     std::stable_sort(minima_sorted.begin(), minima_sorted.end(), local_minimum_sorter<T>());
     local_minimum_ptr_list_itr<T> current_lm = minima_sorted.begin();
-    // std::clog << output_all_edges(minima_sorted) << std::endl;
 
     setup_scanbeam(minima_list, scanbeam);
 

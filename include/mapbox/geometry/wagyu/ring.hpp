@@ -71,12 +71,12 @@ struct ring_manager {
     ring_list<T> children;
     std::vector<point_ptr<T>> all_points;
     hot_pixel_vector<T> hot_pixels;
-    bool hot_pixels_sorted;
+    hot_pixel_itr<T> current_hp_itr;
     std::deque<point<T>> points;
     std::deque<ring<T>> rings;
 
     ring_manager()
-        : index(0), all_rings(), children(), all_points(), hot_pixels(), hot_pixels_sorted(false) {
+        : index(0), all_rings(), children(), all_points(), hot_pixels(), current_hp_itr(hot_pixels.end()) {
     }
 };
 
