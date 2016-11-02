@@ -12,7 +12,6 @@ shares some of the same code, however, some of the algorithm has been changed. B
 
 * Wagyu Algorithm Documentation
     * [Vatti Algorithm](vatti.md)
-        * [Bounds and Edges](bounds_and_edges.md)
         * [Vatti Intersections](vatti_intersections.md)
         * [Snap Rounding](snap_rounding.md)
     * [Topology Correction](topology_correction.md)
