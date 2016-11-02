@@ -10,11 +10,19 @@ shares some of the same code, however, some of the algorithm has been changed. B
 
 ### Documentation Map
 
-* [Vatti Algorithm](vatti.md)
-    * [Bounds and Edges](bounds_and_edges.md)
-    * [Vatti Intersections](vatti_intersections.md)
-    * [Snap Rounding](snap_rounding.md)
-* [Topology Correction](topology_correction.md)
-    * [Point Intersections](point_intersections.md)
-    * [Intersection Chains](intersections_chains.md)
-
+* Wagyu Algorithm Documentation
+    * [Vatti Algorithm](vatti.md)
+        * [Bounds and Edges](bounds_and_edges.md)
+        * [Vatti Intersections](vatti_intersections.md)
+        * [Snap Rounding](snap_rounding.md)
+    * [Topology Correction](topology_correction.md)
+        * [Point Intersections](point_intersections.md)
+        * [Intersection Chains](intersections_chains.md)
+* Examples and Useage
+    * [Getting Started](getting_started.md)
+    * [Example Code](example.md)
+* Contributing to Wagyu
+    * [Rules for Contributing](contributing.md)
+    * [Building and Testing](building_and_testing.md)
+    * [Making a Testcase](make_a_testcase.md)
+    * [Using the Fuzzer](fuzzer.md)
