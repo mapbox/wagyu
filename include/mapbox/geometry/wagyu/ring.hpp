@@ -3,7 +3,6 @@
 #include <assert.h>
 #include <list>
 #include <map>
-#include <memory>
 #include <set>
 #include <vector>
 #include <deque>
@@ -74,12 +73,8 @@ struct ring_manager {
     hot_pixel_itr<T> current_hp_itr;
     std::deque<point<T>> points;
     std::deque<ring<T>> rings;
-    
-    std::allocator<point<T>> storage;
+    std::vector<point<T>> storage;
     std::size_t index;
-    std::size_t storage_max_size;
-    std::size_t storage_size;
-    point_ptr<T> s;
 
     ring_manager()
         : children(),
@@ -89,24 +84,13 @@ struct ring_manager {
           points(),
           rings(),
           storage(),
-          index(0),
-          storage_max_size(0),
-          storage_size(0),
-          s(nullptr) {
-    }
-
-    ~ring_manager() {
-        if (storage_max_size != 0 && s != nullptr) {
-            storage.deallocate(s, storage_max_size);
-        }
+          index(0) {
     }
 };
 
 template <typename T>
 void preallocate_point_memory(ring_manager<T>& rings, std::size_t size) {
-    rings.storage_max_size = size;
-    rings.s = rings.storage.allocate(rings.storage_max_size);
-    rings.all_points.reserve(size);
+    rings.storage.reserve(size);
 }
 
 template <typename T>
@@ -120,11 +104,10 @@ ring_ptr<T> create_new_ring(ring_manager<T>& rings) {
 template <typename T>
 point_ptr<T>
 create_new_point(ring_ptr<T> r, mapbox::geometry::point<T> const& pt, ring_manager<T>& rings) {
-    using allocator_type = std::allocator<point<T>>;
     point_ptr<T> point;
-    if (rings.storage_size < rings.storage_max_size) {
-        point = rings.s + rings.storage_size++;
-        std::allocator_traits<allocator_type>::construct(rings.storage, point, r, pt);
+    if (rings.storage.size() < rings.storage.capacity()) {
+        rings.storage.emplace_back(r, pt);
+        point = &rings.storage.back();
     } else {
         rings.points.emplace_back(r, pt);
         point = &rings.points.back();
@@ -138,11 +121,10 @@ point_ptr<T> create_new_point(ring_ptr<T> r,
                               mapbox::geometry::point<T> const& pt,
                               point_ptr<T> before_this_point,
                               ring_manager<T>& rings) {
-    using allocator_type = std::allocator<point<T>>;
     point_ptr<T> point;
-    if (rings.storage_size < rings.storage_max_size) {
-        point = rings.s + rings.storage_size++;
-        std::allocator_traits<allocator_type>::construct(rings.storage, point, r, pt, before_this_point);
+    if (rings.storage.size() < rings.storage.capacity()) {
+        rings.storage.emplace_back(r, pt, before_this_point);
+        point = &rings.storage.back();
     } else {
         rings.points.emplace_back(r, pt, before_this_point);
         point = &rings.points.back();
