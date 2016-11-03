@@ -147,14 +147,6 @@ void build_hot_pixels(local_minimum_list<T>& minima_list,
 
     setup_scanbeam(minima_list, scanbeam);
 
-    // Estimate size for reserving hot pixels
-    std::size_t reserve = 0;
-    for (auto & lm : minima_list) {
-        reserve += lm.left_bound.edges.size() + 2;
-        reserve += lm.right_bound.edges.size() + 2;
-    }
-    rings.hot_pixels.reserve(reserve);
-
     while (pop_from_scanbeam(scanline_y, scanbeam) || current_lm != minima_sorted.end()) {
 
         process_hot_pixel_intersections(scanline_y, active_bounds, rings);
@@ -165,8 +157,7 @@ void build_hot_pixels(local_minimum_list<T>& minima_list,
         process_hot_pixel_edges_at_top_of_scanbeam(scanline_y, scanbeam, active_bounds, rings);
         
     }
-    preallocate_point_memory(rings, rings.hot_pixels.size());
-    sort_hot_pixels(rings);
+    preallocate_point_memory(rings, rings.reserve);
 }
 
 }

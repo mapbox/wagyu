@@ -28,13 +28,6 @@ void update_hotpixels_to_scanline(T scanline_y,
             std::llround(get_current_x(*(bnd->current_edge), scanline_y)), scanline_y);
         insert_hot_pixels_in_path(*bnd, scanline_point, rings, true);
     }
-    
-    while(rings.current_hp_itr != rings.hot_pixels.end()) {
-        if (rings.current_hp_itr->y >= scanline_y) {
-            break;
-        }
-        ++rings.current_hp_itr;
-    }
 }
 
 template <typename T>
@@ -71,7 +64,6 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
     // std::clog << output_all_edges(minima_sorted) << std::endl;
 
     setup_scanbeam(minima_list, scanbeam);
-    rings.current_hp_itr = rings.hot_pixels.begin();
 
     while (pop_from_scanbeam(scanline_y, scanbeam) || current_lm != minima_sorted.end()) {
 

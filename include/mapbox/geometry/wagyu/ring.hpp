@@ -2,7 +2,7 @@
 
 #include <assert.h>
 #include <list>
-#include <map>
+#include <unordered_map>
 #include <set>
 #include <vector>
 #include <deque>
@@ -56,34 +56,37 @@ struct ring {
 };
 
 template <typename T>
-using hot_pixel_vector = std::vector<mapbox::geometry::point<T>>;
+using hot_pixel_set = std::set<T>;
 
 template <typename T>
-using hot_pixel_itr = typename hot_pixel_vector<T>::iterator;
+using hot_pixel_set_itr = typename hot_pixel_set<T>::iterator;
 
 template <typename T>
-using hot_pixel_rev_itr = typename hot_pixel_vector<T>::reverse_iterator;
+using hot_pixel_set_rev_itr = typename hot_pixel_set<T>::reverse_iterator;
+
+template <typename T>
+using hot_pixel_map = std::unordered_map<T, hot_pixel_set<T>>;
 
 template <typename T>
 struct ring_manager {
     
     ring_list<T> children;
     std::vector<point_ptr<T>> all_points;
-    hot_pixel_vector<T> hot_pixels;
-    hot_pixel_itr<T> current_hp_itr;
+    hot_pixel_map<T> hot_pixels;
     std::deque<point<T>> points;
     std::deque<ring<T>> rings;
     std::vector<point<T>> storage;
+    std::size_t reserve;
     std::size_t index;
 
     ring_manager()
         : children(),
           all_points(),
           hot_pixels(),
-          current_hp_itr(hot_pixels.end()),
           points(),
           rings(),
           storage(),
+          reserve(0),
           index(0) {
     }
 };
@@ -91,6 +94,7 @@ struct ring_manager {
 template <typename T>
 void preallocate_point_memory(ring_manager<T>& rings, std::size_t size) {
     rings.storage.reserve(size);
+    rings.all_points.reserve(size);
 }
 
 template <typename T>
@@ -438,10 +442,25 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
 
 template <class charT, class traits, typename T>
 inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
-                                                     const hot_pixel_vector<T>& hp_vec) {
+                                                     const hot_pixel_set<T>& hp_set) {
+    bool first = true;
+    for (auto& hp : hp_set) {
+        if (first) {
+            out << hp;
+            first = false;
+        } else {
+            out << ", " << hp;
+        }
+    }
+    return out;
+}
+
+template <class charT, class traits, typename T>
+inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
+                                                     const hot_pixel_map<T>& hp_map) {
     out << "Hot Pixels: " << std::endl;
-    for (auto& hp : hp_vec) {
-        out << hp << std::endl;
+    for (auto& hp_set : hp_map) {
+        out << "     y: " << hp_set.first << " - x: " << hp_set.second << std::endl;
     }
     return out;
 }
