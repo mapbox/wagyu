@@ -34,6 +34,9 @@ build-fixture-tester-r:
 build-fixture-tester:
 	$(CXX) $(DEBUG_FLAGS) tests/fixture-tester.cpp $(WARNING_FLAGS) $(CXXFLAGS)  -o fixture-tester
 
+build-fuzzer-r:
+	$(CXX) $(RELEASE_FLAGS) tests/fuzzer.cpp $(WARNING_FLAGS) $(CXXFLAGS) -o fuzzer
+
 build-fuzzer:
 	$(CXX) $(DEBUG_FLAGS) tests/fuzzer.cpp $(WARNING_FLAGS) $(CXXFLAGS) -o fuzzer
 

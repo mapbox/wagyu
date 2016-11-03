@@ -247,12 +247,9 @@ void hot_pixel_set_right_to_left(T y,
 
 template <typename T>
 void sort_hot_pixels(ring_manager<T>& rings) {
-    if (!rings.hot_pixels_sorted) {
-        std::sort(rings.hot_pixels.begin(), rings.hot_pixels.end(), hot_pixel_sorter<T>());
-        auto last = std::unique(rings.hot_pixels.begin(), rings.hot_pixels.end());
-        rings.hot_pixels.erase(last, rings.hot_pixels.end());
-        rings.hot_pixels_sorted = true;
-    }
+    std::sort(rings.hot_pixels.begin(), rings.hot_pixels.end(), hot_pixel_sorter<T>());
+    auto last = std::unique(rings.hot_pixels.begin(), rings.hot_pixels.end());
+    rings.hot_pixels.erase(last, rings.hot_pixels.end());
 }
 
 template <typename T>
@@ -273,10 +270,8 @@ void insert_hot_pixels_in_path(bound<T>& bnd,
     T end_y = end_pt.y;
     T end_x = end_pt.x;
 
-    sort_hot_pixels(rings);
-
     if (start_x > end_x) {
-        for (auto itr = rings.hot_pixels.begin(); itr != rings.hot_pixels.end();) {
+        for (auto itr = rings.current_hp_itr; itr != rings.hot_pixels.end();) {
             if (itr->y > start_y) {
                 ++itr;
                 continue;
@@ -295,7 +290,7 @@ void insert_hot_pixels_in_path(bound<T>& bnd,
                                         add_end_point_itr);
         }
     } else {
-        for (auto itr = rings.hot_pixels.begin(); itr != rings.hot_pixels.end();) {
+        for (auto itr = rings.current_hp_itr; itr != rings.hot_pixels.end();) {
             if (itr->y > start_y) {
                 ++itr;
                 continue;
@@ -319,7 +314,6 @@ void insert_hot_pixels_in_path(bound<T>& bnd,
 
 template <typename T>
 void add_to_hot_pixels(mapbox::geometry::point<T> const& pt, ring_manager<T>& rings) {
-    rings.hot_pixels_sorted = false;
     rings.hot_pixels.push_back(pt);
 }
 

@@ -99,12 +99,9 @@ void process_edges_at_top_of_scanbeam(T top_y,
                 next_edge_in_bound(bnd, scanbeam);
                 if ((*bnd)->ring) {
                     add_point_to_ring(*(*bnd), (*bnd)->current_edge->bot, rings);
-                    mapbox::geometry::point<T> hp((*bnd)->current_edge->top.x, top_y);
-                    add_to_hot_pixels(hp, rings);
                 }
             } else {
-                (*bnd)->curr.x = get_current_x(*((*bnd)->current_edge), top_y);
-                (*bnd)->curr.y = static_cast<double>(top_y);
+                (*bnd)->current_x = get_current_x(*((*bnd)->current_edge), top_y);
             }
 
             ++bnd;
