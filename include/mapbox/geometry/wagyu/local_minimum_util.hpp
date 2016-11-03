@@ -317,7 +317,9 @@ void add_ring_to_local_minima_list(edge_list<T>& edges,
     while (!edges.empty()) {
         bool lm_minimum_has_horizontal = false;
         auto to_minimum = create_bound_towards_minimum(edges);
-        assert(!edges.empty());
+        if (edges.empty()) {
+            throw std::runtime_error("Edges is empty after only creating a single bound.");
+        }
         auto to_maximum = create_bound_towards_maximum(edges);
         fix_horizontals(to_minimum);
         fix_horizontals(to_maximum);
