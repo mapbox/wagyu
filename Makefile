@@ -5,6 +5,8 @@ RELEASE_FLAGS := -O3 -DNDEBUG
 WARNING_FLAGS := -Wall -Wextra -Werror -Wsign-compare -Wfloat-equal -Wfloat-conversion -Wshadow -Wno-unsequenced
 DEBUG_FLAGS := -g -O0 -DDEBUG -fno-inline-functions -fno-omit-frame-pointer
 MASON ?= .mason/mason
+CLIPPER_REVISION=ac8d6bf2517f46c05647b5c19cac113fb180ffb4
+ANGUS_DEFINES := -D'CLIPPER_INTPOINT_IMPL=mapbox::geometry::point<cInt>' -D'CLIPPER_PATH_IMPL=mapbox::geometry::linear_ring<cInt>' -D'CLIPPER_PATHS_IMPL=mapbox::geometry::polygon<cInt>' -D'CLIPPER_IMPL_INCLUDE=<mapbox/geometry/polygon.hpp>'
 
 default: test
 
@@ -39,6 +41,15 @@ build-fuzzer-r:
 
 build-fuzzer:
 	$(CXX) $(DEBUG_FLAGS) tests/fuzzer.cpp $(WARNING_FLAGS) $(CXXFLAGS) -o fuzzer
+
+# angus clipper for benchmark
+./deps/clipper:
+	git clone https://github.com/mapnik/clipper.git -b r496-mapnik ./deps/clipper && cd ./deps/clipper && git checkout $(CLIPPER_REVISION) && ./cpp/fix_members.sh
+
+build-benchmark: ./deps/clipper
+	$(CXX) -c $(RELEASE_FLAGS) deps/clipper/cpp/clipper.cpp $(ANGUS_DEFINES) $(CXXFLAGS) -I./deps/clipper/cpp 
+	$(CXX) -c $(RELEASE_FLAGS) tests/benchmark.cpp $(ANGUS_DEFINES) $(CXXFLAGS) -I./deps/clipper/cpp
+	$(CXX) $(RELEASE_FLAGS) clipper.o benchmark.o $(CXXFLAGS) -o benchmark
 
 test: build-test build-fixture-tester-r
 	./test

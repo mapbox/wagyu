@@ -20,33 +20,6 @@ namespace geometry {
 namespace wagyu {
 
 template <typename T>
-void update_hotpixels_to_scanline(T scanline_y,
-                                  active_bound_list<T>& active_bounds,
-                                  ring_manager<T>& rings) {
-    for (auto & bnd : active_bounds) {
-        mapbox::geometry::point<T> scanline_point(
-            std::llround(get_current_x(*(bnd->current_edge), scanline_y)), scanline_y);
-        insert_hot_pixels_in_path(*bnd, scanline_point, rings, true);
-    }
-    
-    while(rings.current_hp_itr != rings.hot_pixels.end()) {
-        if (rings.current_hp_itr->y >= scanline_y) {
-            break;
-        }
-        ++rings.current_hp_itr;
-    }
-}
-
-template <typename T>
-void clear_hot_pixels(T scanline_y, ring_manager<T>& rings) {
-
-    auto end = std::remove_if(rings.hot_pixels.begin(), rings.hot_pixels.end(),
-                                  [scanline_y](const mapbox::geometry::point<T> & pt)
-                                   { return pt.y != scanline_y; });
-    rings.hot_pixels.erase(end, rings.hot_pixels.end());
-}
-
-template <typename T>
 bool execute_vatti(local_minimum_list<T>& minima_list,
                    ring_manager<T>& rings,
                    clip_type cliptype,
@@ -92,7 +65,6 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
                                      rings, scanbeam, cliptype, subject_fill_type,
                                      clip_fill_type);
 
-        update_hotpixels_to_scanline(scanline_y, active_bounds, rings);
     }
     // std::clog << rings.all_rings << std::endl;
     // std::clog << output_as_polygon(rings.all_rings[0]);

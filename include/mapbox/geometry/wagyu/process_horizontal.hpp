@@ -31,7 +31,6 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
         bound_max_pair = get_maxima_pair<T>(horz_bound, active_bounds);
     }
 
-    sort_hot_pixels(rings);
     auto hp_itr = rings.hot_pixels.begin();
     while (hp_itr != rings.hot_pixels.end() && (hp_itr->y > scanline_y || (hp_itr->y == scanline_y && hp_itr->x < (*horz_bound)->current_edge->bot.x))) {
         ++hp_itr;
@@ -155,7 +154,6 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
     if (is_maxima_edge) {
         bound_max_pair = get_maxima_pair<T>(horz_bound, active_bounds);
     }
-    sort_hot_pixels(rings);
     auto hp_itr = rings.hot_pixels.rbegin();
     while (hp_itr != rings.hot_pixels.rend() && (hp_itr->y < scanline_y || (hp_itr->y == scanline_y && hp_itr->x > (*horz_bound)->current_edge->bot.x))) {
         ++hp_itr;

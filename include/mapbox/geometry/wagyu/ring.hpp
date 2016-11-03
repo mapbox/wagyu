@@ -91,6 +91,7 @@ struct ring_manager {
 template <typename T>
 void preallocate_point_memory(ring_manager<T>& rings, std::size_t size) {
     rings.storage.reserve(size);
+    rings.all_points.reserve(size);
 }
 
 template <typename T>
