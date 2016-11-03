@@ -281,9 +281,11 @@ int main(int argc, char* const argv[]) {
     
     using double_seconds = std::chrono::duration<double, std::chrono::seconds::period>;
 
-    /*
+    double time_wagyu;
+    double time_angus;
+    bool wagyu_valid = true;
+    bool angus_valid = true;
     {
-        bool wagyu_valid = true;
         wagyu<value_type> clipper;
         clipper.add_polygon(poly_subject, polygon_type_subject);
         clipper.add_polygon(poly_clip, polygon_type_clip);
@@ -296,13 +298,8 @@ int main(int argc, char* const argv[]) {
                 wagyu_valid = false;
             }
         }
-        if (wagyu_valid) {
-            std::clog << "Wagyu is valid" << std::endl;
-        } else {
-            std::clog << "Wagyu is not valid" << std::endl;
-        }
     }
-    */
+    
     {
         auto t1 = std::chrono::high_resolution_clock::now();
 
@@ -314,13 +311,11 @@ int main(int argc, char* const argv[]) {
             clipper.execute(options.operation, solution, options.fill, fill_type_even_odd);
         }
         auto t2 = std::chrono::high_resolution_clock::now();
-        std::clog << "Wagyu took: " << double_seconds(t2 - t1).count() << " seconds" << std::endl;
+        time_wagyu = double_seconds(t2 - t1).count();
     }
  
-    /*   
     ClipperLib::PolyFillType angus_fill_type = get_angus_fill_type(options.fill);
     ClipperLib::ClipType angus_clip_type = get_angus_clip_type(options.operation);
-    bool angus_valid = true;
     {
         ClipperLib::Clipper clipper;
         clipper.StrictlySimple(true);
@@ -346,11 +341,6 @@ int main(int argc, char* const argv[]) {
             if (!boost::geometry::is_valid(p, message)) {
                 angus_valid = false;
             }
-        }
-        if (angus_valid) {
-            std::clog << "Angus is valid" << std::endl;
-        } else {
-            std::clog << "Angus is not valid" << std::endl;
         }
     }
     
@@ -378,8 +368,20 @@ int main(int argc, char* const argv[]) {
             }
         }
         auto t2 = std::chrono::high_resolution_clock::now();
-        std::clog << "Angus took: " << double_seconds(t2 - t1).count() << " seconds" << std::endl;
+        time_angus = double_seconds(t2 - t1).count();
     }
-    */
-    std::cout << std::endl;
+    if (wagyu_valid) {
+        std::clog << "\033[1;32m";
+    } else {
+        std::clog << "\033[0;31m";
+    }
+    std::clog << time_wagyu << "\033[0m,  ";
+    if (angus_valid) {
+        std::clog << "\033[1;32m";
+    } else {
+        std::clog << "\033[0;31m";
+    }
+    std::clog << time_angus << "\033[0m  - ";
+    double factor = time_wagyu / time_angus;
+    std::clog << factor << std::endl;
 }
