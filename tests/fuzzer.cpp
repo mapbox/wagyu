@@ -225,9 +225,9 @@ int main() {
                 }
                 ++count;
                 std::clog << "\r Number of Tests: " << count << std::flush;
-                clipper.add_polygon(polygon, mapbox::geometry::wagyu::polygon_type_subject);
                 mapbox::geometry::multi_polygon<std::int64_t> solution;
                 try {
+                    clipper.add_polygon(polygon, mapbox::geometry::wagyu::polygon_type_subject);
                     clipper.execute(clip_type, solution, fill_type,
                                     mapbox::geometry::wagyu::fill_type_even_odd);
                 } catch (std::exception const& ex) {
