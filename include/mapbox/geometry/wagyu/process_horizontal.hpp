@@ -31,7 +31,7 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
         bound_max_pair = get_maxima_pair<T>(horz_bound, active_bounds);
     }
 
-    auto hp_itr = rings.hot_pixels.begin();
+    auto hp_itr = rings.current_hp_itr;
     while (hp_itr != rings.hot_pixels.end() && (hp_itr->y > scanline_y || (hp_itr->y == scanline_y && hp_itr->x < (*horz_bound)->current_edge->bot.x))) {
         ++hp_itr;
     }
