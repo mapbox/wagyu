@@ -104,9 +104,13 @@ bound<T> create_bound_towards_minimum(edge_list<T>& edges) {
         ++next_edge;
     }
     bound<T> bnd;
-    bnd.edges.reserve(std::distance(edges.begin(), next_edge));
-    std::move(edges.begin(), next_edge, std::back_inserter(bnd.edges));
-    edges.erase(edges.begin(), next_edge);
+    if (next_edge == edges.end()) {
+        std::swap(edges, bnd.edges);
+    } else {
+        bnd.edges.reserve(std::distance(edges.begin(), next_edge));
+        std::move(edges.begin(), next_edge, std::back_inserter(bnd.edges));
+        edges.erase(edges.begin(), next_edge);
+    }
     std::reverse(bnd.edges.begin(), bnd.edges.end());
     return bnd;
 }
@@ -145,9 +149,13 @@ bound<T> create_bound_towards_maximum(edge_list<T>& edges) {
         ++next_edge;
     }
     bound<T> bnd;
-    bnd.edges.reserve(std::distance(edges.begin(), next_edge));
-    std::move(edges.begin(), next_edge, std::back_inserter(bnd.edges));
-    edges.erase(edges.begin(), next_edge);
+    if (next_edge == edges.end()) {
+        std::swap(bnd.edges, edges);
+    } else {
+        bnd.edges.reserve(std::distance(edges.begin(), next_edge));
+        std::move(edges.begin(), next_edge, std::back_inserter(bnd.edges));
+        edges.erase(edges.begin(), next_edge);
+    }
     return bnd;
 }
 
