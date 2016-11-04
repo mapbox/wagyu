@@ -152,13 +152,6 @@ bound<T> create_bound_towards_maximum(edge_list<T>& edges) {
 }
 
 template <typename T>
-void set_edge_data(edge_list<T>& edges, bound_ptr<T> bound) {
-    for (auto& e : edges) {
-        e.bound = bound;
-    }
-}
-
-template <typename T>
 void fix_horizontals(bound<T>& bnd) {
 
     auto edge_itr = bnd.edges.begin();
@@ -234,11 +227,7 @@ void add_line_to_local_minima_list(edge_list<T>& edges, local_minimum_list<T>& m
                 right_bound.side = edge_right;
                 right_bound.poly_type = polygon_type_subject;
                 move_horizontals_on_left_to_right(to_minimum, right_bound);
-                set_edge_data(to_minimum.edges, &to_minimum);
                 auto const& min_front = to_minimum.edges.front();
-                if (!right_bound.empty()) {
-                    set_edge_data(right_bound.edges, &right_bound);
-                }
                 minima_list.emplace_back(std::move(to_minimum), std::move(right_bound), min_front.y,
                                          lm_minimum_has_horizontal);
                 if (last_maximum) {
@@ -282,8 +271,6 @@ void add_line_to_local_minima_list(edge_list<T>& edges, local_minimum_list<T>& m
         auto const& min_front = to_minimum.edges.front();
         to_maximum.poly_type = polygon_type_subject;
         to_maximum.winding_delta = 0;
-        set_edge_data(to_minimum.edges, &to_minimum);
-        set_edge_data(to_maximum.edges, &to_maximum);
         if (!minimum_is_left) {
             to_minimum.side = edge_right;
             to_maximum.side = edge_left;
@@ -371,8 +358,6 @@ void add_ring_to_local_minima_list(edge_list<T>& edges,
         }
         to_minimum.poly_type = poly_type;
         to_maximum.poly_type = poly_type;
-        set_edge_data(to_minimum.edges, &to_minimum);
-        set_edge_data(to_maximum.edges, &to_maximum);
         if (!minimum_is_left) {
             to_minimum.side = edge_right;
             to_maximum.side = edge_left;

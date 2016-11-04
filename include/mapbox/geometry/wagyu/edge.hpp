@@ -27,7 +27,6 @@ struct edge {
     mapbox::geometry::point<T> bot;
     mapbox::geometry::point<T> top;
     double dx;
-    bound_ptr<T> bound; // the bound to which an edge belongs
 
     edge(mapbox::geometry::point<T> const& current, mapbox::geometry::point<T> const& next_pt)
         : bot(current), top(current), dx(0.0) {
@@ -43,6 +42,7 @@ struct edge {
             dx = static_cast<double>(top.x - bot.x) / dy;
         }
     }
+
 };
 
 template <typename T>
