@@ -394,7 +394,12 @@ int main(int argc, char* const argv[]) {
     }
     std::clog << time_angus << "\033[0m  - ";
     double factor = time_wagyu / time_angus;
-    std::clog << factor << std::endl;
+    if (factor < 1.0) {
+        std::clog << "\033[1;34m";
+    } else {
+        std::clog << "\033[0;36m";
+    }
+    std::clog << factor << "\033[0m" << std::endl;
     if (!angus_valid) {
         return -1;
     }
