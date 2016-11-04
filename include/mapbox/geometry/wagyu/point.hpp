@@ -37,6 +37,13 @@ struct point {
     point_ptr<T> next;
     point_ptr<T> prev;
 
+    point(point<T> && p)
+        : ring(std::move(p.ring)),
+          x(std::move(p.x)),
+          y(std::move(p.y)),
+          next(std::move(p.next)),
+          prev(std::move(p.prev)) { }
+
     point() : ring(nullptr), x(0), y(0), prev(this), next(this) {
     }
     point(T x_, T y_) : ring(nullptr), x(x_), y(y_), next(this), prev(this) {

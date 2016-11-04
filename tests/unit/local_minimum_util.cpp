@@ -51,9 +51,9 @@ TEST_CASE("edge adding ring - square closed") {
     CHECK(itr->dx == Approx(0.0));
     ++itr;
     CHECK(itr == edges.end());
-    edges = lm.right_bound.edges;
-    REQUIRE(edges.size() == 3);
-    itr = edges.begin();
+    auto& edges_r = lm.right_bound.edges;
+    REQUIRE(edges_r.size() == 3);
+    itr = edges_r.begin();
     CHECK(itr->top.x == 5);
     CHECK(itr->top.y == 5);
     CHECK(itr->bot.x == 0);
@@ -72,7 +72,7 @@ TEST_CASE("edge adding ring - square closed") {
     CHECK(itr->bot.y == 0);
     CHECK(std::isinf(itr->dx));
     ++itr;
-    CHECK(itr == edges.end());
+    CHECK(itr == edges_r.end());
 }
 
 TEST_CASE("edge adding ring - square not closed") {
@@ -99,9 +99,9 @@ TEST_CASE("edge adding ring - square not closed") {
     CHECK(itr->dx == Approx(0.0));
     ++itr;
     CHECK(itr == edges.end());
-    edges = lm.right_bound.edges;
-    REQUIRE(edges.size() == 3);
-    itr = edges.begin();
+    auto& edges_r = lm.right_bound.edges;
+    REQUIRE(edges_r.size() == 3);
+    itr = edges_r.begin();
     CHECK(itr->top.x == 5);
     CHECK(itr->top.y == 5);
     CHECK(itr->bot.x == 0);
@@ -120,7 +120,7 @@ TEST_CASE("edge adding ring - square not closed") {
     CHECK(itr->bot.y == 0);
     CHECK(std::isinf(itr->dx));
     ++itr;
-    CHECK(itr == edges.end());
+    CHECK(itr == edges_r.end());
 }
 
 TEST_CASE("edge adding ring - triangle closed") {
@@ -153,16 +153,16 @@ TEST_CASE("edge adding ring - triangle closed") {
     CHECK(itr->dx == Approx(2.0));
     ++itr;
     CHECK(itr == edges.end());
-    edges = lm.left_bound.edges;
-    REQUIRE(edges.size() == 1);
-    itr = edges.begin();
+    auto& edges_r = lm.left_bound.edges;
+    REQUIRE(edges_r.size() == 1);
+    itr = edges_r.begin();
     CHECK(itr->top.x == 0);
     CHECK(itr->top.y == 0);
     CHECK(itr->bot.x == 5);
     CHECK(itr->bot.y == 10);
     CHECK(itr->dx == Approx(0.5));
     ++itr;
-    CHECK(itr == edges.end());
+    CHECK(itr == edges_r.end());
 }
 /*
 TEST_CASE("edge adding ring - triangle not closed") {
