@@ -154,10 +154,11 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
     if (is_maxima_edge) {
         bound_max_pair = get_maxima_pair<T>(horz_bound, active_bounds);
     }
-    auto hp_itr = rings.hot_pixels.rbegin();
-    while (hp_itr != rings.hot_pixels.rend() && (hp_itr->y < scanline_y || (hp_itr->y == scanline_y && hp_itr->x > (*horz_bound)->current_edge->bot.x))) {
-        ++hp_itr;
+    auto hp_itr_fwd = rings.current_hp_itr;
+    while (hp_itr_fwd != rings.hot_pixels.end() && (hp_itr_fwd->y < scanline_y || (hp_itr_fwd->y == scanline_y && hp_itr_fwd->x < (*horz_bound)->current_edge->top.x))) {
+        ++hp_itr_fwd;
     }
+    auto hp_itr = hot_pixel_rev_itr<T>(hp_itr_fwd);
 
     auto bnd = active_bound_list_rev_itr<T>(horz_bound);
     while (bnd != active_bounds.rend()) {
