@@ -28,7 +28,7 @@ struct Options {
     fill_type fill = fill_type_even_odd;
     char* subject_file;
     char* clip_file;
-    std::size_t iter = 1000;
+    std::size_t iter = 100;
 } options;
 
 void log_ring(mapbox::geometry::polygon<std::int64_t> const& p) {
@@ -204,26 +204,37 @@ inline void process_polynode_branch(ClipperLib::PolyNode* polynode,
                                     mapbox::geometry::multi_polygon<std::int64_t> & mp) {
     mapbox::geometry::polygon<std::int64_t> polygon;
     polygon.push_back(std::move(polynode->Contour));
-    double outer_area = ClipperLib::Area(polygon.back());
-    // The view transform inverts the y axis so this should be positive still despite now
-    // being clockwise for the exterior ring. If it is not lets invert it.
-    if (outer_area < 0)
-    {   
-        std::reverse(polygon.back().begin(), polygon.back().end());
-    }
-    
-    // children of exterior ring are always interior rings
-    for (auto * ring : polynode->Childs)
+    if (polygon.back().size() > 2) // Throw out invalid polygons
     {
-        double inner_area = ClipperLib::Area(ring->Contour);
-        
-        if (inner_area > 0)
-        {
-            std::reverse(ring->Contour.begin(), ring->Contour.end());
+        if (polygon.back().back() != polygon.back().front()) {
+            polygon.back().push_back(polygon.back().front());
         }
-        polygon.push_back(std::move(ring->Contour));
+        double outer_area = ClipperLib::Area(polygon.back());
+        if (outer_area > 0)
+        {   
+            std::reverse(polygon.back().begin(), polygon.back().end());
+        }
+        
+        // children of exterior ring are always interior rings
+        for (auto * ring : polynode->Childs)
+        {
+            if (ring->Contour.size() < 3)
+            {
+                continue; // Throw out invalid holes
+            }
+            double inner_area = ClipperLib::Area(ring->Contour);
+            
+            if (inner_area < 0)
+            {
+                std::reverse(ring->Contour.begin(), ring->Contour.end());
+            }
+            polygon.push_back(std::move(ring->Contour));
+            if (polygon.back().back() != polygon.back().front()) {
+                polygon.back().push_back(polygon.back().front());
+            }
+        }
+        mp.push_back(std::move(polygon));
     }
-    mp.push_back(std::move(polygon));
     for (auto * ring : polynode->Childs)
     {
         for (auto * sub_ring : ring->Childs)
@@ -384,4 +395,7 @@ int main(int argc, char* const argv[]) {
     std::clog << time_angus << "\033[0m  - ";
     double factor = time_wagyu / time_angus;
     std::clog << factor << std::endl;
+    if (!angus_valid) {
+        return -1;
+    }
 }

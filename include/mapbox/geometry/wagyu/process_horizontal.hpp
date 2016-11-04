@@ -35,7 +35,7 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
     while (hp_itr != rings.hot_pixels.end() && (hp_itr->y > scanline_y || (hp_itr->y == scanline_y && hp_itr->x < (*horz_bound)->current_edge->bot.x))) {
         ++hp_itr;
     }
-
+    
     auto bnd = std::next(horz_bound);
 
     while (bnd != active_bounds.end()) {

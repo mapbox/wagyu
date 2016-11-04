@@ -51,6 +51,8 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         process_intersections(scanline_y, active_bounds, cliptype,
                               subject_fill_type, clip_fill_type, rings);
 
+        update_current_hp_itr(scanline_y, rings);
+
         // First we process bounds that has already been added to the active bound list --
         // if the active bound list is empty local minima that are at this scanline_y and
         // have a horizontal edge at the local minima will be processed
@@ -64,8 +66,6 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         insert_local_minima_into_ABL(scanline_y, minima_sorted, current_lm, active_bounds,
                                      rings, scanbeam, cliptype, subject_fill_type,
                                      clip_fill_type);
-
-        update_current_hp_itr(scanline_y, rings);
 
     }
     // std::clog << rings.all_rings << std::endl;
