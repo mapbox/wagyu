@@ -81,6 +81,13 @@ void set_hole_state(active_bound_list_rev_itr<T>& bnd,
 }
 
 template <typename T>
+void update_current_hp_itr(T scanline_y, ring_manager<T>& rings) {
+    while (rings.current_hp_itr->y > scanline_y) {
+        ++rings.current_hp_itr;       
+    }
+}
+
+template <typename T>
 struct hot_pixel_sorter {
     inline bool operator()(mapbox::geometry::point<T> const& pt1, mapbox::geometry::point<T> const& pt2) {
         if (pt1.y == pt2.y) {
@@ -270,8 +277,12 @@ void insert_hot_pixels_in_path(bound<T>& bnd,
     T end_y = end_pt.y;
     T end_x = end_pt.x;
 
+    auto itr = rings.current_hp_itr;
+    while (itr->y <= start_y && itr != rings.hot_pixels.begin()) {
+        --itr;
+    }
     if (start_x > end_x) {
-        for (auto itr = rings.current_hp_itr; itr != rings.hot_pixels.end();) {
+        for (; itr != rings.hot_pixels.end();) {
             if (itr->y > start_y) {
                 ++itr;
                 continue;
@@ -290,7 +301,7 @@ void insert_hot_pixels_in_path(bound<T>& bnd,
                                         add_end_point_itr);
         }
     } else {
-        for (auto itr = rings.current_hp_itr; itr != rings.hot_pixels.end();) {
+        for (; itr != rings.hot_pixels.end();) {
             if (itr->y > start_y) {
                 ++itr;
                 continue;

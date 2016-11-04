@@ -51,6 +51,11 @@ build-benchmark: ./deps/clipper
 	$(CXX) -c $(RELEASE_FLAGS) tests/benchmark.cpp $(ANGUS_DEFINES) $(CXXFLAGS) -I./deps/clipper/cpp
 	$(CXX) $(RELEASE_FLAGS) clipper.o benchmark.o $(CXXFLAGS) -o benchmark
 
+build-benchmark-d: ./deps/clipper
+	$(CXX) -c $(DEBUG_FLAGS) deps/clipper/cpp/clipper.cpp $(ANGUS_DEFINES) $(CXXFLAGS) -I./deps/clipper/cpp 
+	$(CXX) -c $(DEBUG_FLAGS) tests/benchmark.cpp $(ANGUS_DEFINES) $(CXXFLAGS) -I./deps/clipper/cpp
+	$(CXX) $(DEBUG_FLAGS) clipper.o benchmark.o $(CXXFLAGS) -o benchmark
+
 benchmark: build-benchmark
 	./tests/run-geometry-tests.sh ./benchmark
 

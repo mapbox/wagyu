@@ -49,7 +49,7 @@ template <typename T>
 using edge_ptr = edge<T>*;
 
 template <typename T>
-using edge_list = std::list<edge<T>>;
+using edge_list = std::vector<edge<T>>;
 
 template <typename T>
 using edge_list_itr = typename edge_list<T>::iterator;

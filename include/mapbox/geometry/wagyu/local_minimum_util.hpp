@@ -54,7 +54,7 @@ void start_list_on_local_maximum(edge_list<T>& edges) {
         ++edge;
     }
     if (edge != edges.end() && edge != edges.begin()) {
-        edges.splice(edges.end(), edges, edges.begin(), edge);
+        std::rotate(edges.begin(), edge, edges.end());
     } else if (edges.begin()->top.y < prev_edge->bot.y) {
         // This should only happen in lines not in rings
         std::reverse(edges.begin(), edges.end());
@@ -68,7 +68,7 @@ bound<T> create_bound_towards_minimum(edge_list<T>& edges) {
             reverse_horizontal(edges.front());
         }
         bound<T> bnd;
-        bnd.edges.splice(bnd.edges.end(), edges, edges.begin(), edges.end());
+        std::swap(bnd.edges, edges);
         return bnd;
     }
     auto next_edge = edges.begin();
@@ -104,7 +104,9 @@ bound<T> create_bound_towards_minimum(edge_list<T>& edges) {
         ++next_edge;
     }
     bound<T> bnd;
-    bnd.edges.splice(bnd.edges.end(), edges, edges.begin(), next_edge);
+    bnd.edges.reserve(std::distance(edges.begin(), next_edge));
+    std::move(edges.begin(), next_edge, std::back_inserter(bnd.edges));
+    edges.erase(edges.begin(), next_edge);
     std::reverse(bnd.edges.begin(), bnd.edges.end());
     return bnd;
 }
@@ -113,7 +115,7 @@ template <typename T>
 bound<T> create_bound_towards_maximum(edge_list<T>& edges) {
     if (edges.size() == 1) {
         bound<T> bnd;
-        bnd.edges.splice(bnd.edges.end(), edges, edges.begin(), edges.end());
+        std::swap(bnd.edges, edges);
         return bnd;
     }
     auto next_edge = edges.begin();
@@ -143,7 +145,9 @@ bound<T> create_bound_towards_maximum(edge_list<T>& edges) {
         ++next_edge;
     }
     bound<T> bnd;
-    bnd.edges.splice(bnd.edges.end(), edges, edges.begin(), next_edge);
+    bnd.edges.reserve(std::distance(edges.begin(), next_edge));
+    std::move(edges.begin(), next_edge, std::back_inserter(bnd.edges));
+    edges.erase(edges.begin(), next_edge);
     return bnd;
 }
 
@@ -190,9 +194,11 @@ void move_horizontals_on_left_to_right(bound<T>& left_bound, bound<T>& right_bou
     if (edge_itr == left_bound.edges.begin()) {
         return;
     }
-    auto original_first = right_bound.edges.begin();
-    right_bound.edges.splice(original_first, left_bound.edges, left_bound.edges.begin(), edge_itr);
-    std::reverse(right_bound.edges.begin(), original_first);
+    std::reverse(left_bound.edges.begin(), edge_itr);
+    auto dist = std::distance(left_bound.edges.begin(), edge_itr);
+    std::move(left_bound.edges.begin(), edge_itr, std::back_inserter(right_bound.edges));
+    left_bound.edges.erase(left_bound.edges.begin(), edge_itr);
+    std::rotate(right_bound.edges.begin(), std::prev(right_bound.edges.end(), dist), right_bound.edges.end());
 }
 
 template <typename T>

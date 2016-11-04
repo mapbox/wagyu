@@ -65,6 +65,8 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
                                      rings, scanbeam, cliptype, subject_fill_type,
                                      clip_fill_type);
 
+        update_current_hp_itr(scanline_y, rings);
+
     }
     // std::clog << rings.all_rings << std::endl;
     // std::clog << output_as_polygon(rings.all_rings[0]);
