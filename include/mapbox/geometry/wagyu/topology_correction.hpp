@@ -31,6 +31,8 @@ struct point_ptr_pair {
      : op1(o1),
        op2(o2) {}
 
+    point_ptr_pair(point_ptr_pair<T> const& p) = default;
+
     point_ptr_pair(point_ptr_pair<T> && p)
         : op1(std::move(p.op1)),
           op2(std::move(p.op2)) {}
