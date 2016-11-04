@@ -19,8 +19,8 @@ struct local_minimum {
     bool minimum_has_horizontal;
 
     local_minimum(bound<T>&& left_bound_, bound<T>&& right_bound_, T y_, bool has_horz_)
-        : left_bound(left_bound_),
-          right_bound(right_bound_),
+        : left_bound(std::move(left_bound_)),
+          right_bound(std::move(right_bound_)),
           y(y_),
           minimum_has_horizontal(has_horz_) {
     }

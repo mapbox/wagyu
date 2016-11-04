@@ -46,6 +46,21 @@ struct bound {
           poly_type(polygon_type_subject),
           side(edge_left) {
     }
+    
+    bound(bound<T> && b)
+        : edges(std::move(b.edges)),
+          current_edge(std::move(b.current_edge)),
+          last_point(std::move(b.last_point)),
+          ring(std::move(b.ring)),
+          maximum_bound(std::move(b.maximum_bound)),
+          current_x(std::move(b.current_x)),
+          pos(std::move(b.pos)),
+          winding_count(std::move(b.winding_count)),
+          winding_count2(std::move(b.winding_count2)),
+          winding_delta(std::move(b.winding_delta)),
+          poly_type(std::move(b.poly_type)),
+          side(std::move(b.side)) {
+    }
 };
 
 #ifdef DEBUG
