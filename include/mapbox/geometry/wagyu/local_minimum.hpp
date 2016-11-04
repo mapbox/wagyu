@@ -27,7 +27,7 @@ struct local_minimum {
 };
 
 template <typename T>
-using local_minimum_list = std::list<local_minimum<T>>;
+using local_minimum_list = std::deque<local_minimum<T>>;
 
 template <typename T>
 using local_minimum_itr = typename local_minimum_list<T>::iterator;
