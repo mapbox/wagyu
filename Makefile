@@ -73,8 +73,8 @@ coverage: Makefile
 fuzzer: build-fuzzer
 	./fuzzer
 
-# avoids fuzzer getting deleted by make when it fails
-.PRECIOUS: fuzzer
+# avoids tools from getting deleted by make when it fails or you ctrl-c process
+.PRECIOUS: fuzzer benchmark fixture-tester test
 
 clean:
 	rm -rf *dSYM
