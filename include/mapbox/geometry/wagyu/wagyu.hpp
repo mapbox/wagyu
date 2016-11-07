@@ -28,6 +28,9 @@ private:
     bool has_open_paths;
     bool reverse_output;
 
+    wagyu( wagyu const& ) = delete;
+    wagyu& operator=(wagyu const& ) = delete;
+
 public:
     wagyu() : minima_list(), has_open_paths(false), reverse_output(false) {
     }

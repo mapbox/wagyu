@@ -28,6 +28,18 @@ struct edge {
     mapbox::geometry::point<T> top;
     double dx;
 
+    edge(edge<T> && e)
+        : bot(std::move(e.bot)),
+          top(std::move(e.top)),
+          dx(std::move(e.dx)) {}
+
+    edge& operator=(edge<T> && e) {
+        bot = std::move(e.bot);
+        top = std::move(e.top);
+        dx = std::move(e.dx);
+        return *this;
+    }
+
     edge(mapbox::geometry::point<T> const& current, mapbox::geometry::point<T> const& next_pt)
         : bot(current), top(current), dx(0.0) {
         if (current.y >= next_pt.y) {

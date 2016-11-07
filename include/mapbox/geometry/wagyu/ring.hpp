@@ -44,6 +44,9 @@ struct ring {
     point_ptr<T> bottom_point;
     bool is_open;
 
+    ring( ring const& ) = delete;
+    ring& operator=(ring const& ) = delete;
+
     ring()
         : ring_index(0),
           area(std::numeric_limits<double>::quiet_NaN()),
@@ -75,6 +78,9 @@ struct ring_manager {
     std::deque<ring<T>> rings;
     std::vector<point<T>> storage;
     std::size_t index;
+
+    ring_manager( ring_manager const& ) = delete;
+    ring_manager& operator=(ring_manager const& ) = delete;
 
     ring_manager()
         : children(),

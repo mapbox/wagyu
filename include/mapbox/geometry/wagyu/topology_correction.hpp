@@ -26,6 +26,23 @@ template <typename T>
 struct point_ptr_pair {
     point_ptr<T> op1;
     point_ptr<T> op2;
+
+    constexpr point_ptr_pair(point_ptr<T> o1, point_ptr<T> o2)
+     : op1(o1),
+       op2(o2) {}
+
+    point_ptr_pair(point_ptr_pair<T> const& p) = default;
+
+    point_ptr_pair(point_ptr_pair<T> && p)
+        : op1(std::move(p.op1)),
+          op2(std::move(p.op2)) {}
+
+    point_ptr_pair& operator=(point_ptr_pair<T> && p) {
+        op1 = std::move(p.op1);
+        op2 = std::move(p.op2);
+        return *this;
+    }
+
 };
 
 #ifdef DEBUG
@@ -92,25 +109,27 @@ bool find_intersect_loop(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>
                          point_ptr<T> orig_pt,
                          point_ptr<T> prev_pt,
                          ring_manager<T>& rings) {
-    auto range = dupe_ring.equal_range(ring_search);
-    // Check for direct connection
-    for (auto& it = range.first; it != range.second;) {
-        ring_ptr<T> it_ring1 = it->second.op1->ring;
-        ring_ptr<T> it_ring2 = it->second.op2->ring;
-        if (!it_ring1 || !it_ring2 || it_ring1 != ring_search ||
-            (!ring_is_hole(it_ring1) && !ring_is_hole(it_ring2))) {
-            it = dupe_ring.erase(it);
-            continue;
+    {
+        auto range = dupe_ring.equal_range(ring_search);
+        // Check for direct connection
+        for (auto& it = range.first; it != range.second;) {
+            ring_ptr<T> it_ring1 = it->second.op1->ring;
+            ring_ptr<T> it_ring2 = it->second.op2->ring;
+            if (!it_ring1 || !it_ring2 || it_ring1 != ring_search ||
+                (!ring_is_hole(it_ring1) && !ring_is_hole(it_ring2))) {
+                it = dupe_ring.erase(it);
+                continue;
+            }
+            if (it_ring2 == ring_origin &&
+                (ring_parent == it_ring2 || ring_parent == it_ring2->parent) &&
+                *prev_pt != *it->second.op2 && *orig_pt != *it->second.op2) {
+                iList.emplace_front(ring_search, it->second);
+                return true;
+            }
+            ++it;
         }
-        if (it_ring2 == ring_origin &&
-            (ring_parent == it_ring2 || ring_parent == it_ring2->parent) &&
-            *prev_pt != *it->second.op2 && *orig_pt != *it->second.op2) {
-            iList.emplace_front(ring_search, it->second);
-            return true;
-        }
-        ++it;
     }
-    range = dupe_ring.equal_range(ring_search);
+    auto range = dupe_ring.equal_range(ring_search);
     visited.insert(ring_search);
     // Check for connection through chain of other intersections
     for (auto& it = range.first;
@@ -259,29 +278,31 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
     }
     bool found = false;
     std::list<std::pair<ring_ptr<T>, point_ptr_pair<T>>> iList;
-    auto range = dupe_ring.equal_range(ring_search);
-    // Check for direct connection
-    for (auto& it = range.first; it != range.second;) {
-        if (!it->second.op1->ring) {
-            it = dupe_ring.erase(it);
-            continue;
-        }
-        if (!it->second.op2->ring) {
-            it = dupe_ring.erase(it);
-            continue;
-        }
-        ring_ptr<T> it_ring2 = it->second.op2->ring;
-        if (it_ring2 == ring_origin) {
-            found = true;
-            if (*op_origin_1 != *(it->second.op2)) {
-                iList.emplace_back(ring_search, it->second);
-                break;
+    {
+        auto range = dupe_ring.equal_range(ring_search);
+        // Check for direct connection
+        for (auto& it = range.first; it != range.second;) {
+            if (!it->second.op1->ring) {
+                it = dupe_ring.erase(it);
+                continue;
             }
+            if (!it->second.op2->ring) {
+                it = dupe_ring.erase(it);
+                continue;
+            }
+            ring_ptr<T> it_ring2 = it->second.op2->ring;
+            if (it_ring2 == ring_origin) {
+                found = true;
+                if (*op_origin_1 != *(it->second.op2)) {
+                    iList.emplace_back(ring_search, it->second);
+                    break;
+                }
+            }
+            ++it;
         }
-        ++it;
     }
     if (iList.empty()) {
-        range = dupe_ring.equal_range(ring_search);
+        auto range = dupe_ring.equal_range(ring_search);
         std::set<ring_ptr<T>> visited;
         visited.insert(ring_search);
         // Check for connection through chain of other intersections
@@ -302,8 +323,8 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
     if (!found) {
         point_ptr_pair<T> intPt_origin = { op_origin_1, op_origin_2 };
         point_ptr_pair<T> intPt_search = { op_origin_2, op_origin_1 };
-        dupe_ring.emplace(ring_origin, intPt_origin);
-        dupe_ring.emplace(ring_search, intPt_search);
+        dupe_ring.emplace(ring_origin, std::move(intPt_origin));
+        dupe_ring.emplace(ring_search, std::move(intPt_search));
         return false;
     }
 
@@ -321,7 +342,7 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
         }
         if (missing) {
             point_ptr_pair<T> intPt_origin = { op_origin_1, op_origin_2 };
-            dupe_ring.emplace(ring_origin, intPt_origin);
+            dupe_ring.emplace(ring_origin, std::move(intPt_origin));
         }
         return false;
     }
