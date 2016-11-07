@@ -57,8 +57,8 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
         // Also break if we've got to the end of an intermediate horizontal edge ...
         // nb: Smaller Dx's are to the right of larger Dx's ABOVE the horizontal.
         if (std::llround((*bnd)->current_x) == (*horz_bound)->current_edge->top.x &&
-            std::next((*horz_bound)->current_edge) != (*horz_bound)->edges.end() &&
-            (*horz_bound)->current_edge->dx < std::next((*horz_bound)->current_edge)->dx) {
+            (*horz_bound)->next_edge != (*horz_bound)->edges.end() &&
+            (*horz_bound)->current_edge->dx < (*horz_bound)->next_edge->dx) {
             break;
         }
 
@@ -106,7 +106,7 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
         }
     }
 
-    if (std::next((*horz_bound)->current_edge) != (*horz_bound)->edges.end()) {
+    if ((*horz_bound)->next_edge != (*horz_bound)->edges.end()) {
         if ((*horz_bound)->ring) {
             add_point_to_ring(*(*horz_bound), (*horz_bound)->current_edge->top, rings);
             next_edge_in_bound(horz_bound, scanbeam);
@@ -179,8 +179,8 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
         // Also break if we've got to the end of an intermediate horizontal edge ...
         // nb: Smaller Dx's are to the right of larger Dx's ABOVE the horizontal.
         if (std::llround((*bnd)->current_x) == (*horz_bound)->current_edge->top.x &&
-            std::next((*horz_bound)->current_edge) != (*horz_bound)->edges.end() &&
-            (*horz_bound)->current_edge->dx < std::next((*horz_bound)->current_edge)->dx) {
+            (*horz_bound)->next_edge != (*horz_bound)->edges.end() &&
+            (*horz_bound)->current_edge->dx < (*horz_bound)->next_edge->dx) {
             break;
         }
 
@@ -223,7 +223,7 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
         }
     }
 
-    if (std::next((*horz_bound)->current_edge) != (*horz_bound)->edges.end()) {
+    if ((*horz_bound)->next_edge != (*horz_bound)->edges.end()) {
         if ((*horz_bound)->ring) {
             add_point_to_ring(*(*horz_bound), (*horz_bound)->current_edge->top, rings);
             next_edge_in_bound(horz_bound, scanbeam);

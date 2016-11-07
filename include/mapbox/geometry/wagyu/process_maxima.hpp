@@ -78,34 +78,35 @@ void process_edges_at_top_of_scanbeam(T top_y,
     for (auto bnd = active_bounds.begin(); bnd != active_bounds.end();) {
         // 1. Process maxima, treating them as if they are "bent" horizontal edges,
         // but exclude maxima with horizontal edges.
-
+    
         bool is_maxima_edge = is_maxima(bnd, top_y);
 
-        active_bound_list_itr<T> bnd_max_pair;
         if (is_maxima_edge) {
-            bnd_max_pair = get_maxima_pair(bnd, active_bounds);
+            auto bnd_max_pair = get_maxima_pair(bnd, active_bounds);
             is_maxima_edge = ((bnd_max_pair == active_bounds.end() ||
                                !current_edge_is_horizontal<T>(bnd_max_pair)) &&
                               is_maxima(bnd_max_pair, top_y));
-        }
-
-        if (is_maxima_edge) {
-            bnd = do_maxima(bnd, bnd_max_pair, cliptype, subject_fill_type, clip_fill_type, rings,
-                            active_bounds);
-        } else {
-            // 2. Promote horizontal edges.
-            if (is_intermediate(bnd, top_y) && next_edge_is_horizontal<T>(bnd)) {
-                insert_hot_pixels_in_path(*(*bnd), (*bnd)->current_edge->top, rings, false);
-                next_edge_in_bound(bnd, scanbeam);
-                if ((*bnd)->ring) {
-                    add_point_to_ring(*(*bnd), (*bnd)->current_edge->bot, rings);
-                }
-            } else {
-                (*bnd)->current_x = get_current_x(*((*bnd)->current_edge), top_y);
+            if (is_maxima_edge) {
+                bnd = do_maxima(bnd, bnd_max_pair, cliptype, subject_fill_type, clip_fill_type, rings,
+                                active_bounds);
+                continue;
             }
-
-            ++bnd;
         }
+
+        // 2. Promote horizontal edges.
+        if (is_intermediate(bnd, top_y) && next_edge_is_horizontal<T>(bnd)) {
+            if ((*bnd)->ring) {
+                insert_hot_pixels_in_path(*(*bnd), (*bnd)->current_edge->top, rings, false);
+            }
+            next_edge_in_bound(bnd, scanbeam);
+            if ((*bnd)->ring) {
+                add_point_to_ring(*(*bnd), (*bnd)->current_edge->bot, rings);
+            }
+        } else {
+            (*bnd)->current_x = get_current_x(*((*bnd)->current_edge), top_y);
+        }
+
+        ++bnd;
     }
 
     insert_horizontal_local_minima_into_ABL(top_y, minima_sorted, current_lm, active_bounds, rings,

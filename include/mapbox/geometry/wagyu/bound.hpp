@@ -21,6 +21,7 @@ struct bound {
 
     edge_list<T> edges;
     edge_list_itr<T> current_edge;
+    edge_list_itr<T> next_edge;
     mapbox::geometry::point<T> last_point;
     ring_ptr<T> ring;
     bound_ptr<T> maximum_bound; // the bound who's maximum connects with this bound
@@ -32,7 +33,7 @@ struct bound {
     polygon_type poly_type;
     edge_side side; // side only refers to current side of solution poly
 
-    bound()
+    bound() noexcept
         : edges(),
           current_edge(edges.end()),
           last_point({ 0, 0 }),
@@ -47,7 +48,7 @@ struct bound {
           side(edge_left) {
     }
     
-    bound(bound<T> && b)
+    bound(bound<T> && b) noexcept
         : edges(std::move(b.edges)),
           current_edge(std::move(b.current_edge)),
           last_point(std::move(b.last_point)),

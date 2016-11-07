@@ -57,7 +57,7 @@ build-benchmark-d: ./deps/clipper
 	$(CXX) $(DEBUG_FLAGS) clipper.o benchmark.o $(CXXFLAGS) -o benchmark
 
 benchmark: build-benchmark
-	./tests/run-geometry-tests.sh ./benchmark
+	./tests/run-benchmark-tests.sh ./benchmark
 
 test: build-test build-fixture-tester-r
 	./test

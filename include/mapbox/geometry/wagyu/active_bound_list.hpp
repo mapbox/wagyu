@@ -117,15 +117,25 @@ active_bound_list_itr<T> insert_bound_into_ABL(bound<T>& bnd,
 }
 
 template <typename T>
+inline bool is_maxima(bound<T>& bnd, T y) {
+    return bnd.next_edge == bnd.edges.end() &&
+           bnd.current_edge->top.y == y;
+}
+
+template <typename T>
 inline bool is_maxima(active_bound_list_itr<T>& bnd, T y) {
-    return std::next((*bnd)->current_edge) == (*bnd)->edges.end() &&
-           (*bnd)->current_edge->top.y == y;
+    return is_maxima(*(*bnd), y);
+}
+
+template <typename T>
+inline bool is_intermediate(bound<T>& bnd, T y) {
+    return bnd.next_edge != bnd.edges.end() &&
+           bnd.current_edge->top.y == y;
 }
 
 template <typename T>
 inline bool is_intermediate(active_bound_list_itr<T>& bnd, T y) {
-    return std::next((*bnd)->current_edge) != (*bnd)->edges.end() &&
-           (*bnd)->current_edge->top.y == y;
+    return is_intermediate(*(*bnd), y);
 }
 
 template <typename T>
@@ -135,7 +145,7 @@ inline bool current_edge_is_horizontal(active_bound_list_itr<T>& bnd) {
 
 template <typename T>
 inline bool next_edge_is_horizontal(active_bound_list_itr<T>& bnd) {
-    return is_horizontal(*std::next((*bnd)->current_edge));
+    return is_horizontal(*((*bnd)->next_edge));
 }
 
 template <typename T>
@@ -152,6 +162,7 @@ inline void swap_positions_in_ABL(active_bound_list_itr<T>& bnd1,
 template <typename T>
 void next_edge_in_bound(active_bound_list_itr<T>& bnd, scanbeam_list<T>& scanbeam) {
     ++((*bnd)->current_edge);
+    ++((*bnd)->next_edge);
     if ((*bnd)->current_edge != (*bnd)->edges.end()) {
         (*bnd)->current_x = static_cast<double>((*bnd)->current_edge->bot.x);
         if (!current_edge_is_horizontal<T>(bnd)) {

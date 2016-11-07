@@ -331,7 +331,7 @@ int main(int argc, char* const argv[]) {
         ClipperLib::Clipper clipper;
         clipper.StrictlySimple(true);
         for (auto & r : poly_subject) {
-            ClipperLib::CleanPolygon(r, 1.415);
+            //ClipperLib::CleanPolygon(r, 1.415);
             clipper.AddPath(r, ClipperLib::ptSubject, true);
         }
         for (auto & r : poly_clip) {
@@ -362,7 +362,7 @@ int main(int argc, char* const argv[]) {
             ClipperLib::Clipper clipper;
             clipper.StrictlySimple(true);
             for (auto & r : poly_subject) {
-                ClipperLib::CleanPolygon(r, 1.415);
+                //ClipperLib::CleanPolygon(r, 1.415);
                 clipper.AddPath(r, ClipperLib::ptSubject, true);
             }
             for (auto & r : poly_clip) {
