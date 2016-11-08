@@ -19,7 +19,7 @@ do
     do
         for filltype in even_odd non_zero positive negative
         do
-            #echo $TESTER -t $type -f $filltype -i 10 ./tests/geometry-test-data/input-polyjson/$filename ./tests/fixtures/clip-clockwise-square.json 
+            echo $TESTER -t $type -f $filltype -i 10 ./tests/geometry-test-data/input-polyjson/$filename ./tests/fixtures/clip-clockwise-square.json 
             $TESTER -t $type -f $filltype -i 200 \
                 ./tests/geometry-test-data/input-polyjson/$filename \
                 ./tests/fixtures/clip-clockwise-square.json;
