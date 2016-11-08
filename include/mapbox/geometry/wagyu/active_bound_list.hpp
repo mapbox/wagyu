@@ -162,8 +162,8 @@ inline void swap_positions_in_ABL(active_bound_list_itr<T>& bnd1,
 template <typename T>
 void next_edge_in_bound(active_bound_list_itr<T>& bnd, scanbeam_list<T>& scanbeam) {
     ++((*bnd)->current_edge);
-    ++((*bnd)->next_edge);
     if ((*bnd)->current_edge != (*bnd)->edges.end()) {
+        ++((*bnd)->next_edge);
         (*bnd)->current_x = static_cast<double>((*bnd)->current_edge->bot.x);
         if (!current_edge_is_horizontal<T>(bnd)) {
             scanbeam.push((*bnd)->current_edge->top.y);
