@@ -360,10 +360,11 @@ void process_intersections(T top_y,
                            fill_type subject_fill_type,
                            fill_type clip_fill_type,
                            ring_manager<T>& rings) {
+    if (active_bounds.empty()) {
+        return;
+    }
     update_current_x(active_bounds, top_y);
-    
     intersect_list<T> intersects;
-    intersects.reserve(active_bounds.size());
     build_intersect_list(active_bounds, intersects);
 
     if (intersects.empty()) {
