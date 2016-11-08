@@ -48,6 +48,19 @@ bool build_edge_list(mapbox::geometry::line_string<T> const& path_geometry,
 }
 
 template <typename T>
+bool point_2_is_between_point_1_and_point_3(mapbox::geometry::point<T> const& pt1, 
+                                            mapbox::geometry::point<T> const& pt2, 
+                                            mapbox::geometry::point<T> const& pt3) {
+    if ((pt1 == pt3) || (pt1 == pt2) || (pt3 == pt2)) {
+        return false;
+    } else if (pt1.x != pt3.x) {
+        return (pt2.x > pt1.x) == (pt2.x < pt3.x);
+    } else {
+        return (pt2.y > pt1.y) == (pt2.y < pt3.y);
+    }
+}
+
+template <typename T>
 bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry, edge_list<T>& edges) {
     using value_type = T;
 
@@ -148,23 +161,49 @@ bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry, edge
         }
     }
 
-    if (edges.size() < 3) {
-        return false;
-    }
-    auto& f = edges.front();
-    auto& b = edges.back();
-    if (slopes_equal(f, b)) {
-        if (f.bot == b.top) {
-            f.bot = b.bot;
-            edges.pop_back();
-        } else if (f.top == b.bot) {
-            f.top = b.top;
-            edges.pop_back();
+    bool modified = false;
+    do {
+        modified = false;
+        if (edges.size() < 3) {
+            return false;
         }
-    }
-    if (edges.size() < 3) {
-        return false;
-    }
+        auto& f = edges.front();
+        auto& b = edges.back();
+        if (slopes_equal(f, b)) {
+            if (f.bot == b.top) {
+                f.bot = b.bot;
+                edges.pop_back();
+                modified = true;
+            } else if (f.top == b.bot) {
+                f.top = b.top;
+                edges.pop_back();
+                modified = true;
+            } else if (f.top == b.top && f.bot == b.bot) {
+                edges.pop_back();
+                edges.erase(edges.begin());
+                modified = true;
+            } else if (f.top == b.top) {
+                if (point_2_is_between_point_1_and_point_3(f.top, f.bot, b.bot)) {
+                    b.top = f.bot;
+                    edges.erase(edges.begin());
+                } else {
+                    f.top = b.bot;
+                    edges.pop_back();
+                }
+                modified = true;
+            } else if (f.bot == b.bot) {
+                if (point_2_is_between_point_1_and_point_3(f.bot, f.top, b.top)) {
+                    b.bot = f.top;
+                    edges.erase(edges.begin());
+                } else {
+                    f.bot = b.top;
+                    edges.pop_back();
+                }
+                modified = true;
+            }
+        }
+    } while (modified);
+
     return true;
 }
 }

@@ -7,8 +7,26 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <signal.h>
 #include <time.h>
 #include <vector>
+
+static int s_int = 0;
+
+static void signal_handler(int value)
+{
+    s_int = value;
+}
+
+static void catch_signals()
+{
+    struct sigaction action;
+    action.sa_handler = signal_handler;
+    action.sa_flags = 0;
+    sigemptyset(&action.sa_mask);
+    sigaction(SIGINT, &action, NULL);
+    sigaction(SIGTERM, &action, NULL);
+}
 
 void log_ring(mapbox::geometry::polygon<std::int64_t> const& p) {
     bool first = true;
@@ -68,53 +86,6 @@ void log_ring(mapbox::geometry::multi_polygon<std::int64_t> const& mp) {
         std::clog << "]";
     }
     std::clog << "]" << std::endl;
-}
-
-void check_cross_ring(std::vector<mapbox::geometry::polygon<std::int64_t>>& solution) {
-    bool found_error = false;
-
-    std::vector<boost::geometry::model::segment<mapbox::geometry::point<std::int64_t>>> segments;
-    for (size_t i = 0; i < solution.size(); i++) {
-        for (size_t j = 0; j < solution[i].size(); j++) {
-            for (size_t k = 0; k < solution[i][j].size(); k++) {
-                segments.push_back(
-                    boost::geometry::model::segment<mapbox::geometry::point<std::int64_t>>(
-                        solution[i][j][k], solution[i][j][(k + 1) % solution[i][j].size()]));
-            }
-        }
-    }
-
-    for (size_t i = 0; i < segments.size(); i++) {
-        for (size_t j = i + 1; j < segments.size(); j++) {
-            std::vector<mapbox::geometry::point<std::int64_t>> xings;
-            boost::geometry::intersection(segments[i], segments[j], xings);
-
-            if (xings.size() > 0) {
-                for (size_t k = 0; k < xings.size(); k++) {
-                    if (xings[k] != segments[i].first && xings[k] != segments[i].second &&
-                        xings[k] != segments[j].first && xings[k] != segments[j].second) {
-                        found_error = true;
-
-                        std::clog << "Intersection between rings: ";
-                        std::clog << xings[k].x << "," << xings[k].y;
-                        std::clog << " in ";
-
-                        std::clog << segments[i].first.x << "," << segments[i].first.y << " to ";
-                        std::clog << segments[i].second.x << "," << segments[i].second.y << " and ";
-                        std::clog << segments[j].first.x << "," << segments[j].first.y << " to ";
-                        std::clog << segments[j].second.x << "," << segments[j].second.y << "\n";
-                    }
-                }
-            }
-        }
-    }
-
-    if (found_error) {
-        for (size_t i = 0; i < solution.size(); i++) {
-            log_ring(solution[i]);
-        }
-        exit(EXIT_FAILURE);
-    }
 }
 
 void create_test(mapbox::geometry::polygon<std::int64_t> const& polygon,
@@ -188,6 +159,7 @@ void print_fill_type(mapbox::geometry::wagyu::fill_type ft) {
 }
 
 int main() {
+	catch_signals();
     unsigned seed = time(0);
     std::size_t count = 0;
     srand(seed);
@@ -263,7 +235,9 @@ int main() {
                     return -1;
                 }
                 */
-                // check_cross_ring(solution);
+				if (s_int) {
+					return 0;
+				}
             }
         }
     }
