@@ -20,7 +20,7 @@ do
         for filltype in even_odd non_zero positive negative
         do
             #echo $TESTER -t $type -f $filltype -i 10 ./tests/geometry-test-data/input-polyjson/$filename ./tests/fixtures/clip-clockwise-square.json 
-            $TESTER -t $type -f $filltype -i 10 \
+            $TESTER -t $type -f $filltype -i 200 \
                 ./tests/geometry-test-data/input-polyjson/$filename \
                 ./tests/fixtures/clip-clockwise-square.json;
 
@@ -35,5 +35,5 @@ do
 done
 
 TOTAL=$((PASSES + FAILS))
-echo -e "Angus Clipper \033[1;32m ✓ $PASSES/$TOTAL \033[0;31m ✗ $FAILS/$TOTAL \033[0m"
+echo -e "Wagyu Faster On: \033[1;32m ✓ $PASSES/$TOTAL \033[0;31m ✗ $FAILS/$TOTAL \033[0m"
 

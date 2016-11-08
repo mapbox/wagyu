@@ -400,7 +400,7 @@ int main(int argc, char* const argv[]) {
         std::clog << "\033[0;36m";
     }
     std::clog << factor << "\033[0m" << std::endl;
-    if (!angus_valid) {
+    if (factor > 1.0) {
         return -1;
     }
 }

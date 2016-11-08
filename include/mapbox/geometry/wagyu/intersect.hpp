@@ -17,26 +17,26 @@ namespace wagyu {
 template <typename T>
 struct intersect_node {
 
-    active_bound_list_itr<T> bound1;
-    active_bound_list_itr<T> bound2;
+    bound_ptr<T> bound1;
+    bound_ptr<T> bound2;
     mapbox::geometry::point<double> pt;
 
-    intersect_node(intersect_node<T> && n)
+    intersect_node(intersect_node<T> && n) noexcept
         : bound1(std::move(n.bound1)),
           bound2(std::move(n.bound2)),
           pt(std::move(n.pt)) { }
 
-    intersect_node& operator=(intersect_node<T> && n) {
+    intersect_node& operator=(intersect_node<T> && n) noexcept {
         bound1 = std::move(n.bound1);
         bound2 = std::move(n.bound2);
         pt = std::move(n.pt);
         return *this;
     }
 
-    intersect_node(active_bound_list_itr<T> const& bound1_,
-                   active_bound_list_itr<T> const& bound2_,
-                   mapbox::geometry::point<double> const& pt_)
-        : bound1(bound1_), bound2(bound2_), pt(pt_) {
+    intersect_node(bound_ptr<T> bound1_,
+                   bound_ptr<T> bound2_,
+                   mapbox::geometry::point<double> && pt_)
+        : bound1(bound1_), bound2(bound2_), pt(std::move(pt_)) {
     }
 };
 

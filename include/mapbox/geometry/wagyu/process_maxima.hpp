@@ -32,13 +32,14 @@ active_bound_list_itr<T> do_maxima(active_bound_list_itr<T>& bnd,
         return active_bounds.erase(bnd);
     }
     auto bnd_next = std::next(bnd);
-    auto return_bnd = bnd_next;
+    auto return_bnd = bnd;
     bool skipped = false;
     while (bnd_next != active_bounds.end() && bnd_next != bndMaxPair) {
         skipped = true;
         intersect_bounds(bnd, bnd_next, (*bnd)->current_edge->top, cliptype, subject_fill_type,
                          clip_fill_type, rings, active_bounds);
-        swap_positions_in_ABL(bnd, bnd_next, active_bounds);
+        std::iter_swap(bnd, bnd_next);
+        std::swap(bnd, bnd_next);
         bnd_next = std::next(bnd);
     }
 

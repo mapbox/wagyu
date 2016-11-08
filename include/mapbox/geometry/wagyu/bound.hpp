@@ -76,6 +76,7 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
     out << "        winding count: " << bnd.winding_count << std::endl;
     out << "        winding_count2: " << bnd.winding_count2 << std::endl;
     out << "        winding_delta: " << static_cast<int>(bnd.winding_delta) << std::endl;
+    out << "        pos: " << bnd.pos << std::endl;
     out << "        maximum_bound: " << bnd.maximum_bound << std::endl;
     if (bnd.side == edge_left) {
         out << "        side: left" << std::endl;

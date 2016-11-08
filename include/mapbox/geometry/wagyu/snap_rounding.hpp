@@ -15,6 +15,15 @@ namespace geometry {
 namespace wagyu {
 
 template <typename T>
+void update_current_x(active_bound_list<T>& active_bounds, T top_y) {
+    std::size_t pos = 0;
+    for (auto & bnd : active_bounds) {
+        bnd->pos = pos++;
+        bnd->current_x = get_current_x(*bnd->current_edge, top_y);
+    }
+}
+
+template <typename T>
 void process_hot_pixel_intersections(T top_y,
                                      active_bound_list<T>& active_bounds,
                                      ring_manager<T>& rings) {
@@ -24,9 +33,9 @@ void process_hot_pixel_intersections(T top_y,
 
     update_current_x(active_bounds, top_y);
     // bubblesort ...
-    bool isModified;
+    bool is_modified;
     do {
-        isModified = false;
+        is_modified = false;
         auto bnd = active_bounds.begin();
         auto bnd_next = std::next(bnd);
         while (bnd_next != active_bounds.end()) {
@@ -37,15 +46,16 @@ void process_hot_pixel_intersections(T top_y,
                     throw std::runtime_error("Edges do not intersect!");
                 }
                 add_to_hot_pixels(round_point<T>(pt), rings);
-                swap_positions_in_ABL(bnd, bnd_next, active_bounds);
+                std::iter_swap(bnd, bnd_next);
+                std::swap(bnd, bnd_next);
                 bnd_next = std::next(bnd);
-                isModified = true;
+                is_modified = true;
             } else {
                 bnd = bnd_next;
                 ++bnd_next;
             }
         }
-    } while (isModified);
+    } while (is_modified);
 }
 
 template <typename T>
@@ -53,34 +63,47 @@ void process_hot_pixel_edges_at_top_of_scanbeam(T top_y,
                                                 scanbeam_list<T>& scanbeam,
                                                 active_bound_list<T>& active_bounds,
                                                 ring_manager<T>& rings) {
-    for (auto bnd = active_bounds.begin(); bnd != active_bounds.end();) {
-        auto bnd_2 = std::next(bnd);
-        while ((*bnd)->current_edge != (*bnd)->edges.end() && (*bnd)->current_edge->top.y == top_y) {
-            add_to_hot_pixels((*bnd)->current_edge->top, rings);
+    std::size_t pos = 0;
+    for (auto & bnd : active_bounds) {
+        bnd->pos = pos++;
+    }
+    auto bnd_end = active_bounds.end();
+    for (auto bnd = active_bounds.begin(); bnd != bnd_end;) {
+        bound_ptr<T> b = *bnd;
+        auto bnd2 = std::next(bnd);
+        bool first = true;
+        while (b->current_edge != b->edges.end() && b->current_edge->top.y == top_y) {
+            add_to_hot_pixels(b->current_edge->top, rings);
             if (current_edge_is_horizontal<T>(bnd)) {
-                (*bnd)->current_x = static_cast<double>((*bnd)->current_edge->top.x);
-                if ((*bnd)->current_edge->bot.x < (*bnd)->current_edge->top.x) {
+                b->current_x = static_cast<double>(b->current_edge->top.x);
+                if (b->current_edge->bot.x < b->current_edge->top.x) {
                     // left to right
                     auto bnd_next = std::next(bnd);
-                    while (bnd_next != active_bounds.end() && (*bnd_next)->current_x < (*bnd)->current_x) {
+                    while (bnd_next != bnd_end && (*bnd_next)->current_x < b->current_x) {
                         if (std::llround((*bnd_next)->current_edge->top.y) != top_y && std::llround((*bnd_next)->current_edge->bot.y) != top_y) {
                             mapbox::geometry::point<T> pt(std::llround((*bnd_next)->current_x), top_y);
                             add_to_hot_pixels(pt, rings);
                         }
-                        swap_positions_in_ABL(bnd, bnd_next, active_bounds);
-                        bnd_next = std::next(bnd);
+                        if (first) {
+                            --bnd2;
+                            first = false;
+                        }
+                        std::iter_swap(bnd, bnd_next);
+                        ++bnd;
+                        ++bnd_next;
                     }
                 } else {
                     // right to left
                     if (bnd != active_bounds.begin()) {
                         auto bnd_prev = std::prev(bnd);
-                        while (bnd != active_bounds.begin() && (*bnd_prev)->current_x > (*bnd)->current_x) {
+                        while (bnd != active_bounds.begin() && (*bnd_prev)->current_x > b->current_x) {
                             if (std::llround((*bnd_prev)->current_edge->top.y) != top_y && std::llround((*bnd_prev)->current_edge->bot.y) != top_y) {
                                 mapbox::geometry::point<T> pt(std::llround((*bnd_prev)->current_x), top_y);
                                 add_to_hot_pixels(pt, rings);
                             }
-                            swap_positions_in_ABL(bnd, bnd_prev, active_bounds);
-                            bnd_prev = std::prev(bnd);
+                            std::iter_swap(bnd, bnd_prev);
+                            --bnd;
+                            --bnd_prev;
                         }
                     }
                 }
@@ -88,9 +111,16 @@ void process_hot_pixel_edges_at_top_of_scanbeam(T top_y,
             next_edge_in_bound(bnd, scanbeam);
         }
         if ((*bnd)->current_edge == (*bnd)->edges.end()) {
-            active_bounds.erase(bnd);
+            std::rotate(bnd, bnd + 1, bnd_end);
+            --bnd_end;
+            if (first) {
+                --bnd2;
+            }
         }
-        bnd = bnd_2;
+        bnd = bnd2;
+    }
+    if (bnd_end != active_bounds.end()) {
+        active_bounds.erase(bnd_end, active_bounds.end());
     }
 }
 

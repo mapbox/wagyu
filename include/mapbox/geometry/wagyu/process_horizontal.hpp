@@ -78,11 +78,11 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
                                         (*horz_bound)->current_edge->top, rings, active_bounds);
             }
             active_bounds.erase(bound_max_pair);
-            auto after_horz = active_bounds.erase(horz_bound);
             if (horizontal_itr_behind != horz_bound) {
+                active_bounds.erase(horz_bound);
                 return horizontal_itr_behind;
             } else {
-                return after_horz;
+                return active_bounds.erase(horz_bound);
             }
         }
 
@@ -91,7 +91,8 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
                                                     scanline_y),
                          cliptype, subject_fill_type, clip_fill_type, rings, active_bounds);
         auto next_bnd = std::next(bnd);
-        swap_positions_in_ABL(horz_bound, bnd, active_bounds);
+        std::iter_swap(horz_bound, bnd);
+        std::swap(horz_bound, bnd);
         if (current_edge_is_horizontal<T>(bnd) && horizontal_itr_behind == horz_bound) {
             horizontal_itr_behind = bnd;
         }
@@ -130,11 +131,11 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
         if ((*horz_bound)->ring) {
             add_point_to_ring(*(*horz_bound), (*horz_bound)->current_edge->top, rings);
         }
-        auto after_horz = active_bounds.erase(horz_bound);
         if (horizontal_itr_behind != horz_bound) {
+            active_bounds.erase(horz_bound);
             return horizontal_itr_behind;
         } else {
-            return after_horz;
+            return active_bounds.erase(horz_bound);
         }
     }
 }
@@ -200,15 +201,17 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
                 add_local_maximum_point(horz_bound, bound_max_pair,
                                         (*horz_bound)->current_edge->top, rings, active_bounds);
             }
-            active_bounds.erase(bound_max_pair);
-            return active_bounds.erase(horz_bound);
+            active_bounds.erase(horz_bound);
+            return active_bounds.erase(bound_max_pair);
         }
 
         intersect_bounds(bnd_forward, horz_bound,
                          mapbox::geometry::point<T>(std::llround((*bnd)->current_x),
                                                     scanline_y),
                          cliptype, subject_fill_type, clip_fill_type, rings, active_bounds);
-        swap_positions_in_ABL(horz_bound, bnd_forward, active_bounds);
+        std::iter_swap(horz_bound, bnd_forward);
+        std::swap(horz_bound, bnd_forward);
+        ++bnd;
         // Why are we not incrementing the bnd iterator here:
         // It is because reverse iterators point to a `base()` iterator that is a forward
         // iterator that is one ahead of the reverse bound. This will always be the horizontal

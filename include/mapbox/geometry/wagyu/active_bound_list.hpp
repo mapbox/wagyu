@@ -19,7 +19,7 @@ namespace geometry {
 namespace wagyu {
 
 template <typename T>
-using active_bound_list = std::list<bound_ptr<T>>;
+using active_bound_list = std::vector<bound_ptr<T>>;
 
 template <typename T>
 using active_bound_list_itr = typename active_bound_list<T>::iterator;
@@ -117,6 +117,26 @@ active_bound_list_itr<T> insert_bound_into_ABL(bound<T>& bnd,
 }
 
 template <typename T>
+std::pair<active_bound_list_itr<T>, active_bound_list_itr<T>> insert_bounds_into_ABL(bound<T>& bnd1, bound<T>& bnd2, active_bound_list<T>& active_bounds) {
+    active_bound_list<T> tmp;
+    tmp.push_back(&bnd1);
+    tmp.push_back(&bnd2);
+    auto itr = active_bounds.begin();
+    while (itr != active_bounds.end() && !bound2_inserts_before_bound1(*(*itr), bnd1)) {
+        ++itr;
+    }
+    auto lb = active_bounds.insert(itr, tmp.begin(), tmp.end());
+    auto rb = std::next(lb);
+    auto rb_next = std::next(rb);
+    while (rb_next != active_bounds.end() && !bound2_inserts_before_bound1(*(*rb_next), bnd2)) {
+        std::iter_swap(rb, rb_next);
+        ++rb;
+        ++rb_next;
+    }
+    return { lb, rb };
+}
+
+template <typename T>
 inline bool is_maxima(bound<T>& bnd, T y) {
     return bnd.next_edge == bnd.edges.end() &&
            bnd.current_edge->top.y == y;
@@ -146,17 +166,6 @@ inline bool current_edge_is_horizontal(active_bound_list_itr<T>& bnd) {
 template <typename T>
 inline bool next_edge_is_horizontal(active_bound_list_itr<T>& bnd) {
     return is_horizontal(*((*bnd)->next_edge));
-}
-
-template <typename T>
-inline void swap_positions_in_ABL(active_bound_list_itr<T>& bnd1,
-                                  active_bound_list_itr<T>& bnd2,
-                                  active_bound_list<T>& active_bounds) {
-    if (std::next(bnd2) == bnd1) {
-        active_bounds.splice(bnd2, active_bounds, bnd1);
-    } else { 
-        active_bounds.splice(bnd1, active_bounds, bnd2);
-    } 
 }
 
 template <typename T>
@@ -437,8 +446,9 @@ void insert_lm_left_and_right_bound(bound<T>& left_bound,
                                     fill_type clip_fill_type) {
 
     // Both left and right bound
-    auto lb_abl_itr = insert_bound_into_ABL(left_bound, active_bounds);
-    auto rb_abl_itr = insert_bound_into_ABL(right_bound, lb_abl_itr, active_bounds);
+    auto lb_rb_pair = insert_bounds_into_ABL(left_bound, right_bound, active_bounds);
+    auto & lb_abl_itr = lb_rb_pair.first;
+    auto & rb_abl_itr = lb_rb_pair.second;
     set_winding_count(lb_abl_itr, active_bounds, cliptype, subject_fill_type, clip_fill_type);
     (*rb_abl_itr)->winding_count = (*lb_abl_itr)->winding_count;
     (*rb_abl_itr)->winding_count2 = (*lb_abl_itr)->winding_count2;

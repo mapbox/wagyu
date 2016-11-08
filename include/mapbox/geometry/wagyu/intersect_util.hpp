@@ -17,8 +17,8 @@ struct intersect_list_sorter {
         if (!values_are_equal(node2.pt.y, node1.pt.y)) {
             return node2.pt.y < node1.pt.y;
         } else {
-            return ((*node2.bound1)->winding_count2 + (*node2.bound2)->winding_count2) >
-                   ((*node1.bound1)->winding_count2 + (*node1.bound2)->winding_count2);
+            return (node2.bound1->winding_count2 + node2.bound2->winding_count2) >
+                   (node1.bound1->winding_count2 + node1.bound2->winding_count2);
         }
     }
 };
@@ -73,33 +73,52 @@ bool get_edge_intersection(edge<T1> const& e1,
 }
 
 template <typename T>
-void build_intersect_list(active_bound_list<T>& active_bounds,
+void update_current_x(active_bound_list<T>& active_bounds, std::vector<std::size_t>& idx_vec, T top_y) {
+    std::size_t pos = 0;
+    for (auto & bnd : active_bounds) {
+        idx_vec.push_back(pos);
+        bnd->pos = pos++;
+        bnd->current_x = get_current_x(*bnd->current_edge, top_y);
+    }
+}
+
+template <typename T>
+void build_intersect_list(T top_y, 
+                          active_bound_list<T> & active_bounds,
                           intersect_list<T>& intersects) {
+    
+    if (active_bounds.empty()) {
+        return;
+    }
+    std::vector<std::size_t> idx_vec;
+    idx_vec.reserve(active_bounds.size());
+    update_current_x(active_bounds, idx_vec, top_y);
+    
     // bubblesort ...
-    bool isModified = false;
+    bool is_modified = false;
     do {
-        isModified = false;
-        auto bnd = active_bounds.begin();
-        auto bnd_next = std::next(bnd);
-        while (bnd_next != active_bounds.end()) {
-            if ((*bnd)->current_x > (*bnd_next)->current_x &&
-                !slopes_equal(*((*bnd)->current_edge), *((*bnd_next)->current_edge))) {
+        is_modified = false;
+        auto idx = idx_vec.begin();
+        auto idx_next = std::next(idx);
+        while (idx_next != idx_vec.end()) {
+            bound_ptr<T> bnd = active_bounds[*idx];
+            bound_ptr<T> bnd_next = active_bounds[*idx_next];
+            if (bnd->current_x > bnd_next->current_x &&
+                !slopes_equal(*(bnd->current_edge), *(bnd_next->current_edge))) {
                 mapbox::geometry::point<double> pt;
-                if (!get_edge_intersection<T, double>(*((*bnd)->current_edge),
-                                                      *((*bnd_next)->current_edge), pt)) {
+                if (!get_edge_intersection<T, double>(*(bnd->current_edge),
+                                                      *(bnd_next->current_edge), pt)) {
                     throw std::runtime_error(
                         "Trying to find intersection of lines that do not intersect");
                 }
-                intersects.emplace_back(bnd, bnd_next, pt);
-                swap_positions_in_ABL(bnd, bnd_next, active_bounds);
-                bnd_next = std::next(bnd);
-                isModified = true;
-            } else {
-                bnd = bnd_next;
-                ++bnd_next;
+                intersects.emplace_back(bnd, bnd_next, std::move(pt));
+                std::iter_swap(idx, idx_next);
+                is_modified = true;
             }
+            ++idx;
+            ++idx_next;
         }
-    } while (isModified);
+    } while (is_modified);
 }
 
 template <typename T>
@@ -316,7 +335,7 @@ void intersect_bounds(active_bound_list_itr<T>& b1,
 
 template <typename T>
 bool bounds_adjacent(intersect_node<T> const& inode) {
-    return (std::next(inode.bound1) == inode.bound2) || (std::next(inode.bound2) == inode.bound1);
+    return (inode.bound1->pos + 1 == inode.bound2->pos) || (inode.bound2->pos + 1 == inode.bound1->pos);
 }
 
 template <typename T>
@@ -338,18 +357,12 @@ void process_intersect_list(intersect_list<T>& intersects,
             std::iter_swap(node_itr, next_itr);
         }
         mapbox::geometry::point<T> pt = round_point<T>(node_itr->pt);
-        intersect_bounds(node_itr->bound1, node_itr->bound2, pt, cliptype, subject_fill_type,
+        auto bound1 = active_bounds.begin() + node_itr->bound1->pos;
+        auto bound2 = active_bounds.begin() + node_itr->bound2->pos;
+        intersect_bounds(bound1, bound2, pt, cliptype, subject_fill_type,
                          clip_fill_type, rings, active_bounds);
-        swap_positions_in_ABL(node_itr->bound1, node_itr->bound2, active_bounds);
-    }
-}
-
-template <typename T>
-void update_current_x(active_bound_list<T>& active_bounds, T top_y) {
-    std::size_t pos = 0;
-    for (auto & bnd : active_bounds) {
-        bnd->pos = pos++;
-        bnd->current_x = get_current_x(*bnd->current_edge, top_y);
+        std::iter_swap(bound1, bound2);
+        std::swap((*bound1)->pos, (*bound2)->pos);
     }
 }
 
@@ -360,20 +373,14 @@ void process_intersections(T top_y,
                            fill_type subject_fill_type,
                            fill_type clip_fill_type,
                            ring_manager<T>& rings) {
-    update_current_x(active_bounds, top_y);
     
     intersect_list<T> intersects;
-    intersects.reserve(active_bounds.size());
-    build_intersect_list(active_bounds, intersects);
+    
+    build_intersect_list(top_y, active_bounds, intersects);
 
     if (intersects.empty()) {
         return;
     }
-
-    // Restore order of active bounds list
-    active_bounds.sort([] (bound_ptr<T> const& b1, bound_ptr<T> const& b2) {
-        return b1->pos < b2->pos;
-    });
 
     // Sort the intersection list
     std::stable_sort(intersects.begin(), intersects.end(), intersect_list_sorter<T>());
