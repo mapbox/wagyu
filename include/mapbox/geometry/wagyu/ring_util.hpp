@@ -482,7 +482,8 @@ bool first_is_bottom_point(const_point_ptr<T> btmPt1, const_point_ptr<T> btmPt2)
 
     if (values_are_equal(std::max(dx1p, dx1n), std::max(dx2p, dx2n)) &&
         values_are_equal(std::min(dx1p, dx1n), std::min(dx2p, dx2n))) {
-        return area_from_point(btmPt1) > 0.0; // if otherwise identical use orientation
+        std::size_t s = 0;
+        return area_from_point(btmPt1, s) > 0.0; // if otherwise identical use orientation
     } else {
         return (greater_than_or_equal(dx1p, dx2p) && greater_than_or_equal(dx1p, dx2n)) ||
                (greater_than_or_equal(dx1n, dx2p) && greater_than_or_equal(dx1n, dx2n));

@@ -37,6 +37,7 @@ using ring_list = std::list<ring_ptr<T>>;
 template <typename T>
 struct ring {
     std::size_t ring_index; // To support unset 0 is undefined and indexes offset by 1
+    std::size_t size;
     double area;
     ring_ptr<T> parent;
     ring_list<T> children;
@@ -49,6 +50,7 @@ struct ring {
 
     ring()
         : ring_index(0),
+          size(0),
           area(std::numeric_limits<double>::quiet_NaN()),
           parent(nullptr),
           children(),
@@ -323,13 +325,15 @@ void reverse_ring(point_ptr<T> pp) {
 }
 
 template <typename T>
-double area_from_point(point_ptr<T> op) {
+double area_from_point(point_ptr<T> op, std::size_t & size) {
     point_ptr<T> startOp = op;
+    size = 1;
     if (!op) {
         return 0.0;
     }
     double a = 0.0;
     do {
+        ++size;
         a += static_cast<double>(op->prev->x + op->x) * static_cast<double>(op->prev->y - op->y);
         op = op->next;
     } while (op != startOp);
@@ -340,7 +344,7 @@ template <typename T>
 double area(ring_ptr<T> r) {
     assert(r != nullptr);
     if (std::isnan(r->area)) {
-        r->area = area_from_point(r->points);
+        r->area = area_from_point(r->points, r->size);
     }
     return r->area;
 }

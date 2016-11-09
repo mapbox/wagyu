@@ -35,5 +35,5 @@ do
 done
 
 TOTAL=$((PASSES + FAILS))
-echo -e "Angus Clipper \033[1;32m ✓ $PASSES/$TOTAL \033[0;31m ✗ $FAILS/$TOTAL \033[0m"
+echo -e "Wagyu Faster On: \033[1;32m ✓ $PASSES/$TOTAL \033[0;31m ✗ $FAILS/$TOTAL \033[0m"
 

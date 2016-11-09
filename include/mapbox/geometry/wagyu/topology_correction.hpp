@@ -433,18 +433,24 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
         }
     } else {
         ring_ptr<T> ring_new = create_new_ring(rings);
-        double area_1 = area_from_point(op_origin_1);
-        double area_2 = area_from_point(op_origin_2);
+        std::size_t size_1 = 0;
+        std::size_t size_2 = 0;
+        double area_1 = area_from_point(op_origin_1, size_1);
+        double area_2 = area_from_point(op_origin_2, size_2);
         if (ring_is_hole(ring_origin) && ((area_1 < 0.0))) {
             ring_origin->points = op_origin_1;
             ring_origin->area = area_1;
+            ring_origin->size = size_1;
             ring_new->points = op_origin_2;
             ring_new->area = area_2;
+            ring_new->size = size_2;
         } else {
             ring_origin->points = op_origin_2;
             ring_origin->area = area_2;
+            ring_origin->size = size_2;
             ring_new->points = op_origin_1;
             ring_new->area = area_1;
+            ring_new->size = size_1;
         }
 
         update_points_ring(ring_origin);
@@ -734,8 +740,10 @@ void handle_self_intersections(point_ptr<T> op,
     }
 
     ring_ptr<T> new_ring = create_new_ring(rings);
-    double area_1 = area_from_point(op);
-    double area_2 = area_from_point(op2);
+    std::size_t size_1 = 0;
+    std::size_t size_2 = 0;
+    double area_1 = area_from_point(op, size_1);
+    double area_2 = area_from_point(op2, size_2);
     bool area_1_is_positive = (area_1 > 0.0);
     bool area_2_is_positive = (area_2 > 0.0);
     bool area_1_is_zero = value_is_zero(area_1);
@@ -758,13 +766,17 @@ void handle_self_intersections(point_ptr<T> op,
         if (area_2_is_zero || (!area_1_is_zero && area_1_is_positive == original_is_positive)) {
             ring->points = op;
             ring->area = area_1;
+            ring->size = size_1;
             new_ring->points = op2;
             new_ring->area = area_2;
+            new_ring->size = size_2;
         } else {
             ring->points = op2;
             ring->area = area_2;
+            ring->size = size_2;
             new_ring->points = op;
             new_ring->area = area_1;
+            new_ring->size = size_1;
         }
         update_points_ring(ring);
         update_points_ring(new_ring);
@@ -777,13 +789,17 @@ void handle_self_intersections(point_ptr<T> op,
         if (std::fabs(area_1) > std::fabs(area_2)) {
             ring->points = op;
             ring->area = area_1;
+            ring->size = size_1;
             new_ring->points = op2;
             new_ring->area = area_2;
+            new_ring->size = size_2;
         } else {
             ring->points = op2;
             ring->area = area_2;
+            ring->size = size_2;
             new_ring->points = op;
             new_ring->area = area_1;
+            new_ring->size = size_1;
         }
         update_points_ring(ring);
         update_points_ring(new_ring);
@@ -1834,7 +1850,8 @@ void do_simple_polygons(ring_manager<T>& rings) {
         if (!r.points || r.is_open) {
             continue;
         }
-        if (ring_is_hole(&r) == (area_from_point(r.points) > 0)) {
+        std::size_t s = 0;
+        if (ring_is_hole(&r) == (area_from_point(r.points, s) > 0)) {
             reverse_ring(r.points);
         }
         remove_spikes_in_polygons(&r, rings);
@@ -1890,7 +1907,8 @@ void do_simple_polygons(ring_manager<T>& rings) {
             continue;
         }
         double stored_area = area(&r);
-        double calculated_area = area_from_point(r.points);
+        std::size_t s = 0;
+        double calculated_area = area_from_point(r.points, s);
         if (!values_near_equal(stored_area, calculated_area)) {
             throw std::runtime_error("Difference in stored area vs calculated area!");
         }
