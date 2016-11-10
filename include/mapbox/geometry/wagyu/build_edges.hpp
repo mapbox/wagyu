@@ -171,8 +171,13 @@ bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry, edge
         auto& b = edges.back();
         if (slopes_equal(f, b)) {
             if (f.bot == b.top) {
-                f.bot = b.bot;
-                edges.pop_back();
+                if (f.top == b.bot) {
+                    edges.pop_back();
+                    edges.erase(edges.begin());
+                } else {
+                    f.bot = b.bot;
+                    edges.pop_back();
+                }
                 modified = true;
             } else if (f.top == b.bot) {
                 f.top = b.top;
@@ -183,6 +188,7 @@ bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry, edge
                 edges.erase(edges.begin());
                 modified = true;
             } else if (f.top == b.top) {
+                edges.pop_back();
                 if (point_2_is_between_point_1_and_point_3(f.top, f.bot, b.bot)) {
                     b.top = f.bot;
                     edges.erase(edges.begin());
