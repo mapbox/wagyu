@@ -22,6 +22,20 @@ do
     do
         for filltype in even_odd non_zero positive negative
         do
+            if [ "$type" = "union" ]; then
+                $TESTER -t $type -f $filltype \
+                    ./tests/geometry-test-data/input-polyjson/$filename \
+                    1>./tests/output-polyjson/$type-$filename;
+
+                # Check exit code of last command
+                if [ "$?" -eq "0" ]; then
+                    PASSES=$((PASSES + 1))
+                else
+                    echo --- Test failure: $type $filltype $filename
+                    echo $TESTER -t $type -f $filltype ./tests/geometry-test-data/input-polyjson/$filename
+                    FAILS=$((FAILS + 1))
+                fi
+            fi
             $TESTER -t $type -f $filltype \
                 ./tests/geometry-test-data/input-polyjson/$filename \
                 ./tests/fixtures/clip-clockwise-square.json \
