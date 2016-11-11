@@ -78,6 +78,9 @@ fuzzer: build-fuzzer
 
 clean:
 	rm -rf *dSYM
+	rm -rf deps/
+	rm -f *.o
+	rm -f benchmark
 	rm -f test
 	rm -f fuzzer
 	rm -f fixture-tester
