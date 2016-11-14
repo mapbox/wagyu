@@ -49,3 +49,11 @@ Then, it will run the `fixture-tester` executable with all of the geometry tests
 
 You may want to use wagyu in your own project. Since wagyu is a header-only library, all you have to do is include `mapbox/geometry/polygon.hpp` and `mapbox/geometry/wagyu/wagyu.hpp`. `polygon.hpp` is the polygon portion of the Mapbox geometry library, a boost-compliant polygon geometry container.
 
+### Debugging
+
+`wagyu` has many `DEBUG` flags [throughout the code](https://github.com/mapbox/wagyu/blob/79d85c720c8fb9ab37d0b677ccf12f83d1015ad7/include/mapbox/geometry/wagyu/local_minimum.hpp#L56-L113) that will help you make sense of the library and what it is doing. To see log messages during execution of the code:
+
+```
+make debug
+```
+
