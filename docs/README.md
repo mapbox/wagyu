@@ -17,7 +17,7 @@ shares some of the same code, however, some of the algorithm has been changed. B
     * [Topology Correction](topology_correction.md)
         * [Point Intersections](point_intersections.md)
         * [Intersection Chains](intersections_chains.md)
-* Examples and Useage
+* Examples and Usage
     * [Getting Started](getting_started.md)
     * [Example Code](example.md)
 * Contributing to Wagyu
