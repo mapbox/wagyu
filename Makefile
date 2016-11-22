@@ -42,6 +42,10 @@ build-fuzzer-r:
 build-fuzzer:
 	$(CXX) $(DEBUG_FLAGS) tests/fuzzer.cpp $(WARNING_FLAGS) $(CXXFLAGS) -o fuzzer
 
+orient: tests/orient.cpp
+	$(CXX) $(DEBUG_FLAGS) tests/orient.cpp $(WARNING_FLAGS) $(CXXFLAGS) -o orient
+
+
 # angus clipper for benchmark
 ./deps/clipper:
 	git clone https://github.com/mapnik/clipper.git -b r496-mapnik ./deps/clipper && cd ./deps/clipper && git checkout $(CLIPPER_REVISION) && ./cpp/fix_members.sh
