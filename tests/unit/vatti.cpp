@@ -7,6 +7,65 @@
 using namespace mapbox::geometry::wagyu;
 using T = std::int64_t;
 
+TEST_CASE("simple test for winding order - positive") {
+    
+	// This ring is counter-clockwise
+	mapbox::geometry::linear_ring<std::int64_t> ring;
+    ring.push_back(mapbox::geometry::point<std::int64_t>(0, 0));
+    ring.push_back(mapbox::geometry::point<std::int64_t>(1, 0));
+    ring.push_back(mapbox::geometry::point<std::int64_t>(1, 1));
+    ring.push_back(mapbox::geometry::point<std::int64_t>(0, 1));
+    ring.push_back(mapbox::geometry::point<std::int64_t>(0, 0));
+
+    mapbox::geometry::wagyu::wagyu<std::int64_t> wagyu;
+    wagyu.add_ring(ring);
+
+    mapbox::geometry::multi_polygon<std::int64_t> solution;
+    wagyu.execute(mapbox::geometry::wagyu::clip_type_union, solution,
+                  mapbox::geometry::wagyu::fill_type_positive,
+                  mapbox::geometry::wagyu::fill_type_positive);
+
+    REQUIRE(solution.size() == 1);
+    // Check first polygon number of rings
+    REQUIRE(solution[0].size() == 1);
+
+    // Check Ring 1 is counter clockwise as well
+    REQUIRE(solution[0][0].size() == 5);
+    CHECK(solution[0][0][0].x == 1);
+    CHECK(solution[0][0][0].y == 0);
+
+    CHECK(solution[0][0][1].x == 1);
+    CHECK(solution[0][0][1].y == 1);
+
+    CHECK(solution[0][0][2].x == 0);
+    CHECK(solution[0][0][2].y == 1);
+
+    CHECK(solution[0][0][3].x == 0);
+    CHECK(solution[0][0][3].y == 0);
+
+    CHECK(solution[0][0][4].x == 1);
+    CHECK(solution[0][0][4].y == 0);
+}
+
+TEST_CASE("simple test for winding order - negative") {
+	mapbox::geometry::linear_ring<std::int64_t> ring;
+    ring.push_back(mapbox::geometry::point<std::int64_t>(0, 0));
+    ring.push_back(mapbox::geometry::point<std::int64_t>(1, 0));
+    ring.push_back(mapbox::geometry::point<std::int64_t>(1, 1));
+    ring.push_back(mapbox::geometry::point<std::int64_t>(0, 1));
+    ring.push_back(mapbox::geometry::point<std::int64_t>(0, 0));
+
+    mapbox::geometry::wagyu::wagyu<std::int64_t> wagyu;
+    wagyu.add_ring(ring);
+
+    mapbox::geometry::multi_polygon<std::int64_t> solution;
+    wagyu.execute(mapbox::geometry::wagyu::clip_type_union, solution,
+                  mapbox::geometry::wagyu::fill_type_negative,
+                  mapbox::geometry::wagyu::fill_type_negative);
+
+    REQUIRE(solution.size() == 0);
+}
+
 TEST_CASE("simple test of entire vatti") {
 
     mapbox::geometry::wagyu::wagyu<T> clipper;
@@ -64,24 +123,24 @@ TEST_CASE("simple test of entire vatti") {
     REQUIRE(solution[0][0].size() == 5);
     CHECK(solution[0][0][0].x == -70312);
     CHECK(solution[0][0][0].y == -55285);
-    CHECK(solution[0][0][1].x == -79102);
-    CHECK(solution[0][0][1].y == 0);
+    CHECK(solution[0][0][1].x == 85254);
+    CHECK(solution[0][0][1].y == -30747);
     CHECK(solution[0][0][2].x == 58008);
     CHECK(solution[0][0][2].y == 80592);
-    CHECK(solution[0][0][3].x == 85254);
-    CHECK(solution[0][0][3].y == -30747);
+    CHECK(solution[0][0][3].x == -79102);
+    CHECK(solution[0][0][3].y == 0);
     CHECK(solution[0][0][4].x == -70312);
     CHECK(solution[0][0][4].y == -55285);
 
     REQUIRE(solution[0][1].size() == 5);
     CHECK(solution[0][1][0].x == -65918);
     CHECK(solution[0][1][0].y == -32502);
-    CHECK(solution[0][1][1].x == 51855);
-    CHECK(solution[0][1][1].y == -21089);
+    CHECK(solution[0][1][1].x == -50098);
+    CHECK(solution[0][1][1].y == 4394);
     CHECK(solution[0][1][2].x == 44824);
     CHECK(solution[0][1][2].y == 42149);
-    CHECK(solution[0][1][3].x == -50098);
-    CHECK(solution[0][1][3].y == 4394);
+    CHECK(solution[0][1][3].x == 51855);
+    CHECK(solution[0][1][3].y == -21089);
     CHECK(solution[0][1][4].x == -65918);
     CHECK(solution[0][1][4].y == -32502);
 
@@ -146,24 +205,24 @@ TEST_CASE("simple test of entire vatti - reverse output") {
     REQUIRE(solution[0][0].size() == 5);
     CHECK(solution[0][0][0].x == -70312);
     CHECK(solution[0][0][0].y == -55285);
-    CHECK(solution[0][0][1].x == 85254);
-    CHECK(solution[0][0][1].y == -30747);
+    CHECK(solution[0][0][1].x == -79102);
+    CHECK(solution[0][0][1].y == 0);
     CHECK(solution[0][0][2].x == 58008);
     CHECK(solution[0][0][2].y == 80592);
-    CHECK(solution[0][0][3].x == -79102);
-    CHECK(solution[0][0][3].y == 0);
+    CHECK(solution[0][0][3].x == 85254);
+    CHECK(solution[0][0][3].y == -30747);
     CHECK(solution[0][0][4].x == -70312);
     CHECK(solution[0][0][4].y == -55285);
 
     REQUIRE(solution[0][1].size() == 5);
     CHECK(solution[0][1][0].x == -65918);
     CHECK(solution[0][1][0].y == -32502);
-    CHECK(solution[0][1][1].x == -50098);
-    CHECK(solution[0][1][1].y == 4394);
+    CHECK(solution[0][1][1].x == 51855);
+    CHECK(solution[0][1][1].y == -21089);
     CHECK(solution[0][1][2].x == 44824);
     CHECK(solution[0][1][2].y == 42149);
-    CHECK(solution[0][1][3].x == 51855);
-    CHECK(solution[0][1][3].y == -21089);
+    CHECK(solution[0][1][3].x == -50098);
+    CHECK(solution[0][1][3].y == 4394);
     CHECK(solution[0][1][4].x == -65918);
     CHECK(solution[0][1][4].y == -32502);
 

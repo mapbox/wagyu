@@ -16,12 +16,12 @@ void push_ring_to_polygon(mapbox::geometry::polygon<T>& poly, ring_ptr<T>& r, bo
     if (reverse_output) {
         do {
             lr.push_back({ ptIt->x, ptIt->y });
-            ptIt = ptIt->prev;
+            ptIt = ptIt->next;
         } while (ptIt != firstPt);
     } else {
         do {
             lr.push_back({ ptIt->x, ptIt->y });
-            ptIt = ptIt->next;
+            ptIt = ptIt->prev;
         } while (ptIt != firstPt);
     }
     lr.push_back({ firstPt->x, firstPt->y }); // close the ring
