@@ -3,28 +3,39 @@
 set -eu
 set -o pipefail
 
-# http://clang.llvm.org/docs/UsersManual.html#profiling-with-instrumentation
-# https://www.bignerdranch.com/blog/weve-got-you-covered/
+./.mason/mason install clang++ 4.0.0
+./.mason/mason install llvm-cov 4.0.0
 
-MASON_BASE=$(pwd)
-.mason/mason install clang++ 3.9.0
-.mason/mason link clang++ 3.9.0
-.mason/mason install llvm-cov 3.9.0
-.mason/mason link llvm-cov 3.9.0
-export CXX="${MASON_BASE}/mason_packages/.link/bin/clang++"
+export CXX="$(./.mason/mason prefix clang++ 4.0.0)/bin/clang++"
+export PROF=$(./.mason/mason prefix llvm-cov 4.0.0)/bin/llvm-profdata
+export COV=$(./.mason/mason prefix llvm-cov 4.0.0)/bin/llvm-cov
 export CXXFLAGS="-fprofile-instr-generate -fcoverage-mapping"
 export LDFLAGS="-fprofile-instr-generate"
 export LLVM_PROFILE_FILE="code-%p.profraw"
-make debug
-rm -f *profdata
-echo "merging results"
-${MASON_BASE}/mason_packages/.link/bin/llvm-profdata merge -output=code.profdata code-*.profraw
-${MASON_BASE}/mason_packages/.link/bin/llvm-cov report ./fixture-tester -instr-profile=code.profdata -use-color
-${MASON_BASE}/mason_packages/.link/bin/llvm-cov report ./test -instr-profile=code.profdata -use-color
-${MASON_BASE}/mason_packages/.link/bin/llvm-cov show ./fixture-tester -instr-profile=code.profdata include/mapbox/geometry/wagyu/*hpp -filename-equivalence -use-color --format html > /tmp/fixture-tester-coverage.html
-open /tmp/fixture-tester-coverage.html
-${MASON_BASE}/mason_packages/.link/bin/llvm-cov show ./test -instr-profile=code.profdata include/mapbox/geometry/wagyu/*hpp -filename-equivalence -use-color --format html > /tmp/test-coverage.html
-open /tmp/test-coverage.html
-echo "open /tmp/fixture-tester-coverage.html and /tmp/test-coverate.html for HTML version of this report"
-rm -f *profraw
-rm -f *gcov
+
+function run_cov() {
+    local target=$1
+    local binary=$2
+    local cmd=$3
+    local name=$4
+
+    echo "** cleaning"
+    make clean
+    make ${target}
+    rm -f code-*.profraw
+    rm -f *profdata
+    echo "** running '${name}'"
+    ${cmd}
+    echo "** merging '${name}' results"
+    ${PROF} merge -output="${name}.profdata" code-*.profraw
+    # note: demangling is not working - https://llvm.org/bugs/show_bug.cgi?id=31394
+    ${COV} report ${binary} -instr-profile="${name}.profdata" -use-color
+    ${COV} show ${binary} -instr-profile="${name}.profdata" include/mapbox/geometry/wagyu/*hpp -use-color --format html > /tmp/${name}.html
+    rm -f code-*.profraw
+    open /tmp/${name}.html
+    echo "** open /tmp/${name}.html"
+}
+
+# unit test report
+run_cov build-debug ./test ./test "wagyu-unit-test-coverage"
+run_cov build-fixture-tester ./fixture-tester "./tests/run-geometry-tests.sh ./fixture-tester" "wagyu-fixture-test-coverage"
