@@ -5,7 +5,6 @@
 
 #include <mapbox/geometry/wagyu/active_bound_list.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
-#include <mapbox/geometry/wagyu/exceptions.hpp>
 #include <mapbox/geometry/wagyu/intersect_util.hpp>
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
 #include <mapbox/geometry/wagyu/local_minimum_util.hpp>

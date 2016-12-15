@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdexcept>
 #include <cassert>
 #include <cstdint>
 #include <list>

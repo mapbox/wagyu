@@ -3,7 +3,6 @@
 #include <mapbox/geometry/wagyu/active_bound_list.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/edge.hpp>
-#include <mapbox/geometry/wagyu/exceptions.hpp>
 #include <mapbox/geometry/wagyu/intersect_util.hpp>
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
 #include <mapbox/geometry/wagyu/local_minimum_util.hpp>
@@ -48,7 +47,7 @@ active_bound_list_itr<T> do_maxima(active_bound_list_itr<T>& bnd,
         add_local_maximum_point(bnd, bndMaxPair, (*bnd)->current_edge->top, rings, active_bounds);
         active_bounds.erase(bndMaxPair);
     } else {
-        throw clipper_exception("DoMaxima error");
+        throw std::runtime_error("DoMaxima error");
     }
     auto prev_itr = active_bounds.erase(bnd);
     if (skipped) {

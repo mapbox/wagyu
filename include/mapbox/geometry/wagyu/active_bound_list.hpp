@@ -8,7 +8,6 @@
 #include <mapbox/geometry/wagyu/bound.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/edge.hpp>
-#include <mapbox/geometry/wagyu/exceptions.hpp>
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
 #include <mapbox/geometry/wagyu/local_minimum_util.hpp>
 #include <mapbox/geometry/wagyu/ring.hpp>
