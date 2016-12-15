@@ -395,95 +395,57 @@ bool fix_intersects(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& dup
         op_search_1_next->prev = op_search_2;
         op_search_2_next->prev = op_search_1;
     }
-
-    remove_spikes(op_origin_1);
-    remove_spikes(op_origin_2);
-
-    if (op_origin_1 == nullptr || op_origin_2 == nullptr) {
-        if (op_origin_1 == nullptr && op_origin_2 == nullptr) {
-            // Self destruction!
-            ring_origin->points = nullptr;
-            ring_origin->area = std::numeric_limits<double>::quiet_NaN();
-            remove_ring(ring_origin, rings);
-            for (auto& iRing : iList) {
-                ring_ptr<T> ring_itr = iRing.first;
-                ring_itr->points = nullptr;
-                ring_itr->area = std::numeric_limits<double>::quiet_NaN();
-                remove_ring(ring_itr, rings);
-            }
-        } else {
-            if (op_origin_1 == nullptr) {
-                ring_origin->points = op_origin_2;
-            } else {
-                //(op_origin_2 == nullptr)
-                ring_origin->points = op_origin_1;
-            }
-            ring_origin->area = std::numeric_limits<double>::quiet_NaN();
-            update_points_ring(ring_origin);
-            for (auto& iRing : iList) {
-                ring_ptr<T> ring_itr = iRing.first;
-                ring_itr->points = nullptr;
-                ring_itr->area = std::numeric_limits<double>::quiet_NaN();
-                ring_itr->bottom_point = nullptr;
-                if (ring_is_hole(ring_origin)) {
-                    ring1_replaces_ring2(ring_origin, ring_itr, rings);
-                } else {
-                    ring1_replaces_ring2(ring_origin->parent, ring_itr, rings);
-                }
-            }
-        }
+    
+    ring_ptr<T> ring_new = create_new_ring(rings);
+    std::size_t size_1 = 0;
+    std::size_t size_2 = 0;
+    double area_1 = area_from_point(op_origin_1, size_1);
+    double area_2 = area_from_point(op_origin_2, size_2);
+    if (ring_is_hole(ring_origin) && ((area_1 < 0.0))) {
+        ring_origin->points = op_origin_1;
+        ring_origin->area = area_1;
+        ring_origin->size = size_1;
+        ring_new->points = op_origin_2;
+        ring_new->area = area_2;
+        ring_new->size = size_2;
     } else {
-        ring_ptr<T> ring_new = create_new_ring(rings);
-        std::size_t size_1 = 0;
-        std::size_t size_2 = 0;
-        double area_1 = area_from_point(op_origin_1, size_1);
-        double area_2 = area_from_point(op_origin_2, size_2);
-        if (ring_is_hole(ring_origin) && ((area_1 < 0.0))) {
-            ring_origin->points = op_origin_1;
-            ring_origin->area = area_1;
-            ring_origin->size = size_1;
-            ring_new->points = op_origin_2;
-            ring_new->area = area_2;
-            ring_new->size = size_2;
-        } else {
-            ring_origin->points = op_origin_2;
-            ring_origin->area = area_2;
-            ring_origin->size = size_2;
-            ring_new->points = op_origin_1;
-            ring_new->area = area_1;
-            ring_new->size = size_1;
-        }
+        ring_origin->points = op_origin_2;
+        ring_origin->area = area_2;
+        ring_origin->size = size_2;
+        ring_new->points = op_origin_1;
+        ring_new->area = area_1;
+        ring_new->size = size_1;
+    }
 
-        update_points_ring(ring_origin);
-        update_points_ring(ring_new);
+    update_points_ring(ring_origin);
+    update_points_ring(ring_new);
 
-        ring_origin->bottom_point = nullptr;
+    ring_origin->bottom_point = nullptr;
 
-        for (auto& iRing : iList) {
-            ring_ptr<T> ring_itr = iRing.first;
-            ring_itr->points = nullptr;
-            ring_itr->area = std::numeric_limits<double>::quiet_NaN();
-            ring_itr->bottom_point = nullptr;
-            if (ring_is_hole(ring_origin)) {
-                ring1_replaces_ring2(ring_origin, ring_itr, rings);
-            } else {
-                ring1_replaces_ring2(ring_origin->parent, ring_itr, rings);
-            }
-        }
+    for (auto& iRing : iList) {
+        ring_ptr<T> ring_itr = iRing.first;
+        ring_itr->points = nullptr;
+        ring_itr->area = std::numeric_limits<double>::quiet_NaN();
+        ring_itr->bottom_point = nullptr;
         if (ring_is_hole(ring_origin)) {
-            ring_new->parent = ring_origin;
-            ring_new->parent->children.push_back(ring_new);
-            fixup_children(ring_origin, ring_new);
-            fixup_children(ring_parent, ring_new);
+            ring1_replaces_ring2(ring_origin, ring_itr, rings);
         } else {
-            ring_new->parent = ring_origin->parent;
-            if (ring_new->parent == nullptr) {
-                rings.children.push_back(ring_new);
-            } else {
-                ring_new->parent->children.push_back(ring_new);
-            }
-            fixup_children(ring_origin, ring_new);
+            ring1_replaces_ring2(ring_origin->parent, ring_itr, rings);
         }
+    }
+    if (ring_is_hole(ring_origin)) {
+        ring_new->parent = ring_origin;
+        ring_new->parent->children.push_back(ring_new);
+        fixup_children(ring_origin, ring_new);
+        fixup_children(ring_parent, ring_new);
+    } else {
+        ring_new->parent = ring_origin->parent;
+        if (ring_new->parent == nullptr) {
+            rings.children.push_back(ring_new);
+        } else {
+            ring_new->parent->children.push_back(ring_new);
+        }
+        fixup_children(ring_origin, ring_new);
     }
 
     std::list<std::pair<ring_ptr<T>, point_ptr_pair<T>>> move_list;
@@ -1659,7 +1621,7 @@ void process_repeated_points(std::size_t first_index,
             }
         }
     }
-    // LCOV_EXCL_STOP
+    // LCOV_EXCL_END
 #endif
 }
 
@@ -1893,10 +1855,6 @@ void do_simple_polygons(ring_manager<T>& rings) {
             continue;
         }
         fixup_out_polygon(r, rings);
-        if (ring_is_hole(&r) == (area(&r) > 0.0)) {
-            reverse_ring(r.points);
-            r.area = std::numeric_limits<double>::quiet_NaN();
-        }
     }
 }
 }

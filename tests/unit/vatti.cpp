@@ -7,6 +7,16 @@
 using namespace mapbox::geometry::wagyu;
 using T = std::int64_t;
 
+TEST_CASE("no input test") {
+    
+    mapbox::geometry::wagyu::wagyu<std::int64_t> wagyu;
+
+    mapbox::geometry::multi_polygon<std::int64_t> solution;
+    CHECK_FALSE(wagyu.execute(mapbox::geometry::wagyu::clip_type_union, solution,
+                          mapbox::geometry::wagyu::fill_type_positive,
+                          mapbox::geometry::wagyu::fill_type_positive));
+}
+
 TEST_CASE("simple test for winding order - positive") {
     
 	// This ring is counter-clockwise
