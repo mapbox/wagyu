@@ -3,23 +3,7 @@
 #include <mapbox/geometry/point.hpp>
 #include <mapbox/geometry/polygon.hpp>
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wunused-variable"
-#pragma GCC diagnostic ignored "-Wshadow"
-#ifdef __clang__
-#pragma GCC diagnostic ignored "-Wunknown-pragmas"
-#endif
-#pragma GCC diagnostic ignored "-Wfloat-equal"
-#pragma GCC diagnostic ignored "-Wpragmas"
-#pragma GCC diagnostic ignored "-Wdeprecated-register"
-#pragma GCC diagnostic ignored "-Wshorten-64-to-32"
-#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #include <boost/geometry.hpp>
-#pragma GCC diagnostic pop
-
 #include <boost/range/iterator_range_core.hpp>
 
 #include <cassert>
