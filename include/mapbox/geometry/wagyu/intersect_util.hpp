@@ -69,7 +69,9 @@ bool get_edge_intersection(edge<T1> const& e1,
         pt.y = p0_y + (t * s1_y);
         return true;
     }
+    // LCOV_EXCL_START
     return false;
+    // LCOV_EXCL_END
 }
 
 template <typename T>
@@ -87,8 +89,10 @@ void build_intersect_list(active_bound_list<T>& active_bounds,
                 mapbox::geometry::point<double> pt;
                 if (!get_edge_intersection<T, double>(*((*bnd)->current_edge),
                                                       *((*bnd_next)->current_edge), pt)) {
+                    // LCOV_EXCL_START
                     throw std::runtime_error(
                         "Trying to find intersection of lines that do not intersect");
+                    // LCOV_EXCL_END
                 }
                 intersects.emplace_back(bnd, bnd_next, pt);
                 swap_positions_in_ABL(bnd, bnd_next, active_bounds);

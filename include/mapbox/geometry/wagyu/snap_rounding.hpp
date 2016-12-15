@@ -34,7 +34,9 @@ void process_hot_pixel_intersections(T top_y,
                 mapbox::geometry::point<double> pt;
                 if (!get_edge_intersection<T, double>(*((*bnd)->current_edge),
                                                      *((*bnd_next)->current_edge), pt)) {
+                    // LCOV_EXCL_START
                     throw std::runtime_error("Edges do not intersect!");
+                    // LCOV_EXCL_END
                 }
                 add_to_hot_pixels(round_point<T>(pt), rings);
                 swap_positions_in_ABL(bnd, bnd_next, active_bounds);
@@ -102,11 +104,6 @@ void insert_local_minima_into_ABL_hot_pixel(T top_y,
                                             ring_manager<T>& rings,
                                             scanbeam_list<T>& scanbeam) {
     while (lm != minima_sorted.end() && (*lm)->y == top_y) {
-        if ((*lm)->left_bound.edges.empty() || (*lm)->right_bound.edges.empty()) {
-            ++lm;
-            continue;
-        }
-
         add_to_hot_pixels((*lm)->left_bound.edges.front().bot, rings); 
         auto& left_bound = (*lm)->left_bound;
         left_bound.current_edge = left_bound.edges.begin();
@@ -129,10 +126,6 @@ void insert_local_minima_into_ABL_hot_pixel(T top_y,
 template <typename T>
 void build_hot_pixels(local_minimum_list<T>& minima_list,
                       ring_manager<T>& rings) {
-    if (minima_list.empty()) {
-        return;
-    }
-    
     active_bound_list<T> active_bounds;
     scanbeam_list<T> scanbeam;
     T scanline_y = std::numeric_limits<T>::max();
