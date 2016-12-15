@@ -1772,35 +1772,6 @@ void remove_spikes_in_polygons(ring_ptr<T> r, ring_manager<T>& rings) {
 }
 
 template <typename T>
-void fixup_out_polyline(ring<T>& ring, ring_manager<T>& rings) {
-    point_ptr<T> pp = ring.points;
-    point_ptr<T> lastPP = pp->prev;
-    while (pp != lastPP) {
-        pp = pp->next;
-        if (*pp == *pp->prev) {
-            if (pp == lastPP)
-                lastPP = pp->prev;
-            point_ptr<T> tmpPP = pp->prev;
-            tmpPP->next = pp->next;
-            pp->next->prev = tmpPP;
-            // delete pp;
-            pp->next = pp;
-            pp->prev = pp;
-            pp->ring = nullptr;
-            pp = tmpPP;
-        }
-    }
-
-    if (pp == pp->prev) {
-        remove_ring(&ring, rings);
-        dispose_out_points(pp);
-        ring.points = nullptr;
-        return;
-    }
-}
-
-
-template <typename T>
 void fixup_out_polygon(ring<T>& ring, ring_manager<T>& rings) {
     // FixupOutPolygon() - removes duplicate points and simplifies consecutive
     // parallel edges by removing the middle vertex.
@@ -1848,7 +1819,7 @@ void do_simple_polygons(ring_manager<T>& rings) {
 
     // fix orientations ...
     for (auto& r : rings.rings) {
-        if (!r.points || r.is_open) {
+        if (!r.points) {
             continue;
         }
         std::size_t s = 0;
@@ -1904,7 +1875,7 @@ void do_simple_polygons(ring_manager<T>& rings) {
 #if DEBUG
     // LCOV_EXCL_START
     for (auto& r : rings.rings) {
-        if (!r.points || r.is_open) {
+        if (!r.points) {
             continue;
         }
         double stored_area = area(&r);
@@ -1918,7 +1889,7 @@ void do_simple_polygons(ring_manager<T>& rings) {
 #endif
 
     for (auto& r : rings.rings) {
-        if (!r.points || r.is_open) {
+        if (!r.points) {
             continue;
         }
         fixup_out_polygon(r, rings);

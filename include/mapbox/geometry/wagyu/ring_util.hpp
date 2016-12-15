@@ -336,11 +336,8 @@ void add_first_point(active_bound_list_itr<T>& bnd,
 
     ring_ptr<T> r = create_new_ring(rings);
     (*bnd)->ring = r;
-    r->is_open = ((*bnd)->winding_delta == 0);
     r->points = create_new_point(r, pt, rings);
-    if (!r->is_open) {
-        set_hole_state(bnd, active_bounds, rings);
-    }
+    set_hole_state(bnd, active_bounds, rings);
     (*bnd)->last_point = pt;
 }
 
@@ -352,11 +349,8 @@ void add_first_point(active_bound_list_rev_itr<T>& bnd,
     ring_ptr<T> r = create_new_ring(rings);
     // no ring currently set!
     (*bnd)->ring = r;
-    r->is_open = ((*bnd)->winding_delta == 0);
     r->points = create_new_point(r, pt, rings);
-    if (!r->is_open) {
-        set_hole_state(bnd, active_bounds, rings);
-    }
+    set_hole_state(bnd, active_bounds, rings);
     (*bnd)->last_point = pt;
 }
 
@@ -688,9 +682,6 @@ void add_local_maximum_point(active_bound_list_itr<T>& b1,
                              active_bound_list<T>& active_bounds) {
     insert_hot_pixels_in_path(*(*b2), pt, rings, false);
     add_point(b1, active_bounds, pt, rings);
-    if ((*b2)->winding_delta == 0) {
-        add_point(b2, active_bounds, pt, rings);
-    }
     if ((*b1)->ring == (*b2)->ring) {
         (*b1)->ring = nullptr;
         (*b2)->ring = nullptr;
@@ -907,7 +898,6 @@ void dispose_out_points(point_ptr<T>& pp) {
         tmpPp->next = tmpPp;
         tmpPp->prev = tmpPp;
         tmpPp->ring = nullptr;
-        // delete tmpPp;
     }
 }
 }

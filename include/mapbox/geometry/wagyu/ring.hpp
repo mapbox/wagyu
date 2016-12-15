@@ -46,7 +46,6 @@ struct ring {
     ring_list<T> children;
     point_ptr<T> points;
     point_ptr<T> bottom_point;
-    bool is_open;
 
     ring( ring const& ) = delete;
     ring& operator=(ring const& ) = delete;
@@ -58,8 +57,7 @@ struct ring {
           parent(nullptr),
           children(),
           points(nullptr),
-          bottom_point(nullptr),
-          is_open(false) {
+          bottom_point(nullptr) {
     }
 };
 

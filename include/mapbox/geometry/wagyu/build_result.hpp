@@ -36,7 +36,7 @@ void build_result_polygons(std::vector<mapbox::geometry::polygon<T>>& solution,
     for (auto& r : rings) {
         assert(r->points);
         std::size_t cnt = point_count(r->points);
-        if ((r->is_open && cnt < 2) || (!r->is_open && cnt < 3)) {
+        if (cnt < 3) {
             continue;
         }
         solution.emplace_back();
@@ -44,7 +44,7 @@ void build_result_polygons(std::vector<mapbox::geometry::polygon<T>>& solution,
         for (auto& c : r->children) {
             assert(c->points);
             cnt = point_count(c->points);
-            if ((c->is_open && cnt < 2) || (!c->is_open && cnt < 3)) {
+            if (cnt < 3) {
                 continue;
             }
             push_ring_to_polygon(solution.back(), c, reverse_output);

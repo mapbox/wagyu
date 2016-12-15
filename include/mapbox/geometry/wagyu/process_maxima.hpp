@@ -47,12 +47,6 @@ active_bound_list_itr<T> do_maxima(active_bound_list_itr<T>& bnd,
     } else if ((*bnd)->ring && (*bndMaxPair)->ring) {
         add_local_maximum_point(bnd, bndMaxPair, (*bnd)->current_edge->top, rings, active_bounds);
         active_bounds.erase(bndMaxPair);
-    } else if ((*bnd)->winding_delta == 0 && (*bnd)->ring) {
-        add_point_to_ring(*(*bnd), (*bnd)->current_edge->top, rings);
-        active_bounds.erase(bndMaxPair);
-    } else if ((*bnd)->winding_delta == 0 && (*bndMaxPair)->ring) {
-        add_point_to_ring(*(*bndMaxPair), (*bnd)->current_edge->top, rings);
-        active_bounds.erase(bndMaxPair);
     } else {
         throw clipper_exception("DoMaxima error");
     }

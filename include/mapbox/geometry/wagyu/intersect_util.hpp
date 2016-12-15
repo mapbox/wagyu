@@ -113,50 +113,6 @@ void intersect_bounds(active_bound_list_itr<T>& b1,
                       active_bound_list<T>& active_bounds) {
     bool b1Contributing = ((*b1)->ring != nullptr);
     bool b2Contributing = ((*b2)->ring != nullptr);
-    // if either bound is on an OPEN path ...
-    if ((*b1)->winding_delta == 0 || (*b2)->winding_delta == 0) {
-        // ignore subject-subject open path intersections UNLESS they
-        // are both open paths, AND they are both 'contributing maximas' ...
-        if ((*b1)->winding_delta == 0 && (*b2)->winding_delta == 0) {
-            return;
-        }
-
-        // if intersecting a subj line with a subj poly ...
-        else if ((*b1)->poly_type == (*b2)->poly_type &&
-                 (*b1)->winding_delta != (*b2)->winding_delta && cliptype == clip_type_union) {
-            if ((*b1)->winding_delta == 0) {
-                if (b2Contributing) {
-                    add_point(b1, active_bounds, pt, rings);
-                    if (b1Contributing) {
-                        (*b1)->ring = nullptr;
-                    }
-                }
-            } else {
-                if (b1Contributing) {
-                    add_point(b2, active_bounds, pt, rings);
-                    if (b2Contributing) {
-                        (*b2)->ring = nullptr;
-                    }
-                }
-            }
-        } else if ((*b1)->poly_type != (*b2)->poly_type) {
-            // toggle subj open path index on/off when std::abs(clip.WndCnt) == 1
-            if (((*b1)->winding_delta == 0) && std::abs(static_cast<int>((*b2)->winding_count)) == 1 &&
-                (cliptype != clip_type_union || (*b2)->winding_count2 == 0)) {
-                add_point(b1, active_bounds, pt, rings);
-                if (b1Contributing) {
-                    (*b1)->ring = nullptr;
-                }
-            } else if (((*b2)->winding_delta == 0) && (std::abs(static_cast<int>((*b1)->winding_count)) == 1) &&
-                       (cliptype != clip_type_union || (*b1)->winding_count2 == 0)) {
-                add_point(b2, active_bounds, pt, rings);
-                if (b2Contributing) {
-                    (*b2)->ring = nullptr;
-                }
-            }
-        }
-        return;
-    }
 
     // update winding counts...
     // assumes that b1 will be to the Right of b2 ABOVE the intersection

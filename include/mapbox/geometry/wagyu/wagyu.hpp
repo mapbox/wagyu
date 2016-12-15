@@ -25,26 +25,17 @@ private:
     using value_type = T;
 
     local_minimum_list<value_type> minima_list;
-    bool has_open_paths;
     bool reverse_output;
 
     wagyu( wagyu const& ) = delete;
     wagyu& operator=(wagyu const& ) = delete;
 
 public:
-    wagyu() : minima_list(), has_open_paths(false), reverse_output(false) {
+    wagyu() : minima_list(), reverse_output(false) {
     }
 
     ~wagyu() {
         clear();
-    }
-
-    bool add_line(mapbox::geometry::line_string<value_type> const& pg) {
-        bool success = add_line_string(pg, minima_list);
-        if (success) {
-            has_open_paths = true;
-        }
-        return success;
     }
 
     bool add_ring(mapbox::geometry::linear_ring<value_type> const& pg,
@@ -69,7 +60,6 @@ public:
 
     void clear() {
         minima_list.clear();
-        has_open_paths = false;
     }
 
     mapbox::geometry::box<value_type> get_bounds() {

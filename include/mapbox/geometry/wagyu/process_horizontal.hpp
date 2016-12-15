@@ -24,7 +24,6 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
                                                           fill_type subject_fill_type,
                                                           fill_type clip_fill_type) {
     auto horizontal_itr_behind = horz_bound;
-    bool is_open = (*horz_bound)->winding_delta == 0;
     bool is_maxima_edge = is_maxima(horz_bound, scanline_y);
     auto bound_max_pair = active_bounds.end();
     if (is_maxima_edge) {
@@ -44,7 +43,7 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
         //'simplifying' polygons (ie if the Simplify property is set).
         while (hp_itr != rings.hot_pixels.end() && hp_itr->y == scanline_y && hp_itr->x < std::llround((*bnd)->current_x) &&
                hp_itr->x < (*horz_bound)->current_edge->top.x) {
-            if ((*horz_bound)->ring && !is_open) {
+            if ((*horz_bound)->ring) {
                 add_point_to_ring(*(*horz_bound), *hp_itr, rings);
             }
             ++hp_itr;
@@ -63,7 +62,7 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
         }
 
         // note: may be done multiple times
-        if ((*horz_bound)->ring && !is_open) {
+        if ((*horz_bound)->ring) {
             add_point_to_ring(*(*horz_bound),
                               mapbox::geometry::point<T>(std::llround((*bnd)->current_x),
                                                          scanline_y),
@@ -98,7 +97,7 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
         bnd = next_bnd;
     } // end while (bnd != active_bounds.end())
 
-    if ((*horz_bound)->ring && !is_open) {
+    if ((*horz_bound)->ring) {
         while (hp_itr != rings.hot_pixels.end() && hp_itr->y == scanline_y &&
                hp_itr->x < std::llround((*horz_bound)->current_edge->top.x)) {
             add_point_to_ring(*(*horz_bound), *hp_itr, rings);
@@ -110,14 +109,6 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
         if ((*horz_bound)->ring) {
             add_point_to_ring(*(*horz_bound), (*horz_bound)->current_edge->top, rings);
             next_edge_in_bound(horz_bound, scanbeam);
-
-            if ((*horz_bound)->winding_delta == 0) {
-                if (horizontal_itr_behind != horz_bound) {
-                    return horizontal_itr_behind;
-                } else {
-                    return std::next(horz_bound);
-                }
-            }
         } else {
             next_edge_in_bound(horz_bound, scanbeam);
         }
@@ -148,7 +139,6 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
                                                           clip_type cliptype,
                                                           fill_type subject_fill_type,
                                                           fill_type clip_fill_type) {
-    bool is_open = (*horz_bound)->winding_delta == 0;
     bool is_maxima_edge = is_maxima(horz_bound, scanline_y);
     auto bound_max_pair = active_bounds.end();
     if (is_maxima_edge) {
@@ -166,7 +156,7 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
         // polygons) wherever hot pixels touch these horizontal edges.
         while (hp_itr != rings.hot_pixels.rend() && hp_itr->y == scanline_y && hp_itr->x > std::llround((*bnd)->current_x) &&
                hp_itr->x > (*horz_bound)->current_edge->top.x) {
-            if ((*horz_bound)->ring && !is_open) {
+            if ((*horz_bound)->ring) {
                 add_point_to_ring(*(*horz_bound), *hp_itr, rings);
             }
             ++hp_itr;
@@ -185,7 +175,7 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
         }
 
         // note: may be done multiple times
-        if ((*horz_bound)->ring && !is_open) {
+        if ((*horz_bound)->ring) {
             add_point_to_ring(*(*horz_bound),
                               mapbox::geometry::point<T>(std::llround((*bnd)->current_x),
                                                          scanline_y),
@@ -216,7 +206,7 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
         // so what the reverse bound points to will have changed.
     } // end while (bnd != active_bounds.rend())
 
-    if ((*horz_bound)->ring && !is_open) {
+    if ((*horz_bound)->ring) {
         while (hp_itr != rings.hot_pixels.rend() && hp_itr->y == scanline_y && hp_itr->x > (*horz_bound)->current_edge->top.x) {
             add_point_to_ring(*(*horz_bound), *hp_itr, rings);
             ++hp_itr;
@@ -227,10 +217,6 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
         if ((*horz_bound)->ring) {
             add_point_to_ring(*(*horz_bound), (*horz_bound)->current_edge->top, rings);
             next_edge_in_bound(horz_bound, scanbeam);
-
-            if ((*horz_bound)->winding_delta == 0) {
-                return std::next(horz_bound);
-            }
         } else {
             next_edge_in_bound(horz_bound, scanbeam);
         }

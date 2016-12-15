@@ -14,40 +14,6 @@ namespace geometry {
 namespace wagyu {
 
 template <typename T>
-bool build_edge_list(mapbox::geometry::line_string<T> const& path_geometry,
-                     edge_list<T>& edges,
-                     bool& is_flat) {
-    if (path_geometry.size() < 2) {
-        return false;
-    }
-
-    auto itr_next = path_geometry.begin();
-    ++itr_next;
-    auto itr = path_geometry.begin();
-    while (itr_next != path_geometry.end()) {
-        if (*itr_next == *itr) {
-            // Duplicate point advance itr_next, but do not
-            // advance itr
-            ++itr_next;
-            continue;
-        }
-
-        if (is_flat && itr_next->y != itr->y) {
-            is_flat = false;
-        }
-        edges.emplace_back(*itr, *itr_next);
-        itr = itr_next;
-        ++itr_next;
-    }
-
-    if (edges.size() < 2) {
-        return false;
-    }
-
-    return true;
-}
-
-template <typename T>
 bool point_2_is_between_point_1_and_point_3(mapbox::geometry::point<T> const& pt1, 
                                             mapbox::geometry::point<T> const& pt2, 
                                             mapbox::geometry::point<T> const& pt3) {
