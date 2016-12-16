@@ -62,7 +62,6 @@ bool point_2_is_between_point_1_and_point_3(mapbox::geometry::point<T> const& pt
 
 template <typename T>
 bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry, edge_list<T>& edges) {
-    using value_type = T;
 
     if (path_geometry.size() < 3) {
         return false;
@@ -73,8 +72,8 @@ bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry, edge
 
     auto itr_rev = path_geometry.rbegin();
     auto itr = path_geometry.begin();
-    mapbox::geometry::point<value_type> pt1 = *itr_rev;
-    mapbox::geometry::point<value_type> pt2 = *itr;
+    mapbox::geometry::point<T> pt1 = *itr_rev;
+    mapbox::geometry::point<T> pt2 = *itr;
 
     // Find next non repeated point going backwards from
     // end for pt1
@@ -86,10 +85,10 @@ bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry, edge
         pt1 = *itr_rev;
     }
     ++itr;
-    mapbox::geometry::point<value_type> pt3 = *itr;
+    mapbox::geometry::point<T> pt3 = *itr;
     auto itr_last = itr_rev.base();
-    mapbox::geometry::point<value_type> front_pt;
-    mapbox::geometry::point<value_type> back_pt;
+    mapbox::geometry::point<T> front_pt;
+    mapbox::geometry::point<T> back_pt;
     while (true) {
         if (pt3 == pt2) {
             // Duplicate point advance itr, but do not
