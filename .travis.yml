@@ -4,31 +4,55 @@ sudo: false
 matrix:
   include:
     - os: linux
+      env: CXX=g++-4.9 BUILDTYPE=Release
+      addons:
+        apt:
+          sources: [ 'ubuntu-toolchain-r-test' ]
+          packages: [ 'g++-4.9' ]
+    - os: linux
       env: CXX=g++-5 BUILDTYPE=Release
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'g++-5' ]
     - os: linux
-      env: CXX=clang++ BUILDTYPE=Release MASON_CLANG=true
+      env: CXX=g++-6 BUILDTYPE=Release
+      addons:
+        apt:
+          sources: [ 'ubuntu-toolchain-r-test' ]
+          packages: [ 'g++-6' ]
+    - os: linux
+      env: CXX=clang++ BUILDTYPE=Release CXXFLAGS="-flto"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'libstdc++6','libstdc++-5-dev' ]
     - os: linux
-      env: CXX=clang++ BUILDTYPE=Debug CXXFLAGS="-fsanitize=address" MASON_CLANG=true
+      env: CXX=clang++ BUILDTYPE=Debug CXXFLAGS="-flto -fsanitize=cfi -fvisibility=hidden"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'libstdc++6','libstdc++-5-dev' ]
     - os: linux
-      env: CXX=clang++ BUILDTYPE=Debug CXXFLAGS="-fsanitize=integer" MASON_CLANG=true
+      env: CXX=clang++ BUILDTYPE=Debug CXXFLAGS="-fsanitize=address -fsanitize-address-use-after-scope -fno-omit-frame-pointer -fno-common"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'libstdc++6','libstdc++-5-dev' ]
     - os: linux
-      env: CXX=clang++ BUILDTYPE=Debug COVERAGE=true CXXFLAGS="--coverage" MASON_CLANG=true
+      env: CXX=clang++ BUILDTYPE=Debug CXXFLAGS="-fsanitize=undefined"
+      addons:
+        apt:
+          sources: [ 'ubuntu-toolchain-r-test' ]
+          packages: [ 'libstdc++6','libstdc++-5-dev' ]
+    - os: linux
+      env: CXX=clang++ BUILDTYPE=Debug CXXFLAGS="-fsanitize=integer"
+      addons:
+        apt:
+          sources: [ 'ubuntu-toolchain-r-test' ]
+          packages: [ 'libstdc++6','libstdc++-5-dev' ]
+    - os: linux
+      env: CXX=clang++ BUILDTYPE=Debug COVERAGE=true CXXFLAGS="--coverage"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
@@ -39,7 +63,14 @@ matrix:
 cache: apt
 
 before_install:
- - source ./travis_setup.sh
+ - git submodule update --init
+ - |
+   if [[ ${CXX} == "clang++" ]]; then
+    ./.mason/mason install clang++ 3.9.0
+    export PATH=$(./.mason/mason prefix clang++ 3.9.0)/bin:${PATH}
+    ./.mason/mason install binutils 2.27
+    export PATH=$(./.mason/mason prefix binutils 2.27)/bin:${PATH}
+   fi
 
 script:
  - |
