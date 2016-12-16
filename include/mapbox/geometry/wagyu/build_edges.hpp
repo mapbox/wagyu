@@ -17,12 +17,10 @@ bool point_2_is_between_point_1_and_point_3(mapbox::geometry::point<T> const& pt
                                             mapbox::geometry::point<T> const& pt2, 
                                             mapbox::geometry::point<T> const& pt3) {
     if ((pt1 == pt3) || (pt1 == pt2) || (pt3 == pt2)) {
-        throw std::runtime_error("ADD ME TEST CASE! - A");
         return false;
     } else if (pt1.x != pt3.x) {
         return (pt2.x > pt1.x) == (pt2.x < pt3.x);
     } else {
-        throw std::runtime_error("ADD ME TEST CASE! - B");
         return (pt2.y > pt1.y) == (pt2.y < pt3.y);
     }
 }

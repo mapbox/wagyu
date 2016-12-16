@@ -267,10 +267,6 @@ void insert_hot_pixels_in_path(bound<T>& bnd,
     if (end_pt == bnd.last_point) {
         return;
     }
-    if (!bnd.ring) {
-        bnd.last_point = end_pt;
-        return;
-    }
 
     T start_y = bnd.last_point.y;
     T start_x = bnd.last_point.x;

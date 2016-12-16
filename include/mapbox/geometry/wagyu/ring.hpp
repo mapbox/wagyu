@@ -329,9 +329,6 @@ template <typename T>
 double area_from_point(point_ptr<T> op, std::size_t & size) {
     point_ptr<T> startOp = op;
     size = 1;
-    if (!op) {
-        return 0.0;
-    }
     double a = 0.0;
     do {
         ++size;
