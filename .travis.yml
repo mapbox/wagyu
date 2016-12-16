@@ -4,6 +4,12 @@ sudo: false
 matrix:
   include:
     - os: linux
+      env: CXX=g++-4.9 BUILDTYPE=Release
+      addons:
+        apt:
+          sources: [ 'ubuntu-toolchain-r-test' ]
+          packages: [ 'g++-4.9' ]
+    - os: linux
       env: CXX=g++-5 BUILDTYPE=Release
       addons:
         apt:
