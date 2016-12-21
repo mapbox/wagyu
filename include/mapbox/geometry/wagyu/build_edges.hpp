@@ -48,8 +48,8 @@ bool build_edge_list(mapbox::geometry::line_string<T> const& path_geometry,
 }
 
 template <typename T>
-bool point_2_is_between_point_1_and_point_3(mapbox::geometry::point<T> const& pt1, 
-                                            mapbox::geometry::point<T> const& pt2, 
+bool point_2_is_between_point_1_and_point_3(mapbox::geometry::point<T> const& pt1,
+                                            mapbox::geometry::point<T> const& pt2,
                                             mapbox::geometry::point<T> const& pt3) {
     if ((pt1 == pt3) || (pt1 == pt2) || (pt3 == pt2)) {
         return false;
@@ -61,7 +61,27 @@ bool point_2_is_between_point_1_and_point_3(mapbox::geometry::point<T> const& pt
 }
 
 template <typename T>
-bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry, edge_list<T>& edges) {
+mapbox::geometry::linear_ring<T> remove_collinear(mapbox::geometry::linear_ring<T> path_geometry) {
+    mapbox::geometry::linear_ring<T> out;
+    size_t s = path_geometry.size();
+
+    // Starts at 1 because of test expectation that point 0 will stay in first position
+    if (s > 0) {
+        out.push_back(path_geometry[0]);
+    }
+    for (size_t i = 1; i < path_geometry.size(); i++) {
+        if (!slopes_equal(path_geometry[(i + s - 1) % s], path_geometry[i],
+                          path_geometry[(i + 1) % s])) {
+            out.push_back(path_geometry[i]);
+        }
+    }
+
+    return out;
+}
+
+template <typename T>
+bool build_edge_list(mapbox::geometry::linear_ring<T> path_geometry, edge_list<T>& edges) {
+    path_geometry = remove_collinear(path_geometry);
 
     if (path_geometry.size() < 3) {
         return false;
@@ -111,33 +131,7 @@ bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry, edge
         // Now check if slopes are equal between two segments - either
         // a spike or a collinear point - if so drop point number 2.
         if (slopes_equal(pt1, pt2, pt3)) {
-            // We need to reconsider previously added points
-            // because the point it was using was found to be collinear
-            // or a spike
-            pt2 = pt1;
-            if (!edges.empty()) {
-                edges.pop_back(); // remove previous edge (pt1)
-            }
-            if (!edges.empty()) {
-                if (back_pt == edges.back().top) {
-                    pt1 = edges.back().bot;
-                } else {
-                    pt1 = edges.back().top;
-                }
-                back_pt = pt1;
-            } else {
-                // If this occurs we must look to the back of the
-                // ring for new points.
-                do {
-                    ++itr_rev;
-                    if ((itr + 1) == itr_rev.base()) {
-                        return false;
-                    }
-                    pt1 = *itr_rev;
-                } while (pt1 == pt2);
-                itr_last = itr_rev.base();
-            }
-            continue;
+            assert("Can't happen: collinear points");
         }
 
         if (edges.empty()) {
