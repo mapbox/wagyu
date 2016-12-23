@@ -74,8 +74,7 @@ struct tag<mapbox::geometry::linear_ring<CoordinateType>> {
 };
 
 template <typename CoordinateType>
-struct point_order<mapbox::geometry::linear_ring<CoordinateType> >
-{
+struct point_order<mapbox::geometry::linear_ring<CoordinateType>> {
     static const order_selector value = counterclockwise;
 };
 

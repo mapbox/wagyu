@@ -8,19 +8,19 @@ using namespace mapbox::geometry::wagyu;
 using T = std::int64_t;
 
 TEST_CASE("no input test") {
-    
+
     mapbox::geometry::wagyu::wagyu<std::int64_t> wagyu;
 
     mapbox::geometry::multi_polygon<std::int64_t> solution;
     CHECK_FALSE(wagyu.execute(mapbox::geometry::wagyu::clip_type_union, solution,
-                          mapbox::geometry::wagyu::fill_type_positive,
-                          mapbox::geometry::wagyu::fill_type_positive));
+                              mapbox::geometry::wagyu::fill_type_positive,
+                              mapbox::geometry::wagyu::fill_type_positive));
 }
 
 TEST_CASE("simple test for winding order - positive") {
-    
-	// This ring is counter-clockwise
-	mapbox::geometry::linear_ring<std::int64_t> ring;
+
+    // This ring is counter-clockwise
+    mapbox::geometry::linear_ring<std::int64_t> ring;
     ring.push_back(mapbox::geometry::point<std::int64_t>(0, 0));
     ring.push_back(mapbox::geometry::point<std::int64_t>(1, 0));
     ring.push_back(mapbox::geometry::point<std::int64_t>(1, 1));
@@ -58,7 +58,7 @@ TEST_CASE("simple test for winding order - positive") {
 }
 
 TEST_CASE("simple test for winding order - negative") {
-	mapbox::geometry::linear_ring<std::int64_t> ring;
+    mapbox::geometry::linear_ring<std::int64_t> ring;
     ring.push_back(mapbox::geometry::point<std::int64_t>(0, 0));
     ring.push_back(mapbox::geometry::point<std::int64_t>(1, 0));
     ring.push_back(mapbox::geometry::point<std::int64_t>(1, 1));

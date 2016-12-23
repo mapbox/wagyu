@@ -2,13 +2,13 @@
 
 #include <assert.h>
 #include <cmath>
+#include <deque>
 #include <list>
 #include <map>
+#include <mapbox/geometry/wagyu/point.hpp>
 #include <set>
 #include <sstream>
 #include <vector>
-#include <deque>
-#include <mapbox/geometry/wagyu/point.hpp>
 
 #ifdef DEBUG
 #include <execinfo.h>
@@ -47,8 +47,8 @@ struct ring {
     point_ptr<T> points;
     point_ptr<T> bottom_point;
 
-    ring( ring const& ) = delete;
-    ring& operator=(ring const& ) = delete;
+    ring(ring const&) = delete;
+    ring& operator=(ring const&) = delete;
 
     ring()
         : ring_index(0),
@@ -72,7 +72,7 @@ using hot_pixel_rev_itr = typename hot_pixel_vector<T>::reverse_iterator;
 
 template <typename T>
 struct ring_manager {
-    
+
     ring_list<T> children;
     std::vector<point_ptr<T>> all_points;
     hot_pixel_vector<T> hot_pixels;
@@ -82,8 +82,8 @@ struct ring_manager {
     std::vector<point<T>> storage;
     std::size_t index;
 
-    ring_manager( ring_manager const& ) = delete;
-    ring_manager& operator=(ring_manager const& ) = delete;
+    ring_manager(ring_manager const&) = delete;
+    ring_manager& operator=(ring_manager const&) = delete;
 
     ring_manager()
         : children(),
@@ -326,7 +326,7 @@ void reverse_ring(point_ptr<T> pp) {
 }
 
 template <typename T>
-double area_from_point(point_ptr<T> op, std::size_t & size) {
+double area_from_point(point_ptr<T> op, std::size_t& size) {
     point_ptr<T> startOp = op;
     size = 1;
     double a = 0.0;

@@ -7,8 +7,8 @@
 #include <mapbox/geometry/multi_polygon.hpp>
 #include <mapbox/geometry/polygon.hpp>
 
-#include <mapbox/geometry/wagyu/build_result.hpp>
 #include <mapbox/geometry/wagyu/build_local_minima_list.hpp>
+#include <mapbox/geometry/wagyu/build_result.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
 #include <mapbox/geometry/wagyu/snap_rounding.hpp>
@@ -27,8 +27,8 @@ private:
     local_minimum_list<value_type> minima_list;
     bool reverse_output;
 
-    wagyu( wagyu const& ) = delete;
-    wagyu& operator=(wagyu const& ) = delete;
+    wagyu(wagyu const&) = delete;
+    wagyu& operator=(wagyu const&) = delete;
 
 public:
     wagyu() : minima_list(), reverse_output(false) {
@@ -112,13 +112,13 @@ public:
                  fill_type clip_fill_type) {
 
         ring_manager<T> rings;
-        
+
         build_hot_pixels(minima_list, rings);
 
         if (!execute_vatti(minima_list, rings, cliptype, subject_fill_type, clip_fill_type)) {
             return false;
         }
-        
+
         do_simple_polygons(rings);
 
         build_result(solution, rings, reverse_output);

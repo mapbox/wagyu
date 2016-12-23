@@ -86,8 +86,7 @@ void log_ring(mapbox::geometry::multi_polygon<std::int64_t> const& mp) {
     std::clog << "]" << std::endl;
 }
 
-mapbox::geometry::polygon<value_type> parse_file(const char* file_path)
-{
+mapbox::geometry::polygon<value_type> parse_file(const char* file_path) {
     // todo safety checks opening files
     FILE* file = fopen(file_path, "r");
     char read_buffer[65536];

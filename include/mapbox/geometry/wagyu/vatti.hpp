@@ -28,7 +28,7 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
     if (minima_list.empty()) {
         return false;
     }
-    
+
     active_bound_list<T> active_bounds;
     scanbeam_list<T> scanbeam;
     T scanline_y = std::numeric_limits<T>::max();
@@ -47,8 +47,8 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
 
     while (pop_from_scanbeam(scanline_y, scanbeam) || current_lm != minima_sorted.end()) {
 
-        process_intersections(scanline_y, active_bounds, cliptype,
-                              subject_fill_type, clip_fill_type, rings);
+        process_intersections(scanline_y, active_bounds, cliptype, subject_fill_type,
+                              clip_fill_type, rings);
 
         update_current_hp_itr(scanline_y, rings);
 
@@ -62,10 +62,8 @@ bool execute_vatti(local_minimum_list<T>& minima_list,
         // Next we will add local minima bounds to the active bounds list that are on the local
         // minima queue at
         // this current scanline_y
-        insert_local_minima_into_ABL(scanline_y, minima_sorted, current_lm, active_bounds,
-                                     rings, scanbeam, cliptype, subject_fill_type,
-                                     clip_fill_type);
-
+        insert_local_minima_into_ABL(scanline_y, minima_sorted, current_lm, active_bounds, rings,
+                                     scanbeam, cliptype, subject_fill_type, clip_fill_type);
     }
     // std::clog << rings.rings << std::endl;
     // std::clog << output_as_polygon(rings.all_rings[0]);

@@ -13,13 +13,11 @@
 
 static int s_int = 0;
 
-static void signal_handler(int value)
-{
+static void signal_handler(int value) {
     s_int = value;
 }
 
-static void catch_signals()
-{
+static void catch_signals() {
     struct sigaction action;
     action.sa_handler = signal_handler;
     action.sa_flags = 0;
@@ -159,7 +157,7 @@ void print_fill_type(mapbox::geometry::wagyu::fill_type ft) {
 }
 
 int main() {
-	catch_signals();
+    catch_signals();
     unsigned seed = time(0);
     std::size_t count = 0;
     srand(seed);
@@ -235,9 +233,9 @@ int main() {
                     return -1;
                 }
                 */
-				if (s_int) {
-					return 0;
-				}
+                if (s_int) {
+                    return 0;
+                }
             }
         }
     }

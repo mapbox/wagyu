@@ -75,8 +75,7 @@ bool get_edge_intersection(edge<T1> const& e1,
 }
 
 template <typename T>
-void build_intersect_list(active_bound_list<T>& active_bounds,
-                          intersect_list<T>& intersects) {
+void build_intersect_list(active_bound_list<T>& active_bounds, intersect_list<T>& intersects) {
     // bubblesort ...
     bool isModified = false;
     do {
@@ -307,7 +306,7 @@ void process_intersect_list(intersect_list<T>& intersects,
 template <typename T>
 void update_current_x(active_bound_list<T>& active_bounds, T top_y) {
     std::size_t pos = 0;
-    for (auto & bnd : active_bounds) {
+    for (auto& bnd : active_bounds) {
         bnd->pos = pos++;
         bnd->current_x = get_current_x(*bnd->current_edge, top_y);
     }
@@ -332,9 +331,8 @@ void process_intersections(T top_y,
     }
 
     // Restore order of active bounds list
-    active_bounds.sort([] (bound_ptr<T> const& b1, bound_ptr<T> const& b2) {
-        return b1->pos < b2->pos;
-    });
+    active_bounds.sort(
+        [](bound_ptr<T> const& b1, bound_ptr<T> const& b2) { return b1->pos < b2->pos; });
 
     // Sort the intersection list
     std::stable_sort(intersects.begin(), intersects.end(), intersect_list_sorter<T>());

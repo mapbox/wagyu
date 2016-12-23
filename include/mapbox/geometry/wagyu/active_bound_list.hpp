@@ -118,8 +118,7 @@ active_bound_list_itr<T> insert_bound_into_ABL(bound<T>& bnd,
 
 template <typename T>
 inline bool is_maxima(bound<T>& bnd, T y) {
-    return bnd.next_edge == bnd.edges.end() &&
-           bnd.current_edge->top.y == y;
+    return bnd.next_edge == bnd.edges.end() && bnd.current_edge->top.y == y;
 }
 
 template <typename T>
@@ -129,8 +128,7 @@ inline bool is_maxima(active_bound_list_itr<T>& bnd, T y) {
 
 template <typename T>
 inline bool is_intermediate(bound<T>& bnd, T y) {
-    return bnd.next_edge != bnd.edges.end() &&
-           bnd.current_edge->top.y == y;
+    return bnd.next_edge != bnd.edges.end() && bnd.current_edge->top.y == y;
 }
 
 template <typename T>
@@ -154,9 +152,9 @@ inline void swap_positions_in_ABL(active_bound_list_itr<T>& bnd1,
                                   active_bound_list<T>& active_bounds) {
     if (std::next(bnd2) == bnd1) {
         active_bounds.splice(bnd2, active_bounds, bnd1);
-    } else { 
+    } else {
         active_bounds.splice(bnd1, active_bounds, bnd2);
-    } 
+    }
 }
 
 template <typename T>
@@ -365,7 +363,7 @@ void insert_lm_left_and_right_bound(bound<T>& left_bound,
 
     // Both left and right bound
     auto lb_abl_itr = insert_bound_into_ABL(left_bound, active_bounds);
-    auto rb_abl_itr = insert_bound_into_ABL(right_bound, lb_abl_itr, active_bounds);
+    auto rb_abl_itr = active_bounds.insert(std::next(lb_abl_itr), &right_bound);
     set_winding_count(lb_abl_itr, active_bounds, subject_fill_type, clip_fill_type);
     (*rb_abl_itr)->winding_count = (*lb_abl_itr)->winding_count;
     (*rb_abl_itr)->winding_count2 = (*lb_abl_itr)->winding_count2;
@@ -379,16 +377,6 @@ void insert_lm_left_and_right_bound(bound<T>& left_bound,
 
     if (!current_edge_is_horizontal<T>(rb_abl_itr)) {
         scanbeam.push((*rb_abl_itr)->current_edge->top.y);
-    }
-    auto abl_itr = std::next(lb_abl_itr);
-    while (abl_itr != rb_abl_itr && abl_itr != active_bounds.end()) {
-        // We call intersect_bounds here, but we do not swap positions in the ABL
-        // this is the logic that was copied from angus, but it might be correct
-        // to swap the positions in the ABL following this or at least move
-        // lb and rb to be next to each other in the ABL.
-        intersect_bounds(rb_abl_itr, abl_itr, (*lb_abl_itr)->current_edge->bot, cliptype,
-                         subject_fill_type, clip_fill_type, rings, active_bounds);
-        ++abl_itr;
     }
 }
 

@@ -13,8 +13,8 @@ namespace geometry {
 namespace wagyu {
 
 template <typename T>
-bool point_2_is_between_point_1_and_point_3(mapbox::geometry::point<T> const& pt1, 
-                                            mapbox::geometry::point<T> const& pt2, 
+bool point_2_is_between_point_1_and_point_3(mapbox::geometry::point<T> const& pt1,
+                                            mapbox::geometry::point<T> const& pt2,
                                             mapbox::geometry::point<T> const& pt3) {
     if ((pt1 == pt3) || (pt1 == pt2) || (pt3 == pt2)) {
         return false;

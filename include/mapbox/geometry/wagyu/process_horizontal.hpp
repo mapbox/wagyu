@@ -30,17 +30,20 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
     }
 
     auto hp_itr = rings.current_hp_itr;
-    while (hp_itr != rings.hot_pixels.end() && (hp_itr->y > scanline_y || (hp_itr->y == scanline_y && hp_itr->x < (*horz_bound)->current_edge->bot.x))) {
+    while (hp_itr != rings.hot_pixels.end() &&
+           (hp_itr->y > scanline_y ||
+            (hp_itr->y == scanline_y && hp_itr->x < (*horz_bound)->current_edge->bot.x))) {
         ++hp_itr;
     }
-    
+
     auto bnd = std::next(horz_bound);
 
     while (bnd != active_bounds.end()) {
         // this code block inserts extra coords into horizontal edges (in output
         // polygons) wherever hot pixels touch these horizontal edges. This helps
         //'simplifying' polygons (ie if the Simplify property is set).
-        while (hp_itr != rings.hot_pixels.end() && hp_itr->y == scanline_y && hp_itr->x < std::llround((*bnd)->current_x) &&
+        while (hp_itr != rings.hot_pixels.end() && hp_itr->y == scanline_y &&
+               hp_itr->x < std::llround((*bnd)->current_x) &&
                hp_itr->x < (*horz_bound)->current_edge->top.x) {
             if ((*horz_bound)->ring) {
                 add_point_to_ring(*(*horz_bound), *hp_itr, rings);
@@ -62,10 +65,9 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
 
         // note: may be done multiple times
         if ((*horz_bound)->ring) {
-            add_point_to_ring(*(*horz_bound),
-                              mapbox::geometry::point<T>(std::llround((*bnd)->current_x),
-                                                         scanline_y),
-                              rings);
+            add_point_to_ring(
+                *(*horz_bound),
+                mapbox::geometry::point<T>(std::llround((*bnd)->current_x), scanline_y), rings);
         }
 
         // OK, so far we're still in range of the horizontal Edge  but make sure
@@ -85,8 +87,7 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
         }
 
         intersect_bounds(horz_bound, bnd,
-                         mapbox::geometry::point<T>(std::llround((*bnd)->current_x),
-                                                    scanline_y),
+                         mapbox::geometry::point<T>(std::llround((*bnd)->current_x), scanline_y),
                          cliptype, subject_fill_type, clip_fill_type, rings, active_bounds);
         auto next_bnd = std::next(bnd);
         swap_positions_in_ABL(horz_bound, bnd, active_bounds);
@@ -144,7 +145,9 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
         bound_max_pair = get_maxima_pair<T>(horz_bound, active_bounds);
     }
     auto hp_itr_fwd = rings.current_hp_itr;
-    while (hp_itr_fwd != rings.hot_pixels.end() && (hp_itr_fwd->y < scanline_y || (hp_itr_fwd->y == scanline_y && hp_itr_fwd->x < (*horz_bound)->current_edge->top.x))) {
+    while (hp_itr_fwd != rings.hot_pixels.end() &&
+           (hp_itr_fwd->y < scanline_y ||
+            (hp_itr_fwd->y == scanline_y && hp_itr_fwd->x < (*horz_bound)->current_edge->top.x))) {
         ++hp_itr_fwd;
     }
     auto hp_itr = hot_pixel_rev_itr<T>(hp_itr_fwd);
@@ -153,7 +156,8 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
     while (bnd != active_bounds.rend()) {
         // this code block inserts extra coords into horizontal edges (in output
         // polygons) wherever hot pixels touch these horizontal edges.
-        while (hp_itr != rings.hot_pixels.rend() && hp_itr->y == scanline_y && hp_itr->x > std::llround((*bnd)->current_x) &&
+        while (hp_itr != rings.hot_pixels.rend() && hp_itr->y == scanline_y &&
+               hp_itr->x > std::llround((*bnd)->current_x) &&
                hp_itr->x > (*horz_bound)->current_edge->top.x) {
             if ((*horz_bound)->ring) {
                 add_point_to_ring(*(*horz_bound), *hp_itr, rings);
@@ -175,10 +179,9 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
 
         // note: may be done multiple times
         if ((*horz_bound)->ring) {
-            add_point_to_ring(*(*horz_bound),
-                              mapbox::geometry::point<T>(std::llround((*bnd)->current_x),
-                                                         scanline_y),
-                              rings);
+            add_point_to_ring(
+                *(*horz_bound),
+                mapbox::geometry::point<T>(std::llround((*bnd)->current_x), scanline_y), rings);
         }
         auto bnd_forward = --(bnd.base());
 
@@ -194,8 +197,7 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
         }
 
         intersect_bounds(bnd_forward, horz_bound,
-                         mapbox::geometry::point<T>(std::llround((*bnd)->current_x),
-                                                    scanline_y),
+                         mapbox::geometry::point<T>(std::llround((*bnd)->current_x), scanline_y),
                          cliptype, subject_fill_type, clip_fill_type, rings, active_bounds);
         swap_positions_in_ABL(horz_bound, bnd_forward, active_bounds);
         // Why are we not incrementing the bnd iterator here:
@@ -206,7 +208,8 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
     } // end while (bnd != active_bounds.rend())
 
     if ((*horz_bound)->ring) {
-        while (hp_itr != rings.hot_pixels.rend() && hp_itr->y == scanline_y && hp_itr->x > (*horz_bound)->current_edge->top.x) {
+        while (hp_itr != rings.hot_pixels.rend() && hp_itr->y == scanline_y &&
+               hp_itr->x > (*horz_bound)->current_edge->top.x) {
             add_point_to_ring(*(*horz_bound), *hp_itr, rings);
             ++hp_itr;
         }

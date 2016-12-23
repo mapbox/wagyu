@@ -1,9 +1,9 @@
 #pragma once
 
-#include <stdexcept>
 #include <cassert>
 #include <cstdint>
 #include <list>
+#include <stdexcept>
 
 namespace mapbox {
 namespace geometry {
