@@ -1,11 +1,11 @@
 #include "util/boost_geometry_adapters.hpp"
+#include <chrono>
 #include <cstdio>
 #include <iostream>
-#include <sstream>
 #include <mapbox/geometry/polygon.hpp>
 #include <mapbox/geometry/wagyu/wagyu.hpp>
 #include <ostream>
-#include <chrono>
+#include <sstream>
 
 #include "clipper.hpp"
 #include "rapidjson/writer.h"
@@ -85,8 +85,7 @@ void log_ring(mapbox::geometry::multi_polygon<std::int64_t> const& mp) {
     std::clog << "]" << std::endl;
 }
 
-mapbox::geometry::polygon<value_type> parse_file(const char* file_path)
-{
+mapbox::geometry::polygon<value_type> parse_file(const char* file_path) {
     // todo safety checks opening files
     FILE* file = fopen(file_path, "r");
     char read_buffer[65536];
@@ -194,8 +193,8 @@ void parse_options(int argc, char* const argv[]) {
     }
 }
 
-inline void process_polynode_branch(ClipperLib::PolyNode* polynode, 
-                                    mapbox::geometry::multi_polygon<std::int64_t> & mp) {
+inline void process_polynode_branch(ClipperLib::PolyNode* polynode,
+                                    mapbox::geometry::multi_polygon<std::int64_t>& mp) {
     mapbox::geometry::polygon<std::int64_t> polygon;
     polygon.push_back(std::move(polynode->Contour));
     if (polygon.back().size() > 2) // Throw out invalid polygons
@@ -204,22 +203,18 @@ inline void process_polynode_branch(ClipperLib::PolyNode* polynode,
             polygon.back().push_back(polygon.back().front());
         }
         double outer_area = ClipperLib::Area(polygon.back());
-        if (outer_area > 0)
-        {   
+        if (outer_area > 0) {
             std::reverse(polygon.back().begin(), polygon.back().end());
         }
-        
+
         // children of exterior ring are always interior rings
-        for (auto * ring : polynode->Childs)
-        {
-            if (ring->Contour.size() < 3)
-            {
+        for (auto* ring : polynode->Childs) {
+            if (ring->Contour.size() < 3) {
                 continue; // Throw out invalid holes
             }
             double inner_area = ClipperLib::Area(ring->Contour);
-            
-            if (inner_area < 0)
-            {
+
+            if (inner_area < 0) {
                 std::reverse(ring->Contour.begin(), ring->Contour.end());
             }
             polygon.push_back(std::move(ring->Contour));
@@ -229,22 +224,18 @@ inline void process_polynode_branch(ClipperLib::PolyNode* polynode,
         }
         mp.push_back(std::move(polygon));
     }
-    for (auto * ring : polynode->Childs)
-    {
-        for (auto * sub_ring : ring->Childs)
-        {
+    for (auto* ring : polynode->Childs) {
+        for (auto* sub_ring : ring->Childs) {
             process_polynode_branch(sub_ring, mp);
         }
     }
 }
 
-inline ClipperLib::PolyFillType get_angus_fill_type(fill_type type)
-{
-    switch (type) 
-    {
+inline ClipperLib::PolyFillType get_angus_fill_type(fill_type type) {
+    switch (type) {
     case fill_type_even_odd:
         return ClipperLib::pftEvenOdd;
-    case fill_type_non_zero: 
+    case fill_type_non_zero:
         return ClipperLib::pftNonZero;
     case fill_type_positive:
         return ClipperLib::pftPositive;
@@ -253,13 +244,11 @@ inline ClipperLib::PolyFillType get_angus_fill_type(fill_type type)
     }
 }
 
-inline ClipperLib::ClipType get_angus_clip_type(clip_type type)
-{
-    switch (type) 
-    {
+inline ClipperLib::ClipType get_angus_clip_type(clip_type type) {
+    switch (type) {
     case clip_type_intersection:
         return ClipperLib::ctIntersection;
-    case clip_type_union: 
+    case clip_type_union:
         return ClipperLib::ctUnion;
     case clip_type_difference:
         return ClipperLib::ctDifference;
@@ -283,7 +272,7 @@ int main(int argc, char* const argv[]) {
 
     auto poly_subject = parse_file(options.subject_file);
     auto poly_clip = parse_file(options.clip_file);
-    
+
     using double_seconds = std::chrono::duration<double, std::chrono::seconds::period>;
 
     double time_wagyu;
@@ -296,7 +285,7 @@ int main(int argc, char* const argv[]) {
         clipper.add_polygon(poly_clip, polygon_type_clip);
         mapbox::geometry::multi_polygon<value_type> solution;
         clipper.execute(options.operation, solution, options.fill, fill_type_even_odd);
-        
+
         for (auto const& p : solution) {
             std::string message;
             if (!boost::geometry::is_valid(p, message)) {
@@ -304,7 +293,7 @@ int main(int argc, char* const argv[]) {
             }
         }
     }
-    
+
     {
         auto t1 = std::chrono::high_resolution_clock::now();
 
@@ -318,29 +307,28 @@ int main(int argc, char* const argv[]) {
         auto t2 = std::chrono::high_resolution_clock::now();
         time_wagyu = double_seconds(t2 - t1).count();
     }
- 
+
     ClipperLib::PolyFillType angus_fill_type = get_angus_fill_type(options.fill);
     ClipperLib::ClipType angus_clip_type = get_angus_clip_type(options.operation);
     {
         ClipperLib::Clipper clipper;
         clipper.StrictlySimple(true);
-        for (auto & r : poly_subject) {
-            //ClipperLib::CleanPolygon(r, 1.415);
+        for (auto& r : poly_subject) {
+            // ClipperLib::CleanPolygon(r, 1.415);
             clipper.AddPath(r, ClipperLib::ptSubject, true);
         }
-        for (auto & r : poly_clip) {
+        for (auto& r : poly_clip) {
             clipper.AddPath(r, ClipperLib::ptClip, true);
         }
         ClipperLib::PolyTree polygons;
         clipper.Execute(angus_clip_type, polygons, angus_fill_type, ClipperLib::pftEvenOdd);
         clipper.Clear();
         mapbox::geometry::multi_polygon<value_type> solution;
-        
-        for (auto * polynode : polygons.Childs)
-        {
-            process_polynode_branch(polynode, solution); 
+
+        for (auto* polynode : polygons.Childs) {
+            process_polynode_branch(polynode, solution);
         }
-        
+
         for (auto const& p : solution) {
             std::string message;
             if (!boost::geometry::is_valid(p, message)) {
@@ -348,28 +336,27 @@ int main(int argc, char* const argv[]) {
             }
         }
     }
-    
+
     {
         auto t1 = std::chrono::high_resolution_clock::now();
 
         for (std::size_t i = 0; i < options.iter; ++i) {
             ClipperLib::Clipper clipper;
             clipper.StrictlySimple(true);
-            for (auto & r : poly_subject) {
-                //ClipperLib::CleanPolygon(r, 1.415);
+            for (auto& r : poly_subject) {
+                // ClipperLib::CleanPolygon(r, 1.415);
                 clipper.AddPath(r, ClipperLib::ptSubject, true);
             }
-            for (auto & r : poly_clip) {
+            for (auto& r : poly_clip) {
                 clipper.AddPath(r, ClipperLib::ptClip, true);
             }
             ClipperLib::PolyTree polygons;
             clipper.Execute(angus_clip_type, polygons, angus_fill_type, ClipperLib::pftEvenOdd);
             clipper.Clear();
             mapbox::geometry::multi_polygon<value_type> solution;
-            
-            for (auto * polynode : polygons.Childs)
-            {
-                process_polynode_branch(polynode, solution); 
+
+            for (auto* polynode : polygons.Childs) {
+                process_polynode_branch(polynode, solution);
             }
         }
         auto t2 = std::chrono::high_resolution_clock::now();
