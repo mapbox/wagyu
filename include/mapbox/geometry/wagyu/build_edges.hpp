@@ -93,13 +93,13 @@ bool build_edge_list(mapbox::geometry::linear_ring<T> const& path_geometry, edge
             } else {
                 // If this occurs we must look to the back of the
                 // ring for new points.
-                do {
+                while (*itr_rev == pt2) {
                     ++itr_rev;
                     if ((itr + 1) == itr_rev.base()) {
                         return false;
                     }
-                    pt1 = *itr_rev;
-                } while (pt1 == pt2);
+                }
+                pt1 = *itr_rev;
                 itr_last = itr_rev.base();
             }
             continue;
