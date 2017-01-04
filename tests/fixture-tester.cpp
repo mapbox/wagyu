@@ -174,6 +174,85 @@ void parse_options(int argc, char* const argv[]) {
     }
 }
 
+bool lt(mapbox::geometry::point<value_type> const &a, mapbox::geometry::point<value_type> const &b) {
+    if (a.x < b.x) {
+        return true;
+    }
+    if (a.x == b.x && a.y < b.y) {
+        return true;
+    }
+    return false;
+}
+
+bool lt(mapbox::geometry::linear_ring<value_type> const &a, mapbox::geometry::linear_ring<value_type> const &b) {
+    if (a.size() < b.size()) {
+        return true;
+    }
+    if (a.size() > b.size()) {
+        return false;
+    }
+    for (size_t i = 0; i < a.size(); i++) {
+        if (lt(a[i], b[i])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+struct {
+    bool operator()(mapbox::geometry::linear_ring<value_type> const &a, mapbox::geometry::linear_ring<value_type> const &b) {
+        return lt(a, b);
+    }   
+} ringcmp;
+
+struct {
+    bool operator()(mapbox::geometry::polygon<value_type> const &a, mapbox::geometry::polygon<value_type> const &b) {
+        return lt(a[0], b[0]);
+    }   
+} outercmp;
+
+void canonicalize(mapbox::geometry::multi_polygon<value_type> &poly) {
+    // Canonicalize order of points within each ring
+
+    for (size_t i = 0; i < poly.size(); i++) {
+        for (size_t j = 0; j < poly[i].size(); j++) {
+            ssize_t first = 0;
+            ssize_t size = poly[i][j].size();
+
+            for (size_t k = 0; k < poly[i][j].size(); k++) {
+                if (lt(poly[i][j][k], poly[i][j][first])) {
+                    first = k;
+                }
+            }
+
+            mapbox::geometry::linear_ring<value_type> lr;
+            if (size > 0) {
+                for (ssize_t k = first; k < size - 1; k++) {
+                    lr.push_back(poly[i][j][k]);
+                }
+                for (ssize_t k = 0; k < first; k++) {
+                    lr.push_back(poly[i][j][k]);
+                }
+                lr.push_back(poly[i][j][first]);
+            }
+
+            poly[i][j] = lr;
+        }
+    }
+
+    // Canonicalize order of child rings within each polygon
+
+    for (size_t i = 0; i < poly.size(); i++) {
+        if (poly[i].size() > 1) {
+            std::sort(poly[i].begin() + 1, poly[i].end(), ringcmp);
+        }
+    }
+
+    // Canonicalize order of outer rings
+
+    std::sort(poly.begin(), poly.end(), outercmp);
+}
+
 int main(int argc, char* const argv[]) {
     if (argc < 3) {
         std::cout << "Error: too few parameters\n" << std::endl;
@@ -219,6 +298,30 @@ int main(int argc, char* const argv[]) {
         return -1;
     }
     */
+
+    wagyu<value_type> clipper2;
+    mapbox::geometry::multi_polygon<value_type> result;
+    for (size_t i = 0; i < solution.size(); i++) {
+        for (size_t j = 0; j < solution[i].size(); j++) {
+            clipper2.add_ring(solution[i][j]);
+        }
+    }
+    clipper2.execute(clip_type_union, result, fill_type_positive, fill_type_positive);
+    canonicalize(solution);
+    canonicalize(result);
+    if (result != solution) {
+        std::clog << std::endl;
+        std::clog << "Error: output not stable" << std::endl;
+        for (auto const& p : solution) {
+            log_ring(p);
+        }
+        std::clog << "vs" << std::endl;
+        for (auto const& p : result) {
+            log_ring(p);
+        }
+        return -1;
+    }
+
     char write_buffer[65536];
     FileWriteStream out_stream(stdout, write_buffer, sizeof(write_buffer));
     Writer<FileWriteStream> writer(out_stream);
