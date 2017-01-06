@@ -157,12 +157,8 @@ optional_linear_ring<T> quick_lr_clip(mapbox::geometry::linear_ring<T> const& ri
         if (point_inside(*itr_2, b)) {
             add_point(new_ring, *itr_2);
         } else {
-            if (point_inside(*itr_1, b)) {
-                add_intersection_point(new_ring, b, *itr_1, *itr_2);
-            }
-            if (point_inside(*itr_3, b)) {
-                add_intersection_point(new_ring, b, *itr_2, *itr_3);
-            }
+            add_intersection_point(new_ring, b, *itr_1, *itr_2);
+            add_intersection_point(new_ring, b, *itr_2, *itr_3);
         }
         ++itr_1;
         ++itr_2;
