@@ -8,7 +8,7 @@
 #include <experimental/optional>
 
 template <typename T>
-using optional_linear_ring = std::experimental::optional<geometry::linear_ring<T>>;
+using optional_linear_ring = std::experimental::optional<mapbox::geometry::linear_ring<T>>;
 
 namespace mapbox {
 namespace geometry {
@@ -16,13 +16,13 @@ namespace wagyu {
 namespace quick_clip {
 
 template <typename T>
-bool point_inside(geometry::point<T> const& pt, geometry::box<T> const& b) {
+bool point_inside(mapbox::geometry::point<T> const& pt, mapbox::geometry::box<T> const& b) {
     return (pt.x >= b.min.x && pt.x <= b.max.x &&
             pt.y >= b.min.y && pt.y <= b.max.y);
 }
 
 template <typename T>
-void add_point(geometry::linear_ring<T> & ring, geometry::point<T> const& pt) {
+void add_point(mapbox::geometry::linear_ring<T> & ring, mapbox::geometry::point<T> const& pt) {
     if (ring.empty() || ring.back() != pt) {
         ring.push_back(pt);
     }
@@ -32,9 +32,9 @@ template <typename T>
 void compute_intersection_x(T x,
                             T min_y,
                             T max_y,
-                            geometry::point<T> const& pt1,
-                            geometry::point<T> const& pt2,
-                            geometry::linear_ring<T> & new_pts) {
+                            mapbox::geometry::point<T> const& pt1,
+                            mapbox::geometry::point<T> const& pt2,
+                            mapbox::geometry::linear_ring<T> & new_pts) {
     // Since we are dealing with x constant value, this is
     // an intersection with a vertical line. Therefore, if 
     // dy == 0, this is another vertial line and therefore they
@@ -64,9 +64,9 @@ template <typename T>
 void compute_intersection_y(T y,
                             T min_x,
                             T max_x,
-                            geometry::point<T> const& pt1,
-                            geometry::point<T> const& pt2,
-                            geometry::linear_ring<T> & new_pts) {
+                            mapbox::geometry::point<T> const& pt1,
+                            mapbox::geometry::point<T> const& pt2,
+                            mapbox::geometry::linear_ring<T> & new_pts) {
     // Since we are dealing with x constant value, this is
     // an intersection with a horizontal line. Therefore, if 
     // dx == 0, this is another horizontal line and therefore they
@@ -93,16 +93,16 @@ void compute_intersection_y(T y,
 }
 
 template <typename T>
-void add_intersection_point(geometry::linear_ring<T> & ring,
-                            geometry::box<T> const& b,
-                            geometry::point<T> const& pt1,
-                            geometry::point<T> const& pt2) {
+void add_intersection_point(mapbox::geometry::linear_ring<T> & ring,
+                            mapbox::geometry::box<T> const& b,
+                            mapbox::geometry::point<T> const& pt1,
+                            mapbox::geometry::point<T> const& pt2) {
     if (pt1 == pt2) {
         return;
     }
     T dx = pt2.x - pt1.x;
     T dy = pt2.y - pt1.y;
-    geometry::linear_ring<T> new_pts;
+    mapbox::geometry::linear_ring<T> new_pts;
     if (dy > 0 || dy < 0) {
         compute_intersection_x(b.min.x, b.min.y, b.max.y, pt1, pt2, new_pts);
         compute_intersection_x(b.max.x, b.min.y, b.max.y, pt1, pt2, new_pts);
@@ -117,50 +117,50 @@ void add_intersection_point(geometry::linear_ring<T> & ring,
     if (dx > 0) {
         // dx positive means we sort min to max
         std::sort(new_pts.begin(), new_pts.end(), 
-                [](geometry::point<T> const& a, geometry::point<T> const& b) {
+                [](mapbox::geometry::point<T> const& a, mapbox::geometry::point<T> const& b) {
                     return a.x < b.x;
                 });
     } else if (dx < 0) {
         std::sort(new_pts.begin(), new_pts.end(), 
-                [](geometry::point<T> const& a, geometry::point<T> const& b) {
+                [](mapbox::geometry::point<T> const& a, mapbox::geometry::point<T> const& b) {
                     return a.x > b.x;
                 });
     } else if (dy > 0) {
         // Because dx == 0 we fall back to dy for sorting
         std::sort(new_pts.begin(), new_pts.end(), 
-                [](geometry::point<T> const& a, geometry::point<T> const& b) {
+                [](mapbox::geometry::point<T> const& a, mapbox::geometry::point<T> const& b) {
                     return a.y < b.y;
                 });
     } else {
         // Because dx == 0 we fall back to dy for sorting
         std::sort(new_pts.begin(), new_pts.end(), 
-                [](geometry::point<T> const& a, geometry::point<T> const& b) {
+                [](mapbox::geometry::point<T> const& a, mapbox::geometry::point<T> const& b) {
                     return a.y > b.y;
                 });
     }
     for (auto const& pt : new_pts) {
-        add_points(ring, pt);
+        add_point(ring, pt);
     }
 }
 
 template <typename T>
-optional_linear_ring<T> quick_lr_clip(geometry::linear_ring<T> const& ring,
-                                      geometry::box<T> const& b) {
+optional_linear_ring<T> quick_lr_clip(mapbox::geometry::linear_ring<T> const& ring,
+                                      mapbox::geometry::box<T> const& b) {
     if (ring.size() < 3) {
-        return optional_linear_ring();
+        return optional_linear_ring<T>();
     }
-    geometry::linear_ring<T> new_ring;
+    mapbox::geometry::linear_ring<T> new_ring;
     auto itr_1 = ring.end() - 1;
     auto itr_2 = ring.begin();
     auto itr_3 = std::next(itr_2);
-    while (itr2 != ring.end()) {
-        if (quick_clip::point_inside(*itr_2)) {
-            quick_clip::add_point(*itr_2);
+    while (itr_2 != ring.end()) {
+        if (point_inside(*itr_2, b)) {
+            add_point(new_ring, *itr_2);
         } else {
-            if (quick_clip::point_inside(*itr_1)) {
+            if (point_inside(*itr_1, b)) {
                 add_intersection_point(new_ring, b, *itr_1, *itr_2);
             }
-            if (quick_clip::point_inside(*itr_3)) {
+            if (point_inside(*itr_3, b)) {
                 add_intersection_point(new_ring, b, *itr_2, *itr_3);
             }
         }
@@ -175,18 +175,18 @@ optional_linear_ring<T> quick_lr_clip(geometry::linear_ring<T> const& ring,
         }
     }
     if (new_ring.size() < 3) {
-        return optional_linear_ring();
+        return optional_linear_ring<T>();
     }
-    return optional_linear_ring(std::move(new_ring));
+    return optional_linear_ring<T>(std::move(new_ring));
 }
 
 }
 
 template <typename T>
-geometry::multipolygon<T> clip(geometry::polygon<T> const& poly,
-                               geometry::box<T> const& b,
+mapbox::geometry::multi_polygon<T> clip(mapbox::geometry::polygon<T> const& poly,
+                               mapbox::geometry::box<T> const& b,
                                fill_type subject_fill_type) {
-    geometry::multipolygon<T> result;
+    mapbox::geometry::multi_polygon<T> result;
     wagyu<T> clipper;
     for (auto const& lr : poly) {
         auto new_lr = quick_clip::quick_lr_clip(lr, b);
@@ -199,10 +199,10 @@ geometry::multipolygon<T> clip(geometry::polygon<T> const& poly,
 }
 
 template <typename T>
-geometry::multipolygon<T> clip(geometry::multi_polygon<T> const& mp,
-                               geometry::box<T> const& b,
+mapbox::geometry::multi_polygon<T> clip(mapbox::geometry::multi_polygon<T> const& mp,
+                               mapbox::geometry::box<T> const& b,
                                fill_type subject_fill_type) {
-    geometry::multipolygon<T> result;
+    mapbox::geometry::multi_polygon<T> result;
     wagyu<T> clipper;
     for (auto const& poly : mp) {
         for (auto const& lr : poly) {
