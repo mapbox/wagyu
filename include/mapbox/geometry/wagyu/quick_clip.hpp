@@ -1,7 +1,8 @@
 #pragma once
 
-#include <mapbox/geometry/polygon.hpp>
 #include <mapbox/geometry/box.hpp>
+#include <mapbox/geometry/multi_polygon.hpp>
+#include <mapbox/geometry/polygon.hpp>
 #include <mapbox/geometry/wagyu/wagyu.hpp>
 
 #include <experimental/optional>
@@ -10,7 +11,7 @@ template <typename T>
 using optional_linear_ring = std::experimental::optional<geometry::linear_ring<T>>;
 
 namespace mapbox {
-namespace geoemtry {
+namespace geometry {
 namespace wagyu {
 namespace quick_clip {
 
@@ -191,6 +192,24 @@ geometry::multipolygon<T> clip(geometry::polygon<T> const& poly,
         auto new_lr = quick_clip::quick_lr_clip(lr, b);
         if (new_lr) {
             clipper.add_ring(*new_lr, polygon_type_subject);
+        }
+    }
+    clipper.execute(clip_type_union, result, subject_fill_type, fill_type_even_odd);
+    return result;
+}
+
+template <typename T>
+geometry::multipolygon<T> clip(geometry::multi_polygon<T> const& mp,
+                               geometry::box<T> const& b,
+                               fill_type subject_fill_type) {
+    geometry::multipolygon<T> result;
+    wagyu<T> clipper;
+    for (auto const& poly : mp) {
+        for (auto const& lr : poly) {
+            auto new_lr = quick_clip::quick_lr_clip(lr, b);
+            if (new_lr) {
+                clipper.add_ring(*new_lr, polygon_type_subject);
+            }
         }
     }
     clipper.execute(clip_type_union, result, subject_fill_type, fill_type_even_odd);
