@@ -14,13 +14,13 @@ $(MASON):
 	git submodule update --init
 
 mason_packages/.link/include/boost: $(MASON)
-	$(MASON) install boost 1.61.0 && $(MASON) link boost 1.61.0
+	$(MASON) install boost 1.63.0 && $(MASON) link boost 1.63.0
 
 mason_packages/.link/include/rapidjson: $(MASON)
 	$(MASON) install rapidjson 1.0.2 && $(MASON) link rapidjson 1.0.2
 
 mason_packages/.link/include/mapbox/geometry.hpp: $(MASON)
-	$(MASON) install geometry 0.7.0 && $(MASON) link geometry 0.7.0
+	$(MASON) install geometry 0.9.0 && $(MASON) link geometry 0.9.0
 
 deps: mason_packages/.link/include/rapidjson mason_packages/.link/include/mapbox/geometry.hpp mason_packages/.link/include/boost
 
