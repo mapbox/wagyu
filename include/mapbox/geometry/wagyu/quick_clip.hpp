@@ -117,25 +117,25 @@ void add_intersection_point(mapbox::geometry::linear_ring<T> & ring,
     if (dx > 0) {
         // dx positive means we sort min to max
         std::sort(new_pts.begin(), new_pts.end(), 
-                [](mapbox::geometry::point<T> const& a, mapbox::geometry::point<T> const& b) {
-                    return a.x < b.x;
+                [](mapbox::geometry::point<T> const& p1, mapbox::geometry::point<T> const& p2) {
+                    return p1.x < p2.x;
                 });
     } else if (dx < 0) {
         std::sort(new_pts.begin(), new_pts.end(), 
-                [](mapbox::geometry::point<T> const& a, mapbox::geometry::point<T> const& b) {
-                    return a.x > b.x;
+                [](mapbox::geometry::point<T> const& p1, mapbox::geometry::point<T> const& p2) {
+                    return p1.x > p2.x;
                 });
     } else if (dy > 0) {
         // Because dx == 0 we fall back to dy for sorting
         std::sort(new_pts.begin(), new_pts.end(), 
-                [](mapbox::geometry::point<T> const& a, mapbox::geometry::point<T> const& b) {
-                    return a.y < b.y;
+                [](mapbox::geometry::point<T> const& p1, mapbox::geometry::point<T> const& p2) {
+                    return p1.y < p2.y;
                 });
     } else {
         // Because dx == 0 we fall back to dy for sorting
         std::sort(new_pts.begin(), new_pts.end(), 
-                [](mapbox::geometry::point<T> const& a, mapbox::geometry::point<T> const& b) {
-                    return a.y > b.y;
+                [](mapbox::geometry::point<T> const& p1, mapbox::geometry::point<T> const& p2) {
+                    return p1.y > p2.y;
                 });
     }
     for (auto const& pt : new_pts) {
