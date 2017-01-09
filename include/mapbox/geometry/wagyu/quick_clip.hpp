@@ -34,15 +34,19 @@ void compute_intersection_x(T x,
                             mapbox::geometry::point<T> const& pt1,
                             mapbox::geometry::point<T> const& pt2,
                             mapbox::geometry::linear_ring<T>& new_pts) {
-    // Since we are dealing with x constant value, this is
-    // an intersection with a vertical line. Therefore, if
-    // dy == 0, this is another vertial line and therefore they
-    // can not intersect
-    T dy = pt2.y - pt1.y;
-    if (dy == 0) {
+    if (!((x >= pt1.x && x <= pt2.x) || (x >= pt2.x && x <= pt1.x))) {
+        // Cannot intersect unless the segment crosses the vertical line at X
         return;
     }
+    T dy = pt2.y - pt1.y;
+    // Since we are dealing with x constant value, this is
+    // an intersection with a vertical line. Therefore, if
+    // dx == 0, this is another vertical line and therefore they
+    // can not intersect
     T dx = pt2.x - pt1.x;
+    if (dx == 0) {
+        return;
+    }
     T pt_min_y = std::min(pt2.y, pt1.y);
     T pt_max_y = std::max(pt2.y, pt1.y);
     double dydx = static_cast<double>(dy) / static_cast<double>(dx);
@@ -67,15 +71,19 @@ void compute_intersection_y(T y,
                             mapbox::geometry::point<T> const& pt1,
                             mapbox::geometry::point<T> const& pt2,
                             mapbox::geometry::linear_ring<T>& new_pts) {
-    // Since we are dealing with x constant value, this is
-    // an intersection with a horizontal line. Therefore, if
-    // dx == 0, this is another horizontal line and therefore they
-    // can not intersect
-    T dx = pt2.x - pt1.x;
-    if (dx == 0) {
+    if (!((y >= pt1.y && y <= pt2.y) || (y >= pt2.y && y <= pt1.y))) {
+        // Cannot intersect unless the segment crosses the horizontal line at Y
         return;
     }
+    T dx = pt2.x - pt1.x;
+    // Since we are dealing with y constant value, this is
+    // an intersection with a horizontal line. Therefore, if
+    // dy == 0, this is another horizontal line and therefore they
+    // can not intersect
     T dy = pt2.y - pt1.y;
+    if (dy == 0) {
+        return;
+    }
     T pt_min_x = std::min(pt2.x, pt1.x);
     T pt_max_x = std::max(pt2.x, pt1.x);
     double dxdy = static_cast<double>(dx) / static_cast<double>(dy);
@@ -104,11 +112,11 @@ void add_intersection_point(mapbox::geometry::linear_ring<T>& ring,
     T dx = pt2.x - pt1.x;
     T dy = pt2.y - pt1.y;
     mapbox::geometry::linear_ring<T> new_pts;
-    if (dy > 0 || dy < 0) {
+    if (dx > 0 || dx < 0) {
         compute_intersection_x(b.min.x, b.min.y, b.max.y, pt1, pt2, new_pts);
         compute_intersection_x(b.max.x, b.min.y, b.max.y, pt1, pt2, new_pts);
     }
-    if (dx > 0 || dx < 0) {
+    if (dy > 0 || dy < 0) {
         compute_intersection_y(b.min.y, b.min.x, b.max.x, pt1, pt2, new_pts);
         compute_intersection_y(b.max.y, b.min.x, b.max.x, pt1, pt2, new_pts);
     }
