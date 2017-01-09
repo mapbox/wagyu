@@ -4,61 +4,61 @@ sudo: false
 matrix:
   include:
     - os: linux
-      env: CXX=g++-4.9 BUILDTYPE=Release
+      env: CXX=g++-4.9
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'g++-4.9' ]
     - os: linux
-      env: CXX=g++-5 BUILDTYPE=Release
+      env: CXX=g++-5
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'g++-5' ]
     - os: linux
-      env: CXX=g++-6 BUILDTYPE=Release
+      env: CXX=g++-6
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'g++-6' ]
     - os: linux
-      env: CXX=clang++ BUILDTYPE=Release CXXFLAGS="-flto"
+      env: CXX=clang++ CXXFLAGS="-flto"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'libstdc++6','libstdc++-5-dev' ]
     - os: linux
-      env: CXX=clang++ CLANG_VERSION="4.0.0" BUILDTYPE=Release CXXFLAGS="-flto"
+      env: CXX=clang++ CLANG_VERSION="4.0.0" CXXFLAGS="-flto"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'libstdc++6','libstdc++-5-dev' ]
     - os: linux
-      env: CXX=clang++ BUILDTYPE=Debug CXXFLAGS="-flto -fsanitize=cfi -fvisibility=hidden"
+      env: CXX=clang++ CXXFLAGS="-flto -fsanitize=cfi -fvisibility=hidden"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'libstdc++6','libstdc++-5-dev' ]
     - os: linux
-      env: CXX=clang++ BUILDTYPE=Debug CXXFLAGS="-fsanitize=address -fsanitize-address-use-after-scope -fno-omit-frame-pointer -fno-common"
+      env: CXX=clang++ CXXFLAGS="-fsanitize=address -fsanitize-address-use-after-scope -fno-omit-frame-pointer -fno-common"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'libstdc++6','libstdc++-5-dev' ]
     - os: linux
-      env: CXX=clang++ BUILDTYPE=Debug CXXFLAGS="-fsanitize=undefined"
+      env: CXX=clang++ CXXFLAGS="-fsanitize=undefined"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'libstdc++6','libstdc++-5-dev' ]
     - os: linux
-      env: CXX=clang++ BUILDTYPE=Debug CXXFLAGS="-fsanitize=integer"
+      env: CXX=clang++ CXXFLAGS="-fsanitize=integer"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'libstdc++6','libstdc++-5-dev' ]
     - os: linux
-      env: CXX=clang++ BUILDTYPE=Debug COVERAGE=true CXXFLAGS="--coverage"
+      env: CXX=clang++ COVERAGE=true CXXFLAGS="--coverage"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
@@ -80,12 +80,9 @@ before_install:
    fi
 
 script:
- - |
-   if [[ ${BUILDTYPE} == 'Debug' ]]; then
-     make debug
-   else
-     make test
-   fi
+ - make debug
+ - make clean
+ - make test
  - |
    if [[ ${COVERAGE} == 'true' ]]; then
      which llvm-cov
