@@ -47,7 +47,7 @@ void compute_intersection_x(T x,
     T pt_min_y = std::min(pt2.y, pt1.y);
     T pt_max_y = std::max(pt2.y, pt1.y);
     double dydx = static_cast<double>(dy) / static_cast<double>(dx);
-    T y = std::round(static_cast<double>(pt1.y) + dydx * static_cast<double>(x - pt1.x));
+    T y = static_cast<T>(std::round(static_cast<double>(pt1.y) + dydx * static_cast<double>(x - pt1.x)));
     if (y >= pt_min_y && y <= pt_max_y) {
         // There is an interception with the line during within this segment.
         // So lets add it to the new_pts
@@ -79,7 +79,7 @@ void compute_intersection_y(T y,
     T pt_min_x = std::min(pt2.x, pt1.x);
     T pt_max_x = std::max(pt2.x, pt1.x);
     double dxdy = static_cast<double>(dx) / static_cast<double>(dy);
-    T x = std::round(static_cast<double>(pt1.x) + dxdy * static_cast<double>(y - pt1.y));
+    T x = static_cast<T>(std::round(static_cast<double>(pt1.x) + dxdy * static_cast<double>(y - pt1.y)));
     if (x >= pt_min_x && x <= pt_max_x) {
         // There is an interception with the line during within this segment.
         // So lets add it to the new_pts
