@@ -80,9 +80,9 @@ before_install:
    fi
 
 script:
- - make debug
- - make clean
  - make test
+ - make clean
+ - make debug
  - |
    if [[ ${COVERAGE} == 'true' ]]; then
      which llvm-cov
