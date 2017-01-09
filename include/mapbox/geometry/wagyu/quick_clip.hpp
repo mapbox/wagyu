@@ -182,6 +182,10 @@ optional_linear_ring<T> quick_lr_clip(mapbox::geometry::linear_ring<T> const& ri
     if (new_ring.size() < 3) {
         return optional_linear_ring<T>();
     }
+    // Close the ring if the first/last point was outside
+    if (new_ring[0] != new_ring[new_ring.size() - 1]) {
+        new_ring.push_back(new_ring[0]);
+    }
     return optional_linear_ring<T>(std::move(new_ring));
 }
 }
