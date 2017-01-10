@@ -1,64 +1,93 @@
 language: generic
 sudo: false
 
+default_script: &run_script
+
+script: *run_script
+
 matrix:
   include:
     - os: linux
-      env: CXX=g++-4.9 BUILDTYPE=Release
+      env: CXX=g++-4.9
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'g++-4.9' ]
+      script: *run_script
     - os: linux
-      env: CXX=g++-5 BUILDTYPE=Release
+      env: CXX=g++-5
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'g++-5' ]
+      script: *run_script
     - os: linux
-      env: CXX=g++-6 BUILDTYPE=Release
+      env: CXX=g++-6
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'g++-6' ]
+      script: *run_script
     - os: linux
-      env: CXX=clang++ BUILDTYPE=Release CXXFLAGS="-flto"
+      env: CXX=clang++ CXXFLAGS="-flto"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'libstdc++6','libstdc++-5-dev' ]
+      script: *run_script
     - os: linux
-      env: CXX=clang++ BUILDTYPE=Debug CXXFLAGS="-flto -fsanitize=cfi -fvisibility=hidden"
+      env: CXX=clang++ CLANG_VERSION="4.0.0" CXXFLAGS="-flto"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'libstdc++6','libstdc++-5-dev' ]
+      script: *run_script
     - os: linux
-      env: CXX=clang++ BUILDTYPE=Debug CXXFLAGS="-fsanitize=address -fsanitize-address-use-after-scope -fno-omit-frame-pointer -fno-common"
+      env: CXX=clang++ CXXFLAGS="-flto -fsanitize=cfi -fvisibility=hidden"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'libstdc++6','libstdc++-5-dev' ]
+      script: *run_script
     - os: linux
-      env: CXX=clang++ BUILDTYPE=Debug CXXFLAGS="-fsanitize=undefined"
+      env: CXX=clang++ CXXFLAGS="-fsanitize=address -fsanitize-address-use-after-scope -fno-omit-frame-pointer -fno-common"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'libstdc++6','libstdc++-5-dev' ]
+      script: *run_script
     - os: linux
-      env: CXX=clang++ BUILDTYPE=Debug CXXFLAGS="-fsanitize=integer"
+      env: CXX=clang++ CXXFLAGS="-fsanitize=undefined"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'libstdc++6','libstdc++-5-dev' ]
+      script: *run_script
     - os: linux
-      env: CXX=clang++ BUILDTYPE=Debug COVERAGE=true CXXFLAGS="--coverage"
+      env: CXX=clang++ CXXFLAGS="-fsanitize=integer"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'libstdc++6','libstdc++-5-dev' ]
+      script: *run_script
     - os: osx
       osx_image: xcode7.3
+      script: *run_script
+    - os: linux
+      env: CXX=clang++ COVERAGE=true CXXFLAGS="--coverage"
+      addons:
+        apt:
+          sources: [ 'ubuntu-toolchain-r-test' ]
+          packages: [ 'libstdc++6','libstdc++-5-dev' ]
+      script:
+       - make debug
+       - |
+         if [[ ${COVERAGE} == 'true' ]]; then
+           which llvm-cov
+           curl -S -f https://codecov.io/bash -o codecov
+           chmod +x codecov
+           ./codecov -x "llvm-cov gcov" -Z
+         fi
 
 cache: apt
 
@@ -66,23 +95,9 @@ before_install:
  - git submodule update --init
  - |
    if [[ ${CXX} == "clang++" ]]; then
-    ./.mason/mason install clang++ 3.9.0
-    export PATH=$(./.mason/mason prefix clang++ 3.9.0)/bin:${PATH}
+    CLANG_VERSION="${CLANG_VERSION:-3.9.1}"
+    ./.mason/mason install clang++ ${CLANG_VERSION}
+    export PATH=$(./.mason/mason prefix clang++ ${CLANG_VERSION})/bin:${PATH}
     ./.mason/mason install binutils 2.27
     export PATH=$(./.mason/mason prefix binutils 2.27)/bin:${PATH}
-   fi
-
-script:
- - |
-   if [[ ${BUILDTYPE} == 'Debug' ]]; then
-     make debug
-   else
-     make test
-   fi
- - |
-   if [[ ${COVERAGE} == 'true' ]]; then
-     which llvm-cov
-     curl -S -f https://codecov.io/bash -o codecov
-     chmod +x codecov
-     ./codecov -x "llvm-cov gcov" -Z
    fi
