@@ -16,143 +16,6 @@ namespace wagyu {
 namespace quick_clip {
 
 template <typename T>
-bool point_inside(mapbox::geometry::point<T> const& pt, mapbox::geometry::box<T> const& b) {
-    return (pt.x >= b.min.x && pt.x <= b.max.x && pt.y >= b.min.y && pt.y <= b.max.y);
-}
-
-template <typename T>
-void add_point(mapbox::geometry::linear_ring<T>& ring, mapbox::geometry::point<T> const& pt) {
-    if (ring.empty() || ring.back() != pt) {
-        ring.push_back(pt);
-    }
-}
-
-template <typename T>
-void compute_intersection_x(T x,
-                            T min_y,
-                            T max_y,
-                            mapbox::geometry::point<T> const& pt1,
-                            mapbox::geometry::point<T> const& pt2,
-                            mapbox::geometry::linear_ring<T>& new_pts) {
-    if (!((x >= pt1.x && x <= pt2.x) || (x >= pt2.x && x <= pt1.x))) {
-        // Cannot intersect unless the segment crosses the vertical line at X
-        return;
-    }
-    T dy = pt2.y - pt1.y;
-    // Since we are dealing with x constant value, this is
-    // an intersection with a vertical line. Therefore, if
-    // dx == 0, this is another vertical line and therefore they
-    // can not intersect
-    T dx = pt2.x - pt1.x;
-    if (dx == 0) {
-        return;
-    }
-    T pt_min_y = std::min(pt2.y, pt1.y);
-    T pt_max_y = std::max(pt2.y, pt1.y);
-    double dydx = static_cast<double>(dy) / static_cast<double>(dx);
-    T y = static_cast<T>(
-        std::round(static_cast<double>(pt1.y) + dydx * static_cast<double>(x - pt1.x)));
-    if (y >= pt_min_y && y <= pt_max_y) {
-        // There is an interception with the line during within this segment.
-        // So lets add it to the new_pts
-        if (y < min_y) {
-            y = min_y;
-        } else if (y > max_y) {
-            y = max_y;
-        }
-        new_pts.emplace_back(x, y);
-    }
-}
-
-template <typename T>
-void compute_intersection_y(T y,
-                            T min_x,
-                            T max_x,
-                            mapbox::geometry::point<T> const& pt1,
-                            mapbox::geometry::point<T> const& pt2,
-                            mapbox::geometry::linear_ring<T>& new_pts) {
-    if (!((y >= pt1.y && y <= pt2.y) || (y >= pt2.y && y <= pt1.y))) {
-        // Cannot intersect unless the segment crosses the horizontal line at Y
-        return;
-    }
-    T dx = pt2.x - pt1.x;
-    // Since we are dealing with y constant value, this is
-    // an intersection with a horizontal line. Therefore, if
-    // dy == 0, this is another horizontal line and therefore they
-    // can not intersect
-    T dy = pt2.y - pt1.y;
-    if (dy == 0) {
-        return;
-    }
-    T pt_min_x = std::min(pt2.x, pt1.x);
-    T pt_max_x = std::max(pt2.x, pt1.x);
-    double dxdy = static_cast<double>(dx) / static_cast<double>(dy);
-    T x = static_cast<T>(
-        std::round(static_cast<double>(pt1.x) + dxdy * static_cast<double>(y - pt1.y)));
-    if (x >= pt_min_x && x <= pt_max_x) {
-        // There is an interception with the line during within this segment.
-        // So lets add it to the new_pts
-        if (x < min_x) {
-            x = min_x;
-        } else if (x > max_x) {
-            x = max_x;
-        }
-        new_pts.emplace_back(x, y);
-    }
-}
-
-template <typename T>
-void add_intersection_point(mapbox::geometry::linear_ring<T>& ring,
-                            mapbox::geometry::box<T> const& b,
-                            mapbox::geometry::point<T> const& pt1,
-                            mapbox::geometry::point<T> const& pt2) {
-    if (pt1 == pt2) {
-        return;
-    }
-    T dx = pt2.x - pt1.x;
-    T dy = pt2.y - pt1.y;
-    mapbox::geometry::linear_ring<T> new_pts;
-    if (dx > 0 || dx < 0) {
-        compute_intersection_x(b.min.x, b.min.y, b.max.y, pt1, pt2, new_pts);
-        compute_intersection_x(b.max.x, b.min.y, b.max.y, pt1, pt2, new_pts);
-    }
-    if (dy > 0 || dy < 0) {
-        compute_intersection_y(b.min.y, b.min.x, b.max.x, pt1, pt2, new_pts);
-        compute_intersection_y(b.max.y, b.min.x, b.max.x, pt1, pt2, new_pts);
-    }
-    if (new_pts.empty()) {
-        return;
-    }
-    if (dx > 0) {
-        // dx positive means we sort min to max
-        std::sort(new_pts.begin(), new_pts.end(),
-                  [](mapbox::geometry::point<T> const& p1, mapbox::geometry::point<T> const& p2) {
-                      return p1.x < p2.x;
-                  });
-    } else if (dx < 0) {
-        std::sort(new_pts.begin(), new_pts.end(),
-                  [](mapbox::geometry::point<T> const& p1, mapbox::geometry::point<T> const& p2) {
-                      return p1.x > p2.x;
-                  });
-    } else if (dy > 0) {
-        // Because dx == 0 we fall back to dy for sorting
-        std::sort(new_pts.begin(), new_pts.end(),
-                  [](mapbox::geometry::point<T> const& p1, mapbox::geometry::point<T> const& p2) {
-                      return p1.y < p2.y;
-                  });
-    } else {
-        // Because dx == 0 we fall back to dy for sorting
-        std::sort(new_pts.begin(), new_pts.end(),
-                  [](mapbox::geometry::point<T> const& p1, mapbox::geometry::point<T> const& p2) {
-                      return p1.y > p2.y;
-                  });
-    }
-    for (auto const& pt : new_pts) {
-        add_point(ring, pt);
-    }
-}
-
-template <typename T>
 mapbox::geometry::point<T> intersect(mapbox::geometry::point<T> a,
                                      mapbox::geometry::point<T> b,
                                      size_t edge,
@@ -173,13 +36,11 @@ mapbox::geometry::point<T> intersect(mapbox::geometry::point<T> a,
             static_cast<T>(a.x + static_cast<double>(b.x - a.x) * (box.max.y - a.y) / (b.y - a.y)),
             box.max.y);
 
-    case 3:
+    default: // case 3
         return mapbox::geometry::point<T>(
             box.min.x,
             static_cast<T>(a.y + static_cast<double>(b.y - a.y) * (box.min.x - a.x) / (b.x - a.x)));
     }
-
-    return mapbox::geometry::point<T>(0, 0); // Can't happen
 }
 
 template <typename T>
@@ -194,11 +55,9 @@ bool inside(mapbox::geometry::point<T> p, size_t edge, mapbox::geometry::box<T> 
     case 2:
         return p.y < b.max.y;
 
-    case 3:
+    default: // case 3
         return p.x > b.min.x;
     }
-
-    return false; // Can't happen
 }
 
 template <typename T>
@@ -237,43 +96,6 @@ optional_linear_ring<T> quick_lr_clip(mapbox::geometry::linear_ring<T> const& ri
         out.push_back(out[0]);
     }
     return optional_linear_ring<T>(std::move(out));
-}
-
-template <typename T>
-optional_linear_ring<T> quick_lr_clip1(mapbox::geometry::linear_ring<T> const& ring,
-                                       mapbox::geometry::box<T> const& b) {
-    if (ring.size() < 3) {
-        return optional_linear_ring<T>();
-    }
-    mapbox::geometry::linear_ring<T> new_ring;
-    auto itr_1 = ring.end() - 1;
-    auto itr_2 = ring.begin();
-    auto itr_3 = std::next(itr_2);
-    while (itr_2 != ring.end()) {
-        if (point_inside(*itr_2, b)) {
-            add_point(new_ring, *itr_2);
-        } else {
-            add_intersection_point(new_ring, b, *itr_1, *itr_2);
-            add_intersection_point(new_ring, b, *itr_2, *itr_3);
-        }
-        ++itr_1;
-        ++itr_2;
-        ++itr_3;
-        if (itr_1 == ring.end()) {
-            itr_1 = ring.begin();
-        }
-        if (itr_3 == ring.end()) {
-            itr_3 = ring.begin();
-        }
-    }
-    if (new_ring.size() < 3) {
-        return optional_linear_ring<T>();
-    }
-    // Close the ring if the first/last point was outside
-    if (new_ring[0] != new_ring[new_ring.size() - 1]) {
-        new_ring.push_back(new_ring[0]);
-    }
-    return optional_linear_ring<T>(std::move(new_ring));
 }
 }
 

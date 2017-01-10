@@ -183,8 +183,5 @@ TEST_CASE("square cut at top and bottom right") {
     lr2.push_back(mapbox::geometry::point<T>(25, 0));
     lr2.push_back(mapbox::geometry::point<T>(100, 0));
 
-    std::cerr << "want " << lr2 << "\n";
-    std::cerr << "got  " << *out << "\n";
-
     CHECK(*out == lr2);
 }
