@@ -42,7 +42,7 @@ build-fuzzer-r:
 build-fuzzer:
 	$(CXX) $(DEBUG_FLAGS) tests/fuzzer.cpp $(WARNING_FLAGS) $(CXXFLAGS) -o fuzzer
 
-quick_clip_profile:
+quick_clip_profile: tests/quick_clip_profile.cpp
 	$(CXX) $(DEBUG_FLAGS) tests/quick_clip_profile.cpp $(WARNING_FLAGS) $(CXXFLAGS) -o quick_clip_profile
 
 # angus clipper for benchmark

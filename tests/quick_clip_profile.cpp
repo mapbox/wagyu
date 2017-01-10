@@ -22,6 +22,7 @@ void check(int pass) {
         for (size_t j = 0; j < n; j++) {
             lr.push_back(mapbox::geometry::point<T>(rand() % 300, rand() % 300));
         }
+	lr.push_back(lr[0]);
 
         if (pass == 0) {
             optional_linear_ring<T> out = mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, bbox);
