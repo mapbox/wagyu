@@ -153,8 +153,95 @@ void add_intersection_point(mapbox::geometry::linear_ring<T>& ring,
 }
 
 template <typename T>
+mapbox::geometry::point<T> intersect(mapbox::geometry::point<T> a,
+                                     mapbox::geometry::point<T> b,
+                                     size_t edge,
+                                     mapbox::geometry::box<T> const& box) {
+    switch (edge) {
+    case 0:
+        return mapbox::geometry::point<T>(
+            static_cast<T>(a.x + static_cast<double>(b.x - a.x) * (box.min.y - a.y) / (b.y - a.y)),
+            box.min.y);
+
+    case 1:
+        return mapbox::geometry::point<T>(
+            box.max.x,
+            static_cast<T>(a.y + static_cast<double>(b.y - a.y) * (box.max.x - a.x) / (b.x - a.x)));
+
+    case 2:
+        return mapbox::geometry::point<T>(
+            static_cast<T>(a.x + static_cast<double>(b.x - a.x) * (box.max.y - a.y) / (b.y - a.y)),
+            box.max.y);
+
+    case 3:
+        return mapbox::geometry::point<T>(
+            box.min.x,
+            static_cast<T>(a.y + static_cast<double>(b.y - a.y) * (box.min.x - a.x) / (b.x - a.x)));
+    }
+
+    return mapbox::geometry::point<T>(0, 0); // Can't happen
+}
+
+template <typename T>
+bool inside(mapbox::geometry::point<T> p, size_t edge, mapbox::geometry::box<T> const& b) {
+    switch (edge) {
+    case 0:
+        return p.y > b.min.y;
+
+    case 1:
+        return p.x < b.max.x;
+
+    case 2:
+        return p.y < b.max.y;
+
+    case 3:
+        return p.x > b.min.x;
+    }
+
+    return false; // Can't happen
+}
+
+template <typename T>
 optional_linear_ring<T> quick_lr_clip(mapbox::geometry::linear_ring<T> const& ring,
                                       mapbox::geometry::box<T> const& b) {
+    mapbox::geometry::linear_ring<T> out = ring;
+
+    for (size_t edge = 0; edge < 4; edge++) {
+        if (out.size() > 0) {
+            mapbox::geometry::linear_ring<T> in = out;
+            mapbox::geometry::point<T> S = in[in.size() - 1];
+            out.resize(0);
+
+            for (size_t e = 0; e < in.size(); e++) {
+                mapbox::geometry::point<T> E = in[e];
+
+                if (inside(E, edge, b)) {
+                    if (!inside(S, edge, b)) {
+                        out.push_back(intersect(S, E, edge, b));
+                    }
+                    out.push_back(E);
+                } else if (inside(S, edge, b)) {
+                    out.push_back(intersect(S, E, edge, b));
+                }
+
+                S = E;
+            }
+        }
+    }
+
+    if (out.size() < 3) {
+        return optional_linear_ring<T>();
+    }
+    // Close the ring if the first/last point was outside
+    if (out[0] != out[out.size() - 1]) {
+        out.push_back(out[0]);
+    }
+    return optional_linear_ring<T>(std::move(out));
+}
+
+template <typename T>
+optional_linear_ring<T> quick_lr_clip1(mapbox::geometry::linear_ring<T> const& ring,
+                                       mapbox::geometry::box<T> const& b) {
     if (ring.size() < 3) {
         return optional_linear_ring<T>();
     }

@@ -177,11 +177,11 @@ TEST_CASE("square cut at top and bottom right") {
     optional_linear_ring<T> out = mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, bbox);
 
     mapbox::geometry::linear_ring<T> lr2;
-    lr2.push_back(mapbox::geometry::point<T>(25, 0));
     lr2.push_back(mapbox::geometry::point<T>(100, 0));
     lr2.push_back(mapbox::geometry::point<T>(100, 100));
     lr2.push_back(mapbox::geometry::point<T>(25, 100));
     lr2.push_back(mapbox::geometry::point<T>(25, 0));
+    lr2.push_back(mapbox::geometry::point<T>(100, 0));
 
     std::cerr << "want " << lr2 << "\n";
     std::cerr << "got  " << *out << "\n";
