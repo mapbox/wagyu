@@ -1,9 +1,9 @@
 #include <iostream>
+#include <mapbox/geometry/wagyu/quick_clip.hpp>
+#include <mapbox/geometry/wagyu/wagyu.hpp>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <mapbox/geometry/wagyu/wagyu.hpp>
-#include <mapbox/geometry/wagyu/quick_clip.hpp>
 
 using namespace mapbox::geometry::wagyu;
 using T = std::int64_t;
@@ -22,12 +22,14 @@ void check(int pass) {
         for (size_t j = 0; j < n; j++) {
             lr.push_back(mapbox::geometry::point<T>(rand() % 300, rand() % 300));
         }
-	lr.push_back(lr[0]);
+        lr.push_back(lr[0]);
 
         if (pass == 0) {
-            optional_linear_ring<T> out = mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, bbox);
+            optional_linear_ring<T> out =
+                mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, bbox);
         } else {
-            optional_linear_ring<T> out = mapbox::geometry::wagyu::quick_clip::quick_lr_clip1(lr, bbox);
+            optional_linear_ring<T> out =
+                mapbox::geometry::wagyu::quick_clip::quick_lr_clip1(lr, bbox);
         }
     }
 

@@ -534,7 +534,7 @@ TEST_CASE("edge adding ring - square closed - zigzag") {
 TEST_CASE("edge adding - odd shape") {
     mapbox::geometry::linear_ring<T> ring;
     ring.push_back({ 65542, 44380 }); // A
-    ring.push_back({ 65542, 45062 }); // B 
+    ring.push_back({ 65542, 45062 }); // B
     ring.push_back({ 64947, 45062 }); // C
     ring.push_back({ 64832, 44579 }); // D
     ring.push_back({ 65176, 44820 }); // E
@@ -608,15 +608,15 @@ TEST_CASE("edge adding insane set of lines") {
     ring.push_back({ 65542, 44901 });
     ring.push_back({ 65542, 45003 });
     ring.push_back({ 65542, 45062 }); // B
-    ring.push_back({ 64989, 45062 }); 
-    ring.push_back({ 64844, 45062 }); 
-    ring.push_back({ 65032, 45062 }); 
-    ring.push_back({ 65101, 45062 }); 
-    ring.push_back({ 64726, 45062 }); 
-    ring.push_back({ 64457, 45062 }); 
-    ring.push_back({ 63901, 45062 }); 
-    ring.push_back({ 63864, 45062 }); 
-    ring.push_back({ 64336, 45062 }); 
+    ring.push_back({ 64989, 45062 });
+    ring.push_back({ 64844, 45062 });
+    ring.push_back({ 65032, 45062 });
+    ring.push_back({ 65101, 45062 });
+    ring.push_back({ 64726, 45062 });
+    ring.push_back({ 64457, 45062 });
+    ring.push_back({ 63901, 45062 });
+    ring.push_back({ 63864, 45062 });
+    ring.push_back({ 64336, 45062 });
     ring.push_back({ 64947, 45062 }); // C
     ring.push_back({ 64832, 44579 }); // D
     ring.push_back({ 65176, 44820 }); // E

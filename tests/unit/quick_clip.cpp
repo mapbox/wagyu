@@ -1,15 +1,15 @@
-#include <iostream>
 #include "catch.hpp"
+#include <iostream>
 
-#include <mapbox/geometry/wagyu/wagyu.hpp>
 #include <mapbox/geometry/wagyu/quick_clip.hpp>
+#include <mapbox/geometry/wagyu/wagyu.hpp>
 
 template <class charT, class traits, typename T>
 inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
                                                      const mapbox::geometry::linear_ring<T>& ring) {
     out << "[";
     bool first = true;
-    for (auto const& pt: ring) {
+    for (auto const& pt : ring) {
         if (first) {
             out << "[";
             first = false;
