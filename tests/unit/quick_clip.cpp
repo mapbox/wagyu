@@ -285,4 +285,13 @@ TEST_CASE("sticking out and back in") {
 
     CHECK(solution[0][0] == want0);
     CHECK(solution[1][0] == want1);
+
+    mapbox::geometry::polygon<T> poly;
+    poly.push_back(lr);
+    mapbox::geometry::multi_polygon<T> poly_out;
+    poly_out = mapbox::geometry::wagyu::clip(poly, bbox, fill_type_even_odd);
+
+    CHECK(poly_out.size() == 2);
+    CHECK(poly_out[0][0] == want0);
+    CHECK(poly_out[1][0] == want1);
 }
