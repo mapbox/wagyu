@@ -37,9 +37,9 @@ TEST_CASE("square entirely within bbox") {
     lr.push_back(mapbox::geometry::point<T>(25, 75));
     lr.push_back(mapbox::geometry::point<T>(25, 25));
 
-    optional_linear_ring<T> out = mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, bbox);
+    auto out = mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, bbox);
 
-    CHECK(*out == lr);
+    CHECK(out == lr);
 }
 
 TEST_CASE("square cut at right") {
@@ -54,7 +54,7 @@ TEST_CASE("square cut at right") {
     lr.push_back(mapbox::geometry::point<T>(25, 75));
     lr.push_back(mapbox::geometry::point<T>(25, 25));
 
-    optional_linear_ring<T> out = mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, bbox);
+    auto out = mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, bbox);
 
     mapbox::geometry::linear_ring<T> want;
     want.push_back(mapbox::geometry::point<T>(25, 25));
@@ -63,7 +63,7 @@ TEST_CASE("square cut at right") {
     want.push_back(mapbox::geometry::point<T>(25, 75));
     want.push_back(mapbox::geometry::point<T>(25, 25));
 
-    CHECK(*out == want);
+    CHECK(out == want);
 }
 
 TEST_CASE("square cut at left") {
@@ -78,7 +78,7 @@ TEST_CASE("square cut at left") {
     lr.push_back(mapbox::geometry::point<T>(-25, 75));
     lr.push_back(mapbox::geometry::point<T>(-25, 25));
 
-    optional_linear_ring<T> out = mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, bbox);
+    auto out = mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, bbox);
 
     mapbox::geometry::linear_ring<T> want;
     want.push_back(mapbox::geometry::point<T>(0, 25));
@@ -87,7 +87,7 @@ TEST_CASE("square cut at left") {
     want.push_back(mapbox::geometry::point<T>(0, 75));
     want.push_back(mapbox::geometry::point<T>(0, 25));
 
-    CHECK(*out == want);
+    CHECK(out == want);
 }
 
 TEST_CASE("square cut at top") {
@@ -102,7 +102,7 @@ TEST_CASE("square cut at top") {
     lr.push_back(mapbox::geometry::point<T>(25, 175));
     lr.push_back(mapbox::geometry::point<T>(25, 25));
 
-    optional_linear_ring<T> out = mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, bbox);
+    auto out = mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, bbox);
 
     mapbox::geometry::linear_ring<T> want;
     want.push_back(mapbox::geometry::point<T>(25, 25));
@@ -111,7 +111,7 @@ TEST_CASE("square cut at top") {
     want.push_back(mapbox::geometry::point<T>(25, 100));
     want.push_back(mapbox::geometry::point<T>(25, 25));
 
-    CHECK(*out == want);
+    CHECK(out == want);
 }
 
 TEST_CASE("square cut at bottom") {
@@ -126,7 +126,7 @@ TEST_CASE("square cut at bottom") {
     lr.push_back(mapbox::geometry::point<T>(-25, 75));
     lr.push_back(mapbox::geometry::point<T>(-25, 25));
 
-    optional_linear_ring<T> out = mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, bbox);
+    auto out = mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, bbox);
 
     mapbox::geometry::linear_ring<T> want;
     want.push_back(mapbox::geometry::point<T>(0, 25));
@@ -135,7 +135,7 @@ TEST_CASE("square cut at bottom") {
     want.push_back(mapbox::geometry::point<T>(0, 75));
     want.push_back(mapbox::geometry::point<T>(0, 25));
 
-    CHECK(*out == want);
+    CHECK(out == want);
 }
 
 TEST_CASE("square cut at top right") {
@@ -150,7 +150,7 @@ TEST_CASE("square cut at top right") {
     lr.push_back(mapbox::geometry::point<T>(25, 175));
     lr.push_back(mapbox::geometry::point<T>(25, 25));
 
-    optional_linear_ring<T> out = mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, bbox);
+    auto out = mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, bbox);
 
     mapbox::geometry::linear_ring<T> want;
     want.push_back(mapbox::geometry::point<T>(25, 25));
@@ -159,7 +159,7 @@ TEST_CASE("square cut at top right") {
     want.push_back(mapbox::geometry::point<T>(25, 100));
     want.push_back(mapbox::geometry::point<T>(25, 25));
 
-    CHECK(*out == want);
+    CHECK(out == want);
 }
 
 TEST_CASE("square cut at top and bottom right") {
@@ -174,7 +174,7 @@ TEST_CASE("square cut at top and bottom right") {
     lr.push_back(mapbox::geometry::point<T>(25, 175));
     lr.push_back(mapbox::geometry::point<T>(25, -25));
 
-    optional_linear_ring<T> out = mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, bbox);
+    auto out = mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, bbox);
 
     mapbox::geometry::linear_ring<T> want;
     want.push_back(mapbox::geometry::point<T>(100, 0));
@@ -183,7 +183,7 @@ TEST_CASE("square cut at top and bottom right") {
     want.push_back(mapbox::geometry::point<T>(25, 0));
     want.push_back(mapbox::geometry::point<T>(100, 0));
 
-    CHECK(*out == want);
+    CHECK(out == want);
 }
 
 TEST_CASE("square entirely out of bounds") {
@@ -198,9 +198,9 @@ TEST_CASE("square entirely out of bounds") {
     lr.push_back(mapbox::geometry::point<T>(125, 175));
     lr.push_back(mapbox::geometry::point<T>(125, 125));
 
-    optional_linear_ring<T> out = mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, bbox);
+    auto out = mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, bbox);
 
-    CHECK(!out);
+    CHECK(out.empty());
 }
 
 TEST_CASE("square entirely enclosing bbox") {
@@ -215,7 +215,7 @@ TEST_CASE("square entirely enclosing bbox") {
     lr.push_back(mapbox::geometry::point<T>(-25, 175));
     lr.push_back(mapbox::geometry::point<T>(-25, -25));
 
-    optional_linear_ring<T> out = mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, bbox);
+    auto out = mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, bbox);
 
     mapbox::geometry::linear_ring<T> want;
     want.push_back(mapbox::geometry::point<T>(0, 0));
@@ -224,7 +224,7 @@ TEST_CASE("square entirely enclosing bbox") {
     want.push_back(mapbox::geometry::point<T>(0, 100));
     want.push_back(mapbox::geometry::point<T>(0, 0));
 
-    CHECK(*out == want);
+    CHECK(out == want);
 }
 
 TEST_CASE("sticking out and back in") {
@@ -245,7 +245,7 @@ TEST_CASE("sticking out and back in") {
     lr.push_back(mapbox::geometry::point<T>(25, 75));
     lr.push_back(mapbox::geometry::point<T>(25, 25));
 
-    optional_linear_ring<T> out = mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, bbox);
+    auto out = mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, bbox);
 
     mapbox::geometry::linear_ring<T> want;
     want.push_back(mapbox::geometry::point<T>(25, 25));
@@ -260,10 +260,10 @@ TEST_CASE("sticking out and back in") {
     want.push_back(mapbox::geometry::point<T>(25, 75));
     want.push_back(mapbox::geometry::point<T>(25, 25));
 
-    CHECK(*out == want);
+    CHECK(out == want);
 
     mapbox::geometry::wagyu::wagyu<T> clipper;
-    clipper.add_ring(*out);
+    clipper.add_ring(out);
     mapbox::geometry::multi_polygon<T> solution;
     clipper.execute(clip_type_union, solution, fill_type_even_odd, fill_type_even_odd);
 
