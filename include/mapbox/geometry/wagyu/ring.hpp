@@ -46,6 +46,7 @@ struct ring {
     ring_list<T> children;
     point_ptr<T> points;
     point_ptr<T> bottom_point;
+    bool corrected;
 
     ring(ring const&) = delete;
     ring& operator=(ring const&) = delete;
@@ -57,7 +58,8 @@ struct ring {
           parent(nullptr),
           children(),
           points(nullptr),
-          bottom_point(nullptr) {
+          bottom_point(nullptr),
+          corrected(false) {
     }
 };
 
@@ -74,7 +76,7 @@ template <typename T>
 struct ring_manager {
 
     ring_list<T> children;
-    std::vector<point_ptr<T>> all_points;
+    point_vector<T> all_points;
     hot_pixel_vector<T> hot_pixels;
     hot_pixel_itr<T> current_hp_itr;
     std::deque<point<T>> points;
@@ -144,6 +146,18 @@ point_ptr<T> create_new_point(ring_ptr<T> r,
 }
 
 template <typename T>
+void assign_as_child(ring_ptr<T> new_ring,
+                     ring_ptr<T> parent,
+                     ring_manager<T>& manager) {
+    if (parent == nullptr) {
+        manager.children.push_back(new_ring);   
+    } else {
+        parent->children.push_back(new_ring);
+    }
+    new_ring->parent = parent;
+}
+
+template <typename T>
 void ring1_child_of_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2, ring_manager<T>& manager) {
     assert(ring1 != ring2);
     if (ring1->parent == ring2) {
@@ -154,13 +168,7 @@ void ring1_child_of_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2, ring_manager<T>&
     } else {
         ring1->parent->children.remove(ring1);
     }
-    if (ring2 == nullptr) {
-        ring1->parent = nullptr;
-        manager.children.push_back(ring1);
-    } else {
-        ring1->parent = ring2;
-        ring2->children.push_back(ring1);
-    }
+    assign_as_child(ring1, ring2, manager);
 }
 
 template <typename T>
@@ -174,12 +182,7 @@ void ring1_sibling_of_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2, ring_manager<T
     } else {
         ring1->parent->children.remove(ring1);
     }
-    if (ring2->parent == nullptr) {
-        manager.children.push_back(ring1);
-    } else {
-        ring2->parent->children.push_back(ring1);
-    }
-    ring1->parent = ring2->parent;
+    assign_as_child(ring1, ring2->parent, manager);
 }
 
 template <typename T>
