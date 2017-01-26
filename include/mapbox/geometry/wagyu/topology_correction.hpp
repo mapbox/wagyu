@@ -2015,8 +2015,9 @@ void correct_repeated_points(ring_manager<T>& manager,
         }
         for (auto itr2 = std::next(itr1); itr2 != end; ++itr2) {
             if ((*itr2)->ring == nullptr) {
-                correct_self_intersection(*itr1, *itr2, manager, new_rings);
+                continue;
             }
+            correct_self_intersection(*itr1, *itr2, manager, new_rings);
         }
     }
 }
@@ -2033,16 +2034,44 @@ void find_and_correct_repeated_points(ring_ptr<T> r,
     while (itr != sorted_points.end()) {
         if (*(*prev_itr) == *(*(itr))) {
             ++count;
+            ++prev_itr;
+            ++itr;
+            if (itr != sorted_points.end()) {
+                continue;
+            } else {
+                ++prev_itr;
+            }
+        } else {
+            ++prev_itr;
+            ++itr;
         }
-        ++prev_itr;
-        ++itr;
-        if (count == 0 || itr != sorted_points.end()) {
+        if (count == 0) {
             continue;
         }
         auto first = prev_itr;
-        std::advance(first, -count);
+        std::advance(first, -(count + 1));
         correct_repeated_points(manager, new_rings, first, prev_itr);
         count = 0;
+    }
+}
+
+template <typename T>
+void reassign_children_if_necessary(ring_ptr<T> new_ring,
+                                    ring_ptr<T> sibling_ring,
+                                    ring_manager<T>& manager,
+                                    ring_vector<T>& new_rings) {
+    for (auto c_itr = sibling_ring->children.begin();
+             c_itr != sibling_ring->children.end();
+             ++c_itr) {
+        ring_ptr<T> c = *c_itr;
+        if (std::find(new_rings.begin(), new_rings.end(), c) != new_rings.end()) {
+           continue;
+        }
+        if (poly2_contains_poly1(c, new_ring)) {
+            c_itr = sibling_ring->children.erase(c_itr);
+            c->parent = nullptr;
+            assign_as_child(c, new_ring, manager);
+        }
     }
 }
 
@@ -2148,7 +2177,11 @@ void assign_new_ring_parents(ring_manager<T>& manager,
                 break;
             }
         }
-        
+
+        if (found) {
+            continue;
+        }
+
         // Next lets check the tree of the original_ring
         if (same_orientation) {
             for (auto o_child : original_ring->children) {
@@ -2161,6 +2194,7 @@ void assign_new_ring_parents(ring_manager<T>& manager,
                 // If we didn't find any parent and the same orientation
                 // then it must be a sibling of the original ring
                 assign_as_child(*r_itr, original_ring->parent, manager);
+                reassign_children_if_necessary(*r_itr, original_ring, manager, new_rings);
             }
         } else {
             if (!find_parent_in_tree(*r_itr, original_ring, manager)) {
@@ -2501,8 +2535,9 @@ void correct_chained_repeats(ring_manager<T>& manager,
         }
         for (auto itr2 = std::next(itr1); itr2 != end; ++itr2) {
             if ((*itr2)->ring == nullptr) {
-                process_single_intersection(connection_map, *itr1, *itr2, manager);
+                continue;
             }
+            process_single_intersection(connection_map, *itr1, *itr2, manager);
         }
     }
 }
@@ -2528,14 +2563,22 @@ void correct_chained_rings(ring_manager<T>& manager) {
     while (itr != manager.all_points.end()) {
         if (*(*prev_itr) == *(*(itr))) {
             ++count;
+            ++prev_itr;
+            ++itr;
+            if (itr != manager.all_points.end()) {
+                continue;
+            } else {
+                ++prev_itr;
+            }
+        } else {
+            ++prev_itr;
+            ++itr;
         }
-        ++prev_itr;
-        ++itr;
-        if (count == 0 || itr != manager.all_points.end()) {
+        if (count == 0) {
             continue;
         }
         auto first = prev_itr;
-        std::advance(first, -count);
+        std::advance(first, -(count + 1));
         correct_chained_repeats(manager, connection_map, first, prev_itr);
         count = 0;
     }

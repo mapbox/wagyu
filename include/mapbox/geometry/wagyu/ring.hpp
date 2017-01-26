@@ -106,10 +106,10 @@ void preallocate_point_memory(ring_manager<T>& rings, std::size_t size) {
 }
 
 template <typename T>
-ring_ptr<T> create_new_ring(ring_manager<T>& rings) {
-    rings.rings.emplace_back();
-    ring_ptr<T> result = &rings.rings.back();
-    result->ring_index = rings.index++;
+ring_ptr<T> create_new_ring(ring_manager<T>& manager) {
+    manager.rings.emplace_back();
+    ring_ptr<T> result = &manager.rings.back();
+    result->ring_index = manager.index++;
     return result;
 }
 
