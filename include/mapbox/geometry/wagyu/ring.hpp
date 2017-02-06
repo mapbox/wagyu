@@ -6,6 +6,7 @@
 #include <list>
 #include <map>
 #include <mapbox/geometry/wagyu/point.hpp>
+#include <mapbox/geometry/box.hpp>
 #include <set>
 #include <sstream>
 #include <vector>
@@ -29,23 +30,57 @@ namespace mapbox {
 namespace geometry {
 namespace wagyu {
 
+template <typename T>
+double area_from_point(point_ptr<T> op, std::size_t& size, mapbox::geometry::box<T>& bbox) {
+    point_ptr<T> startOp = op;
+    size = 0;
+    double a = 0.0;
+    T min_x = op->x;
+    T max_x = op->x;
+    T min_y = op->y;
+    T max_y = op->y;
+    do {
+        ++size;
+        if (op->x > max_x) {
+            max_x = op->x;
+        } else if (op->x < min_x) {
+            min_x = op->x;
+        }
+        if (op->y > max_y) {
+            max_y = op->y;
+        } else if (op->y < min_y) {
+            min_y = op->y;
+        }
+        a += static_cast<double>(op->prev->x + op->x) * static_cast<double>(op->prev->y - op->y);
+        op = op->next;
+    } while (op != startOp);
+    bbox.min.x = min_x;
+    bbox.max.x = max_x;
+    bbox.min.y = min_y;
+    bbox.max.y = max_y;
+    return a * 0.5;
+}
+
+
 // NOTE: ring and ring_ptr are forward declared in wagyu/point.hpp
 
 template <typename T>
 using ring_vector = std::vector<ring_ptr<T>>;
 
 template <typename T>
-using ring_list = std::list<ring_ptr<T>>;
-
-template <typename T>
 struct ring {
     std::size_t ring_index; // To support unset 0 is undefined and indexes offset by 1
-    std::size_t size;
-    double area;
+    
+    std::size_t size_; // number of points in the ring
+    double area_; // area of the ring
+    mapbox::geometry::box<T> bbox; // bounding box of the ring
+
     ring_ptr<T> parent;
-    ring_list<T> children;
+    ring_vector<T> children;
+    
     point_ptr<T> points;
     point_ptr<T> bottom_point;
+    bool is_hole_;
     bool corrected;
 
     ring(ring const&) = delete;
@@ -53,13 +88,60 @@ struct ring {
 
     ring()
         : ring_index(0),
-          size(0),
-          area(std::numeric_limits<double>::quiet_NaN()),
+          size_(0),
+          area_(std::numeric_limits<double>::quiet_NaN()),
+          bbox({0,0},{0,0}),
           parent(nullptr),
           children(),
           points(nullptr),
           bottom_point(nullptr),
+          is_hole_(false),
           corrected(false) {
+    }
+
+    void reset_stats() {
+        area_ = std::numeric_limits<double>::quiet_NaN();
+        is_hole_ = false;
+        bbox.min.x = 0;
+        bbox.min.y = 0;
+        bbox.max.x = 0;
+        bbox.max.y = 0;
+        size_ = 0;
+    }
+
+    void recalculate_stats() {
+        if (points != nullptr) {
+            area_ = area_from_point(points, size_, bbox);
+            is_hole_ = !(area_ > 0.0);
+        }
+    }
+
+    void set_stats(double a, std::size_t s, mapbox::geometry::box<T> const& b) {
+        bbox = b;
+        area_ = a;
+        size_ = s;
+        is_hole_ = !(area_ > 0.0);
+    }
+
+    double area() {
+        if (std::isnan(area_)) {
+            recalculate_stats();
+        }
+        return area_;
+    }
+
+    bool is_hole() {
+        if (std::isnan(area_)) {
+            recalculate_stats();
+        }
+        return is_hole_;
+    }
+
+    std::size_t size() {
+        if (std::isnan(area_)) {
+            recalculate_stats();
+        }
+        return size_;
     }
 };
 
@@ -75,7 +157,7 @@ using hot_pixel_rev_itr = typename hot_pixel_vector<T>::reverse_iterator;
 template <typename T>
 struct ring_manager {
 
-    ring_list<T> children;
+    ring_vector<T> children;
     point_vector<T> all_points;
     hot_pixel_vector<T> hot_pixels;
     hot_pixel_itr<T> current_hp_itr;
@@ -146,80 +228,146 @@ point_ptr<T> create_new_point(ring_ptr<T> r,
 }
 
 template <typename T>
+void set_to_children(ring_ptr<T> r,
+                     ring_vector<T>& children) {
+    for (auto & c : children) {
+        if (c == nullptr) {
+            c = r;
+            return;
+        }
+    }
+    children.push_back(r);
+}
+
+template <typename T>
+void remove_from_children(ring_ptr<T> r,
+                          ring_vector<T>& children) {
+    for (auto & c : children) {
+        if (c == r) {
+            c = nullptr;
+            return;
+        }
+    }
+}
+
+template <typename T>
 void assign_as_child(ring_ptr<T> new_ring,
                      ring_ptr<T> parent,
                      ring_manager<T>& manager) {
-    if (parent == nullptr) {
-        manager.children.push_back(new_ring);   
-    } else {
-        parent->children.push_back(new_ring);
+    // Assigning as a child assumes that this is
+    // a brand new ring. Therefore it does
+    // not have any existing relationships
+    if ((parent == nullptr && new_ring->is_hole()) || 
+        (parent != nullptr && new_ring->is_hole() == parent->is_hole())) {
+        throw std::runtime_error("Trying to assign a child that is the same orientation as the parent");
     }
+    auto & children = parent == nullptr ? manager.children : parent->children;
+    set_to_children(new_ring, children);
     new_ring->parent = parent;
 }
 
 template <typename T>
-void ring1_child_of_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2, ring_manager<T>& manager) {
-    assert(ring1 != ring2);
-    if (ring1->parent == ring2) {
+void reassign_as_child(ring_ptr<T> ring,
+                       ring_ptr<T> parent,
+                       ring_manager<T>& manager) {
+    if (ring->parent == parent) {
         return;
     }
-    if (ring1->parent == nullptr) {
-        manager.children.remove(ring1);
-    } else {
-        ring1->parent->children.remove(ring1);
+    // Reassigning a ring assumes it already
+    // has an existing parent
+    if ((parent == nullptr && ring->is_hole()) || 
+        (parent != nullptr && ring->is_hole() == parent->is_hole())) {
+        throw std::runtime_error("Trying to re-assign a child that is the same orientation as the parent");
     }
-    assign_as_child(ring1, ring2, manager);
+    
+    // Remove the old child relationship
+    auto & old_children = ring->parent == nullptr ? manager.children : ring->parent->children;
+    remove_from_children(ring, old_children);
+
+    // Add new child relationship
+    auto & children = parent == nullptr ? manager.children : parent->children;
+    set_to_children(ring, children);
+    ring->parent = parent;
+}
+                      
+template <typename T>
+void assign_as_sibling(ring_ptr<T> new_ring,
+                       ring_ptr<T> sibling,
+                       ring_manager<T>& manager) {
+    // Assigning as a sibling assumes that this is
+    // a brand new ring. Therefore it does
+    // not have any existing relationships
+    if (new_ring->is_hole() != sibling->is_hole()) {
+        throw std::runtime_error("Trying to assign to be a sibling that is not the same orientation as the sibling");
+    }
+    auto & children = sibling->parent == nullptr ? manager.children : sibling->parent->children;
+    set_to_children(new_ring, children);
+    new_ring->parent = sibling->parent;
+}
+                      
+template <typename T>
+void reassign_as_sibling(ring_ptr<T> ring,
+                         ring_ptr<T> sibling,
+                         ring_manager<T>& manager) {
+    if (ring->parent == sibling->parent) {
+        return;
+    }
+    // Assigning as a sibling assumes that this is
+    // a brand new ring. Therefore it does
+    // not have any existing relationships
+    if (ring->is_hole() != sibling->is_hole()) {
+        throw std::runtime_error("Trying to assign to be a sibling that is not the same orientation as the sibling");
+    }
+    // Remove the old child relationship
+    auto & old_children = ring->parent == nullptr ? manager.children : ring->parent->children;
+    remove_from_children(ring, old_children);
+    // Add new relationship
+    auto & children = sibling->parent == nullptr ? manager.children : sibling->parent->children;
+    set_to_children(ring, children);
+    ring->parent = sibling->parent;
 }
 
 template <typename T>
-void ring1_sibling_of_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2, ring_manager<T>& manager) {
+void ring1_replaces_ring2(ring_ptr<T> ring1, 
+                          ring_ptr<T> ring2, 
+                          ring_manager<T>& manager) {
     assert(ring1 != ring2);
-    if (ring1->parent == ring2->parent) {
-        return;
-    }
-    if (ring1->parent == nullptr) {
-        manager.children.remove(ring1);
-    } else {
-        ring1->parent->children.remove(ring1);
-    }
-    assign_as_child(ring1, ring2->parent, manager);
-}
-
-template <typename T>
-void ring1_replaces_ring2(ring_ptr<T> ring1, ring_ptr<T> ring2, ring_manager<T>& manager) {
-    assert(ring1 != ring2);
-    if (ring2->parent == nullptr) {
-        manager.children.remove(ring2);
-    } else {
-        ring2->parent->children.remove(ring2);
-    }
-    for (auto& c : ring2->children) {
+    auto & ring1_children = ring1 == nullptr ? manager.children : ring1->children;
+    for (auto & c : ring2->children) {
+        if (c == nullptr) {
+            continue;
+        }
         c->parent = ring1;
+        set_to_children(c, ring1_children);
+        c = nullptr;
     }
-    if (ring1 == nullptr) {
-        manager.children.splice(manager.children.end(), ring2->children);
-    } else {
-        ring1->children.splice(ring1->children.end(), ring2->children);
-    }
-    ring2->parent = nullptr;
+    // Remove the old child relationship
+    auto & old_children = ring2->parent == nullptr ? manager.children : ring2->parent->children;
+    remove_from_children(ring2, old_children);
+    ring2->points = nullptr;
+    ring2->reset_stats();
 }
 
 template <typename T>
-void remove_ring(ring_ptr<T> r, ring_manager<T>& manager) {
-    if (r->parent == nullptr) {
-        manager.children.remove(r);
-        for (auto& c : r->children) {
-            c->parent = nullptr;
+void remove_ring(ring_ptr<T> r,
+                 ring_manager<T>& manager,
+                 bool remove_from_parent = true) {
+    // Removes a ring and any children that might be
+    // under that ring.
+    for (auto & c : r->children) {
+        if (c == nullptr) {
+            continue;
         }
-        manager.children.splice(manager.children.end(), r->children);
-    } else {
-        r->parent->children.remove(r);
-        for (auto& c : r->children) {
-            c->parent = r->parent;
-        }
-        r->parent->children.splice(r->parent->children.end(), r->children);
-        r->parent = nullptr;
+        remove_ring(c, manager, false);
+        c = nullptr;
     }
+    if (remove_from_parent) {
+        // Remove the old child relationship
+        auto & old_children = r->parent == nullptr ? manager.children : r->parent->children;
+        remove_from_children(r, old_children);
+    }
+    r->points = nullptr;
+    r->reset_stats();
 }
 
 template <typename T>
@@ -237,6 +385,10 @@ inline std::size_t ring_depth(ring_ptr<T> r) {
 
 template <typename T>
 inline bool ring_is_hole(ring_ptr<T> r) {
+    // This is different then the "normal" way of determing if
+    // a ring is a hole or not because it uses the depth of the
+    // the ring to determine if it is a hole or not. This is only done
+    // intially when rings are output from Vatti.
     return ring_depth(r) & 1;
 }
 
@@ -264,17 +416,6 @@ template <typename T>
 void init(const_point_ptr<T>& node) {
     set_next(node, node);
     set_prev(node, node);
-}
-
-template <typename T>
-std::size_t point_count(const const_point_ptr<T>& orig_node) {
-    std::size_t size = 0;
-    point_ptr<T> n = orig_node;
-    do {
-        n = get_next(n);
-        ++size;
-    } while (n != orig_node);
-    return size;
 }
 
 template <typename T>
@@ -328,33 +469,12 @@ void reverse_ring(point_ptr<T> pp) {
     } while (pp1 != pp);
 }
 
-template <typename T>
-double area_from_point(point_ptr<T> op, std::size_t& size) {
-    point_ptr<T> startOp = op;
-    size = 1;
-    double a = 0.0;
-    do {
-        ++size;
-        a += static_cast<double>(op->prev->x + op->x) * static_cast<double>(op->prev->y - op->y);
-        op = op->next;
-    } while (op != startOp);
-    return a * 0.5;
-}
-
-template <typename T>
-double area(ring_ptr<T> r) {
-    assert(r != nullptr);
-    if (std::isnan(r->area)) {
-        r->area = area_from_point(r->points, r->size);
-    }
-    return r->area;
-}
 
 #ifdef DEBUG
 
 template <class charT, class traits, typename T>
 inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
-                                                     const ring<T>& r) {
+                                                     ring<T>& r) {
     out << "  ring_index: " << r.ring_index << std::endl;
     if (!r.parent) {
         // out << "  parent_ring ptr: nullptr" << std::endl;
@@ -371,7 +491,7 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
     }
     auto pt_itr = r.points;
     if (pt_itr) {
-        out << "  area: " << r.area << std::endl;
+        out << "  area: " << r.area() << std::endl;
         out << "  points:" << std::endl;
         out << "      [[[" << pt_itr->x << "," << pt_itr->y << "],";
         pt_itr = pt_itr->next;
@@ -423,22 +543,10 @@ std::string output_as_polygon(ring_ptr<T> r) {
 
 template <class charT, class traits, typename T>
 inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
-                                                     const ring_list<T>& rings) {
-    out << "START RING LIST" << std::endl;
-    for (auto& r : rings) {
-        out << " ring: " << r->ring_index << " - " << r << std::endl;
-        out << *r;
-    }
-    out << "END RING LIST" << std::endl;
-    return out;
-}
-
-template <class charT, class traits, typename T>
-inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
                                                      const ring_vector<T>& rings) {
     out << "START RING VECTOR" << std::endl;
     for (auto& r : rings) {
-        if (!r->points) {
+        if (r == nullptr || !r->points) {
             continue;
         }
         out << " ring: " << r->ring_index << " - " << r << std::endl;

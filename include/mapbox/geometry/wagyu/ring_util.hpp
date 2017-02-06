@@ -476,7 +476,8 @@ bool first_is_bottom_point(const_point_ptr<T> btmPt1, const_point_ptr<T> btmPt2)
     if (values_are_equal(std::max(dx1p, dx1n), std::max(dx2p, dx2n)) &&
         values_are_equal(std::min(dx1p, dx1n), std::min(dx2p, dx2n))) {
         std::size_t s = 0;
-        return area_from_point(btmPt1, s) > 0.0; // if otherwise identical use orientation
+        mapbox::geometry::box<T> bbox({0,0},{0,0});
+        return area_from_point(btmPt1, s, bbox) > 0.0; // if otherwise identical use orientation
     } else {
         return (greater_than_or_equal(dx1p, dx2p) && greater_than_or_equal(dx1p, dx2n)) ||
                (greater_than_or_equal(dx1n, dx2p) && greater_than_or_equal(dx1n, dx2n));
@@ -834,10 +835,10 @@ point_in_polygon_result point_in_polygon(mapbox::geometry::point<double> const& 
 template <typename T>
 point_in_polygon_result inside_or_outside_special(point_ptr<T> first_pt, point_ptr<T> other_poly) {
 
-    if (value_is_zero(area(first_pt->ring))) {
+    if (value_is_zero(first_pt->ring->area())) {
         return point_inside_polygon;
     }
-    if (value_is_zero(area(other_poly->ring))) {
+    if (value_is_zero(other_poly->ring->area())) {
         return point_outside_polygon;
     }
     point_ptr<T> pt = first_pt;
@@ -871,7 +872,28 @@ point_in_polygon_result inside_or_outside_special(point_ptr<T> first_pt, point_p
 }
 
 template <typename T>
+bool box2_contains_box1(mapbox::geometry::box<T> const& box1,
+                        mapbox::geometry::box<T> const& box2) {
+    return (box2.max.x >= box1.max.x && 
+            box2.max.y >= box1.max.y &&
+            box2.min.x <= box1.min.x &&
+            box2.min.y <= box1.min.y);
+}
+
+template <typename T>
 bool poly2_contains_poly1(ring_ptr<T> ring1, ring_ptr<T> ring2) {
+    if (ring1 == nullptr) {
+        throw std::runtime_error("This is bad.");
+    }
+    if (ring2 == nullptr) {
+        throw std::runtime_error("This is bad2.");
+    }
+    if (!box2_contains_box1(ring1->bbox, ring2->bbox)) {
+        return false;
+    }
+    if (std::fabs(ring2->area()) < std::fabs(ring1->area())) {
+        return false;
+    }
     point_ptr<T> outpt1 = ring1->points->next;
     point_ptr<T> outpt2 = ring2->points->next;
     point_ptr<T> op = outpt1;
