@@ -1153,90 +1153,11 @@ void correct_tree(ring_manager<T>& manager) {
 }
 
 template <typename T>
-void remove_duplicates(point_ptr<T> pt_a,
-                       point_ptr<T> pt_b) {
-    // When removing a point we should always 
-    // remove pt_b because of the position
-    // of the loops
-    if (pt_a->next == pt_b) {
-        pt_a->next = pt_b->next;
-        pt_a->next->prev = pt_a;
-        if (pt_a->ring->points == pt_b) {
-            pt_a->ring->points = pt_a;
-        }
-        pt_b->ring = nullptr;
-        pt_b->next = nullptr;
-        pt_b->prev = nullptr;
-    } else if (pt_a->prev == pt_b) {
-        pt_a->prev = pt_b->prev;
-        pt_a->prev->next = pt_a;
-        if (pt_a->ring->points == pt_b) {
-            pt_a->ring->points = pt_a;
-        }
-        pt_b->ring = nullptr;
-        pt_b->next = nullptr;
-        pt_b->prev = nullptr;
-    }
-}
-
-template <typename T>
-void correct_duplicate_points(point_vector_itr<T> const& begin,
-                              point_vector_itr<T> const& end) {
-    for (auto itr1 = begin; itr1 != end; ++itr1) {
-        if ((*itr1)->ring == nullptr) {
-            continue;
-        }
-        for (auto itr2 = std::next(itr1); itr2 != end; ++itr2) {
-            if ((*itr2)->ring != (*itr1)->ring) {
-                continue;
-            }
-            remove_duplicates(*itr1, *itr2);
-        }
-    }
-}
-
-template <typename T>
-void correct_duplicate_points_in_rings(ring_manager<T>& manager) {
-
-    if (manager.all_points.size() < 2) {
-        return;
-    }
-    std::size_t count = 0;
-    auto prev_itr = manager.all_points.begin();
-    auto itr = std::next(prev_itr);
-    while (itr != manager.all_points.end()) {
-        if (*(*prev_itr) == *(*(itr))) {
-            ++count;
-            ++prev_itr;
-            ++itr;
-            if (itr != manager.all_points.end()) {
-                continue;
-            } else {
-                ++prev_itr;
-            }
-        } else {
-            ++prev_itr;
-            ++itr;
-        }
-        if (count == 0) {
-            continue;
-        }
-        auto first = prev_itr;
-        std::advance(first, -(count + 1));
-        correct_duplicate_points<T>(first, prev_itr);
-        count = 0;
-    }
-}
-
-template <typename T>
 void correct_topology(ring_manager<T>& manager) {
  
     // Sort all the points, this will be used for the locating of chained rings
     // and the collinear edges and only needs to be done once.
     std::stable_sort(manager.all_points.begin(), manager.all_points.end(), point_ptr_cmp<T>());
-
-    // Remove duplicate from rings
-    correct_duplicate_points_in_rings(manager);
 
     // Initially the orientations of the rings
     // could be incorrect, we need to adjust them
