@@ -909,20 +909,6 @@ bool poly2_contains_poly1(ring_ptr<T> ring1, ring_ptr<T> ring2) {
     return res == point_inside_polygon;
 }
 
-template <typename T>
-void dispose_out_points(point_ptr<T>& pp) {
-    if (pp == nullptr) {
-        return;
-    }
-    pp->prev->next = nullptr;
-    while (pp) {
-        point_ptr<T> tmpPp = pp;
-        pp = pp->next;
-        tmpPp->next = tmpPp;
-        tmpPp->prev = tmpPp;
-        tmpPp->ring = nullptr;
-    }
-}
 }
 }
 }

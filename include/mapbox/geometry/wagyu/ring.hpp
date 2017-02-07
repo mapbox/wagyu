@@ -349,8 +349,59 @@ void ring1_replaces_ring2(ring_ptr<T> ring1,
 }
 
 template <typename T>
+void remove_points(point_ptr<T> pt) {
+    if (pt != nullptr) {
+        pt->prev->next = nullptr;
+        while (pt != nullptr) {
+            point_ptr<T> tmp = pt;
+            pt = pt->next;
+            tmp->next = nullptr;
+            tmp->prev = nullptr;
+            tmp->ring = nullptr;
+        }
+    }
+}
+
+template <typename T>
+void remove_ring_and_points(ring_ptr<T> r,
+                            ring_manager<T> & manager,
+                            bool remove_children = true,
+                            bool remove_from_parent = true) {
+    // Removes a ring and any children that might be
+    // under that ring.
+    for (auto & c : r->children) {
+        if (c == nullptr) {
+            continue;
+        }
+        if (remove_children) {
+            remove_ring_and_points(c, manager, true, false);
+        }
+        c = nullptr;
+    }
+    if (remove_from_parent) {
+        // Remove the old child relationship
+        auto & old_children = r->parent == nullptr ? manager.children : r->parent->children;
+        remove_from_children(r, old_children);
+    }
+    point_ptr<T> pt = r->points;
+    if (pt != nullptr) {
+        pt->prev->next = nullptr;
+        while (pt != nullptr) {
+            point_ptr<T> tmp = pt;
+            pt = pt->next;
+            tmp->next = nullptr;
+            tmp->prev = nullptr;
+            tmp->ring = nullptr;
+        }
+    }
+    r->points = nullptr;
+    r->reset_stats();
+}
+
+template <typename T>
 void remove_ring(ring_ptr<T> r,
                  ring_manager<T>& manager,
+                 bool remove_children = true,
                  bool remove_from_parent = true) {
     // Removes a ring and any children that might be
     // under that ring.
@@ -358,7 +409,9 @@ void remove_ring(ring_ptr<T> r,
         if (c == nullptr) {
             continue;
         }
-        remove_ring(c, manager, false);
+        if (remove_children) {
+            remove_ring(c, manager, true, false);
+        }
         c = nullptr;
     }
     if (remove_from_parent) {
@@ -522,6 +575,9 @@ std::string output_as_polygon(ring_ptr<T> r) {
         }
         out << "[" << pt_itr->x << "," << pt_itr->y << "]]";
         for (auto const& c : r->children) {
+            if (c == nullptr) {
+                continue;
+            }
             pt_itr = c->points;
             if (pt_itr) {
                 out << ",[[" << pt_itr->x << "," << pt_itr->y << "],";
@@ -543,7 +599,7 @@ std::string output_as_polygon(ring_ptr<T> r) {
 
 template <class charT, class traits, typename T>
 inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
-                                                     const ring_vector<T>& rings) {
+                                                     ring_vector<T>& rings) {
     out << "START RING VECTOR" << std::endl;
     for (auto& r : rings) {
         if (r == nullptr || !r->points) {
@@ -558,7 +614,7 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
 
 template <class charT, class traits, typename T>
 inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
-                                                     const std::deque<ring<T>>& rings) {
+                                                     std::deque<ring<T>>& rings) {
     out << "START RING VECTOR" << std::endl;
     for (auto& r : rings) {
         if (!r.points) {
@@ -573,7 +629,7 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
 
 template <class charT, class traits, typename T>
 inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, traits>& out,
-                                                     const hot_pixel_vector<T>& hp_vec) {
+                                                     hot_pixel_vector<T>& hp_vec) {
     out << "Hot Pixels: " << std::endl;
     for (auto& hp : hp_vec) {
         out << hp << std::endl;
