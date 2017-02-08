@@ -1136,7 +1136,7 @@ collinear_path<T> find_start_and_end_of_collinear_edges(point_ptr<T> pt_a,
         if (!first && (back == pt_b || forward == pt_a)) {
             break;
         }
-        if (back == forward) {
+        if (back == forward || (!first && (back == end_b || forward == start_a))) {
             back = back->prev;
             forward = forward->next;
             break;
@@ -1492,7 +1492,7 @@ void correct_topology(ring_manager<T>& manager) {
     // Initially the orientations of the rings
     // could be incorrect, we need to adjust them
     correct_orientations(manager);
- 
+    
     // We should only have to fix collinear edges once.
     // During this we also correct self intersections
     correct_collinear_edges(manager);
