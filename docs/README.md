@@ -11,6 +11,7 @@ shares some of the same code, however, some of the algorithm has been changed. B
 ### Documentation Map
 
 * Wagyu Algorithm Documentation
+    * [Algorithm Overview](overview.md)
     * [Vatti Algorithm](vatti.md)
         * [Vatti Intersections](vatti_intersections.md)
         * [Snap Rounding](snap_rounding.md)
