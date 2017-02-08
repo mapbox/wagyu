@@ -561,6 +561,23 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
 }
 
 template <typename T>
+std::string debug_ring_addresses(ring_ptr<T> r) {
+    std::ostringstream out;
+    out << "Ring: " << r->ring_index << std::endl;
+    if (r->points == nullptr) {
+        out << "   Ring has no points" << std::endl;
+        return out.str();
+    }
+    auto pt_itr = r->points;
+    do {
+        out << "    [" << pt_itr->x << "," << pt_itr->y << "] - " << pt_itr << std::endl;
+        pt_itr = pt_itr->next;
+    } while (pt_itr != r->points);
+    return out.str();
+}
+
+
+template <typename T>
 std::string output_as_polygon(ring_ptr<T> r) {
     std::ostringstream out;
 

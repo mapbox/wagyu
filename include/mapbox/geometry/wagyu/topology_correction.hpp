@@ -252,12 +252,12 @@ point_vector<T> sort_ring_points(ring_ptr<T> r) {
 }
 
 template <typename T>
-void correct_self_intersection(point_ptr<T> pt1,
-                               point_ptr<T> pt2,
-                               ring_manager<T>& manager,
-                               ring_vector<T>& new_rings) {
+ring_ptr<T> correct_self_intersection(point_ptr<T> pt1,
+                                      point_ptr<T> pt2,
+                                      ring_manager<T>& manager,
+                                      bool spike_removal) {
     if (pt1->ring != pt2->ring) {
-        return;
+        return static_cast<ring_ptr<T>>(nullptr);
     }
 
     ring_ptr<T> ring = pt1->ring;
@@ -270,28 +270,28 @@ void correct_self_intersection(point_ptr<T> pt1,
     pt2->prev = pt3;
     pt3->next = pt2;
     
-    remove_spikes(pt1);
-    remove_spikes(pt2);
+    if (spike_removal) {
+        remove_spikes(pt1);
+        remove_spikes(pt2);
+    }
 
     if (pt1 == nullptr && pt2 == nullptr) {
         // Self destruction!
         // I am not positive that it could ever reach this point -- but leaving
         // the logic in here for now.
         remove_ring(ring, manager);
-        return;
+        return static_cast<ring_ptr<T>>(nullptr);
     } else if (pt1 == nullptr) {
         ring->points = pt2;
         ring->reset_stats();
-        return;
+        return static_cast<ring_ptr<T>>(nullptr);
     } else if (pt2 == nullptr) {
         ring->points = pt1;
         ring->reset_stats();
-        return;
+        return static_cast<ring_ptr<T>>(nullptr);
     }
 
     ring_ptr<T> new_ring = create_new_ring(manager);
-    new_rings.push_back(new_ring);
-    new_ring->corrected = true;
     std::size_t size_1 = 0;
     std::size_t size_2 = 0;
     mapbox::geometry::box<T> box1({0,0},{0,0});
@@ -310,8 +310,8 @@ void correct_self_intersection(point_ptr<T> pt1,
         new_ring->points = pt1;
         new_ring->set_stats(area_1, size_1, box1);
     }
-
     update_points_ring(new_ring);
+    return new_ring;
 }
 
 template <typename T>
@@ -327,7 +327,10 @@ void correct_repeated_points(ring_manager<T>& manager,
             if ((*itr2)->ring == nullptr) {
                 continue;
             }
-            correct_self_intersection(*itr1, *itr2, manager, new_rings);
+            ring_ptr<T> new_ring = correct_self_intersection(*itr1, *itr2, manager, true);
+            if (new_ring != nullptr) {
+                new_rings.push_back(new_ring);
+            }
         }
     }
 }
@@ -534,7 +537,9 @@ void assign_new_ring_parents(ring_manager<T>& manager,
 }
 
 template <typename T>
-bool correct_ring_self_intersections(ring_manager<T>& manager, ring_ptr<T> r) {
+bool correct_ring_self_intersections(ring_manager<T>& manager, 
+                                     ring_ptr<T> r,
+                                     bool correct_tree) {
 
     if (r->corrected || !r->points) {
         return false;
@@ -543,8 +548,10 @@ bool correct_ring_self_intersections(ring_manager<T>& manager, ring_ptr<T> r) {
     ring_vector<T> new_rings;
 
     find_and_correct_repeated_points(r, manager, new_rings);
-
-    assign_new_ring_parents(manager, r, new_rings);
+    
+    if (correct_tree) {
+        assign_new_ring_parents(manager, r, new_rings);
+    }
     
     r->corrected = true;
     return true;
@@ -1023,25 +1030,36 @@ collinear_result<T> fix_collinear_path(collinear_path<T> & path) {
         point_ptr<T> prev_1 = path.start_1->prev;
         point_ptr<T> prev_2 = path.start_2->prev;
         point_ptr<T> itr = path.start_1;
-        while (itr != path.end_1) {
+        do {
             itr->prev->next = nullptr;
             itr->prev = nullptr;
             itr->ring = nullptr;
             itr = itr->next;
-        }
+        } while (itr != path.end_1 && itr != nullptr);
         itr = path.start_2;
-        while (itr != path.end_2) {
+        do {
             itr->prev->next = nullptr;
             itr->prev = nullptr;
             itr->ring = nullptr;
             itr = itr->next;
+        } while (itr != path.end_2 && itr != nullptr);
+        if (path.start_1 == path.end_1 && path.start_2 == path.end_2) {
+            return { nullptr, nullptr };
+        } else if (path.start_1 == path.end_1) {
+            prev_2->next = path.end_2;
+            path.end_2->prev = prev_2;
+            return { path.end_2, nullptr };
+        } else if (path.start_2 == path.end_2) {
+            prev_1->next = path.end_1;
+            path.end_1->prev = prev_1;
+            return { path.end_1, nullptr };
+        } else {
+            prev_1->next = path.end_2;
+            path.end_2->prev = prev_1;
+            prev_2->next = path.end_1;
+            path.end_1->prev = prev_2;
+            return { path.end_1, path.end_2 };
         }
-
-        prev_1->next = path.end_2;
-        path.end_2->prev = prev_1;
-        prev_2->next = path.end_1;
-        path.end_1->prev = prev_2;
-        return { path.end_1, path.end_2 };
     }
 }
 
@@ -1049,6 +1067,7 @@ template <typename T>
 collinear_path<T> find_start_and_end_of_collinear_edges(point_ptr<T> pt_a,
                                                         point_ptr<T> pt_b) {
     // Search backward on A, forwards on B first
+    bool same_ring = pt_a->ring == pt_b->ring;
     point_ptr<T> back = pt_a;
     point_ptr<T> forward = pt_b;
     bool first = true;
@@ -1083,7 +1102,15 @@ collinear_path<T> find_start_and_end_of_collinear_edges(point_ptr<T> pt_a,
         first = false;
     } while (*back == *forward);
     point_ptr<T> start_a = back->next;
+    // If there are repeated points at the diverge we want to select
+    // only the first of those repeated points.
+    while (!same_ring && *start_a == *start_a->next && start_a != pt_a) {
+        start_a = start_a->next;
+    }
     point_ptr<T> end_b = forward->prev;
+    while (!same_ring && *end_b == *end_b->prev && end_b != pt_b) {
+        end_b = end_b->prev;
+    }
     // Search backward on B, forwards on A next
     back = pt_b;
     forward = pt_a;
@@ -1119,7 +1146,13 @@ collinear_path<T> find_start_and_end_of_collinear_edges(point_ptr<T> pt_a,
         first = false;
     } while (*back == *forward);
     point_ptr<T> start_b = back->next;
+    while (!same_ring && *start_b == *start_b->next && start_b != pt_b) {
+        start_b = start_b->next;
+    }
     point_ptr<T> end_a = forward->prev;
+    while (!same_ring && *end_a == *end_a->prev && end_a != pt_a) {
+        end_a = end_a->prev;
+    }
     return { start_a, end_a, start_b, end_b };
 }
 
@@ -1159,8 +1192,8 @@ void process_collinear_edges_same_ring(point_ptr<T> pt_a,
         mapbox::geometry::box<T> b2({0,0},{0,0});
         double area1 = area_from_point(results.pt1, s1, b1);
         double area2 = area_from_point(results.pt2, s2, b2);
-        bool viable1 = !value_is_zero(area1) && s1 > 2;
-        bool viable2 = !value_is_zero(area2) && s2 > 2;
+        bool viable1 = s1 > 2;
+        bool viable2 = s2 > 2;
         if (!viable1 && !viable2) {
             remove_points(results.pt1);
             remove_points(results.pt2);
@@ -1188,15 +1221,16 @@ template <typename T>
 void process_collinear_edges_different_rings(point_ptr<T> pt_a,
                                              point_ptr<T> pt_b,
                                              ring_manager<T>& manager) {
-    
     ring_ptr<T> ring_a = pt_a->ring;
     ring_ptr<T> ring_b = pt_b->ring;
     bool ring_a_larger = std::fabs(ring_a->area()) > std::fabs(ring_b->area());
     auto path = find_start_and_end_of_collinear_edges(pt_a, pt_b);
     // This should result in two rings becoming one.
     auto results = fix_collinear_path(path);
-    if (results.pt1 == nullptr || results.pt2 == nullptr) {
-        throw std::runtime_error("Collinear edges should not have resulted in spike removal from two different rings");
+    if (results.pt1 == nullptr) {
+        remove_ring(ring_a, manager, false);
+        remove_ring(ring_b, manager, false);
+        return;
     }
     // Rings should merge into a single ring of the same orientation.
     // Therefore, we we will need to replace one ring with the other
@@ -1206,23 +1240,119 @@ void process_collinear_edges_different_rings(point_ptr<T> pt_a,
     merged_ring->points = results.pt1;
     update_points_ring(merged_ring);
     merged_ring->recalculate_stats();
-    if (merged_ring->size() < 3 || value_is_zero(merged_ring->area())) {
+    if (merged_ring->size() < 3) {
         remove_ring_and_points(merged_ring, manager, false);
     }
     remove_ring(deleted_ring, manager, false);
 }
 
 template <typename T>
-void process_collinear_edges(point_ptr<T> pt_a,
+bool remove_duplicate_points(point_ptr<T> pt_a, 
+                             point_ptr<T> pt_b,
+                             ring_manager<T>& manager) {
+    if (pt_a->ring == pt_b->ring) {
+        if (pt_a->next == pt_b) {
+            pt_a->next = pt_b->next;
+            pt_a->next->prev = pt_a;
+            pt_b->next = nullptr;
+            pt_b->prev = nullptr;
+            pt_b->ring = nullptr;
+            if (pt_a->ring->points == pt_b) {
+                pt_a->ring->points = pt_a;
+            }
+            return true;
+        } else if (pt_b->next == pt_a) {
+            pt_a->prev = pt_b->prev;
+            pt_a->prev->next = pt_a;
+            pt_b->next = nullptr;
+            pt_b->prev = nullptr;
+            pt_b->ring = nullptr;
+            if (pt_a->ring->points == pt_b) {
+                pt_a->ring->points = pt_a;
+            }
+            return true;
+        }
+    }
+    while (*pt_a->next == *pt_a && pt_a->next != pt_a) {
+        point_ptr<T> remove = pt_a->next;
+        pt_a->next = remove->next;
+        pt_a->next->prev = pt_a;
+        remove->next = nullptr;
+        remove->prev = nullptr;
+        remove->ring = nullptr;
+        if (pt_a->ring->points == remove) {
+            pt_a->ring->points = pt_a;
+        }
+    }
+    while (*pt_a->prev == *pt_a && pt_a->prev != pt_a) {
+        point_ptr<T> remove = pt_a->prev;
+        pt_a->prev = remove->prev;
+        pt_a->prev->next = pt_a;
+        remove->next = nullptr;
+        remove->prev = nullptr;
+        remove->ring = nullptr;
+        if (pt_a->ring->points == remove) {
+            pt_a->ring->points = pt_a;
+        }
+    }
+    if (pt_a->next == pt_a) {
+        remove_ring_and_points(pt_a->ring, manager, false);
+        return true;
+    }
+    if (pt_b->ring == nullptr) {
+        return true;
+    }
+    while (*pt_b->next == *pt_b && pt_b->next != pt_b) {
+        point_ptr<T> remove = pt_b->next;
+        pt_b->next = remove->next;
+        pt_b->next->prev = pt_b;
+        remove->next = nullptr;
+        remove->prev = nullptr;
+        remove->ring = nullptr;
+        if (pt_b->ring->points == remove) {
+            pt_b->ring->points = pt_b;
+        }
+    }
+    while (*pt_b->prev == *pt_b && pt_b->prev != pt_b) {
+        point_ptr<T> remove = pt_b->prev;
+        pt_b->prev = remove->prev;
+        pt_b->prev->next = pt_b;
+        remove->next = nullptr;
+        remove->prev = nullptr;
+        remove->ring = nullptr;
+        if (pt_b->ring->points == remove) {
+            pt_b->ring->points = pt_b;
+        }
+    }
+    if (pt_b->next == pt_b) {
+        remove_ring_and_points(pt_b->ring, manager, false);
+        return true;
+    }
+    if (pt_a->ring == nullptr) {
+        return true;
+    }
+    return false;
+}
+
+template <typename T>
+bool process_collinear_edges(point_ptr<T> pt_a,
                              point_ptr<T> pt_b,
                              ring_manager<T>& manager) {
     // Neither point assigned to a ring (deleted points)
     if (!pt_a->ring || !pt_b->ring) {
-        return;
+        return false;
+    }
+    
+    if (remove_duplicate_points(pt_a, pt_b, manager)) {
+        return true;
     }
 
     if (!has_collinear_edge(pt_a, pt_b)) {
-        return;
+        if (pt_a->ring == pt_b->ring) {
+            correct_self_intersection(pt_a, pt_b, manager, false);
+            return true;
+        }
+        return false;
     }
 
     if (pt_a->ring == pt_b->ring) {
@@ -1230,6 +1360,7 @@ void process_collinear_edges(point_ptr<T> pt_a,
     } else {
         process_collinear_edges_different_rings(pt_a, pt_b, manager);
     }
+    return true;
 }
 
 template <typename T>
@@ -1240,14 +1371,19 @@ void correct_collinear_repeats(ring_manager<T>& manager,
         if ((*itr1)->ring == nullptr) {
             continue;
         }
-        for (auto itr2 = begin; itr2 != end; ++itr2) {
+        for (auto itr2 = begin; itr2 != end;) {
             if ((*itr1)->ring == nullptr) {
                 break;
             }
             if ((*itr2)->ring == nullptr || *itr2 == *itr1) {
+                ++itr2;
                 continue;
             }
-            process_collinear_edges(*itr1, *itr2, manager);
+            if (process_collinear_edges(*itr1, *itr2, manager)) {
+                itr2 = begin;
+            } else {
+                ++itr2;
+            }
         }
     }
 }
@@ -1304,10 +1440,11 @@ void correct_tree(ring_manager<T>& manager) {
         if ((*itr)->points == nullptr) {
             continue;
         }
-        if ((*itr)->size() < 3) {
+        if ((*itr)->size() < 3 || value_is_zero((*itr)->area())) {
             remove_ring_and_points(*itr, manager, false);
             continue;
         }
+        (*itr)->corrected = true;
         bool found = false;
         // Search in reverse from the current iterator back to the begining
         // to see if any of those rings might be its parent.
@@ -1324,7 +1461,6 @@ void correct_tree(ring_manager<T>& manager) {
         }
         if (!found) {
             if ((*itr)->is_hole()) {
-                // If it is not found and it is a hole this is an error somewhere
                 throw std::runtime_error("Could not properly place hole to a parent.");
             } else {
                 // Assign to base of tree by passing nullptr
@@ -1332,6 +1468,18 @@ void correct_tree(ring_manager<T>& manager) {
             }
         }
     }
+}
+
+template <typename T>
+bool correct_self_intersections(ring_manager<T>& manager, bool correct_tree) {
+    bool fixed_intersections = false;
+    auto sorted_rings = sort_rings_smallest_to_largest(manager);
+    for (auto const& r : sorted_rings) {
+        if (correct_ring_self_intersections(manager, r, correct_tree)) {
+            fixed_intersections = true;
+        }
+    }
+    return fixed_intersections;
 }
 
 template <typename T>
@@ -1344,24 +1492,19 @@ void correct_topology(ring_manager<T>& manager) {
     // Initially the orientations of the rings
     // could be incorrect, we need to adjust them
     correct_orientations(manager);
-    
+ 
     // We should only have to fix collinear edges once.
+    // During this we also correct self intersections
     correct_collinear_edges(manager);
+
+    correct_self_intersections(manager, false);
 
     correct_tree(manager);
  
-    while (true) {
-        bool fixed_intersections = false;
-        auto sorted_rings = sort_rings_smallest_to_largest(manager);
-        for (auto const& r : sorted_rings) {
-            if (correct_ring_self_intersections(manager, r)) {
-                fixed_intersections = true;
-            }
-        }
-        if (!fixed_intersections) {
-            break;
-        }
+    bool fixed_intersections = true;
+    while (fixed_intersections) {
         correct_chained_rings(manager);
+        fixed_intersections = correct_self_intersections(manager, true);
     }
 }
 
