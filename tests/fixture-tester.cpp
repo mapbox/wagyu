@@ -15,6 +15,7 @@ using namespace mapbox::geometry::wagyu;
 using value_type = std::int64_t;
 
 struct Options {
+    std::size_t iterations = 1;
     clip_type operation = clip_type_union;
     fill_type fill = fill_type_even_odd;
     char* subject_file;
@@ -162,6 +163,9 @@ void parse_options(int argc, char* const argv[]) {
             } else if (type.compare("negative") == 0) {
                 options.fill = fill_type_negative;
             }
+        } else if (strcmp(argv[i], "-i") == 0) {
+            std::string iters = argv[++i];
+            options.iterations = static_cast<std::size_t>(std::stoul(iters));
         } else {
             // If we didn't catch this argument as a flag or a flag value,
             // set the input files
@@ -185,16 +189,23 @@ int main(int argc, char* const argv[]) {
         return -1;
     }
     parse_options(argc, argv);
-
-    wagyu<value_type> clipper;
     auto poly_subject = parse_file(options.subject_file);
-    clipper.add_polygon(poly_subject, polygon_type_subject);
-    if (options.clip_file != NULL) {
-        auto poly_clip = parse_file(options.clip_file);
-        clipper.add_polygon(poly_clip, polygon_type_clip);
-    }
+    mapbox::geometry::polygon<value_type> poly_clip;
     mapbox::geometry::multi_polygon<value_type> solution;
-    clipper.execute(options.operation, solution, options.fill, fill_type_even_odd);
+    if (options.clip_file != NULL) {
+        poly_clip = parse_file(options.clip_file);
+    }
+    while (options.iterations > 0) {
+        options.iterations--;
+        solution.clear();
+
+        wagyu<value_type> clipper;
+        clipper.add_polygon(poly_subject, polygon_type_subject);
+        if (!poly_clip.empty()) {
+            clipper.add_polygon(poly_clip, polygon_type_clip);
+        }
+        clipper.execute(options.operation, solution, options.fill, fill_type_even_odd);
+    }
 
     Document output;
     polys_to_json(output, solution);
