@@ -164,7 +164,7 @@ void next_edge_in_bound(active_bound_list_itr<T>& bnd, scanbeam_list<T>& scanbea
         ++((*bnd)->next_edge);
         (*bnd)->current_x = static_cast<double>((*bnd)->current_edge->bot.x);
         if (!current_edge_is_horizontal<T>(bnd)) {
-            scanbeam.push((*bnd)->current_edge->top.y);
+            scanbeam.push_back((*bnd)->current_edge->top.y);
         }
     }
 }
@@ -373,10 +373,10 @@ void insert_lm_left_and_right_bound(bound<T>& left_bound,
     }
 
     // Add top of edges to scanbeam
-    scanbeam.push((*lb_abl_itr)->current_edge->top.y);
+    scanbeam.push_back((*lb_abl_itr)->current_edge->top.y);
 
     if (!current_edge_is_horizontal<T>(rb_abl_itr)) {
-        scanbeam.push((*rb_abl_itr)->current_edge->top.y);
+        scanbeam.push_back((*rb_abl_itr)->current_edge->top.y);
     }
 }
 

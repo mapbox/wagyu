@@ -118,14 +118,14 @@ void insert_local_minima_into_ABL_hot_pixel(T top_y,
         left_bound.current_x = static_cast<double>(left_bound.current_edge->bot.x);
         auto lb_abl_itr = insert_bound_into_ABL(left_bound, active_bounds);
         if (!current_edge_is_horizontal<T>(lb_abl_itr)) {
-            scanbeam.push((*lb_abl_itr)->current_edge->top.y);
+            scanbeam.push_back((*lb_abl_itr)->current_edge->top.y);
         }
         auto& right_bound = (*lm)->right_bound;
         right_bound.current_edge = right_bound.edges.begin();
         right_bound.current_x = static_cast<double>(right_bound.current_edge->bot.x);
         auto rb_abl_itr = insert_bound_into_ABL(right_bound, lb_abl_itr, active_bounds);
         if (!current_edge_is_horizontal<T>(rb_abl_itr)) {
-            scanbeam.push((*rb_abl_itr)->current_edge->top.y);
+            scanbeam.push_back((*rb_abl_itr)->current_edge->top.y);
         }
         ++lm;
     }

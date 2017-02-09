@@ -22,4 +22,4 @@
 - Removed the need to process certain intersections before others in order to gain correct results.
 - Updated `poly2_contain_poly1` such that the rare situation where one ring contains all the same points as another ring, it properly returns results in all situations.
 - Added several more fields to the `ring` struct so that it now tracks area and size more efficiently. Also added a bounding box to the calculation for each `ring`.
-
+- Replaced the scanbeam tracking to no longer use a priority queue as a std vector was shown to be slightly faster
