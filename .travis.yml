@@ -13,7 +13,29 @@ matrix:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'g++-4.9' ]
+        coverity_scan:
+          name: mapbox/wagyu
+          version: 0.4.0
+          description: Wagyu Library
+        notification_email: blake@mapbox.com
+        build_command_prepend: make deps
+        build_command: make
+        branch_pattern: coverity_scan
       script: *run_script
+    - os: linux
+      env: CXX=g++-4.9
+      addons:
+        apt:
+          sources: [ 'ubuntu-toolchain-r-test' ]
+          packages: [ 'g++-4.9' ]
+        coverity_scan:
+          name: mapbox/wagyu
+          version: 0.4.0
+          description: Wagyu Library
+        notification_email: blake@mapbox.com
+        build_command_prepend: "cov-configure --template --comptype g++ --compiler g++-4.9 && make deps"
+        build_command: make
+        branch_pattern: coverity_scan
     - os: linux
       env: CXX=g++-5
       addons:

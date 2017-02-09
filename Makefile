@@ -8,7 +8,7 @@ MASON ?= .mason/mason
 CLIPPER_REVISION=ac8d6bf2517f46c05647b5c19cac113fb180ffb4
 ANGUS_DEFINES := -D'CLIPPER_INTPOINT_IMPL=mapbox::geometry::point<cInt>' -D'CLIPPER_PATH_IMPL=mapbox::geometry::linear_ring<cInt>' -D'CLIPPER_PATHS_IMPL=mapbox::geometry::polygon<cInt>' -D'CLIPPER_IMPL_INCLUDE=<mapbox/geometry/polygon.hpp>'
 
-default: test
+default: build-test build-fixture-tester-r
 
 $(MASON):
 	git submodule update --init
