@@ -36,6 +36,7 @@ struct bound {
     bound() noexcept
         : edges(),
           current_edge(edges.end()),
+          next_edge(edges.end()),
           last_point({ 0, 0 }),
           ring(nullptr),
           maximum_bound(nullptr),
