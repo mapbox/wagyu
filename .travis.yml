@@ -120,4 +120,3 @@ before_install:
     ./.mason/mason install binutils 2.27
     export PATH=$(./.mason/mason prefix binutils 2.27)/bin:${PATH}
    fi
- - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
