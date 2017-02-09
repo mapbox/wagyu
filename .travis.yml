@@ -5,6 +5,10 @@ default_script: &run_script
 
 script: *run_script
 
+env:
+  global:
+    - secure: "BXHfO4lVVYy5RYX579WnWSQB9JJ63F+uAYEs/2v4ZpOdQ55Agn0FX4wTfNvrFFXgSal+PA1BQiXoHDEqb4SPzRK4zP6V1V/c9AS6E3zrhN48LUiJUTn8FaYJjph5qBykzXfi/B2kGqbHGrNixfWYogm9En3BWGC2wVN2ug2NTpKlRehV9pr8XSFLqPNbAXgZEF0SvD1ndIbs+ygxd/EKsNanT8N7S8xEMn0PZLjjR5KR12c691Xc9sk4b/PvZvUSE+AMwj72QylDPbzEpDojWR0UrVpQZ2lijEKR1bJ0E41Teyv6KLR+Ua69kmonrBH5dlfB0MJ9guL1nn85ZAThzXzSW4qkJUEjDtdX6qlLYrNlxQ1ljU8qDojbhxClkg/wJlZEYMxrJANwEhmcZxDEnwao5CfclZ0DdeqcJHKXZevIonM5hw8YfGkCYQP+UbxhmlkaF+g58kbruw6QLC+waJpIET+SOsNMUFJn8SLYOUsIqB279CKSh/QQUGZCA3uGuoYEzcuM1zpNPG+SOzDHhu8vJYhJfRnxl4BmHvWTezOGMb6eX1iW9VgmkPbMmSCoMjVyboTCQyZoDt04R50Gucqx7mHE/k5c09QVeXHhT6jsVVvEtv/c3B9t9cUWpBGnqwkTgZWhibSwTXuWQyljU+UOapFJqDlkkBKXrBWnqZA="
+
 matrix:
   include:
     - os: linux
