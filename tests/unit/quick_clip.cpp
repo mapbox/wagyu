@@ -267,7 +267,7 @@ TEST_CASE("sticking out and back in") {
     mapbox::geometry::multi_polygon<T> solution;
     clipper.execute(clip_type_union, solution, fill_type_even_odd, fill_type_even_odd);
 
-    CHECK(solution.size() == 2);
+    REQUIRE(solution.size() == 2);
 
     mapbox::geometry::linear_ring<T> want0;
     want0.push_back(mapbox::geometry::point<T>(75, 90));
@@ -277,11 +277,11 @@ TEST_CASE("sticking out and back in") {
     want0.push_back(mapbox::geometry::point<T>(75, 90));
 
     mapbox::geometry::linear_ring<T> want1;
-    want1.push_back(mapbox::geometry::point<T>(100, 25));
     want1.push_back(mapbox::geometry::point<T>(100, 75));
     want1.push_back(mapbox::geometry::point<T>(25, 75));
     want1.push_back(mapbox::geometry::point<T>(25, 25));
     want1.push_back(mapbox::geometry::point<T>(100, 25));
+    want1.push_back(mapbox::geometry::point<T>(100, 75));
 
     CHECK(solution[0][0] == want0);
     CHECK(solution[1][0] == want1);
@@ -291,7 +291,7 @@ TEST_CASE("sticking out and back in") {
     mapbox::geometry::multi_polygon<T> poly_out;
     poly_out = mapbox::geometry::wagyu::clip(poly, bbox, fill_type_even_odd);
 
-    CHECK(poly_out.size() == 2);
+    REQUIRE(poly_out.size() == 2);
     CHECK(poly_out[0][0] == want0);
     CHECK(poly_out[1][0] == want1);
 }
