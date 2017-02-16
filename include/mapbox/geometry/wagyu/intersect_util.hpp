@@ -312,11 +312,13 @@ void process_intersect_list(intersect_list<T>& intersects,
         if (!bounds_adjacent(*node_itr, *b2)) {
             auto next_itr = std::next(node_itr);
             while (next_itr != intersects.end()) {
-                auto n2 = std::find_if(active_bounds.begin(), 
+                auto n1 = std::find_if(active_bounds.begin(), 
                                        active_bounds.end(),
                                        find_first_bound<T>(*next_itr));
-                ++n2;
+                auto n2 = std::next(n1);
                 if (bounds_adjacent(*next_itr, *n2)) {
+                    b1 = n1;
+                    b2 = n2;
                     break;
                 }
                 ++next_itr;
