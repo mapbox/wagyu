@@ -122,7 +122,6 @@ void process_edges_at_top_of_scanbeam(T top_y,
         if (is_intermediate(bnd, top_y)) {
             if ((*bnd)->ring) {
                 add_point_to_ring(*(*bnd), (*bnd)->current_edge->top, manager);
-                insert_hot_pixels_in_path(*(*bnd), (*bnd)->current_edge->top, manager, false);
             }
             next_edge_in_bound(*(*bnd), scanbeam);
         }

@@ -234,12 +234,12 @@ void add_ring_to_local_minima_list(edge_list<T>& edges,
             lm_minimum_has_horizontal = true;
             ++to_min_first_non_horizontal;
         }
-#ifdef DEBUG
+
         if (to_max_first_non_horizontal == to_maximum.edges.end() ||
             to_min_first_non_horizontal == to_minimum.edges.end()) {
             throw std::runtime_error("should not have a horizontal only bound for a ring");
         }
-#endif
+
         if (lm_minimum_has_horizontal) {
             if (to_max_first_non_horizontal->bot.x > to_min_first_non_horizontal->bot.x) {
                 minimum_is_left = true;
