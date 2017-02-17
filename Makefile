@@ -2,7 +2,7 @@ CC := $(CC)
 CXX := $(CXX)
 CXXFLAGS := $(CXXFLAGS) -Iinclude -isystem mason_packages/.link/include -std=c++11
 RELEASE_FLAGS := -O3 -DNDEBUG
-WARNING_FLAGS := -Wall -Wextra -Werror -Wsign-compare -Wfloat-equal -Wfloat-conversion -Wshadow -Wno-unsequenced
+WARNING_FLAGS := -Wall -Wextra -Weffc++ -Werror -Wsign-compare -Wfloat-equal -Wfloat-conversion -Wshadow -Wno-unsequenced
 DEBUG_FLAGS := -g -O0 -DDEBUG -fno-inline-functions -fno-omit-frame-pointer
 MASON ?= .mason/mason
 CLIPPER_REVISION=ac8d6bf2517f46c05647b5c19cac113fb180ffb4
