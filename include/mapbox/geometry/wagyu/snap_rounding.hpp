@@ -147,8 +147,10 @@ void insert_local_minima_into_ABL_hot_pixel(T top_y,
         auto& left_bound = (*lm)->left_bound;
         auto& right_bound = (*lm)->right_bound;
         left_bound.current_edge = left_bound.edges.begin();
+        left_bound.next_edge = std::next(left_bound.current_edge); 
         left_bound.current_x = static_cast<double>(left_bound.current_edge->bot.x);
         right_bound.current_edge = right_bound.edges.begin();
+        right_bound.next_edge = std::next(right_bound.current_edge); 
         right_bound.current_x = static_cast<double>(right_bound.current_edge->bot.x);
         auto lb_abl_itr = insert_bound_into_ABL(left_bound, right_bound, active_bounds);
         if (!current_edge_is_horizontal<T>(lb_abl_itr)) {

@@ -52,6 +52,7 @@ struct bound {
     bound(bound<T>&& b) noexcept
         : edges(std::move(b.edges)),
           current_edge(std::move(b.current_edge)),
+          next_edge(b.next_edge), 
           last_point(std::move(b.last_point)),
           ring(std::move(b.ring)),
           maximum_bound(std::move(b.maximum_bound)),
