@@ -23,3 +23,8 @@
 - Updated `poly2_contain_poly1` such that the rare situation where one ring contains all the same points as another ring, it properly returns results in all situations.
 - Added several more fields to the `ring` struct so that it now tracks area and size more efficiently. Also added a bounding box to the calculation for each `ring`.
 - Replaced the scanbeam tracking to no longer use a priority queue as a std vector was shown to be slightly faster
+- Replaced std list in active bounds list with a std vector
+- Fixed bug in bound construtors where `next_edge` was not being properly initialized. 
+- Fixed bug in snap rounding where `next_edge` of bounds were not being properly set.
+- Added ability for `fixture-tester` to repeatedly test the same test. 
+
