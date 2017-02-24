@@ -74,6 +74,17 @@ bool slopes_equal(mapbox::geometry::point<T> const& pt1,
                   mapbox::geometry::point<T> const& pt4) {
     return (pt1.y - pt2.y) * (pt3.x - pt4.x) == (pt1.x - pt2.x) * (pt3.y - pt4.y);
 }
+
+template <typename T>
+inline T wround(double value) {
+    return static_cast<T>(std::llround(value));
+}
+
+template <>
+inline std::int64_t wround<std::int64_t>(double value) {
+    return std::llround(value);
+}
+
 }
 }
 }

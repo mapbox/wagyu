@@ -64,9 +64,9 @@ bool horizontals_at_top_scanbeam(T top_y,
                (*bnd_next == nullptr ||
                (*bnd_next)->current_x < (*bnd_curr)->current_x)) {
             if (*bnd_next != nullptr &&
-                std::llround((*bnd_next)->current_edge->top.y) != top_y &&
-                std::llround((*bnd_next)->current_edge->bot.y) != top_y) {
-                mapbox::geometry::point<T> pt(std::llround((*bnd_next)->current_x),
+                wround<T>((*bnd_next)->current_edge->top.y) != top_y &&
+                wround<T>((*bnd_next)->current_edge->bot.y) != top_y) {
+                mapbox::geometry::point<T> pt(wround<T>((*bnd_next)->current_x),
                                               top_y);
                 add_to_hot_pixels(pt, manager);
             }
@@ -83,9 +83,9 @@ bool horizontals_at_top_scanbeam(T top_y,
                    (*bnd_prev == nullptr ||
                    (*bnd_prev)->current_x > (*bnd_curr)->current_x)) {
                 if (*bnd_prev != nullptr &&
-                    std::llround((*bnd_prev)->current_edge->top.y) != top_y &&
-                    std::llround((*bnd_prev)->current_edge->bot.y) != top_y) {
-                    mapbox::geometry::point<T> pt(std::llround((*bnd_prev)->current_x),
+                    wround<T>((*bnd_prev)->current_edge->top.y) != top_y &&
+                    wround<T>((*bnd_prev)->current_edge->bot.y) != top_y) {
+                    mapbox::geometry::point<T> pt(wround<T>((*bnd_prev)->current_x),
                                                   top_y);
                     add_to_hot_pixels(pt, manager);
                 }

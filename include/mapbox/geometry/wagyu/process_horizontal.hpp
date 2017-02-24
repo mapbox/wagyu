@@ -48,7 +48,7 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
         // polygons) wherever hot pixels touch these horizontal edges. This helps
         //'simplifying' polygons (ie if the Simplify property is set).
         while (hp_itr != rings.hot_pixels.end() && hp_itr->y == scanline_y &&
-               hp_itr->x < std::llround((*bnd)->current_x) &&
+               hp_itr->x < wround<T>((*bnd)->current_x) &&
                hp_itr->x < (*horz_bound)->current_edge->top.x) {
             if ((*horz_bound)->ring) {
                 add_point_to_ring(*(*horz_bound), *hp_itr, rings);
@@ -62,7 +62,7 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
 
         // Also break if we've got to the end of an intermediate horizontal edge ...
         // nb: Smaller Dx's are to the right of larger Dx's ABOVE the horizontal.
-        if (std::llround((*bnd)->current_x) == (*horz_bound)->current_edge->top.x &&
+        if (wround<T>((*bnd)->current_x) == (*horz_bound)->current_edge->top.x &&
             (*horz_bound)->next_edge != (*horz_bound)->edges.end() &&
             (*horz_bound)->current_edge->dx < (*horz_bound)->next_edge->dx) {
             break;
@@ -72,7 +72,7 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
         if ((*horz_bound)->ring) {
             add_point_to_ring(
                 *(*horz_bound),
-                mapbox::geometry::point<T>(std::llround((*bnd)->current_x), scanline_y), rings);
+                mapbox::geometry::point<T>(wround<T>((*bnd)->current_x), scanline_y), rings);
         }
 
         // OK, so far we're still in range of the horizontal Edge  but make sure
@@ -91,7 +91,7 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
         }
 
         intersect_bounds(*(*horz_bound), *(*bnd),
-                         mapbox::geometry::point<T>(std::llround((*bnd)->current_x), scanline_y),
+                         mapbox::geometry::point<T>(wround<T>((*bnd)->current_x), scanline_y),
                          cliptype, subject_fill_type, clip_fill_type, rings, active_bounds);
         std::iter_swap(horz_bound, bnd);
         horz_bound = bnd;
@@ -101,7 +101,7 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
 
     if ((*horz_bound)->ring) {
         while (hp_itr != rings.hot_pixels.end() && hp_itr->y == scanline_y &&
-               hp_itr->x < std::llround((*horz_bound)->current_edge->top.x)) {
+               hp_itr->x < (*horz_bound)->current_edge->top.x) {
             add_point_to_ring(*(*horz_bound), *hp_itr, rings);
             ++hp_itr;
         }
@@ -156,7 +156,7 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
         // this code block inserts extra coords into horizontal edges (in output
         // polygons) wherever hot pixels touch these horizontal edges.
         while (hp_itr != rings.hot_pixels.rend() && hp_itr->y == scanline_y &&
-               hp_itr->x > std::llround((*bnd)->current_x) &&
+               hp_itr->x > wround<T>((*bnd)->current_x) &&
                hp_itr->x > (*horz_bound)->current_edge->top.x) {
             if ((*horz_bound)->ring) {
                 add_point_to_ring(*(*horz_bound), *hp_itr, rings);
@@ -170,7 +170,7 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
 
         // Also break if we've got to the end of an intermediate horizontal edge ...
         // nb: Smaller Dx's are to the right of larger Dx's ABOVE the horizontal.
-        if (std::llround((*bnd)->current_x) == (*horz_bound)->current_edge->top.x &&
+        if (wround<T>((*bnd)->current_x) == (*horz_bound)->current_edge->top.x &&
             (*horz_bound)->next_edge != (*horz_bound)->edges.end() &&
             (*horz_bound)->current_edge->dx < (*horz_bound)->next_edge->dx) {
             break;
@@ -180,7 +180,7 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
         if ((*horz_bound)->ring) {
             add_point_to_ring(
                 *(*horz_bound),
-                mapbox::geometry::point<T>(std::llround((*bnd)->current_x), scanline_y), rings);
+                mapbox::geometry::point<T>(wround<T>((*bnd)->current_x), scanline_y), rings);
         }
         
         // OK, so far we're still in range of the horizontal Edge  but make sure
@@ -196,7 +196,7 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
         }
 
         intersect_bounds(*(*bnd), *(*horz_bound),
-                         mapbox::geometry::point<T>(std::llround((*bnd)->current_x), scanline_y),
+                         mapbox::geometry::point<T>(wround<T>((*bnd)->current_x), scanline_y),
                          cliptype, subject_fill_type, clip_fill_type, rings, active_bounds);
         std::iter_swap(horz_bound, bnd);
         horz_bound = bnd;

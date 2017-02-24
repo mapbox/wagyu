@@ -114,24 +114,24 @@ mapbox::geometry::polygon<value_type> parse_file(const char* file_path) {
 void polys_to_json(Document& output, std::vector<mapbox::geometry::polygon<value_type>>& solution) {
     output.SetArray();
     Document::AllocatorType& allocator = output.GetAllocator();
-    output.Reserve(solution.size(), allocator);
+    output.Reserve(static_cast<unsigned>(solution.size()), allocator);
 
     // Polygons
-    for (std::size_t p = 0; p < solution.size(); ++p) {
+    for (unsigned p = 0; p < solution.size(); ++p) {
         output.PushBack(Value().SetArray(), allocator);
-        output[p].Reserve(solution[p].size(), allocator);
+        output[p].Reserve(static_cast<unsigned>(solution[p].size()), allocator);
 
         // Rings
-        for (std::size_t r = 0; r < solution[p].size(); ++r) {
+        for (unsigned r = 0; r < solution[p].size(); ++r) {
             output[p].PushBack(Value().SetArray(), allocator);
-            output[p][r].Reserve(solution[p][r].size(), allocator);
+            output[p][r].Reserve(static_cast<unsigned>(solution[p][r].size()), allocator);
 
             // Coordinates
             for (auto coord : solution[p][r]) {
                 Value cvalue;
                 cvalue.SetArray();
-                cvalue.PushBack(Value().SetInt(coord.x), allocator);
-                cvalue.PushBack(Value().SetInt(coord.y), allocator);
+                cvalue.PushBack(Value().SetInt(static_cast<int>(coord.x)), allocator);
+                cvalue.PushBack(Value().SetInt(static_cast<int>(coord.y)), allocator);
                 output[p][r].PushBack(cvalue, allocator);
             }
         }
