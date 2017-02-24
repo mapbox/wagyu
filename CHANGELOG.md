@@ -28,3 +28,8 @@
 - Fixed bug in snap rounding where `next_edge` of bounds were not being properly set.
 - Added ability for `fixture-tester` to repeatedly test the same test. 
 
+## 0.4.1
+
+- The integer type of input and output can now be different then the integer type used in wagyu's processing
+- Added -Wshorten-64-to-32 to warnings during builds
+
