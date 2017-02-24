@@ -3,24 +3,26 @@
 #include <mapbox/geometry/wagyu/ring.hpp>
 #include <mapbox/geometry/wagyu/ring_util.hpp>
 
+#include <mapbox/geometry/multi_polygon.hpp>
+
 namespace mapbox {
 namespace geometry {
 namespace wagyu {
 
-template <typename T>
-void push_ring_to_polygon(mapbox::geometry::polygon<T>& poly, ring_ptr<T>& r, bool reverse_output) {
-    mapbox::geometry::linear_ring<T> lr;
+template <typename T1, typename T2>
+void push_ring_to_polygon(mapbox::geometry::polygon<T2>& poly, ring_ptr<T1>& r, bool reverse_output) {
+    mapbox::geometry::linear_ring<T2> lr;
     lr.reserve(r->size() + 1);
     auto firstPt = r->points;
     auto ptIt = r->points;
     if (reverse_output) {
         do {
-            lr.emplace_back(ptIt->x, ptIt->y);
+            lr.emplace_back(static_cast<T2>(ptIt->x), static_cast<T2>(ptIt->y));
             ptIt = ptIt->next;
         } while (ptIt != firstPt);
     } else {
         do {
-            lr.emplace_back(ptIt->x, ptIt->y);
+            lr.emplace_back(static_cast<T2>(ptIt->x), static_cast<T2>(ptIt->y));
             ptIt = ptIt->prev;
         } while (ptIt != firstPt);
     }
@@ -28,9 +30,9 @@ void push_ring_to_polygon(mapbox::geometry::polygon<T>& poly, ring_ptr<T>& r, bo
     poly.push_back(lr);
 }
 
-template <typename T>
-void build_result_polygons(std::vector<mapbox::geometry::polygon<T>>& solution,
-                           ring_vector<T>& rings,
+template <typename T1, typename T2>
+void build_result_polygons(mapbox::geometry::multi_polygon<T2>& solution,
+                           ring_vector<T1>& rings,
                            bool reverse_output) {
     for (auto& r : rings) {
         if (r == nullptr) {
@@ -63,9 +65,9 @@ void build_result_polygons(std::vector<mapbox::geometry::polygon<T>>& solution,
     }
 }
 
-template <typename T>
-void build_result(std::vector<mapbox::geometry::polygon<T>>& solution,
-                  ring_manager<T>& rings,
+template <typename T1, typename T2>
+void build_result(mapbox::geometry::multi_polygon<T2>& solution,
+                  ring_manager<T1>& rings,
                   bool reverse_output) {
     build_result_polygons(solution, rings.children, reverse_output);
 }
