@@ -10,7 +10,7 @@ Wagyu is a general library for the following basic geometric operations:
 * Difference
 * XOR
 
-The output geometry from each of these operations is gauranteed to be [valid and simple as per the OGC](http://postgis.net/docs/using_postgis_dbmanagement.html#OGC_Validity).
+The output geometry from each of these operations is guaranteed to be [valid and simple as per the OGC](http://postgis.net/docs/using_postgis_dbmanagement.html#OGC_Validity).
 
 ## Documentation
 
