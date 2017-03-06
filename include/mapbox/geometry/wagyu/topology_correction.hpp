@@ -373,7 +373,7 @@ void reassign_children_if_necessary(ring_ptr<T> new_ring,
                                     ring_manager<T>& manager,
                                     ring_vector<T>& new_rings) {
     auto& children = sibling_ring == nullptr ? manager.children : sibling_ring->children;
-    for (auto& c : children) {
+    for (auto c : children) {
         if (c == nullptr) {
             continue;
         }
@@ -392,11 +392,11 @@ bool find_parent_in_tree(ring_ptr<T> r, ring_ptr<T> possible_parent, ring_manage
     // and r have opposite signs of their areas
 
     // First we must search all grandchildren
-    for (auto& c : possible_parent->children) {
+    for (auto c : possible_parent->children) {
         if (c == nullptr) {
             continue;
         }
-        for (auto& gc : c->children) {
+        for (auto gc : c->children) {
             if (gc == nullptr) {
                 continue;
             }
@@ -480,7 +480,7 @@ void assign_new_ring_parents(ring_manager<T>& manager,
                 continue;
             }
             if (same_orientation) {
-                for (auto& s_child : (*s_itr)->children) {
+                for (auto s_child : (*s_itr)->children) {
                     if (s_child == nullptr) {
                         continue;
                     }
@@ -508,7 +508,7 @@ void assign_new_ring_parents(ring_manager<T>& manager,
 
         // Next lets check the tree of the original_ring
         if (same_orientation) {
-            for (auto& o_child : original_ring->children) {
+            for (auto o_child : original_ring->children) {
                 if (o_child == nullptr) {
                     continue;
                 }
@@ -782,7 +782,7 @@ void process_single_intersection(
             assign_as_child(ring_new, ring_origin, manager);
             // The parent ring in this situation might need to give up children
             // to the new ring.
-            for (auto& c : ring_parent->children) {
+            for (auto c : ring_parent->children) {
                 if (c == nullptr) {
                     continue;
                 }
@@ -795,7 +795,7 @@ void process_single_intersection(
             // however some children ring from the ring origin might
             // need to be re-assigned to the new ring
             assign_as_sibling(ring_new, ring_origin, manager);
-            for (auto& c : ring_origin->children) {
+            for (auto c : ring_origin->children) {
                 if (c == nullptr) {
                     continue;
                 }
