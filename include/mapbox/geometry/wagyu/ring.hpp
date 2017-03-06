@@ -228,7 +228,7 @@ point_ptr<T> create_new_point(ring_ptr<T> r,
 
 template <typename T>
 void set_to_children(ring_ptr<T> r, ring_vector<T>& children) {
-    for (auto& c : children) {
+    for (auto c : children) {
         if (c == nullptr) {
             c = r;
             return;

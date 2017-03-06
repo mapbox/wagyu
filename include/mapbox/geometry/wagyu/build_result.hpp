@@ -46,7 +46,7 @@ void build_result_polygons(mapbox::geometry::multi_polygon<T2>& solution,
         }
         solution.emplace_back();
         push_ring_to_polygon(solution.back(), r, reverse_output);
-        for (auto& c : r->children) {
+        for (auto c : r->children) {
             if (c == nullptr) {
                 continue;
             }
@@ -56,7 +56,7 @@ void build_result_polygons(mapbox::geometry::multi_polygon<T2>& solution,
             }
             push_ring_to_polygon(solution.back(), c, reverse_output);
         }
-        for (auto& c : r->children) {
+        for (auto c : r->children) {
             if (c == nullptr) {
                 continue;
             }
