@@ -84,18 +84,17 @@ struct intersection_compare {
 
 template <typename T>
 struct on_intersection_swap {
-    
-    intersect_list<T> & intersects;
 
-    on_intersection_swap(intersect_list<T> & i) : intersects(i) {}
+    intersect_list<T>& intersects;
+
+    on_intersection_swap(intersect_list<T>& i) : intersects(i) {
+    }
 
     void operator()(bound_ptr<T> const& b1, bound_ptr<T> const& b2) {
         mapbox::geometry::point<double> pt;
-        if (!get_edge_intersection<T, double>(*(b1->current_edge),
-                                              *(b2->current_edge), pt)) {
+        if (!get_edge_intersection<T, double>(*(b1->current_edge), *(b2->current_edge), pt)) {
             // LCOV_EXCL_START
-            throw std::runtime_error(
-                "Trying to find intersection of lines that do not intersect");
+            throw std::runtime_error("Trying to find intersection of lines that do not intersect");
             // LCOV_EXCL_END
         }
         intersects.emplace_back(b1, b2, pt);
@@ -103,11 +102,8 @@ struct on_intersection_swap {
 };
 
 template <typename T>
-void build_intersect_list(active_bound_list<T>& active_bounds, 
-                          intersect_list<T>& intersects) {
-    bubble_sort(active_bounds.begin(),
-                active_bounds.end(),
-                intersection_compare<T>(),
+void build_intersect_list(active_bound_list<T>& active_bounds, intersect_list<T>& intersects) {
+    bubble_sort(active_bounds.begin(), active_bounds.end(), intersection_compare<T>(),
                 on_intersection_swap<T>(intersects));
 }
 
@@ -278,8 +274,7 @@ void intersect_bounds(bound<T>& b1,
 }
 
 template <typename T>
-bool bounds_adjacent(intersect_node<T> const& inode,
-                     bound_ptr<T> next) {
+bool bounds_adjacent(intersect_node<T> const& inode, bound_ptr<T> next) {
     return (next == inode.bound2) || (next == inode.bound1);
 }
 
@@ -287,10 +282,9 @@ template <typename T>
 struct find_first_bound {
     bound_ptr<T> b1;
     bound_ptr<T> b2;
-    
-    find_first_bound(intersect_node<T> const& inode) :
-            b1(inode.bound1),
-            b2(inode.bound2) {}
+
+    find_first_bound(intersect_node<T> const& inode) : b1(inode.bound1), b2(inode.bound2) {
+    }
 
     bool operator()(bound_ptr<T> const& b) {
         return b == b1 || b == b2;
@@ -305,15 +299,13 @@ void process_intersect_list(intersect_list<T>& intersects,
                             ring_manager<T>& rings,
                             active_bound_list<T>& active_bounds) {
     for (auto node_itr = intersects.begin(); node_itr != intersects.end(); ++node_itr) {
-        auto b1 = std::find_if(active_bounds.begin(), 
-                               active_bounds.end(),
+        auto b1 = std::find_if(active_bounds.begin(), active_bounds.end(),
                                find_first_bound<T>(*node_itr));
         auto b2 = std::next(b1);
         if (!bounds_adjacent(*node_itr, *b2)) {
             auto next_itr = std::next(node_itr);
             while (next_itr != intersects.end()) {
-                auto n1 = std::find_if(active_bounds.begin(), 
-                                       active_bounds.end(),
+                auto n1 = std::find_if(active_bounds.begin(), active_bounds.end(),
                                        find_first_bound<T>(*next_itr));
                 auto n2 = std::next(n1);
                 if (bounds_adjacent(*next_itr, *n2)) {
@@ -363,11 +355,9 @@ void process_intersections(T top_y,
     }
 
     // Restore order of active bounds list
-    std::stable_sort(active_bounds.begin(),
-                     active_bounds.end(),
-                     [](bound_ptr<T> const& b1, bound_ptr<T> const& b2) { 
-                         return b1->pos < b2->pos; 
-                     });
+    std::stable_sort(
+        active_bounds.begin(), active_bounds.end(),
+        [](bound_ptr<T> const& b1, bound_ptr<T> const& b2) { return b1->pos < b2->pos; });
 
     // Sort the intersection list
     std::stable_sort(intersects.begin(), intersects.end(), intersect_list_sorter<T>());

@@ -57,7 +57,7 @@ bool inside(mapbox::geometry::point<T> p, size_t edge, mapbox::geometry::box<T> 
 
 template <typename T>
 mapbox::geometry::linear_ring<T> quick_lr_clip(mapbox::geometry::linear_ring<T> const& ring,
-                                      mapbox::geometry::box<T> const& b) {
+                                               mapbox::geometry::box<T> const& b) {
     mapbox::geometry::linear_ring<T> out = ring;
 
     for (size_t edge = 0; edge < 4; edge++) {

@@ -19,7 +19,8 @@
 #define WAGYU_MINOR_VERSION 4
 #define WAGYU_PATCH_VERSION 1
 
-#define WAGYU_VERSION (WAGYU_MAJOR_VERSION * 100000) + (WAGYU_MINOR_VERSION * 100) + (WAGYU_PATCH_VERSION)
+#define WAGYU_VERSION                                                                              \
+    (WAGYU_MAJOR_VERSION * 100000) + (WAGYU_MINOR_VERSION * 100) + (WAGYU_PATCH_VERSION)
 
 namespace mapbox {
 namespace geometry {
@@ -28,7 +29,6 @@ namespace wagyu {
 template <typename T>
 class wagyu {
 private:
-
     local_minimum_list<T> minima_list;
     bool reverse_output;
 
@@ -124,11 +124,11 @@ public:
         }
 
         ring_manager<T> manager;
-        
+
         build_hot_pixels(minima_list, manager);
-        
+
         execute_vatti(minima_list, manager, cliptype, subject_fill_type, clip_fill_type);
-        
+
         correct_topology(manager);
 
         build_result(solution, manager, reverse_output);

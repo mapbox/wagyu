@@ -359,8 +359,7 @@ void add_local_minimum_point(bound<T>& b1,
                              active_bound_list<T>& active_bounds,
                              mapbox::geometry::point<T> const& pt,
                              ring_manager<T>& rings) {
-    if (is_horizontal(*b2.current_edge) ||
-        (b1.current_edge->dx > b2.current_edge->dx)) {
+    if (is_horizontal(*b2.current_edge) || (b1.current_edge->dx > b2.current_edge->dx)) {
         add_point(b1, active_bounds, pt, rings);
         b2.last_point = pt;
         b2.ring = b1.ring;
@@ -413,7 +412,7 @@ bool first_is_bottom_point(const_point_ptr<T> btmPt1, const_point_ptr<T> btmPt2)
     if (values_are_equal(std::max(dx1p, dx1n), std::max(dx2p, dx2n)) &&
         values_are_equal(std::min(dx1p, dx1n), std::min(dx2p, dx2n))) {
         std::size_t s = 0;
-        mapbox::geometry::box<T> bbox({0,0},{0,0});
+        mapbox::geometry::box<T> bbox({ 0, 0 }, { 0, 0 });
         return area_from_point(btmPt1, s, bbox) > 0.0; // if otherwise identical use orientation
     } else {
         return (greater_than_or_equal(dx1p, dx2p) && greater_than_or_equal(dx1p, dx2n)) ||
@@ -780,7 +779,7 @@ bool is_convex(point_ptr<T> edge) {
     T v1y = edge->y - prev->y;
     T v2x = next->x - edge->x;
     T v2y = next->y - edge->y;
-    T cross = v1x*v2y - v2x*v1y;
+    T cross = v1x * v2y - v2x * v1y;
     if (cross < 0 && edge->ring->area() > 0) {
         return true;
     } else if (cross > 0 && edge->ring->area() < 0) {
@@ -815,16 +814,14 @@ point_in_polygon_result inside_or_outside_special(point_ptr<T> first_pt, point_p
         }
         itr = itr->next;
     } while (itr != first_pt);
-    
+
     throw std::runtime_error("Could not find a point within the polygon to test");
 }
 
 template <typename T>
 bool box2_contains_box1(mapbox::geometry::box<T> const& box1,
                         mapbox::geometry::box<T> const& box2) {
-    return (box2.max.x >= box1.max.x && 
-            box2.max.y >= box1.max.y &&
-            box2.min.x <= box1.min.x &&
+    return (box2.max.x >= box1.max.x && box2.max.y >= box1.max.y && box2.min.x <= box1.min.x &&
             box2.min.y <= box1.min.y);
 }
 
@@ -850,7 +847,6 @@ bool poly2_contains_poly1(ring_ptr<T> ring1, ring_ptr<T> ring2) {
     point_in_polygon_result res = inside_or_outside_special(outpt1, outpt2);
     return res == point_inside_polygon;
 }
-
 }
 }
 }

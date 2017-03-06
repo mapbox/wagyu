@@ -70,9 +70,9 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
 
         // note: may be done multiple times
         if ((*horz_bound)->ring) {
-            add_point_to_ring(
-                *(*horz_bound),
-                mapbox::geometry::point<T>(wround<T>((*bnd)->current_x), scanline_y), rings);
+            add_point_to_ring(*(*horz_bound),
+                              mapbox::geometry::point<T>(wround<T>((*bnd)->current_x), scanline_y),
+                              rings);
         }
 
         // OK, so far we're still in range of the horizontal Edge  but make sure
@@ -83,7 +83,7 @@ active_bound_list_itr<T> process_horizontal_left_to_right(T scanline_y,
                                         (*horz_bound)->current_edge->top, rings, active_bounds);
             }
             *bound_max_pair = nullptr;
-            *horz_bound = nullptr; 
+            *horz_bound = nullptr;
             if (!shifted) {
                 ++horizontal_itr_behind;
             }
@@ -135,13 +135,15 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
     bool is_maxima_edge = is_maxima(horz_bound_fwd, scanline_y);
     auto bound_max_pair = active_bounds.rend();
     if (is_maxima_edge) {
-        bound_max_pair = active_bound_list_rev_itr<T>(get_maxima_pair<T>(horz_bound_fwd, active_bounds));
+        bound_max_pair =
+            active_bound_list_rev_itr<T>(get_maxima_pair<T>(horz_bound_fwd, active_bounds));
         --bound_max_pair;
     }
     auto hp_itr_fwd = rings.current_hp_itr;
-    while (hp_itr_fwd != rings.hot_pixels.end() &&
-           (hp_itr_fwd->y < scanline_y ||
-            (hp_itr_fwd->y == scanline_y && hp_itr_fwd->x < (*horz_bound_fwd)->current_edge->top.x))) {
+    while (
+        hp_itr_fwd != rings.hot_pixels.end() &&
+        (hp_itr_fwd->y < scanline_y ||
+         (hp_itr_fwd->y == scanline_y && hp_itr_fwd->x < (*horz_bound_fwd)->current_edge->top.x))) {
         ++hp_itr_fwd;
     }
     auto hp_itr = hot_pixel_rev_itr<T>(hp_itr_fwd);
@@ -178,11 +180,11 @@ active_bound_list_itr<T> process_horizontal_right_to_left(T scanline_y,
 
         // note: may be done multiple times
         if ((*horz_bound)->ring) {
-            add_point_to_ring(
-                *(*horz_bound),
-                mapbox::geometry::point<T>(wround<T>((*bnd)->current_x), scanline_y), rings);
+            add_point_to_ring(*(*horz_bound),
+                              mapbox::geometry::point<T>(wround<T>((*bnd)->current_x), scanline_y),
+                              rings);
         }
-        
+
         // OK, so far we're still in range of the horizontal Edge  but make sure
         // we're at the last of consec. horizontals when matching with eMaxPair
         if (is_maxima_edge && bnd == bound_max_pair) {
@@ -258,7 +260,7 @@ void process_horizontals(T scanline_y,
             ++bnd_itr;
         }
     }
-    active_bounds.erase(std::remove(active_bounds.begin(), active_bounds.end(), nullptr), 
+    active_bounds.erase(std::remove(active_bounds.begin(), active_bounds.end(), nullptr),
                         active_bounds.end());
 }
 }

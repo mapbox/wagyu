@@ -41,8 +41,8 @@ struct edge {
     template <typename T2>
     edge(mapbox::geometry::point<T2> const& current,
          mapbox::geometry::point<T2> const& next_pt) noexcept
-        : bot(static_cast<T>(current.x), static_cast<T>(current.y)), 
-          top(static_cast<T>(current.x), static_cast<T>(current.y)), 
+        : bot(static_cast<T>(current.x), static_cast<T>(current.y)),
+          top(static_cast<T>(current.x), static_cast<T>(current.y)),
           dx(0.0) {
         if (current.y >= next_pt.y) {
             top = mapbox::geometry::point<T>(static_cast<T>(next_pt.x), static_cast<T>(next_pt.y));

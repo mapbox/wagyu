@@ -84,7 +84,6 @@ template <>
 inline std::int64_t wround<std::int64_t>(double value) {
     return std::llround(value);
 }
-
 }
 }
 }

@@ -40,15 +40,16 @@ active_bound_list_itr<T> do_maxima(active_bound_list_itr<T>& bnd,
             continue;
         }
         skipped = true;
-        intersect_bounds(*(*bnd), *(*bnd_next), (*bnd)->current_edge->top, cliptype, subject_fill_type,
-                         clip_fill_type, manager, active_bounds);
+        intersect_bounds(*(*bnd), *(*bnd_next), (*bnd)->current_edge->top, cliptype,
+                         subject_fill_type, clip_fill_type, manager, active_bounds);
         std::iter_swap(bnd, bnd_next);
         bnd = bnd_next;
         ++bnd_next;
     }
 
     if ((*bnd)->ring && (*bndMaxPair)->ring) {
-        add_local_maximum_point(*(*bnd), *(*bndMaxPair), (*bnd)->current_edge->top, manager, active_bounds);
+        add_local_maximum_point(*(*bnd), *(*bndMaxPair), (*bnd)->current_edge->top, manager,
+                                active_bounds);
     } else if ((*bnd)->ring || (*bndMaxPair)->ring) {
         throw std::runtime_error("DoMaxima error");
     }
@@ -107,11 +108,12 @@ void process_edges_at_top_of_scanbeam(T top_y,
         }
         ++bnd;
     }
-    active_bounds.erase(std::remove(active_bounds.begin(), active_bounds.end(), nullptr), 
+    active_bounds.erase(std::remove(active_bounds.begin(), active_bounds.end(), nullptr),
                         active_bounds.end());
 
-    insert_horizontal_local_minima_into_ABL(top_y, minima_sorted, current_lm, active_bounds, manager,
-                                            scanbeam, cliptype, subject_fill_type, clip_fill_type);
+    insert_horizontal_local_minima_into_ABL(top_y, minima_sorted, current_lm, active_bounds,
+                                            manager, scanbeam, cliptype, subject_fill_type,
+                                            clip_fill_type);
 
     process_horizontals(top_y, active_bounds, manager, scanbeam, cliptype, subject_fill_type,
                         clip_fill_type);

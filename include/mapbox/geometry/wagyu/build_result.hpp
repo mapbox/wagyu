@@ -10,7 +10,9 @@ namespace geometry {
 namespace wagyu {
 
 template <typename T1, typename T2>
-void push_ring_to_polygon(mapbox::geometry::polygon<T2>& poly, ring_ptr<T1>& r, bool reverse_output) {
+void push_ring_to_polygon(mapbox::geometry::polygon<T2>& poly,
+                          ring_ptr<T1>& r,
+                          bool reverse_output) {
     mapbox::geometry::linear_ring<T2> lr;
     lr.reserve(r->size() + 1);
     auto firstPt = r->points;

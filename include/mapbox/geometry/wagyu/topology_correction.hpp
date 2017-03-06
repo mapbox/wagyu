@@ -240,13 +240,12 @@ point_vector<T> sort_ring_points(ring_ptr<T> r) {
         point_itr = point_itr->next;
     }
     sorted_points.push_back(last_point);
-    std::stable_sort(sorted_points.begin(), 
-                     sorted_points.end(), 
+    std::stable_sort(sorted_points.begin(), sorted_points.end(),
                      [](point_ptr<T> const& pt1, point_ptr<T> const& pt2) {
-                        if (pt1->y != pt2->y) {
-                            return (pt1->y > pt2->y);
-                        }
-                        return (pt1->x < pt2->x);
+                         if (pt1->y != pt2->y) {
+                             return (pt1->y > pt2->y);
+                         }
+                         return (pt1->x < pt2->x);
                      });
     return sorted_points;
 }
@@ -269,7 +268,7 @@ ring_ptr<T> correct_self_intersection(point_ptr<T> pt1,
     pt4->next = pt1;
     pt2->prev = pt3;
     pt3->next = pt2;
-    
+
     if (spike_removal) {
         remove_spikes(pt1);
         remove_spikes(pt2);
@@ -294,8 +293,8 @@ ring_ptr<T> correct_self_intersection(point_ptr<T> pt1,
     ring_ptr<T> new_ring = create_new_ring(manager);
     std::size_t size_1 = 0;
     std::size_t size_2 = 0;
-    mapbox::geometry::box<T> box1({0,0},{0,0});
-    mapbox::geometry::box<T> box2({0,0},{0,0});
+    mapbox::geometry::box<T> box1({ 0, 0 }, { 0, 0 });
+    mapbox::geometry::box<T> box2({ 0, 0 }, { 0, 0 });
     double area_1 = area_from_point(pt1, size_1, box1);
     double area_2 = area_from_point(pt2, size_2, box2);
 
@@ -317,8 +316,8 @@ ring_ptr<T> correct_self_intersection(point_ptr<T> pt1,
 template <typename T>
 void correct_repeated_points(ring_manager<T>& manager,
                              ring_vector<T>& new_rings,
-                             point_vector_itr<T>const& begin,
-                             point_vector_itr<T>const& end) {
+                             point_vector_itr<T> const& begin,
+                             point_vector_itr<T> const& end) {
     for (auto itr1 = begin; itr1 != end; ++itr1) {
         if ((*itr1)->ring == nullptr) {
             continue;
@@ -373,13 +372,13 @@ void reassign_children_if_necessary(ring_ptr<T> new_ring,
                                     ring_ptr<T> sibling_ring,
                                     ring_manager<T>& manager,
                                     ring_vector<T>& new_rings) {
-    auto & children = sibling_ring == nullptr ? manager.children : sibling_ring->children;
-    for (auto & c : children) {
+    auto& children = sibling_ring == nullptr ? manager.children : sibling_ring->children;
+    for (auto& c : children) {
         if (c == nullptr) {
             continue;
         }
         if (std::find(new_rings.begin(), new_rings.end(), c) != new_rings.end()) {
-           continue;
+            continue;
         }
         if (poly2_contains_poly1(c, new_ring)) {
             reassign_as_child(c, new_ring, manager);
@@ -388,18 +387,16 @@ void reassign_children_if_necessary(ring_ptr<T> new_ring,
 }
 
 template <typename T>
-bool find_parent_in_tree(ring_ptr<T> r,
-                         ring_ptr<T> possible_parent,
-                         ring_manager<T>& manager) {
+bool find_parent_in_tree(ring_ptr<T> r, ring_ptr<T> possible_parent, ring_manager<T>& manager) {
     // Before starting this we are assuming that possible_parent
     // and r have opposite signs of their areas
-    
+
     // First we must search all grandchildren
-    for (auto & c : possible_parent->children) {
+    for (auto& c : possible_parent->children) {
         if (c == nullptr) {
             continue;
         }
-        for (auto & gc : c->children) {
+        for (auto& gc : c->children) {
             if (gc == nullptr) {
                 continue;
             }
@@ -408,7 +405,7 @@ bool find_parent_in_tree(ring_ptr<T> r,
             }
         }
     }
-    
+
     if (poly2_contains_poly1(r, possible_parent)) {
         reassign_as_child(r, possible_parent, manager);
         return true;
@@ -420,19 +417,18 @@ template <typename T>
 void assign_new_ring_parents(ring_manager<T>& manager,
                              ring_ptr<T> original_ring,
                              ring_vector<T>& new_rings) {
-    
+
     // First lets remove any rings that have zero area
     // or have no points
-    new_rings.erase(
-        std::remove_if(new_rings.begin(), new_rings.end(),
-            [](ring_ptr<T> const& r) {
-                if (r->points == nullptr) {
-                    return true;
-                }
-                return value_is_zero(r->area());
-            }),
-        new_rings.end());
-    
+    new_rings.erase(std::remove_if(new_rings.begin(), new_rings.end(),
+                                   [](ring_ptr<T> const& r) {
+                                       if (r->points == nullptr) {
+                                           return true;
+                                       }
+                                       return value_is_zero(r->area());
+                                   }),
+                    new_rings.end());
+
     if (new_rings.empty()) {
         // No new rings created simply return;
         return;
@@ -441,11 +437,11 @@ void assign_new_ring_parents(ring_manager<T>& manager,
     // We should not have to re-assign the parent of the original ring
     // because we always maintained the largest ring during splitting
     // on repeated points.
-    
+
     double original_ring_area = original_ring->area();
     bool original_positive = original_ring_area > 0.0;
 
-    // If there is only one new ring the logic is very simple and we 
+    // If there is only one new ring the logic is very simple and we
     // do not have to check which ring contains, we only need to compare
     // the areas of the original ring and that of the new ring.
     if (new_rings.size() == 1) {
@@ -457,9 +453,10 @@ void assign_new_ring_parents(ring_manager<T>& manager,
             reassign_children_if_necessary(new_rings.front(), original_ring, manager, new_rings);
         } else {
             // The new ring is a child of original ring
-            // Check the 
+            // Check the
             assign_as_child(new_rings.front(), original_ring, manager);
-            reassign_children_if_necessary(new_rings.front(), original_ring->parent, manager, new_rings);
+            reassign_children_if_necessary(new_rings.front(), original_ring->parent, manager,
+                                           new_rings);
         }
         return;
     }
@@ -467,23 +464,23 @@ void assign_new_ring_parents(ring_manager<T>& manager,
     // Now we want to sort rings from the largest in absolute area to the smallest
     // as we will assign the rings with the largest areas first
     std::stable_sort(new_rings.begin(), new_rings.end(),
-        [] (ring_ptr<T> const& r1, ring_ptr<T> const& r2) {
-            return std::fabs(r1->area()) > std::fabs(r2->area());
-        });
+                     [](ring_ptr<T> const& r1, ring_ptr<T> const& r2) {
+                         return std::fabs(r1->area()) > std::fabs(r2->area());
+                     });
 
     for (auto r_itr = new_rings.begin(); r_itr != new_rings.end(); ++r_itr) {
         double new_ring_area = (*r_itr)->area();
         bool new_positive = new_ring_area > 0.0;
         bool same_orientation = new_positive == original_positive;
         bool found = false;
-        // First lets check the trees of any new_rings that might have 
+        // First lets check the trees of any new_rings that might have
         // been assigned as siblings to the original ring.
         for (auto s_itr = new_rings.begin(); s_itr != r_itr; ++s_itr) {
             if ((*s_itr)->parent != original_ring->parent) {
                 continue;
             }
             if (same_orientation) {
-                for (auto & s_child : (*s_itr)->children) {
+                for (auto& s_child : (*s_itr)->children) {
                     if (s_child == nullptr) {
                         continue;
                     }
@@ -495,7 +492,8 @@ void assign_new_ring_parents(ring_manager<T>& manager,
                 }
             } else {
                 if (find_parent_in_tree(*r_itr, *s_itr, manager)) {
-                    reassign_children_if_necessary(*r_itr, original_ring->parent, manager, new_rings);
+                    reassign_children_if_necessary(*r_itr, original_ring->parent, manager,
+                                                   new_rings);
                     found = true;
                 }
             }
@@ -510,7 +508,7 @@ void assign_new_ring_parents(ring_manager<T>& manager,
 
         // Next lets check the tree of the original_ring
         if (same_orientation) {
-            for (auto & o_child : original_ring->children) {
+            for (auto& o_child : original_ring->children) {
                 if (o_child == nullptr) {
                     continue;
                 }
@@ -537,9 +535,7 @@ void assign_new_ring_parents(ring_manager<T>& manager,
 }
 
 template <typename T>
-bool correct_ring_self_intersections(ring_manager<T>& manager, 
-                                     ring_ptr<T> r,
-                                     bool correct_tree) {
+bool correct_ring_self_intersections(ring_manager<T>& manager, ring_ptr<T> r, bool correct_tree) {
 
     if (r->corrected || !r->points) {
         return false;
@@ -548,20 +544,21 @@ bool correct_ring_self_intersections(ring_manager<T>& manager,
     ring_vector<T> new_rings;
 
     find_and_correct_repeated_points(r, manager, new_rings);
-    
+
     if (correct_tree) {
         assign_new_ring_parents(manager, r, new_rings);
     }
-    
+
     r->corrected = true;
     return true;
 }
 
 template <typename T>
-void process_single_intersection(std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& connection_map,
-                                 point_ptr<T> op_j,
-                                 point_ptr<T> op_k,
-                                 ring_manager<T>& manager) {
+void process_single_intersection(
+    std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& connection_map,
+    point_ptr<T> op_j,
+    point_ptr<T> op_k,
+    ring_manager<T>& manager) {
     ring_ptr<T> ring_j = op_j->ring;
     ring_ptr<T> ring_k = op_k->ring;
     if (ring_j == ring_k) {
@@ -641,8 +638,8 @@ void process_single_intersection(std::unordered_multimap<ring_ptr<T>, point_ptr_
             if (it_ring != ring_search && *op_origin_2 != *it->second.op2 && it_ring != nullptr &&
                 (ring_parent == it_ring || ring_parent == it_ring->parent) &&
                 !value_is_zero(it_ring->area()) &&
-                find_intersect_loop(connection_map, iList, ring_parent, ring_origin, it_ring, visited,
-                                    op_origin_2, it->second.op2, manager)) {
+                find_intersect_loop(connection_map, iList, ring_parent, ring_origin, it_ring,
+                                    visited, op_origin_2, it->second.op2, manager)) {
                 found = true;
                 iList.emplace_front(ring_search, it->second);
                 break;
@@ -751,8 +748,8 @@ void process_single_intersection(std::unordered_multimap<ring_ptr<T>, point_ptr_
         ring_origin->corrected = false;
         std::size_t size_1 = 0;
         std::size_t size_2 = 0;
-        mapbox::geometry::box<T> box1({0,0},{0,0});
-        mapbox::geometry::box<T> box2({0,0},{0,0});
+        mapbox::geometry::box<T> box1({ 0, 0 }, { 0, 0 });
+        mapbox::geometry::box<T> box2({ 0, 0 }, { 0, 0 });
         double area_1 = area_from_point(op_origin_1, size_1, box1);
         double area_2 = area_from_point(op_origin_2, size_2, box2);
         if (origin_is_hole && ((area_1 < 0.0))) {
@@ -785,7 +782,7 @@ void process_single_intersection(std::unordered_multimap<ring_ptr<T>, point_ptr_
             assign_as_child(ring_new, ring_origin, manager);
             // The parent ring in this situation might need to give up children
             // to the new ring.
-            for (auto & c : ring_parent->children) {
+            for (auto& c : ring_parent->children) {
                 if (c == nullptr) {
                     continue;
                 }
@@ -798,7 +795,7 @@ void process_single_intersection(std::unordered_multimap<ring_ptr<T>, point_ptr_
             // however some children ring from the ring origin might
             // need to be re-assigned to the new ring
             assign_as_sibling(ring_new, ring_origin, manager);
-            for (auto & c : ring_origin->children) {
+            for (auto& c : ring_origin->children) {
                 if (c == nullptr) {
                     continue;
                 }
@@ -858,10 +855,11 @@ void process_single_intersection(std::unordered_multimap<ring_ptr<T>, point_ptr_
 }
 
 template <typename T>
-void correct_chained_repeats(ring_manager<T>& manager,
-                             std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& connection_map,
-                             point_vector_itr<T> const& begin,
-                             point_vector_itr<T> const& end) {
+void correct_chained_repeats(
+    ring_manager<T>& manager,
+    std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>>& connection_map,
+    point_vector_itr<T> const& begin,
+    point_vector_itr<T> const& end) {
     for (auto itr1 = begin; itr1 != end; ++itr1) {
         if ((*itr1)->ring == nullptr) {
             continue;
@@ -885,12 +883,12 @@ void correct_chained_rings(ring_manager<T>& manager) {
     // connection point pairs with other rings.
     std::unordered_multimap<ring_ptr<T>, point_ptr_pair<T>> connection_map;
     connection_map.reserve(manager.rings.size());
-   
+
     // Now lets find and process any points
     // that overlap -- we should have solved
     // all situations where these points
     // would be self intersections of a ring with
-    // earlier processing so this should just be 
+    // earlier processing so this should just be
     // points where different rings are touching.
     std::size_t count = 0;
     auto prev_itr = manager.all_points.begin();
@@ -923,16 +921,15 @@ template <typename T>
 ring_vector<T> sort_rings_largest_to_smallest(ring_manager<T>& manager) {
     ring_vector<T> sorted_rings;
     sorted_rings.reserve(manager.rings.size());
-    for (auto & r : manager.rings) {
+    for (auto& r : manager.rings) {
         sorted_rings.push_back(&r);
     }
-    std::stable_sort(sorted_rings.begin(),
-                     sorted_rings.end(),
+    std::stable_sort(sorted_rings.begin(), sorted_rings.end(),
                      [](ring_ptr<T> const& r1, ring_ptr<T> const& r2) {
-                        if (!r1->points || !r2->points) {
-                            return r1->points != nullptr;
-                        }
-                        return std::fabs(r1->area()) > std::fabs(r2->area());
+                         if (!r1->points || !r2->points) {
+                             return r1->points != nullptr;
+                         }
+                         return std::fabs(r1->area()) > std::fabs(r2->area());
                      });
     return sorted_rings;
 }
@@ -941,22 +938,18 @@ template <typename T>
 ring_vector<T> sort_rings_smallest_to_largest(ring_manager<T>& manager) {
     ring_vector<T> sorted_rings;
     sorted_rings.reserve(manager.rings.size());
-    for (auto & r : manager.rings) {
+    for (auto& r : manager.rings) {
         sorted_rings.push_back(&r);
     }
-    std::stable_sort(sorted_rings.begin(),
-                     sorted_rings.end(),
+    std::stable_sort(sorted_rings.begin(), sorted_rings.end(),
                      [](ring_ptr<T> const& r1, ring_ptr<T> const& r2) {
-                        if (!r1->points || !r2->points) {
-                            return r1->points != nullptr;
-                        }
-                        return std::fabs(r1->area()) < std::fabs(r2->area());
+                         if (!r1->points || !r2->points) {
+                             return r1->points != nullptr;
+                         }
+                         return std::fabs(r1->area()) < std::fabs(r2->area());
                      });
     return sorted_rings;
 }
-
-
-
 
 template <typename T>
 struct collinear_path {
@@ -977,11 +970,11 @@ struct collinear_result {
 };
 
 template <typename T>
-collinear_result<T> fix_collinear_path(collinear_path<T> & path) {
+collinear_result<T> fix_collinear_path(collinear_path<T>& path) {
     // Left and right are just the opposite ends of the
     // collinear path, they may not be actually left
     // and right of each other.
-    // The left end is start_1 and end_2 
+    // The left end is start_1 and end_2
     // The right end is start_2 and end_1
 
     // NOTE spike detection is checking that the
@@ -1064,8 +1057,7 @@ collinear_result<T> fix_collinear_path(collinear_path<T> & path) {
 }
 
 template <typename T>
-collinear_path<T> find_start_and_end_of_collinear_edges(point_ptr<T> pt_a,
-                                                        point_ptr<T> pt_b) {
+collinear_path<T> find_start_and_end_of_collinear_edges(point_ptr<T> pt_a, point_ptr<T> pt_b) {
     // Search backward on A, forwards on B first
     bool same_ring = pt_a->ring == pt_b->ring;
     point_ptr<T> back = pt_a;
@@ -1157,8 +1149,7 @@ collinear_path<T> find_start_and_end_of_collinear_edges(point_ptr<T> pt_a,
 }
 
 template <typename T>
-bool has_collinear_edge(point_ptr<T> pt_a,
-                        point_ptr<T> pt_b) {
+bool has_collinear_edge(point_ptr<T> pt_a, point_ptr<T> pt_b) {
     // It is assumed pt_a and pt_b are at the same location.
     return (*pt_a->next == *pt_b->prev || *pt_b->next == *pt_a->prev);
 }
@@ -1184,12 +1175,12 @@ void process_collinear_edges_same_ring(point_ptr<T> pt_a,
         original_ring->points = results.pt1;
         original_ring->recalculate_stats();
     } else {
-        // If we have two seperate points, the ring has split into 
+        // If we have two seperate points, the ring has split into
         // two different rings.
         std::size_t s1 = 0;
         std::size_t s2 = 0;
-        mapbox::geometry::box<T> b1({0,0},{0,0});
-        mapbox::geometry::box<T> b2({0,0},{0,0});
+        mapbox::geometry::box<T> b1({ 0, 0 }, { 0, 0 });
+        mapbox::geometry::box<T> b2({ 0, 0 }, { 0, 0 });
         double area1 = area_from_point(results.pt1, s1, b1);
         double area2 = area_from_point(results.pt2, s2, b2);
         bool viable1 = s1 > 2;
@@ -1236,7 +1227,7 @@ void process_collinear_edges_different_rings(point_ptr<T> pt_a,
     // Therefore, we we will need to replace one ring with the other
     ring_ptr<T> merged_ring = ring_a_larger ? ring_a : ring_b;
     ring_ptr<T> deleted_ring = ring_a_larger ? ring_b : ring_a;
-    
+
     merged_ring->points = results.pt1;
     update_points_ring(merged_ring);
     merged_ring->recalculate_stats();
@@ -1247,9 +1238,7 @@ void process_collinear_edges_different_rings(point_ptr<T> pt_a,
 }
 
 template <typename T>
-bool remove_duplicate_points(point_ptr<T> pt_a, 
-                             point_ptr<T> pt_b,
-                             ring_manager<T>& manager) {
+bool remove_duplicate_points(point_ptr<T> pt_a, point_ptr<T> pt_b, ring_manager<T>& manager) {
     if (pt_a->ring == pt_b->ring) {
         if (pt_a->next == pt_b) {
             pt_a->next = pt_b->next;
@@ -1335,14 +1324,12 @@ bool remove_duplicate_points(point_ptr<T> pt_a,
 }
 
 template <typename T>
-bool process_collinear_edges(point_ptr<T> pt_a,
-                             point_ptr<T> pt_b,
-                             ring_manager<T>& manager) {
+bool process_collinear_edges(point_ptr<T> pt_a, point_ptr<T> pt_b, ring_manager<T>& manager) {
     // Neither point assigned to a ring (deleted points)
     if (!pt_a->ring || !pt_b->ring) {
         return false;
     }
-    
+
     if (remove_duplicate_points(pt_a, pt_b, manager)) {
         return true;
     }
@@ -1365,8 +1352,8 @@ bool process_collinear_edges(point_ptr<T> pt_a,
 
 template <typename T>
 void correct_collinear_repeats(ring_manager<T>& manager,
-                             point_vector_itr<T> const& begin,
-                             point_vector_itr<T> const& end) {
+                               point_vector_itr<T> const& begin,
+                               point_vector_itr<T> const& end) {
     for (auto itr1 = begin; itr1 != end; ++itr1) {
         if ((*itr1)->ring == nullptr) {
             continue;
@@ -1425,18 +1412,16 @@ template <typename T>
 void correct_tree(ring_manager<T>& manager) {
 
     // It is possible that vatti resulted in some parent child
-    // relationships that are not quite right, therefore, we 
+    // relationships that are not quite right, therefore, we
     // need to just rebuild the entire tree of rings
 
-    // First lets process the rings in order of size from largest 
-    // area to smallest, we know right away that no smaller ring could ever 
+    // First lets process the rings in order of size from largest
+    // area to smallest, we know right away that no smaller ring could ever
     // contain a larger ring so we can use this to our advantage
     // as we iterate over the rings.
     using rev_itr = typename ring_vector<T>::reverse_iterator;
     ring_vector<T> sorted_rings = sort_rings_largest_to_smallest(manager);
-    for (auto itr = sorted_rings.begin();
-         itr != sorted_rings.end();
-         ++itr) {
+    for (auto itr = sorted_rings.begin(); itr != sorted_rings.end(); ++itr) {
         if ((*itr)->points == nullptr) {
             continue;
         }
@@ -1484,7 +1469,7 @@ bool correct_self_intersections(ring_manager<T>& manager, bool correct_tree) {
 
 template <typename T>
 void correct_topology(ring_manager<T>& manager) {
- 
+
     // Sort all the points, this will be used for the locating of chained rings
     // and the collinear edges and only needs to be done once.
     std::stable_sort(manager.all_points.begin(), manager.all_points.end(), point_ptr_cmp<T>());
@@ -1492,7 +1477,7 @@ void correct_topology(ring_manager<T>& manager) {
     // Initially the orientations of the rings
     // could be incorrect, we need to adjust them
     correct_orientations(manager);
-    
+
     // We should only have to fix collinear edges once.
     // During this we also correct self intersections
     correct_collinear_edges(manager);
@@ -1500,14 +1485,13 @@ void correct_topology(ring_manager<T>& manager) {
     correct_self_intersections(manager, false);
 
     correct_tree(manager);
- 
+
     bool fixed_intersections = true;
     while (fixed_intersections) {
         correct_chained_rings(manager);
         fixed_intersections = correct_self_intersections(manager, true);
     }
 }
-
 }
 }
 }

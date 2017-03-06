@@ -84,10 +84,11 @@ bool is_even_odd_alt_fill_type(bound<T> const& bound,
 
 template <typename T>
 struct bound_insert_location {
-    
+
     bound<T> const& bound2;
 
-    bound_insert_location(bound<T> const& b) : bound2(b) {}
+    bound_insert_location(bound<T> const& b) : bound2(b) {
+    }
 
     bool operator()(bound_ptr<T> const& b) {
         auto const& bound1 = *b;
@@ -106,12 +107,13 @@ struct bound_insert_location {
 };
 
 template <typename T>
-active_bound_list_itr<T> insert_bound_into_ABL(bound<T>& left, bound<T>& right, active_bound_list<T>& active_bounds) {
+active_bound_list_itr<T>
+insert_bound_into_ABL(bound<T>& left, bound<T>& right, active_bound_list<T>& active_bounds) {
 
-    auto itr = std::find_if(active_bounds.begin(), active_bounds.end(), bound_insert_location<T>(left));
+    auto itr =
+        std::find_if(active_bounds.begin(), active_bounds.end(), bound_insert_location<T>(left));
     return active_bounds.insert(itr, { &left, &right });
 }
-
 
 template <typename T>
 inline bool is_maxima(bound<T>& bnd, T y) {
@@ -145,7 +147,7 @@ inline bool next_edge_is_horizontal(active_bound_list_itr<T>& bnd) {
 
 template <typename T>
 void next_edge_in_bound(bound<T>& bnd, scanbeam_list<T>& scanbeam) {
-    auto & current_edge = bnd.current_edge;
+    auto& current_edge = bnd.current_edge;
     ++current_edge;
     if (current_edge != bnd.edges.end()) {
         ++(bnd.next_edge);
@@ -160,9 +162,7 @@ template <typename T>
 active_bound_list_itr<T> get_maxima_pair(active_bound_list_itr<T> const& bnd,
                                          active_bound_list<T>& active_bounds) {
     bound_ptr<T> maximum = (*bnd)->maximum_bound;
-    return std::find(active_bounds.begin(), 
-                     active_bounds.end(), 
-                     maximum);
+    return std::find(active_bounds.begin(), active_bounds.end(), maximum);
 }
 
 template <typename T>
