@@ -102,7 +102,7 @@ bound<T> create_bound_towards_minimum(edge_list<T>& edges) {
     if (next_edge == edges.end()) {
         std::swap(edges, bnd.edges);
     } else {
-        bnd.edges.reserve(std::distance(edges.begin(), next_edge));
+        bnd.edges.reserve(static_cast<std::size_t>(std::distance(edges.begin(), next_edge)));
         std::move(edges.begin(), next_edge, std::back_inserter(bnd.edges));
         edges.erase(edges.begin(), next_edge);
     }
@@ -147,7 +147,7 @@ bound<T> create_bound_towards_maximum(edge_list<T>& edges) {
     if (next_edge == edges.end()) {
         std::swap(bnd.edges, edges);
     } else {
-        bnd.edges.reserve(std::distance(edges.begin(), next_edge));
+        bnd.edges.reserve(static_cast<std::size_t>(std::distance(edges.begin(), next_edge)));
         std::move(edges.begin(), next_edge, std::back_inserter(bnd.edges));
         edges.erase(edges.begin(), next_edge);
     }

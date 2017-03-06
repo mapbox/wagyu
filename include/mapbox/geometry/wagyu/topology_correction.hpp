@@ -361,7 +361,7 @@ void find_and_correct_repeated_points(ring_ptr<T> r,
             continue;
         }
         auto first = prev_itr;
-        std::advance(first, -(count + 1));
+        std::advance(first, -(static_cast<int>(count) + 1));
         correct_repeated_points(manager, new_rings, first, prev_itr);
         count = 0;
     }
@@ -911,7 +911,7 @@ void correct_chained_rings(ring_manager<T>& manager) {
             continue;
         }
         auto first = prev_itr;
-        std::advance(first, -(count + 1));
+        std::advance(first, -(static_cast<int>(count) + 1));
         correct_chained_repeats(manager, connection_map, first, prev_itr);
         count = 0;
     }
@@ -1402,7 +1402,7 @@ void correct_collinear_edges(ring_manager<T>& manager) {
             continue;
         }
         auto first = prev_itr;
-        std::advance(first, -(count + 1));
+        std::advance(first, -(static_cast<int>(count) + 1));
         correct_collinear_repeats(manager, first, prev_itr);
         count = 0;
     }
