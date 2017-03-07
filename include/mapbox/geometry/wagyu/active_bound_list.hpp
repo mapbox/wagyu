@@ -230,9 +230,7 @@ void set_winding_count(active_bound_list_itr<T>& bnd_itr,
     if (is_even_odd_alt_fill_type(*(*bnd_itr), subject_fill_type, clip_fill_type)) {
         // EvenOdd filling ...
         while (bnd_itr_forward != bnd_itr) {
-            if ((*bnd_itr_forward)->winding_delta != 0) {
-                (*bnd_itr)->winding_count2 = ((*bnd_itr)->winding_count2 == 0 ? 1 : 0);
-            }
+            (*bnd_itr)->winding_count2 = ((*bnd_itr)->winding_count2 == 0 ? 1 : 0);
             ++bnd_itr_forward;
         }
     } else {

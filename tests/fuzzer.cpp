@@ -158,7 +158,7 @@ void print_fill_type(mapbox::geometry::wagyu::fill_type ft) {
 
 int main() {
     catch_signals();
-    unsigned seed = time(0);
+    unsigned seed = static_cast<unsigned>(time(0));
     std::size_t count = 0;
     srand(seed);
 

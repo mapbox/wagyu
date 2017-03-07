@@ -38,10 +38,6 @@ inline bool values_are_equal(double x, double y) {
     return value_is_zero(x - y);
 }
 
-inline bool values_near_equal(double x, double y) {
-    return std::fabs(x - y) < (5.0 * std::numeric_limits<double>::epsilon());
-}
-
 inline bool greater_than_or_equal(double x, double y) {
     return x > y || values_are_equal(x, y);
 }
