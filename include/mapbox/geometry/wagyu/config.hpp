@@ -36,18 +36,6 @@ enum horizontal_direction : std::uint8_t { right_to_left = 0, left_to_right = 1 
 
 enum edge_side : std::uint8_t { edge_left = 0, edge_right };
 
-enum join_type : std::uint8_t { join_type_square = 0, join_type_round, join_type_miter };
-
-enum end_type {
-    end_type_closed_polygon = 0,
-    end_type_closed_line,
-    end_type_open_butt,
-    end_type_open_square,
-    end_type_open_round
-};
-
-template <typename T>
-using maxima_list = std::list<T>;
 }
 }
 }
