@@ -10,66 +10,79 @@ matrix:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'g++-4.9' ]
+      # override before_install to use apt installed compiler
+      # rather than mason installed clang++
+      before_install:
+        - which ${CXX}
     - os: linux
       env: CXX=g++-5
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'g++-5' ]
+      # override before_install to use apt installed compiler
+      # rather than mason installed clang++
+      before_install:
+        - which ${CXX}
     - os: linux
       env: CXX=g++-6
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'g++-6' ]
+      # override before_install to use apt installed compiler
+      # rather than mason installed clang++
+      before_install:
+        - which ${CXX}
     - os: linux
       env: CXX=clang++ CXXFLAGS="-flto"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
-          packages: [ 'libstdc++6','libstdc++-5-dev' ]
+          packages: [ 'libstdc++-5-dev' ]
     - os: linux
       env: CXX=clang++ LLVM_VERSION="4.0.0" CXXFLAGS="-flto"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
-          packages: [ 'libstdc++6','libstdc++-5-dev' ]
+          packages: [ 'libstdc++-5-dev' ]
     - os: linux
       env: CXX=clang++ CXXFLAGS="-flto -fsanitize=cfi -fvisibility=hidden"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
-          packages: [ 'libstdc++6','libstdc++-5-dev' ]
+          packages: [ 'libstdc++-5-dev' ]
     - os: linux
       env: CXX=clang++ CXXFLAGS="-fsanitize=address -fsanitize-address-use-after-scope -fno-omit-frame-pointer -fno-common"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
-          packages: [ 'libstdc++6','libstdc++-5-dev' ]
+          packages: [ 'libstdc++-5-dev' ]
     - os: linux
       env: CXX=clang++ CXXFLAGS="-fsanitize=undefined"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
-          packages: [ 'libstdc++6','libstdc++-5-dev' ]
+          packages: [ 'libstdc++-5-dev' ]
     - os: linux
       env: CXX=clang++ CXXFLAGS="-fsanitize=integer"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
-          packages: [ 'libstdc++6','libstdc++-5-dev' ]
+          packages: [ 'libstdc++-5-dev' ]
     - os: osx
       osx_image: xcode7.3
     - os: linux
-      env: CXX=clang++ LLVM_VERSION="3.9.1" COVERAGE=true CXXFLAGS="--coverage"
+      env: CXX=clang++ COVERAGE=true CXXFLAGS="--coverage"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
-          packages: [ 'libstdc++6','libstdc++-5-dev' ]
+          packages: [ 'libstdc++-5-dev' ]
+      # override before_script to run coverage
       before_script:
        - make debug
-       - ./.mason/mason install llvm-cov ${LLVM_VERSION}
-       - export PATH=$(./.mason/mason prefix llvm-cov ${LLVM_VERSION})/bin:${PATH}
+       - ./.mason/mason install llvm-cov 3.9.1
+       - export PATH=$(./.mason/mason prefix llvm-cov 3.9.1)/bin:${PATH}
        - which llvm-cov
        - curl -S -f https://codecov.io/bash -o codecov
        - chmod +x codecov
@@ -77,6 +90,7 @@ matrix:
 
 before_install:
  - git submodule update --init
+ - export LLVM_VERSION="${LLVM_VERSION:-3.9.1}"
  - |
    if [[ ${CXX} == "clang++" ]]; then
     ./mason.sh install clang++ ${LLVM_VERSION}
@@ -84,6 +98,7 @@ before_install:
     ./mason.sh install binutils 2.27
     export PATH=$(./mason.sh prefix binutils 2.27)/bin:${PATH}
    fi
+ - which ${CXX}
 
 before_script:
  - make test
