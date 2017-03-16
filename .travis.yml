@@ -1,9 +1,6 @@
 language: generic
+
 sudo: false
-
-default_script: &run_script
-
-script: *run_script
 
 matrix:
   include:
@@ -13,91 +10,83 @@ matrix:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'g++-4.9' ]
-      script: *run_script
     - os: linux
       env: CXX=g++-5
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'g++-5' ]
-      script: *run_script
     - os: linux
       env: CXX=g++-6
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'g++-6' ]
-      script: *run_script
     - os: linux
       env: CXX=clang++ CXXFLAGS="-flto"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'libstdc++6','libstdc++-5-dev' ]
-      script: *run_script
     - os: linux
-      env: CXX=clang++ CLANG_VERSION="4.0.0" CXXFLAGS="-flto"
+      env: CXX=clang++ LLVM_VERSION="4.0.0" CXXFLAGS="-flto"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'libstdc++6','libstdc++-5-dev' ]
-      script: *run_script
     - os: linux
       env: CXX=clang++ CXXFLAGS="-flto -fsanitize=cfi -fvisibility=hidden"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'libstdc++6','libstdc++-5-dev' ]
-      script: *run_script
     - os: linux
       env: CXX=clang++ CXXFLAGS="-fsanitize=address -fsanitize-address-use-after-scope -fno-omit-frame-pointer -fno-common"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'libstdc++6','libstdc++-5-dev' ]
-      script: *run_script
     - os: linux
       env: CXX=clang++ CXXFLAGS="-fsanitize=undefined"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'libstdc++6','libstdc++-5-dev' ]
-      script: *run_script
     - os: linux
       env: CXX=clang++ CXXFLAGS="-fsanitize=integer"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'libstdc++6','libstdc++-5-dev' ]
-      script: *run_script
     - os: osx
       osx_image: xcode7.3
-      script: *run_script
     - os: linux
-      env: CXX=clang++ COVERAGE=true CXXFLAGS="--coverage"
+      env: CXX=clang++ LLVM_VERSION="3.9.1" COVERAGE=true CXXFLAGS="--coverage"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'libstdc++6','libstdc++-5-dev' ]
-      script:
+      before_script:
        - make debug
-       - |
-         if [[ ${COVERAGE} == 'true' ]]; then
-           which llvm-cov
-           curl -S -f https://codecov.io/bash -o codecov
-           chmod +x codecov
-           ./codecov -x "llvm-cov gcov" -Z
-         fi
-
-cache: apt
+       - ./.mason/mason install llvm-cov ${LLVM_VERSION}
+       - export PATH=$(./.mason/mason prefix llvm-cov ${LLVM_VERSION})/bin:${PATH}
+       - which llvm-cov
+       - curl -S -f https://codecov.io/bash -o codecov
+       - chmod +x codecov
+       - ./codecov -x "llvm-cov gcov" -Z
 
 before_install:
  - git submodule update --init
  - |
    if [[ ${CXX} == "clang++" ]]; then
-    CLANG_VERSION="${CLANG_VERSION:-3.9.1}"
-    ./mason.sh install clang++ ${CLANG_VERSION}
-    export PATH=$(./mason.sh prefix clang++ ${CLANG_VERSION})/bin:${PATH}
+    ./mason.sh install clang++ ${LLVM_VERSION}
+    export PATH=$(./mason.sh prefix clang++ ${LLVM_VERSION})/bin:${PATH}
     ./mason.sh install binutils 2.27
     export PATH=$(./mason.sh prefix binutils 2.27)/bin:${PATH}
    fi
+
+before_script:
+ - make test
+ - make clean
+ - make debug
+
