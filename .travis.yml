@@ -75,7 +75,7 @@ matrix:
       osx_image: xcode7.3
       env: CXX=clang++
       # override before_install to use apple clang
-      brefore_install:
+      before_install:
         - which ${CXX}
     # OS X / mason clang 4.0.0 / xcode 8.x
     - os: osx
