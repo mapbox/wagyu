@@ -18,8 +18,8 @@ struct Options {
     std::size_t iterations = 1;
     clip_type operation = clip_type_union;
     fill_type fill = fill_type_even_odd;
-    char* subject_file;
-    char* clip_file;
+    char* subject_file = nullptr;
+    char* clip_file = nullptr;
 } options;
 
 void log_ring(mapbox::geometry::polygon<std::int64_t> const& p) {
@@ -169,7 +169,7 @@ void parse_options(int argc, char* const argv[]) {
         } else {
             // If we didn't catch this argument as a flag or a flag value,
             // set the input files
-            if (options.subject_file == NULL) {
+            if (options.subject_file == nullptr) {
                 options.subject_file = argv[i];
             } else {
                 options.clip_file = argv[i];
@@ -192,7 +192,7 @@ int main(int argc, char* const argv[]) {
     auto poly_subject = parse_file(options.subject_file);
     mapbox::geometry::polygon<value_type> poly_clip;
     mapbox::geometry::multi_polygon<value_type> solution;
-    if (options.clip_file != NULL) {
+    if (options.clip_file != nullptr) {
         poly_clip = parse_file(options.clip_file);
     }
     while (options.iterations > 0) {
