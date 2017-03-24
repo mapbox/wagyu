@@ -1,5 +1,6 @@
 test
 fixture-tester
+fuzzer
 build
 *.swp
 mason_packages

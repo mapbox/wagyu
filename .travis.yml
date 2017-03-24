@@ -96,8 +96,8 @@ before_install:
  - |
    if [[ ${CXX} == "clang++" ]]; then
     CLANG_VERSION="${CLANG_VERSION:-3.9.1}"
-    ./.mason/mason install clang++ ${CLANG_VERSION}
-    export PATH=$(./.mason/mason prefix clang++ ${CLANG_VERSION})/bin:${PATH}
-    ./.mason/mason install binutils 2.27
-    export PATH=$(./.mason/mason prefix binutils 2.27)/bin:${PATH}
+    ./mason.sh install clang++ ${CLANG_VERSION}
+    export PATH=$(./mason.sh prefix clang++ ${CLANG_VERSION})/bin:${PATH}
+    ./mason.sh install binutils 2.27
+    export PATH=$(./mason.sh prefix binutils 2.27)/bin:${PATH}
    fi

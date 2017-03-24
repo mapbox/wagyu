@@ -1,28 +1,29 @@
+BOOST_VERSION=1.63.0
+RAPIDJSON_VERSION=1.1.0
+GEOMETRY_VERSION=0.9.0
+
 CC := $(CC)
 CXX := $(CXX)
-CXXFLAGS := $(CXXFLAGS) -Iinclude -isystem mason_packages/.link/include -std=c++11
+CXXFLAGS := $(CXXFLAGS) -Iinclude -isystem mason_packages/headers/boost/$(BOOST_VERSION)/include -isystem mason_packages/headers/rapidjson/$(RAPIDJSON_VERSION)/include -isystem mason_packages/headers/geometry/$(GEOMETRY_VERSION)/include -std=c++11
 RELEASE_FLAGS := -O3 -DNDEBUG
 WARNING_FLAGS := -Wall -Wextra -Weffc++ -Werror -Wsign-compare -Wfloat-equal -Wfloat-conversion -Wshadow -Wno-unsequenced -Wshorten-64-to-32 -Wsign-conversion
 DEBUG_FLAGS := -g -O0 -DDEBUG -fno-inline-functions -fno-omit-frame-pointer
-MASON ?= .mason/mason
 CLIPPER_REVISION=ac8d6bf2517f46c05647b5c19cac113fb180ffb4
 ANGUS_DEFINES := -D'CLIPPER_INTPOINT_IMPL=mapbox::geometry::point<cInt>' -D'CLIPPER_PATH_IMPL=mapbox::geometry::linear_ring<cInt>' -D'CLIPPER_PATHS_IMPL=mapbox::geometry::polygon<cInt>' -D'CLIPPER_IMPL_INCLUDE=<mapbox/geometry/polygon.hpp>'
 
+
 default: test
 
-$(MASON):
-	git submodule update --init
+mason_packages/headers/boost/$(BOOST_VERSION)/include:
+	./mason.sh install --header-only boost 1.63.0
 
-mason_packages/.link/include/boost: $(MASON)
-	$(MASON) install boost 1.63.0 && $(MASON) link boost 1.63.0
+mason_packages/headers/rapidjson/$(RAPIDJSON_VERSION)/include:
+	./mason.sh install --header-only rapidjson 1.1.0
 
-mason_packages/.link/include/rapidjson: $(MASON)
-	$(MASON) install rapidjson 1.0.2 && $(MASON) link rapidjson 1.0.2
+mason_packages/headers/geometry/$(GEOMETRY_VERSION)/include:
+	./mason.sh install --header-only geometry 0.9.0
 
-mason_packages/.link/include/mapbox/geometry.hpp: $(MASON)
-	$(MASON) install geometry 0.9.0 && $(MASON) link geometry 0.9.0
-
-deps: mason_packages/.link/include/rapidjson mason_packages/.link/include/mapbox/geometry.hpp mason_packages/.link/include/boost
+deps: mason_packages/headers/boost/$(BOOST_VERSION)/include mason_packages/headers/rapidjson/$(RAPIDJSON_VERSION)/include mason_packages/headers/geometry/$(GEOMETRY_VERSION)/include
 
 build-test: tests/* include/mapbox/geometry/* deps Makefile
 	$(CXX) $(RELEASE_FLAGS) tests/test.cpp tests/unit/*.cpp $(WARNING_FLAGS) $(CXXFLAGS) -isystem ./tests -o test
