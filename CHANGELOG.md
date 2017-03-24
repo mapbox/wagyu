@@ -33,3 +33,11 @@
 - The integer type of input and output can now be different then the integer type used in wagyu's processing
 - Added -Wshorten-64-to-32 to warnings during builds
 
+## X.X.X
+
+- Fixed issue found with -Wconversion through out the code
+- Put rounding into place in quick clip when it was previously truncating points while clipping.
+- Removed unrequired referencing of children ring pointers in several locations within loops
+- Switched to `mason.sh` client script over including entire mason repository
+- Deleted default copy constructor on bound structure
+
