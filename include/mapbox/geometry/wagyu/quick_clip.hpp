@@ -18,23 +18,23 @@ mapbox::geometry::point<T> intersect(mapbox::geometry::point<T> a,
     switch (edge) {
     case 0:
         return mapbox::geometry::point<T>(
-            static_cast<T>(a.x + static_cast<double>(b.x - a.x) * (box.min.y - a.y) / (b.y - a.y)),
+            static_cast<T>(static_cast<double>(a.x) + static_cast<double>(b.x - a.x) * static_cast<double>(box.min.y - a.y) / static_cast<double>(b.y - a.y)),
             box.min.y);
 
     case 1:
         return mapbox::geometry::point<T>(
             box.max.x,
-            static_cast<T>(a.y + static_cast<double>(b.y - a.y) * (box.max.x - a.x) / (b.x - a.x)));
+            static_cast<T>(static_cast<double>(a.y) + static_cast<double>(b.y - a.y) * static_cast<double>(box.max.x - a.x) / static_cast<double>(b.x - a.x)));
 
     case 2:
         return mapbox::geometry::point<T>(
-            static_cast<T>(a.x + static_cast<double>(b.x - a.x) * (box.max.y - a.y) / (b.y - a.y)),
+            static_cast<T>(static_cast<double>(a.x) + static_cast<double>(b.x - a.x) * static_cast<double>(box.max.y - a.y) / static_cast<double>(b.y - a.y)),
             box.max.y);
 
     default: // case 3
         return mapbox::geometry::point<T>(
             box.min.x,
-            static_cast<T>(a.y + static_cast<double>(b.y - a.y) * (box.min.x - a.x) / (b.x - a.x)));
+            static_cast<T>(static_cast<double>(a.y) + static_cast<double>(b.y - a.y) * static_cast<double>(box.min.x - a.x) / static_cast<double>(b.x - a.x)));
     }
 }
 

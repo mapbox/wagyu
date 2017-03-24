@@ -793,7 +793,7 @@ template <typename T>
 mapbox::geometry::point<double> centroid_of_points(point_ptr<T> edge) {
     point_ptr<T> prev = edge->prev;
     point_ptr<T> next = edge->next;
-    return { (prev->x + edge->x + next->x) / 3.0, (prev->y + edge->y + next->y) / 3.0 };
+    return { static_cast<double>(prev->x + edge->x + next->x) / 3.0, static_cast<double>(prev->y + edge->y + next->y) / 3.0 };
 }
 
 template <typename T>
