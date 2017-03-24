@@ -15,13 +15,13 @@ ANGUS_DEFINES := -D'CLIPPER_INTPOINT_IMPL=mapbox::geometry::point<cInt>' -D'CLIP
 default: test
 
 mason_packages/headers/boost/$(BOOST_VERSION)/include:
-	./mason.sh install --header-only boost 1.63.0
+	./mason.sh install --header-only boost $(BOOST_VERSION)
 
 mason_packages/headers/rapidjson/$(RAPIDJSON_VERSION)/include:
-	./mason.sh install --header-only rapidjson 1.1.0
+	./mason.sh install --header-only rapidjson $(RAPIDJSON_VERSION)
 
 mason_packages/headers/geometry/$(GEOMETRY_VERSION)/include:
-	./mason.sh install --header-only geometry 0.9.0
+	./mason.sh install --header-only geometry $(GEOMETRY_VERSION)
 
 deps: mason_packages/headers/boost/$(BOOST_VERSION)/include mason_packages/headers/rapidjson/$(RAPIDJSON_VERSION)/include mason_packages/headers/geometry/$(GEOMETRY_VERSION)/include
 
