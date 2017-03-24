@@ -737,7 +737,7 @@ point_in_polygon_result point_in_polygon(mapbox::geometry::point<double> const& 
                     if (value_is_zero(d)) {
                         return point_on_polygon;
                     }
-                    if ((d > 0.0) == (op_next_y > op->y)) {
+                    if ((d > 0.0) == (op_next_y > op_y)) {
                         // Switch between point outside polygon and point inside
                         // polygon
                         if (result == point_outside_polygon) {
@@ -754,7 +754,7 @@ point_in_polygon_result point_in_polygon(mapbox::geometry::point<double> const& 
                     if (value_is_zero(d)) {
                         return point_on_polygon;
                     }
-                    if ((d > 0.0) == (op_next_y > op->y)) {
+                    if ((d > 0.0) == (op_next_y > op_y)) {
                         // Switch between point outside polygon and point inside
                         // polygon
                         if (result == point_outside_polygon) {
