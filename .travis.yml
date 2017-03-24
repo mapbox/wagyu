@@ -90,8 +90,8 @@ matrix:
       # override before_script to run coverage
       before_script:
        - make debug
-       - ./.mason/mason install llvm-cov 3.9.1
-       - export PATH=$(./.mason/mason prefix llvm-cov 3.9.1)/bin:${PATH}
+       - ./mason.sh install llvm-cov 3.9.1
+       - export PATH=$(./mason.sh prefix llvm-cov 3.9.1)/bin:${PATH}
        - which llvm-cov
        - curl -S -f https://codecov.io/bash -o codecov
        - chmod +x codecov
