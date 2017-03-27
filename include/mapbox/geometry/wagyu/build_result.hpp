@@ -41,9 +41,6 @@ void build_result_polygons(mapbox::geometry::multi_polygon<T2>& solution,
             continue;
         }
         assert(r->points);
-        if (r->size() < 3) {
-            continue;
-        }
         solution.emplace_back();
         push_ring_to_polygon(solution.back(), r, reverse_output);
         for (auto c : r->children) {
@@ -51,9 +48,6 @@ void build_result_polygons(mapbox::geometry::multi_polygon<T2>& solution,
                 continue;
             }
             assert(c->points);
-            if (c->size() < 3) {
-                continue;
-            }
             push_ring_to_polygon(solution.back(), c, reverse_output);
         }
         for (auto c : r->children) {

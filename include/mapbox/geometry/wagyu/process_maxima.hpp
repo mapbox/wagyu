@@ -24,13 +24,6 @@ active_bound_list_itr<T> do_maxima(active_bound_list_itr<T>& bnd,
                                    fill_type clip_fill_type,
                                    ring_manager<T>& manager,
                                    active_bound_list<T>& active_bounds) {
-    if (bndMaxPair == active_bounds.end()) {
-        if ((*bnd)->ring) {
-            add_point_to_ring(*(*bnd), (*bnd)->current_edge->top, manager);
-        }
-        *bnd = nullptr;
-        return ++bnd;
-    }
     auto bnd_next = std::next(bnd);
     auto return_bnd = bnd;
     bool skipped = false;
