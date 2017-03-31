@@ -379,7 +379,7 @@ inline double get_dx(point<T> const& pt1, point<T> const& pt2) {
     if (pt1.y == pt2.y) {
         return std::numeric_limits<double>::infinity();
     } else {
-        return static_cast<double>(pt2.x - pt2.x) / static_cast<double>(pt2.y - pt1.y);
+        return static_cast<double>(pt2.x - pt1.x) / static_cast<double>(pt2.y - pt1.y);
     }
 }
 
