@@ -15,7 +15,7 @@
 // free(strs);
 #endif
 
-#include <queue>
+#include <algorithm>
 
 #include <mapbox/geometry/wagyu/active_bound_list.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>

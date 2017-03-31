@@ -17,7 +17,7 @@
 
 #define WAGYU_MAJOR_VERSION 0
 #define WAGYU_MINOR_VERSION 4
-#define WAGYU_PATCH_VERSION 1
+#define WAGYU_PATCH_VERSION 2
 
 #define WAGYU_VERSION                                                                              \
     (WAGYU_MAJOR_VERSION * 100000) + (WAGYU_MINOR_VERSION * 100) + (WAGYU_PATCH_VERSION)

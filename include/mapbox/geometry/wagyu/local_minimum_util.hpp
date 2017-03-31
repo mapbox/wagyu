@@ -3,6 +3,8 @@
 #include <mapbox/geometry/wagyu/edge.hpp>
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
 
+#include <algorithm>
+
 #ifdef DEBUG
 #include <stdexcept>
 #endif

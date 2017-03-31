@@ -3,6 +3,8 @@
 #include <mapbox/geometry/wagyu/config.hpp>
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
 
+#include <algorithm>
+
 namespace mapbox {
 namespace geometry {
 namespace wagyu {

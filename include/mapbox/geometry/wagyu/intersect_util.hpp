@@ -8,6 +8,8 @@
 #include <mapbox/geometry/wagyu/ring_util.hpp>
 #include <mapbox/geometry/wagyu/util.hpp>
 
+#include <algorithm>
+
 namespace mapbox {
 namespace geometry {
 namespace wagyu {
