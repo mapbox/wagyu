@@ -15,7 +15,7 @@ matrix:
       before_install:
         - which ${CXX}
     - os: linux
-      env: CXX=g++-4.9
+      env: CXX=g++-4.9 CXXFLAGS="-Weffc++"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
@@ -25,7 +25,7 @@ matrix:
       before_install:
         - which ${CXX}
     - os: linux
-      env: CXX=g++-5
+      env: CXX=g++-5 CXXFLAGS="-Weffc++"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
