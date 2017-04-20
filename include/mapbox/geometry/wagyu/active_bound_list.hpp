@@ -112,11 +112,8 @@ insert_bound_into_ABL(bound<T>& left, bound<T>& right, active_bound_list<T>& act
 
     auto itr =
         std::find_if(active_bounds.begin(), active_bounds.end(), bound_insert_location<T>(left));
-    std::vector<bound_ptr<T>> insertable;
-    insertable.reserve(2);
-    insertable.push_back(&left);
-    insertable.push_back(&right);
-    return active_bounds.insert(itr, insertable.begin(), insertable.end());
+    auto itr2 = active_bounds.insert(itr, &right);
+    return active_bounds.insert(itr2, &left);
 }
 
 template <typename T>
