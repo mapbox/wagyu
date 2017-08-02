@@ -73,12 +73,12 @@ bool slopes_equal(mapbox::geometry::point<T> const& pt1,
 
 template <typename T>
 inline T wround(double value) {
-    return static_cast<T>(std::llround(value));
+    return static_cast<T>(::llround(value));
 }
 
 template <>
 inline std::int64_t wround<std::int64_t>(double value) {
-    return std::llround(value);
+    return ::llround(value);
 }
 }
 }
