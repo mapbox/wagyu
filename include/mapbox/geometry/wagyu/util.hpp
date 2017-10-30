@@ -46,21 +46,30 @@ template <typename T>
 bool slopes_equal(mapbox::geometry::point<T> const& pt1,
                   mapbox::geometry::point<T> const& pt2,
                   mapbox::geometry::point<T> const& pt3) {
-    return (pt1.y - pt2.y) * (pt2.x - pt3.x) == (pt1.x - pt2.x) * (pt2.y - pt3.y);
+    return static_cast<std::int64_t>(pt1.y - pt2.y) * 
+           static_cast<std::int64_t>(pt2.x - pt3.x) == 
+           static_cast<std::int64_t>(pt1.x - pt2.x) * 
+           static_cast<std::int64_t>(pt2.y - pt3.y);
 }
 
 template <typename T>
 bool slopes_equal(mapbox::geometry::wagyu::point<T> const& pt1,
                   mapbox::geometry::wagyu::point<T> const& pt2,
                   mapbox::geometry::point<T> const& pt3) {
-    return (pt1.y - pt2.y) * (pt2.x - pt3.x) == (pt1.x - pt2.x) * (pt2.y - pt3.y);
+    return static_cast<std::int64_t>(pt1.y - pt2.y) * 
+           static_cast<std::int64_t>(pt2.x - pt3.x) == 
+           static_cast<std::int64_t>(pt1.x - pt2.x) * 
+           static_cast<std::int64_t>(pt2.y - pt3.y);
 }
 
 template <typename T>
 bool slopes_equal(mapbox::geometry::wagyu::point<T> const& pt1,
                   mapbox::geometry::wagyu::point<T> const& pt2,
                   mapbox::geometry::wagyu::point<T> const& pt3) {
-    return (pt1.y - pt2.y) * (pt2.x - pt3.x) == (pt1.x - pt2.x) * (pt2.y - pt3.y);
+    return static_cast<std::int64_t>(pt1.y - pt2.y) *
+           static_cast<std::int64_t>(pt2.x - pt3.x) ==
+           static_cast<std::int64_t>(pt1.x - pt2.x) *
+           static_cast<std::int64_t>(pt2.y - pt3.y);
 }
 
 template <typename T>
@@ -68,7 +77,10 @@ bool slopes_equal(mapbox::geometry::point<T> const& pt1,
                   mapbox::geometry::point<T> const& pt2,
                   mapbox::geometry::point<T> const& pt3,
                   mapbox::geometry::point<T> const& pt4) {
-    return (pt1.y - pt2.y) * (pt3.x - pt4.x) == (pt1.x - pt2.x) * (pt3.y - pt4.y);
+    return static_cast<std::int64_t>(pt1.y - pt2.y) *
+           static_cast<std::int64_t>(pt3.x - pt4.x) ==
+           static_cast<std::int64_t>(pt1.x - pt2.x) *
+           static_cast<std::int64_t>(pt3.y - pt4.y);
 }
 
 template <typename T>
