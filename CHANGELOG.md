@@ -43,3 +43,7 @@
 - Fixed bug in `get_dx`
 - Fixed some includes that were missing in some headers
 - Removed some dead code paths and checks that are no longer required
+
+## 0.4.3
+
+- Use `::llround()` instead of `std::llround()` for old libstdc++ compatibility.
