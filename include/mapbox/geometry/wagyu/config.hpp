@@ -5,6 +5,14 @@
 #include <list>
 #include <stdexcept>
 
+
+// GCC 4.8 missing range std::vector::insert (c++11)
+#ifdef __GNUC__
+#if __GNUC__ == 4 && __GNUC_MINOR__ == 8
+#   define GCC_MISSING_VECTOR_RANGE_INSERT
+#endif
+#endif
+
 namespace mapbox {
 namespace geometry {
 namespace wagyu {

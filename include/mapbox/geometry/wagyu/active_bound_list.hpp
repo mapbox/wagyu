@@ -112,8 +112,12 @@ insert_bound_into_ABL(bound<T>& left, bound<T>& right, active_bound_list<T>& act
 
     auto itr =
         std::find_if(active_bounds.begin(), active_bounds.end(), bound_insert_location<T>(left));
+#ifdef GCC_MISSING_VECTOR_RANGE_INSERT
     itr = active_bounds.insert(itr, &right);
     return active_bounds.insert(itr, &left);
+#else
+    return active_bounds.insert(itr, {&left, &right});
+#endif
 }
 
 template <typename T>
