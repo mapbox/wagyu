@@ -112,37 +112,41 @@ insert_bound_into_ABL(bound<T>& left, bound<T>& right, active_bound_list<T>& act
 
     auto itr =
         std::find_if(active_bounds.begin(), active_bounds.end(), bound_insert_location<T>(left));
-    auto itr2 = active_bounds.insert(itr, &right);
-    return active_bounds.insert(itr2, &left);
+#ifdef GCC_MISSING_VECTOR_RANGE_INSERT
+    itr = active_bounds.insert(itr, &right);
+    return active_bounds.insert(itr, &left);
+#else
+    return active_bounds.insert(itr, {&left, &right});
+#endif
 }
 
 template <typename T>
-inline bool is_maxima(bound<T>& bnd, T y) {
+inline bool is_maxima(bound<T> const& bnd, T y) {
     return bnd.next_edge == bnd.edges.end() && bnd.current_edge->top.y == y;
 }
 
 template <typename T>
-inline bool is_maxima(active_bound_list_itr<T>& bnd, T y) {
+inline bool is_maxima(active_bound_list_itr<T> const& bnd, T y) {
     return is_maxima(*(*bnd), y);
 }
 
 template <typename T>
-inline bool is_intermediate(bound<T>& bnd, T y) {
+inline bool is_intermediate(bound<T> const& bnd, T y) {
     return bnd.next_edge != bnd.edges.end() && bnd.current_edge->top.y == y;
 }
 
 template <typename T>
-inline bool is_intermediate(active_bound_list_itr<T>& bnd, T y) {
+inline bool is_intermediate(active_bound_list_itr<T> const& bnd, T y) {
     return is_intermediate(*(*bnd), y);
 }
 
 template <typename T>
-inline bool current_edge_is_horizontal(active_bound_list_itr<T>& bnd) {
+inline bool current_edge_is_horizontal(active_bound_list_itr<T> const& bnd) {
     return is_horizontal(*((*bnd)->current_edge));
 }
 
 template <typename T>
-inline bool next_edge_is_horizontal(active_bound_list_itr<T>& bnd) {
+inline bool next_edge_is_horizontal(active_bound_list_itr<T> const& bnd) {
     return is_horizontal(*((*bnd)->next_edge));
 }
 
@@ -160,14 +164,14 @@ void next_edge_in_bound(bound<T>& bnd, scanbeam_list<T>& scanbeam) {
 }
 
 template <typename T>
-active_bound_list_itr<T> get_maxima_pair(active_bound_list_itr<T> const& bnd,
+active_bound_list_itr<T> get_maxima_pair(active_bound_list_itr<T> bnd,
                                          active_bound_list<T>& active_bounds) {
     bound_ptr<T> maximum = (*bnd)->maximum_bound;
     return std::find(active_bounds.begin(), active_bounds.end(), maximum);
 }
 
 template <typename T>
-void set_winding_count(active_bound_list_itr<T>& bnd_itr,
+void set_winding_count(active_bound_list_itr<T> bnd_itr,
                        active_bound_list<T>& active_bounds,
                        fill_type subject_fill_type,
                        fill_type clip_fill_type) {

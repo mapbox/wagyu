@@ -66,3 +66,49 @@ TEST_CASE("test edge initialization - vertical segment") {
     CHECK(e2.top.y == 10);
     CHECK(e2.dx == Approx(0.0));
 }
+
+TEST_CASE("test edge slope calculation") {
+    mapbox::geometry::point<T> p1 = { 1, 10 };
+    mapbox::geometry::point<T> p2 = { 10, 100 };
+    mapbox::geometry::point<T> p3 = { 5, 100 };
+    edge<T> e1(p1, p2);
+    edge<T> e2(p2, p1);
+    edge<T> e3(p1, p3);
+    edge<T> e4(p3, p1);
+
+    CHECK(slopes_equal(e1, e2));
+    CHECK(slopes_equal(e2, e1));
+    CHECK(slopes_equal(e3, e4));
+    CHECK(!slopes_equal(e1, e3));
+    CHECK(!slopes_equal(e3, e1));
+}
+
+TEST_CASE("test edge slope calculation - int32_t") {
+    using T2 = std::int32_t;
+    mapbox::geometry::point<T2> p1 = { 1, 10 };
+    mapbox::geometry::point<T2> p2 = { 10, 100 };
+    mapbox::geometry::point<T2> p3 = { 5, 100 };
+    edge<T2> e1(p1, p2);
+    edge<T2> e2(p2, p1);
+    edge<T2> e3(p1, p3);
+    edge<T2> e4(p3, p1);
+
+    CHECK(slopes_equal(e1, e2));
+    CHECK(slopes_equal(e2, e1));
+    CHECK(slopes_equal(e3, e4));
+    CHECK(!slopes_equal(e1, e3));
+    CHECK(!slopes_equal(e3, e1));
+}
+
+TEST_CASE("test edge slope calculation - int32_t with possible overflow") {
+    using T2 = std::int32_t;
+    mapbox::geometry::point<T2> p1 = { 1, 0 };
+    mapbox::geometry::point<T2> p2 = { 0, 100000 };
+    mapbox::geometry::point<T2> p3 = { -1000000, 0 };
+    mapbox::geometry::point<T2> p4 = { 1100000, 453397504 };
+    edge<T2> e1(p1, p2);
+    edge<T2> e2(p3, p4);
+    // In the case of an overflow the calculations will lie stating the
+    // slopes are equal when they are not
+    CHECK(!slopes_equal(e1, e2));
+}

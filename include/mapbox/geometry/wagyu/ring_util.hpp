@@ -456,32 +456,32 @@ point_ptr<T> get_bottom_point(point_ptr<T> pp) {
 }
 
 template <typename T>
-ring_ptr<T> get_lower_most_ring(ring_ptr<T> outRec1, ring_ptr<T> outRec2) {
+ring_ptr<T> get_lower_most_ring(ring_ptr<T> ring1, ring_ptr<T> ring2) {
     // work out which polygon fragment has the correct hole state ...
-    if (!outRec1->bottom_point) {
-        outRec1->bottom_point = get_bottom_point(outRec1->points);
+    if (!ring1->bottom_point) {
+        ring1->bottom_point = get_bottom_point(ring1->points);
     }
-    if (!outRec2->bottom_point) {
-        outRec2->bottom_point = get_bottom_point(outRec2->points);
+    if (!ring2->bottom_point) {
+        ring2->bottom_point = get_bottom_point(ring2->points);
     }
-    point_ptr<T> OutPt1 = outRec1->bottom_point;
-    point_ptr<T> OutPt2 = outRec2->bottom_point;
-    if (OutPt1->y > OutPt2->y) {
-        return outRec1;
-    } else if (OutPt1->y < OutPt2->y) {
-        return outRec2;
-    } else if (OutPt1->x < OutPt2->x) {
-        return outRec1;
-    } else if (OutPt1->x > OutPt2->x) {
-        return outRec2;
-    } else if (OutPt1->next == OutPt1) {
-        return outRec2;
-    } else if (OutPt2->next == OutPt2) {
-        return outRec1;
-    } else if (first_is_bottom_point(OutPt1, OutPt2)) {
-        return outRec1;
+    point_ptr<T> pt1 = ring1->bottom_point;
+    point_ptr<T> pt2 = ring2->bottom_point;
+    if (pt1->y > pt2->y) {
+        return ring1;
+    } else if (pt1->y < pt2->y) {
+        return ring2;
+    } else if (pt1->x < pt2->x) {
+        return ring1;
+    } else if (pt1->x > pt2->x) {
+        return ring2;
+    } else if (pt1->next == pt1) {
+        return ring2;
+    } else if (pt2->next == pt2) {
+        return ring1;
+    } else if (first_is_bottom_point(pt1, pt2)) {
+        return ring1;
     } else {
-        return outRec2;
+        return ring2;
     }
 }
 

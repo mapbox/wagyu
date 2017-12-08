@@ -69,8 +69,10 @@ using edge_list_itr = typename edge_list<T>::iterator;
 
 template <typename T>
 bool slopes_equal(edge<T> const& e1, edge<T> const& e2) {
-    return (e1.top.y - e1.bot.y) * (e2.top.x - e2.bot.x) ==
-           (e1.top.x - e1.bot.x) * (e2.top.y - e2.bot.y);
+    return static_cast<std::int64_t>(e1.top.y - e1.bot.y) *
+           static_cast<std::int64_t>(e2.top.x - e2.bot.x) ==
+           static_cast<std::int64_t>(e1.top.x - e1.bot.x) *
+           static_cast<std::int64_t>(e2.top.y - e2.bot.y);
 }
 
 template <typename T>
