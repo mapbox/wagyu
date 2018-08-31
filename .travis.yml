@@ -5,7 +5,17 @@ sudo: false
 matrix:
   include:
     - os: linux
-      env: CXX=g++-4.9
+      env: CXX=g++-4.8
+      addons:
+        apt:
+          sources: [ 'ubuntu-toolchain-r-test' ]
+          packages: [ 'g++-4.8' ]
+      # override before_install to use apt installed compiler
+      # rather than mason installed clang++
+      before_install:
+        - which ${CXX}
+    - os: linux
+      env: CXX=g++-4.9 CXXFLAGS="-Weffc++"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
@@ -15,7 +25,7 @@ matrix:
       before_install:
         - which ${CXX}
     - os: linux
-      env: CXX=g++-5
+      env: CXX=g++-5 CXXFLAGS="-Weffc++"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]

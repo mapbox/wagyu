@@ -12,7 +12,7 @@
 
 using namespace rapidjson;
 using namespace mapbox::geometry::wagyu;
-using value_type = std::int64_t;
+using coordinate_value_type = std::int64_t;
 
 struct Options {
     std::size_t iterations = 1;
@@ -82,7 +82,7 @@ void log_ring(mapbox::geometry::multi_polygon<std::int64_t> const& mp) {
     std::clog << "]" << std::endl;
 }
 
-mapbox::geometry::polygon<value_type> parse_file(const char* file_path) {
+mapbox::geometry::polygon<coordinate_value_type> parse_file(const char* file_path) {
     // todo safety checks opening files
     FILE* file = fopen(file_path, "r");
     char read_buffer[65536];
@@ -94,9 +94,9 @@ mapbox::geometry::polygon<value_type> parse_file(const char* file_path) {
         throw std::runtime_error(("Input file (" + std::string(file_path) + ") is not valid json"));
     }
     // todo catch parsing errors
-    mapbox::geometry::polygon<value_type> poly;
+    mapbox::geometry::polygon<coordinate_value_type> poly;
     for (SizeType i = 0; i < document.Size(); ++i) {
-        mapbox::geometry::linear_ring<value_type> lr;
+        mapbox::geometry::linear_ring<coordinate_value_type> lr;
 
         if (!document[i].IsArray()) {
             throw std::runtime_error("A ring (in " + std::string(file_path) +
@@ -111,7 +111,7 @@ mapbox::geometry::polygon<value_type> parse_file(const char* file_path) {
     return poly;
 }
 
-void polys_to_json(Document& output, std::vector<mapbox::geometry::polygon<value_type>>& solution) {
+void polys_to_json(Document& output, std::vector<mapbox::geometry::polygon<coordinate_value_type>>& solution) {
     output.SetArray();
     Document::AllocatorType& allocator = output.GetAllocator();
     output.Reserve(static_cast<unsigned>(solution.size()), allocator);
@@ -190,8 +190,8 @@ int main(int argc, char* const argv[]) {
     }
     parse_options(argc, argv);
     auto poly_subject = parse_file(options.subject_file);
-    mapbox::geometry::polygon<value_type> poly_clip;
-    mapbox::geometry::multi_polygon<value_type> solution;
+    mapbox::geometry::polygon<coordinate_value_type> poly_clip;
+    mapbox::geometry::multi_polygon<coordinate_value_type> solution;
     if (options.clip_file != nullptr) {
         poly_clip = parse_file(options.clip_file);
     }
@@ -199,7 +199,7 @@ int main(int argc, char* const argv[]) {
         options.iterations--;
         solution.clear();
 
-        wagyu<value_type> clipper;
+        wagyu<coordinate_value_type> clipper;
         clipper.add_polygon(poly_subject, polygon_type_subject);
         if (!poly_clip.empty()) {
             clipper.add_polygon(poly_clip, polygon_type_clip);
