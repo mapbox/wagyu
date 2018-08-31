@@ -21,11 +21,11 @@ struct intersect_node {
     bound_ptr<T> bound2;
     mapbox::geometry::point<double> pt;
 
-    intersect_node(intersect_node<T>&& n)
+    intersect_node(intersect_node<T>&& n) noexcept
         : bound1(std::move(n.bound1)), bound2(std::move(n.bound2)), pt(std::move(n.pt)) {
     }
 
-    intersect_node& operator=(intersect_node<T>&& n) {
+    intersect_node& operator=(intersect_node<T>&& n)  noexcept {
         bound1 = std::move(n.bound1);
         bound2 = std::move(n.bound2);
         pt = std::move(n.pt);
