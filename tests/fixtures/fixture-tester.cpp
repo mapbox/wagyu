@@ -1,11 +1,11 @@
-#include "util/boost_geometry_adapters.hpp"
+#include "../tests/util/boost_geometry_adapters.hpp"
 #include <cstdio>
 #include <iostream>
 #include <mapbox/geometry/polygon.hpp>
 #include <mapbox/geometry/wagyu/wagyu.hpp>
 #include <ostream>
 
-#include "rapidjson/writer.h"
+#include <rapidjson/writer.h>
 #include <rapidjson/document.h>
 #include <rapidjson/filereadstream.h>
 #include <rapidjson/filewritestream.h>
@@ -220,7 +220,7 @@ int main(int argc, char* const argv[]) {
         }
     }
     /*
-     * uncomment once https://svn.boost.org/trac/boost/ticket/12503 is resolved
+    //uncomment once https://svn.boost.org/trac/boost/ticket/12503 is resolved
     std::string message;
     if (!boost::geometry::is_valid(solution, message)) {
         std::clog << std::endl;
