@@ -3,7 +3,7 @@
 #include <mapbox/geometry/point.hpp>
 #include <mapbox/geometry/polygon.hpp>
 #pragma GCC diagnostic push 
-#pragma GCC diagnostic ignored "-Werror=effc++"
+#pragma GCC diagnostic ignored "-Weffc++"
 #include <boost/geometry.hpp>
 #include <boost/range/iterator_range_core.hpp>
 
