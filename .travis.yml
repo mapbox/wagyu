@@ -87,25 +87,23 @@ matrix:
       # override before_install to use apple clang
       before_install:
         - which ${CXX}
-    # OS X / mason clang 4.0.0 / xcode 8.x
-    - os: osx
-      osx_image: xcode8.2
-      env: CXX=clang++ LLVM_VERSION="4.0.0"
+    # coverage build
     - os: linux
-      env: CXX=clang++ COVERAGE=true CXXFLAGS="--coverage"
+      sudo: false
+      env: CXXFLAGS="--coverage" LDFLAGS="--coverage"
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
-          packages: [ 'libstdc++-5-dev' ]
-      # override before_script to run coverage
-      before_script:
-       - make debug
-       - ./mason.sh install llvm-cov 3.9.1
-       - export PATH=$(./mason.sh prefix llvm-cov 3.9.1)/bin:${PATH}
-       - which llvm-cov
-       - curl -S -f https://codecov.io/bash -o codecov
-       - chmod +x codecov
-       - ./codecov -x "llvm-cov gcov" -Z
+          packages: [ 'libstdc++6', 'libstdc++-5-dev' ]
+      script:
+        - make debug
+        - make test
+        # MASON_LLVM_RELEASE comes from the setup.sh script
+        - mason install llvm-cov ${MASON_LLVM_RELEASE}
+        - mason link llvm-cov ${MASON_LLVM_RELEASE}
+        - curl -S -f https://codecov.io/bash -o codecov
+        - chmod +x codecov
+        - ./codecov -x "llvm-cov gcov" -Z
 
 before_install:
  - git submodule update --init
@@ -120,7 +118,9 @@ before_install:
  - which ${CXX}
 
 before_script:
+ - make release
  - make test
  - make clean
  - make debug
+ - make test
 
