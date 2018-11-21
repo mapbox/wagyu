@@ -35,6 +35,7 @@
 #define clipper_hpp
 #pragma GCC diagnostic push 
 #pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Weffc++"
 
 #define CLIPPER_INTPOINT_IMPL mapbox::geometry::point<cInt>
 #define CLIPPER_PATH_IMPL mapbox::geometry::linear_ring<cInt>
