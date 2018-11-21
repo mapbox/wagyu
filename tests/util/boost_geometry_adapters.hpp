@@ -6,7 +6,6 @@
 #pragma GCC diagnostic ignored "-Werror=effc++"
 #include <boost/geometry.hpp>
 #include <boost/range/iterator_range_core.hpp>
-#pragma GCC diagnostic pop
 
 #include <cassert>
 
@@ -124,3 +123,5 @@ struct tag<mapbox::geometry::multi_polygon<CoordinateType>> {
 }
 }
 }
+
+#pragma GCC diagnostic pop
