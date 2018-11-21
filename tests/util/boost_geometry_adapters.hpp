@@ -2,9 +2,11 @@
 #include <mapbox/geometry/multi_polygon.hpp>
 #include <mapbox/geometry/point.hpp>
 #include <mapbox/geometry/polygon.hpp>
-
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Werror=effc++"
 #include <boost/geometry.hpp>
 #include <boost/range/iterator_range_core.hpp>
+#pragma GCC diagnostic pop
 
 #include <cassert>
 
