@@ -5,9 +5,9 @@
 #include "../tests/util/fixture_utils.hpp"
 #include "angus.hpp"
 
-static void BM_wagyu_fixture_union(benchmark::State& state, 
-                                   std::string subject_filename,
-                                   std::string clip_filename) // NOLINT google-runtime-references
+auto BM_wagyu_fixture_union = [](benchmark::State& state, 
+                                 std::string subject_filename,
+                                 std::string clip_filename) // NOLINT google-runtime-references
 {
     auto poly_subject = fixture_file_to_polygon<std::int64_t>(subject_filename.c_str());
     auto poly_clip = fixture_file_to_polygon<std::int64_t>(clip_filename.c_str());
@@ -23,11 +23,11 @@ static void BM_wagyu_fixture_union(benchmark::State& state,
                         mapbox::geometry::wagyu::fill_type_even_odd,
                         mapbox::geometry::wagyu::fill_type_even_odd);
     }
-}
+};
 
-static void BM_wagyu_fixture_intersection(benchmark::State& state, 
-                                          std::string subject_filename,
-                                          std::string clip_filename) // NOLINT google-runtime-references
+auto BM_wagyu_fixture_intersection = [](benchmark::State& state, 
+                                        std::string subject_filename,
+                                        std::string clip_filename)
 {
     auto poly_subject = fixture_file_to_polygon<std::int64_t>(subject_filename.c_str());
     auto poly_clip = fixture_file_to_polygon<std::int64_t>(clip_filename.c_str());
@@ -43,11 +43,11 @@ static void BM_wagyu_fixture_intersection(benchmark::State& state,
                         mapbox::geometry::wagyu::fill_type_even_odd,
                         mapbox::geometry::wagyu::fill_type_even_odd);
     }
-}
+};
 
-static void BM_wagyu_fixture_difference(benchmark::State& state, 
-                                        std::string subject_filename,
-                                        std::string clip_filename) // NOLINT google-runtime-references
+auto BM_wagyu_fixture_difference = [](benchmark::State& state, 
+                                      std::string subject_filename,
+                                      std::string clip_filename)
 {
     auto poly_subject = fixture_file_to_polygon<std::int64_t>(subject_filename.c_str());
     auto poly_clip = fixture_file_to_polygon<std::int64_t>(clip_filename.c_str());
@@ -63,11 +63,11 @@ static void BM_wagyu_fixture_difference(benchmark::State& state,
                         mapbox::geometry::wagyu::fill_type_even_odd,
                         mapbox::geometry::wagyu::fill_type_even_odd);
     }
-}
+};
 
-static void BM_wagyu_fixture_x_or(benchmark::State& state, 
-                                  std::string subject_filename,
-                                  std::string clip_filename) // NOLINT google-runtime-references
+auto BM_wagyu_fixture_x_or = [](benchmark::State& state, 
+                                std::string subject_filename,
+                                std::string clip_filename)
 {
     auto poly_subject = fixture_file_to_polygon<std::int64_t>(subject_filename.c_str());
     auto poly_clip = fixture_file_to_polygon<std::int64_t>(clip_filename.c_str());
@@ -83,10 +83,10 @@ static void BM_wagyu_fixture_x_or(benchmark::State& state,
                         mapbox::geometry::wagyu::fill_type_even_odd,
                         mapbox::geometry::wagyu::fill_type_even_odd);
     }
-}
+};
 
 inline void process_polynode_branch(ClipperLib::PolyNode* polynode,
-                             mapbox::geometry::multi_polygon<std::int64_t>& mp) {
+                                    mapbox::geometry::multi_polygon<std::int64_t>& mp) {
     mapbox::geometry::polygon<std::int64_t> polygon;
     polygon.push_back(std::move(polynode->Contour));
     if (polygon.back().size() > 2) // Throw out invalid polygons
@@ -123,9 +123,9 @@ inline void process_polynode_branch(ClipperLib::PolyNode* polynode,
     }
 }
 
-static void BM_angus_fixture_union(benchmark::State& state,
-                                   std::string subject_filename,
-                                   std::string clip_filename) // NOLINT google-runtime-references
+auto BM_angus_fixture_union = [](benchmark::State& state,
+                                 std::string subject_filename,
+                                 std::string clip_filename)
 {
     auto poly_subject = fixture_file_to_polygon<std::int64_t>(subject_filename.c_str());
     auto poly_clip = fixture_file_to_polygon<std::int64_t>(clip_filename.c_str());
@@ -150,11 +150,11 @@ static void BM_angus_fixture_union(benchmark::State& state,
             process_polynode_branch(polynode, solution);
         }
     }
-}
+};
 
-static void BM_angus_fixture_intersection(benchmark::State& state,
-                                          std::string subject_filename,
-                                          std::string clip_filename) // NOLINT google-runtime-references
+auto BM_angus_fixture_intersection = [](benchmark::State& state,
+                                        std::string subject_filename,
+                                        std::string clip_filename)
 {
     auto poly_subject = fixture_file_to_polygon<std::int64_t>(subject_filename.c_str());
     auto poly_clip = fixture_file_to_polygon<std::int64_t>(clip_filename.c_str());
@@ -179,11 +179,11 @@ static void BM_angus_fixture_intersection(benchmark::State& state,
             process_polynode_branch(polynode, solution);
         }
     }
-}
+};
 
-static void BM_angus_fixture_difference(benchmark::State& state,
-                                        std::string subject_filename,
-                                        std::string clip_filename) // NOLINT google-runtime-references
+auto BM_angus_fixture_difference = [](benchmark::State& state,
+                                      std::string subject_filename,
+                                      std::string clip_filename)
 {
     auto poly_subject = fixture_file_to_polygon<std::int64_t>(subject_filename.c_str());
     auto poly_clip = fixture_file_to_polygon<std::int64_t>(clip_filename.c_str());
@@ -208,11 +208,11 @@ static void BM_angus_fixture_difference(benchmark::State& state,
             process_polynode_branch(polynode, solution);
         }
     }
-}
+};
 
-static void BM_angus_fixture_x_or(benchmark::State& state,
-                                  std::string subject_filename,
-                                  std::string clip_filename) // NOLINT google-runtime-references
+auto BM_angus_fixture_x_or = [](benchmark::State& state,
+                                std::string subject_filename,
+                                std::string clip_filename)
 {
     auto poly_subject = fixture_file_to_polygon<std::int64_t>(subject_filename.c_str());
     auto poly_clip = fixture_file_to_polygon<std::int64_t>(clip_filename.c_str());
@@ -237,7 +237,7 @@ static void BM_angus_fixture_x_or(benchmark::State& state,
             process_polynode_branch(polynode, solution);
         }
     }
-}
+};
 
 inline void register_fixtures()
 {
@@ -268,6 +268,4 @@ inline void register_fixtures()
         benchmark::RegisterBenchmark(x_or_name.c_str(), BM_wagyu_fixture_x_or, subject.path().native(), clip_file.native());
         benchmark::RegisterBenchmark(x_or_name2.c_str(), BM_angus_fixture_x_or, subject.path().native(), clip_file.native());
     }
-
-    
 }
