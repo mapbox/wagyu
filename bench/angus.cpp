@@ -220,9 +220,8 @@ PolyNode* PolyNode::GetNextSiblingUp() const {
     }
     if (Index == Parent->Childs.size() - 1) {
         return Parent->GetNextSiblingUp();
-    } else {
-        return Parent->Childs[Index + 1];
     }
+    return Parent->Childs[Index + 1];
 }
 //------------------------------------------------------------------------------
 
@@ -352,10 +351,8 @@ public:
                 return static_cast<double>(hi) * shift64;
             }
             return -(~lo + ~hi * shift64);
-
-        } else {
-            return (lo + hi * shift64);
         }
+        return (lo + hi * shift64);
     }
 };
 //------------------------------------------------------------------------------
@@ -1047,9 +1044,8 @@ bool Pt2IsBetweenPt1AndPt3(const IntPoint pt1, const IntPoint pt2, const IntPoin
     }
     if (pt1.x != pt3.x) {
         return (pt2.x > pt1.x) == (pt2.x < pt3.x);
-    } else {
-        return (pt2.y > pt1.y) == (pt2.y < pt3.y);
     }
+    return (pt2.y > pt1.y) == (pt2.y < pt3.y);
 }
 //------------------------------------------------------------------------------
 
@@ -2683,11 +2679,13 @@ OutRec* GetLowermostRec(OutRec* outRec1, OutRec* outRec2) {
     }
     if (OutPt1->Pt.y < OutPt2->Pt.y) {
         return outRec2;
-    } else if (OutPt1->Pt.x < OutPt2->Pt.x) {
+    }
+    if (OutPt1->Pt.x < OutPt2->Pt.x) {
         return outRec1;
-    } else if (OutPt1->Pt.x > OutPt2->Pt.x) {
+    }
+    if (OutPt1->Pt.x > OutPt2->Pt.x) {
         return outRec2;
-    } else if (OutPt1->Next == OutPt1) {
+    } if (OutPt1->Next == OutPt1) {
         return outRec2;
     } else if (OutPt2->Next == OutPt2) {
         return outRec1;
@@ -2898,9 +2896,8 @@ TEdge* GetMaximaPair(TEdge* e) {
     }
     if ((e->Prev->Top == e->Top) && (e->Prev->NextInLML == nullptr)) {
         return e->Prev;
-    } else {
-        return nullptr;
     }
+    return nullptr;
 }
 //------------------------------------------------------------------------------
 
@@ -3808,10 +3805,8 @@ inline bool E2InsertsBeforeE1(TEdge& e1, TEdge& e2) {
             return e2.Top.x < TopX(e1, e2.Top.y);
         }
         return e1.Top.x > TopX(e2, e1.Top.y);
-
-    } else {
-        return e2.Curr.x < e1.Curr.x;
     }
+    return e2.Curr.x < e1.Curr.x;
 }
 //------------------------------------------------------------------------------
 
@@ -4208,77 +4203,76 @@ bool Clipper::JoinPoints(Join* j, OutRec* outRec1, OutRec* outRec2) {
         j->OutPt1 = op1;
         j->OutPt2 = op2;
         return JoinHorz(op1, op1b, op2, op2b, Pt, DiscardLeftSide);
-    } else {
-        // nb: For
-        // non-horizontal
-        // joins ...
-        //    1.
-        //    Jr.OutPt1.Pt.y
-        //    ==
-        //    Jr.OutPt2.Pt.y
-        //    2.
-        //    Jr.OutPt1.Pt
-        //    >
-        //    Jr.OffPt.y
+    }
+    // nb: For
+    // non-horizontal
+    // joins ...
+    //    1.
+    //    Jr.OutPt1.Pt.y
+    //    ==
+    //    Jr.OutPt2.Pt.y
+    //    2.
+    //    Jr.OutPt1.Pt
+    //    >
+    //    Jr.OffPt.y
 
-        // make sure the
-        // polygons are
-        // correctly
-        // oriented ...
-        op1b = op1->Next;
+    // make sure the
+    // polygons are
+    // correctly
+    // oriented ...
+    op1b = op1->Next;
+    while ((op1b->Pt == op1->Pt) && (op1b != op1)) {
+        op1b = op1b->Next;
+    }
+    bool Reverse1 = ((op1b->Pt.y > op1->Pt.y) || !SlopesEqual(op1->Pt, op1b->Pt, j->OffPt, m_UseFullRange));
+    if (Reverse1) {
+        op1b = op1->Prev;
         while ((op1b->Pt == op1->Pt) && (op1b != op1)) {
-            op1b = op1b->Next;
+            op1b = op1b->Prev;
         }
-        bool Reverse1 = ((op1b->Pt.y > op1->Pt.y) || !SlopesEqual(op1->Pt, op1b->Pt, j->OffPt, m_UseFullRange));
-        if (Reverse1) {
-            op1b = op1->Prev;
-            while ((op1b->Pt == op1->Pt) && (op1b != op1)) {
-                op1b = op1b->Prev;
-            }
-            if ((op1b->Pt.y > op1->Pt.y) || !SlopesEqual(op1->Pt, op1b->Pt, j->OffPt, m_UseFullRange)) {
-                return false;
-            }
-        };
-        op2b = op2->Next;
-        while ((op2b->Pt == op2->Pt) && (op2b != op2)) {
-            op2b = op2b->Next;
-        }
-        bool Reverse2 = ((op2b->Pt.y > op2->Pt.y) || !SlopesEqual(op2->Pt, op2b->Pt, j->OffPt, m_UseFullRange));
-        if (Reverse2) {
-            op2b = op2->Prev;
-            while ((op2b->Pt == op2->Pt) && (op2b != op2)) {
-                op2b = op2b->Prev;
-            }
-            if ((op2b->Pt.y > op2->Pt.y) || !SlopesEqual(op2->Pt, op2b->Pt, j->OffPt, m_UseFullRange)) {
-                return false;
-            }
-        }
-
-        if ((op1b == op1) || (op2b == op2) || (op1b == op2b) || ((outRec1 == outRec2) && (Reverse1 == Reverse2))) {
+        if ((op1b->Pt.y > op1->Pt.y) || !SlopesEqual(op1->Pt, op1b->Pt, j->OffPt, m_UseFullRange)) {
             return false;
         }
-
-        if (Reverse1) {
-            op1b = DupOutPt(op1, false);
-            op2b = DupOutPt(op2, true);
-            op1->Prev = op2;
-            op2->Next = op1;
-            op1b->Next = op2b;
-            op2b->Prev = op1b;
-            j->OutPt1 = op1;
-            j->OutPt2 = op1b;
-            return true;
+    };
+    op2b = op2->Next;
+    while ((op2b->Pt == op2->Pt) && (op2b != op2)) {
+        op2b = op2b->Next;
+    }
+    bool Reverse2 = ((op2b->Pt.y > op2->Pt.y) || !SlopesEqual(op2->Pt, op2b->Pt, j->OffPt, m_UseFullRange));
+    if (Reverse2) {
+        op2b = op2->Prev;
+        while ((op2b->Pt == op2->Pt) && (op2b != op2)) {
+            op2b = op2b->Prev;
         }
-        op1b = DupOutPt(op1, true);
-        op2b = DupOutPt(op2, false);
-        op1->Next = op2;
-        op2->Prev = op1;
-        op1b->Prev = op2b;
-        op2b->Next = op1b;
+        if ((op2b->Pt.y > op2->Pt.y) || !SlopesEqual(op2->Pt, op2b->Pt, j->OffPt, m_UseFullRange)) {
+            return false;
+        }
+    }
+
+    if ((op1b == op1) || (op2b == op2) || (op1b == op2b) || ((outRec1 == outRec2) && (Reverse1 == Reverse2))) {
+        return false;
+    }
+
+    if (Reverse1) {
+        op1b = DupOutPt(op1, false);
+        op2b = DupOutPt(op2, true);
+        op1->Prev = op2;
+        op2->Next = op1;
+        op1b->Next = op2b;
+        op2b->Prev = op1b;
         j->OutPt1 = op1;
         j->OutPt2 = op1b;
         return true;
     }
+    op1b = DupOutPt(op1, true);
+    op2b = DupOutPt(op2, false);
+    op1->Next = op2;
+    op2->Prev = op1;
+    op1b->Prev = op2b;
+    op2b->Next = op1b;
+    j->OutPt1 = op1;
+    j->OutPt2 = op1b;
+    return true;
 }
 //----------------------------------------------------------------------
 
@@ -5046,11 +5040,11 @@ bool SortOutPt(OutPt* op1, OutPt* op2) {
     }
     if (op1->Pt.x < op2->Pt.x) {
         return true;
-    } else if (op1->Pt.x > op2->Pt.x) {
-        return false;
-    } else {
-        return (op1->Idx < op2->Idx);
     }
+    if (op1->Pt.x > op2->Pt.x) {
+        return false;
+    }
+    return (op1->Idx < op2->Idx);
 }
 
 //-----------------------------------------------------------------------------
@@ -5695,19 +5689,16 @@ bool SlopesNearCollinear(const IntPoint& pt1, const IntPoint& pt2, const IntPoin
         }
         if ((pt2.x > pt1.x) == (pt2.x < pt3.x)) {
             return DistanceFromLineSqrd(pt2, pt1, pt3) < distSqrd;
-        } else {
-            return DistanceFromLineSqrd(pt3, pt1, pt2) < distSqrd;
         }
-    } else {
-        if ((pt1.y > pt2.y) == (pt1.y < pt3.y)) {
-            return DistanceFromLineSqrd(pt1, pt2, pt3) < distSqrd;
-        }
-        if ((pt2.y > pt1.y) == (pt2.y < pt3.y)) {
-            return DistanceFromLineSqrd(pt2, pt1, pt3) < distSqrd;
-        } else {
-            return DistanceFromLineSqrd(pt3, pt1, pt2) < distSqrd;
-        }
+        return DistanceFromLineSqrd(pt3, pt1, pt2) < distSqrd;
     }
+    if ((pt1.y > pt2.y) == (pt1.y < pt3.y)) {
+        return DistanceFromLineSqrd(pt1, pt2, pt3) < distSqrd;
+    }
+    if ((pt2.y > pt1.y) == (pt2.y < pt3.y)) {
+        return DistanceFromLineSqrd(pt2, pt1, pt3) < distSqrd;
+    }
+    return DistanceFromLineSqrd(pt3, pt1, pt2) < distSqrd;
 }
 //------------------------------------------------------------------------------
 
