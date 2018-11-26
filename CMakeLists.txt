@@ -61,7 +61,7 @@ file(GLOB FUZZER_SOURCES fuzzer/*.cpp)
 add_executable(fuzzer-tests ${FUZZER_SOURCES})
 
 # libbenchmark.a supports threads and therefore needs pthread support
-#find_package(Threads REQUIRED)
+find_package(Threads REQUIRED)
 file(GLOB BENCH_SOURCES bench/*.cpp)
 add_executable(bench-tests ${BENCH_SOURCES})
 
