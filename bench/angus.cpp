@@ -1159,7 +1159,7 @@ TEdge* ClipperBase::ProcessBound(TEdge* E, bool NextIsForward) {
             } else {
                 E = Result->Prev;
             }
-            MinimaList::value_type locMin{};
+            MinimaList::value_type locMin{ 0, nullptr, nullptr };
             locMin.y = E->Bot.y;
             locMin.LeftBound = nullptr;
             locMin.RightBound = E;
@@ -1371,7 +1371,7 @@ bool ClipperBase::AddPath(const Path& pg, PolyType PolyTyp, bool Closed) {
             return false;
         }
         E->Prev->OutIdx = Skip;
-        MinimaList::value_type locMin{};
+        MinimaList::value_type locMin{ 0, nullptr, nullptr };
         locMin.y = E->Bot.y;
         locMin.LeftBound = nullptr;
         locMin.RightBound = E;
@@ -1415,7 +1415,7 @@ bool ClipperBase::AddPath(const Path& pg, PolyType PolyTyp, bool Closed) {
         // E and E.Prev now share a local minima (left
         // aligned if horizontal). Compare their slopes
         // to find which starts which bound ...
-        MinimaList::value_type locMin{};
+        MinimaList::value_type locMin{ 0, nullptr, nullptr };
         locMin.y = E->Bot.y;
         if (E->Dx < E->Prev->Dx) {
             locMin.LeftBound = E->Prev;
@@ -1530,7 +1530,7 @@ bool ClipperBase::PopLocalMinima(cInt Y, const LocalMinimum*& locMin) {
 //------------------------------------------------------------------------------
 
 IntRect ClipperBase::GetBounds() {
-    IntRect result{};
+    IntRect result{ 0, 0, 0, 0 };
     auto lm = m_MinimaList.begin();
     if (lm == m_MinimaList.end()) {
         result.left = result.top = result.right = result.bottom = 0;
