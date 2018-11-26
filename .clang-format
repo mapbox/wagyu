@@ -13,6 +13,6 @@ NamespaceIndentation: None
 PointerBindsToType: true
 SpacesInParentheses: false
 BreakBeforeBraces: Attach
-ColumnLimit: 100
+ColumnLimit: 120
 Cpp11BracedListStyle: false
 SpacesBeforeTrailingComments: 1

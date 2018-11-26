@@ -1,8 +1,7 @@
-#include <benchmark/benchmark.h>
 #include "fixtures.hpp"
+#include <benchmark/benchmark.h>
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
     register_fixtures();
     benchmark::Initialize(&argc, argv);
     benchmark::RunSpecifiedBenchmarks();

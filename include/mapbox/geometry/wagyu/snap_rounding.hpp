@@ -35,9 +35,7 @@ struct hp_intersection_swap {
 };
 
 template <typename T>
-void process_hot_pixel_intersections(T top_y,
-                                     active_bound_list<T>& active_bounds,
-                                     ring_manager<T>& manager) {
+void process_hot_pixel_intersections(T top_y, active_bound_list<T>& active_bounds, ring_manager<T>& manager) {
     if (active_bounds.empty()) {
         return;
     }
@@ -121,8 +119,7 @@ void process_hot_pixel_edges_at_top_of_scanbeam(T top_y,
             ++bnd;
         }
     }
-    active_bounds.erase(std::remove(active_bounds.begin(), active_bounds.end(), nullptr),
-                        active_bounds.end());
+    active_bounds.erase(std::remove(active_bounds.begin(), active_bounds.end(), nullptr), active_bounds.end());
 }
 
 template <typename T>
@@ -182,14 +179,13 @@ void build_hot_pixels(local_minimum_list<T>& minima_list, ring_manager<T>& manag
 
         process_hot_pixel_intersections(scanline_y, active_bounds, manager);
 
-        insert_local_minima_into_ABL_hot_pixel(scanline_y, minima_sorted, current_lm, active_bounds,
-                                               manager, scanbeam);
+        insert_local_minima_into_ABL_hot_pixel(scanline_y, minima_sorted, current_lm, active_bounds, manager, scanbeam);
 
         process_hot_pixel_edges_at_top_of_scanbeam(scanline_y, scanbeam, active_bounds, manager);
     }
     preallocate_point_memory(manager, manager.hot_pixels.size());
     sort_hot_pixels(manager);
 }
-}
-}
-}
+} // namespace wagyu
+} // namespace geometry
+} // namespace mapbox

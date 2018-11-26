@@ -31,8 +31,7 @@ TEST_CASE("simple test for winding order - positive") {
     wagyu.add_ring(ring);
 
     mapbox::geometry::multi_polygon<std::int64_t> solution;
-    wagyu.execute(mapbox::geometry::wagyu::clip_type_union, solution,
-                  mapbox::geometry::wagyu::fill_type_positive,
+    wagyu.execute(mapbox::geometry::wagyu::clip_type_union, solution, mapbox::geometry::wagyu::fill_type_positive,
                   mapbox::geometry::wagyu::fill_type_positive);
 
     REQUIRE(solution.size() == 1);
@@ -69,11 +68,10 @@ TEST_CASE("simple test for winding order - negative") {
     wagyu.add_ring(ring);
 
     mapbox::geometry::multi_polygon<std::int64_t> solution;
-    wagyu.execute(mapbox::geometry::wagyu::clip_type_union, solution,
-                  mapbox::geometry::wagyu::fill_type_negative,
+    wagyu.execute(mapbox::geometry::wagyu::clip_type_union, solution, mapbox::geometry::wagyu::fill_type_negative,
                   mapbox::geometry::wagyu::fill_type_negative);
 
-    REQUIRE(solution.size() == 0);
+    REQUIRE(solution.empty());
 }
 
 TEST_CASE("simple test of entire vatti") {

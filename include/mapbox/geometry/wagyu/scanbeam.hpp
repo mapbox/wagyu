@@ -31,6 +31,6 @@ void setup_scanbeam(local_minimum_list<T>& minima_list, scanbeam_list<T>& scanbe
         scanbeam.push_back(lm->y);
     }
 }
-}
-}
-}
+} // namespace wagyu
+} // namespace geometry
+} // namespace mapbox

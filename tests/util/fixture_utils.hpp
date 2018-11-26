@@ -2,10 +2,10 @@
 #include <iostream>
 #include <mapbox/geometry/polygon.hpp>
 
-#include <rapidjson/writer.h>
 #include <rapidjson/document.h>
 #include <rapidjson/filereadstream.h>
 #include <rapidjson/filewritestream.h>
+#include <rapidjson/writer.h>
 
 template <typename T>
 mapbox::geometry::polygon<T> fixture_file_to_polygon(const char* file_path) {
@@ -25,8 +25,7 @@ mapbox::geometry::polygon<T> fixture_file_to_polygon(const char* file_path) {
         mapbox::geometry::linear_ring<T> lr;
 
         if (!document[i].IsArray()) {
-            throw std::runtime_error("A ring (in " + std::string(file_path) +
-                                     ") is not a valid json array");
+            throw std::runtime_error("A ring (in " + std::string(file_path) + ") is not a valid json array");
         }
         for (rapidjson::SizeType j = 0; j < document[i].Size(); ++j) {
             lr.push_back({ document[i][j][0].GetInt(), document[i][j][1].GetInt() });

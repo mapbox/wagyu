@@ -21,11 +21,11 @@ mason install clang-format ${MASON_LLVM_RELEASE}
 mason link clang-format ${MASON_LLVM_RELEASE}
 
 # Run clang-format on all cpp and hpp files in the /src directory
-find include/ bench/ test/ -type f -name '*.hpp' -or -name '*.cpp' \
+find include/ bench/ tests/ -type f -name '*.hpp' -or -name '*.cpp' \
  | xargs -I{} clang-format -i -style=file {}
 
 # Print list of modified files
-dirty=$(git ls-files --modified include/ bench/ test/)
+dirty=$(git ls-files --modified include/ bench/ tests/)
 
 if [[ $dirty ]]; then
     echo "The following files have been modified:"

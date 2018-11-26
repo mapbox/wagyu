@@ -3,12 +3,12 @@
 #include <mapbox/geometry/polygon.hpp>
 #include <mapbox/geometry/wagyu/wagyu.hpp>
 
+#include <csignal>
 #include <cstdlib>
+#include <ctime>
 #include <fstream>
 #include <iostream>
 #include <limits>
-#include <signal.h>
-#include <time.h>
 #include <vector>
 
 static int s_int = 0;
@@ -18,12 +18,12 @@ static void signal_handler(int value) {
 }
 
 static void catch_signals() {
-    struct sigaction action;
+    struct sigaction action{};
     action.sa_handler = signal_handler;
     action.sa_flags = 0;
     sigemptyset(&action.sa_mask);
-    sigaction(SIGINT, &action, NULL);
-    sigaction(SIGTERM, &action, NULL);
+    sigaction(SIGINT, &action, nullptr);
+    sigaction(SIGTERM, &action, nullptr);
 }
 
 void log_ring(mapbox::geometry::polygon<std::int64_t> const& p) {
@@ -158,7 +158,7 @@ void print_fill_type(mapbox::geometry::wagyu::fill_type ft) {
 
 int main() {
     catch_signals();
-    unsigned seed = static_cast<unsigned>(time(0));
+    auto seed = static_cast<unsigned>(time(nullptr));
     std::size_t count = 0;
     srand(seed);
 
@@ -233,7 +233,7 @@ int main() {
                     return -1;
                 }
                 */
-                if (s_int) {
+                if (s_int != 0) {
                     return 0;
                 }
             }
