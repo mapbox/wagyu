@@ -2685,15 +2685,17 @@ OutRec* GetLowermostRec(OutRec* outRec1, OutRec* outRec2) {
     }
     if (OutPt1->Pt.x > OutPt2->Pt.x) {
         return outRec2;
-    } if (OutPt1->Next == OutPt1) {
-        return outRec2;
-    } else if (OutPt2->Next == OutPt2) {
-        return outRec1;
-    } else if (FirstIsBottomPt(OutPt1, OutPt2)) {
-        return outRec1;
-    } else {
+    }
+    if (OutPt1->Next == OutPt1) {
         return outRec2;
     }
+    if (OutPt2->Next == OutPt2) {
+        return outRec1;
+    }
+    if (FirstIsBottomPt(OutPt1, OutPt2)) {
+        return outRec1;
+    }
+    return outRec2;
 }
 //------------------------------------------------------------------------------
 
