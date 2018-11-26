@@ -1,23 +1,23 @@
+#pragma once
 #include <benchmark/benchmark.h>
 #include <mapbox/geometry/wagyu/wagyu.hpp>
 #include <boost/filesystem.hpp>
 #include "../tests/util/fixture_utils.hpp"
 #include "angus.hpp"
 
-template <typename T>
 static void BM_wagyu_fixture_union(benchmark::State& state, 
                                    std::string subject_filename,
                                    std::string clip_filename) // NOLINT google-runtime-references
 {
-    auto poly_subject = fixture_file_to_polygon<T>(subject_filename.c_str());
-    auto poly_clip = fixture_file_to_polygon<T>(clip_filename.c_str());
+    auto poly_subject = fixture_file_to_polygon<std::int64_t>(subject_filename.c_str());
+    auto poly_clip = fixture_file_to_polygon<std::int64_t>(clip_filename.c_str());
 
     while (state.KeepRunning())
     {
-        mapbox::geometry::wagyu::wagyu<T> clipper;
+        mapbox::geometry::wagyu::wagyu<std::int64_t> clipper;
         clipper.add_polygon(poly_subject, mapbox::geometry::wagyu::polygon_type_subject);
         clipper.add_polygon(poly_clip, mapbox::geometry::wagyu::polygon_type_clip);
-        mapbox::geometry::multi_polygon<T> solution;
+        mapbox::geometry::multi_polygon<std::int64_t> solution;
         clipper.execute(mapbox::geometry::wagyu::clip_type_union,
                         solution, 
                         mapbox::geometry::wagyu::fill_type_even_odd,
@@ -25,20 +25,19 @@ static void BM_wagyu_fixture_union(benchmark::State& state,
     }
 }
 
-template <typename T>
 static void BM_wagyu_fixture_intersection(benchmark::State& state, 
                                           std::string subject_filename,
                                           std::string clip_filename) // NOLINT google-runtime-references
 {
-    auto poly_subject = fixture_file_to_polygon<T>(subject_filename.c_str());
-    auto poly_clip = fixture_file_to_polygon<T>(clip_filename.c_str());
+    auto poly_subject = fixture_file_to_polygon<std::int64_t>(subject_filename.c_str());
+    auto poly_clip = fixture_file_to_polygon<std::int64_t>(clip_filename.c_str());
 
     while (state.KeepRunning())
     {
-        mapbox::geometry::wagyu::wagyu<T> clipper;
+        mapbox::geometry::wagyu::wagyu<std::int64_t> clipper;
         clipper.add_polygon(poly_subject, mapbox::geometry::wagyu::polygon_type_subject);
         clipper.add_polygon(poly_clip, mapbox::geometry::wagyu::polygon_type_clip);
-        mapbox::geometry::multi_polygon<T> solution;
+        mapbox::geometry::multi_polygon<std::int64_t> solution;
         clipper.execute(mapbox::geometry::wagyu::clip_type_intersection,
                         solution, 
                         mapbox::geometry::wagyu::fill_type_even_odd,
@@ -46,20 +45,19 @@ static void BM_wagyu_fixture_intersection(benchmark::State& state,
     }
 }
 
-template <typename T>
 static void BM_wagyu_fixture_difference(benchmark::State& state, 
                                         std::string subject_filename,
                                         std::string clip_filename) // NOLINT google-runtime-references
 {
-    auto poly_subject = fixture_file_to_polygon<T>(subject_filename.c_str());
-    auto poly_clip = fixture_file_to_polygon<T>(clip_filename.c_str());
+    auto poly_subject = fixture_file_to_polygon<std::int64_t>(subject_filename.c_str());
+    auto poly_clip = fixture_file_to_polygon<std::int64_t>(clip_filename.c_str());
 
     while (state.KeepRunning())
     {
-        mapbox::geometry::wagyu::wagyu<T> clipper;
+        mapbox::geometry::wagyu::wagyu<std::int64_t> clipper;
         clipper.add_polygon(poly_subject, mapbox::geometry::wagyu::polygon_type_subject);
         clipper.add_polygon(poly_clip, mapbox::geometry::wagyu::polygon_type_clip);
-        mapbox::geometry::multi_polygon<T> solution;
+        mapbox::geometry::multi_polygon<std::int64_t> solution;
         clipper.execute(mapbox::geometry::wagyu::clip_type_difference,
                         solution, 
                         mapbox::geometry::wagyu::fill_type_even_odd,
@@ -67,20 +65,19 @@ static void BM_wagyu_fixture_difference(benchmark::State& state,
     }
 }
 
-template <typename T>
 static void BM_wagyu_fixture_x_or(benchmark::State& state, 
                                   std::string subject_filename,
                                   std::string clip_filename) // NOLINT google-runtime-references
 {
-    auto poly_subject = fixture_file_to_polygon<T>(subject_filename.c_str());
-    auto poly_clip = fixture_file_to_polygon<T>(clip_filename.c_str());
+    auto poly_subject = fixture_file_to_polygon<std::int64_t>(subject_filename.c_str());
+    auto poly_clip = fixture_file_to_polygon<std::int64_t>(clip_filename.c_str());
 
     while (state.KeepRunning())
     {
-        mapbox::geometry::wagyu::wagyu<T> clipper;
+        mapbox::geometry::wagyu::wagyu<std::int64_t> clipper;
         clipper.add_polygon(poly_subject, mapbox::geometry::wagyu::polygon_type_subject);
         clipper.add_polygon(poly_clip, mapbox::geometry::wagyu::polygon_type_clip);
-        mapbox::geometry::multi_polygon<T> solution;
+        mapbox::geometry::multi_polygon<std::int64_t> solution;
         clipper.execute(mapbox::geometry::wagyu::clip_type_x_or,
                         solution, 
                         mapbox::geometry::wagyu::fill_type_even_odd,
@@ -88,10 +85,9 @@ static void BM_wagyu_fixture_x_or(benchmark::State& state,
     }
 }
 
-template <typename T>
-void process_polynode_branch(ClipperLib::PolyNode* polynode,
-                             mapbox::geometry::multi_polygon<T>& mp) {
-    mapbox::geometry::polygon<T> polygon;
+inline void process_polynode_branch(ClipperLib::PolyNode* polynode,
+                             mapbox::geometry::multi_polygon<std::int64_t>& mp) {
+    mapbox::geometry::polygon<std::int64_t> polygon;
     polygon.push_back(std::move(polynode->Contour));
     if (polygon.back().size() > 2) // Throw out invalid polygons
     {
@@ -127,13 +123,12 @@ void process_polynode_branch(ClipperLib::PolyNode* polynode,
     }
 }
 
-template <typename T>
 static void BM_angus_fixture_union(benchmark::State& state,
                                    std::string subject_filename,
                                    std::string clip_filename) // NOLINT google-runtime-references
 {
-    auto poly_subject = fixture_file_to_polygon<T>(subject_filename.c_str());
-    auto poly_clip = fixture_file_to_polygon<T>(clip_filename.c_str());
+    auto poly_subject = fixture_file_to_polygon<std::int64_t>(subject_filename.c_str());
+    auto poly_clip = fixture_file_to_polygon<std::int64_t>(clip_filename.c_str());
 
     while (state.KeepRunning())
     {
@@ -149,21 +144,20 @@ static void BM_angus_fixture_union(benchmark::State& state,
         ClipperLib::PolyTree polygons;
         clipper.Execute(ClipperLib::ctUnion, polygons, ClipperLib::pftEvenOdd, ClipperLib::pftEvenOdd);
         clipper.Clear();
-        mapbox::geometry::multi_polygon<T> solution;
+        mapbox::geometry::multi_polygon<std::int64_t> solution;
 
         for (auto* polynode : polygons.Childs) {
-            process_polynode_branch<T>(polynode, solution);
+            process_polynode_branch(polynode, solution);
         }
     }
 }
 
-template <typename T>
 static void BM_angus_fixture_intersection(benchmark::State& state,
                                           std::string subject_filename,
                                           std::string clip_filename) // NOLINT google-runtime-references
 {
-    auto poly_subject = fixture_file_to_polygon<T>(subject_filename.c_str());
-    auto poly_clip = fixture_file_to_polygon<T>(clip_filename.c_str());
+    auto poly_subject = fixture_file_to_polygon<std::int64_t>(subject_filename.c_str());
+    auto poly_clip = fixture_file_to_polygon<std::int64_t>(clip_filename.c_str());
 
     while (state.KeepRunning())
     {
@@ -179,21 +173,20 @@ static void BM_angus_fixture_intersection(benchmark::State& state,
         ClipperLib::PolyTree polygons;
         clipper.Execute(ClipperLib::ctIntersection, polygons, ClipperLib::pftEvenOdd, ClipperLib::pftEvenOdd);
         clipper.Clear();
-        mapbox::geometry::multi_polygon<T> solution;
+        mapbox::geometry::multi_polygon<std::int64_t> solution;
 
         for (auto* polynode : polygons.Childs) {
-            process_polynode_branch<T>(polynode, solution);
+            process_polynode_branch(polynode, solution);
         }
     }
 }
 
-template <typename T>
 static void BM_angus_fixture_difference(benchmark::State& state,
                                         std::string subject_filename,
                                         std::string clip_filename) // NOLINT google-runtime-references
 {
-    auto poly_subject = fixture_file_to_polygon<T>(subject_filename.c_str());
-    auto poly_clip = fixture_file_to_polygon<T>(clip_filename.c_str());
+    auto poly_subject = fixture_file_to_polygon<std::int64_t>(subject_filename.c_str());
+    auto poly_clip = fixture_file_to_polygon<std::int64_t>(clip_filename.c_str());
 
     while (state.KeepRunning())
     {
@@ -209,21 +202,20 @@ static void BM_angus_fixture_difference(benchmark::State& state,
         ClipperLib::PolyTree polygons;
         clipper.Execute(ClipperLib::ctDifference, polygons, ClipperLib::pftEvenOdd, ClipperLib::pftEvenOdd);
         clipper.Clear();
-        mapbox::geometry::multi_polygon<T> solution;
+        mapbox::geometry::multi_polygon<std::int64_t> solution;
 
         for (auto* polynode : polygons.Childs) {
-            process_polynode_branch<T>(polynode, solution);
+            process_polynode_branch(polynode, solution);
         }
     }
 }
 
-template <typename T>
 static void BM_angus_fixture_x_or(benchmark::State& state,
                                   std::string subject_filename,
                                   std::string clip_filename) // NOLINT google-runtime-references
 {
-    auto poly_subject = fixture_file_to_polygon<T>(subject_filename.c_str());
-    auto poly_clip = fixture_file_to_polygon<T>(clip_filename.c_str());
+    auto poly_subject = fixture_file_to_polygon<std::int64_t>(subject_filename.c_str());
+    auto poly_clip = fixture_file_to_polygon<std::int64_t>(clip_filename.c_str());
 
     while (state.KeepRunning())
     {
@@ -239,16 +231,15 @@ static void BM_angus_fixture_x_or(benchmark::State& state,
         ClipperLib::PolyTree polygons;
         clipper.Execute(ClipperLib::ctXor, polygons, ClipperLib::pftEvenOdd, ClipperLib::pftEvenOdd);
         clipper.Clear();
-        mapbox::geometry::multi_polygon<T> solution;
+        mapbox::geometry::multi_polygon<std::int64_t> solution;
 
         for (auto* polynode : polygons.Childs) {
-            process_polynode_branch<T>(polynode, solution);
+            process_polynode_branch(polynode, solution);
         }
     }
 }
 
-template <typename T>
-void register_fixtures()
+inline void register_fixtures()
 {
     boost::filesystem::path fixture_directory("./tests/output-polyjson");
     boost::filesystem::path clip_file("./tests/fixtures/clip-clockwise-square.json");
@@ -265,17 +256,17 @@ void register_fixtures()
         std::string x_or_name = std::string("f/") + subject.path().filename().string() + std::string("/x_or/wagyu");
         std::string x_or_name2 = std::string("f/") + subject.path().filename().string() + std::string("/x_or/angus");
 
-        benchmark::RegisterBenchmark(union_name.c_str(), BM_wagyu_fixture_union<T>, subject.path().native(), clip_file.native());
-        benchmark::RegisterBenchmark(union_name2.c_str(), BM_angus_fixture_union<T>, subject.path().native(), clip_file.native());
+        benchmark::RegisterBenchmark(union_name.c_str(), BM_wagyu_fixture_union, subject.path().native(), clip_file.native());
+        benchmark::RegisterBenchmark(union_name2.c_str(), BM_angus_fixture_union, subject.path().native(), clip_file.native());
 
-        benchmark::RegisterBenchmark(intersection_name.c_str(), BM_wagyu_fixture_intersection<T>, subject.path().native(), clip_file.native());
-        benchmark::RegisterBenchmark(intersection_name2.c_str(), BM_angus_fixture_intersection<T>, subject.path().native(), clip_file.native());
+        benchmark::RegisterBenchmark(intersection_name.c_str(), BM_wagyu_fixture_intersection, subject.path().native(), clip_file.native());
+        benchmark::RegisterBenchmark(intersection_name2.c_str(), BM_angus_fixture_intersection, subject.path().native(), clip_file.native());
         
-        benchmark::RegisterBenchmark(difference_name.c_str(), BM_wagyu_fixture_difference<T>, subject.path().native(), clip_file.native());
-        benchmark::RegisterBenchmark(difference_name2.c_str(), BM_angus_fixture_difference<T>, subject.path().native(), clip_file.native());
+        benchmark::RegisterBenchmark(difference_name.c_str(), BM_wagyu_fixture_difference, subject.path().native(), clip_file.native());
+        benchmark::RegisterBenchmark(difference_name2.c_str(), BM_angus_fixture_difference, subject.path().native(), clip_file.native());
         
-        benchmark::RegisterBenchmark(x_or_name.c_str(), BM_wagyu_fixture_x_or<T>, subject.path().native(), clip_file.native());
-        benchmark::RegisterBenchmark(x_or_name2.c_str(), BM_angus_fixture_x_or<T>, subject.path().native(), clip_file.native());
+        benchmark::RegisterBenchmark(x_or_name.c_str(), BM_wagyu_fixture_x_or, subject.path().native(), clip_file.native());
+        benchmark::RegisterBenchmark(x_or_name2.c_str(), BM_angus_fixture_x_or, subject.path().native(), clip_file.native());
     }
 
     

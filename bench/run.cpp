@@ -3,7 +3,7 @@
 
 int main(int argc, char* argv[])
 {
-    register_fixtures<std::int64_t>();
+    register_fixtures();
     benchmark::Initialize(&argc, argv);
     benchmark::RunSpecifiedBenchmarks();
 
