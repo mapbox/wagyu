@@ -146,9 +146,8 @@ struct LocMinSorter {
 inline cInt Round(double val) {
     if ((val < 0)) {
         return static_cast<cInt>(val - 0.5);
-    } else {
-        return static_cast<cInt>(val + 0.5);
     }
+    return static_cast<cInt>(val + 0.5);
 }
 //------------------------------------------------------------------------------
 
@@ -172,9 +171,8 @@ void PolyTree::Clear() {
 PolyNode* PolyTree::GetFirst() const {
     if (!Childs.empty()) {
         return Childs[0];
-    } else {
-        return nullptr;
     }
+    return nullptr;
 }
 //------------------------------------------------------------------------------
 
@@ -191,7 +189,7 @@ int PolyTree::Total() const {
 // PolyNode methods ...
 //------------------------------------------------------------------------------
 
-PolyNode::PolyNode() : Childs(), Parent(nullptr), Index(0), m_IsOpen(false) {
+PolyNode::PolyNode() : Parent(nullptr), Index(0), m_IsOpen(false) {
 }
 //------------------------------------------------------------------------------
 
@@ -211,16 +209,16 @@ void PolyNode::AddChild(PolyNode& child) {
 PolyNode* PolyNode::GetNext() const {
     if (!Childs.empty()) {
         return Childs[0];
-    } else {
-        return GetNextSiblingUp();
     }
+    return GetNextSiblingUp();
 }
 //------------------------------------------------------------------------------
 
 PolyNode* PolyNode::GetNextSiblingUp() const {
     if (Parent == nullptr) { // protects against PolyTree.GetNextSiblingUp()
         return nullptr;
-    } else if (Index == Parent->Childs.size() - 1) {
+    }
+    if (Index == Parent->Childs.size() - 1) {
         return Parent->GetNextSiblingUp();
     } else {
         return Parent->Childs[Index + 1];
@@ -294,17 +292,15 @@ public:
     bool operator>(const Int128& val) const {
         if (hi != val.hi) {
             return hi > val.hi;
-        } else {
-            return lo > val.lo;
         }
+        return lo > val.lo;
     }
 
     bool operator<(const Int128& val) const {
         if (hi != val.hi) {
             return hi < val.hi;
-        } else {
-            return lo < val.lo;
         }
+        return lo < val.lo;
     }
 
     bool operator>=(const Int128& val) const {
@@ -345,9 +341,8 @@ public:
     {
         if (lo == 0) {
             return Int128(-hi, 0);
-        } else {
-            return Int128(~hi, ~lo + 1);
         }
+        return Int128(~hi, ~lo + 1);
     }
 
     explicit operator double() const {
@@ -355,9 +350,9 @@ public:
         if (hi < 0) {
             if (lo == 0) {
                 return static_cast<double>(hi) * shift64;
-            } else {
-                return -(~lo + ~hi * shift64);
             }
+            return -(~lo + ~hi * shift64);
+
         } else {
             return (lo + hi * shift64);
         }
@@ -569,10 +564,10 @@ bool SlopesEqual(const TEdge& e1, const TEdge& e2, bool UseFullInt64Range) {
     if (UseFullInt64Range) {
         return Int128Mul(e1.Top.y - e1.Bot.y, e2.Top.x - e2.Bot.x) ==
                Int128Mul(e1.Top.x - e1.Bot.x, e2.Top.y - e2.Bot.y);
-    } else {
-#endif
-        return (e1.Top.y - e1.Bot.y) * (e2.Top.x - e2.Bot.x) == (e1.Top.x - e1.Bot.x) * (e2.Top.y - e2.Bot.y);
     }
+#endif
+    return (e1.Top.y - e1.Bot.y) * (e2.Top.x - e2.Bot.x) == (e1.Top.x - e1.Bot.x) * (e2.Top.y - e2.Bot.y);
+
 } // namespace ClipperLib
 //------------------------------------------------------------------------------
 
@@ -580,10 +575,9 @@ bool SlopesEqual(const IntPoint pt1, const IntPoint pt2, const IntPoint pt3, boo
 #ifndef use_int32
     if (UseFullInt64Range) {
         return Int128Mul(pt1.y - pt2.y, pt2.x - pt3.x) == Int128Mul(pt1.x - pt2.x, pt2.y - pt3.y);
-    } else {
-#endif
-        return (pt1.y - pt2.y) * (pt2.x - pt3.x) == (pt1.x - pt2.x) * (pt2.y - pt3.y);
     }
+#endif
+    return (pt1.y - pt2.y) * (pt2.x - pt3.x) == (pt1.x - pt2.x) * (pt2.y - pt3.y);
 }
 //------------------------------------------------------------------------------
 
@@ -592,10 +586,9 @@ bool SlopesEqual(
 #ifndef use_int32
     if (UseFullInt64Range) {
         return Int128Mul(pt1.y - pt2.y, pt3.x - pt4.x) == Int128Mul(pt1.x - pt2.x, pt3.y - pt4.y);
-    } else {
-#endif
-        return (pt1.y - pt2.y) * (pt3.x - pt4.x) == (pt1.x - pt2.x) * (pt3.y - pt4.y);
     }
+#endif
+    return (pt1.y - pt2.y) * (pt3.x - pt4.x) == (pt1.x - pt2.x) * (pt3.y - pt4.y);
 }
 //------------------------------------------------------------------------------
 
@@ -1008,9 +1001,8 @@ bool FirstIsBottomPt(const OutPt* btmPt1, const OutPt* btmPt2) {
 
     if (std::max(dx1p, dx1n) == std::max(dx2p, dx2n) && std::min(dx1p, dx1n) == std::min(dx2p, dx2n)) {
         return Area(btmPt1) > 0; // if otherwise identical use orientation
-    } else {
-        return (dx1p >= dx2p && dx1p >= dx2n) || (dx1n >= dx2p && dx1n >= dx2n);
     }
+    return (dx1p >= dx2p && dx1p >= dx2n) || (dx1n >= dx2p && dx1n >= dx2n);
 }
 //------------------------------------------------------------------------------
 
@@ -1052,7 +1044,8 @@ OutPt* GetBottomPt(OutPt* pp) {
 bool Pt2IsBetweenPt1AndPt3(const IntPoint pt1, const IntPoint pt2, const IntPoint pt3) {
     if ((pt1 == pt3) || (pt1 == pt2) || (pt3 == pt2)) {
         return false;
-    } else if (pt1.x != pt3.x) {
+    }
+    if (pt1.x != pt3.x) {
         return (pt2.x > pt1.x) == (pt2.x < pt3.x);
     } else {
         return (pt2.y > pt1.y) == (pt2.y < pt3.y);
@@ -1328,8 +1321,9 @@ bool ClipperBase::AddPath(const Path& pg, PolyType PolyTyp, bool Closed) {
         }
         if (E->Prev == E->Next) {
             break; // only two vertices
-        } else if (Closed && SlopesEqual(E->Prev->Curr, E->Curr, E->Next->Curr, m_UseFullRange) &&
-                   (!m_PreserveCollinear || !Pt2IsBetweenPt1AndPt3(E->Prev->Curr, E->Curr, E->Next->Curr))) {
+        }
+        if (Closed && SlopesEqual(E->Prev->Curr, E->Curr, E->Next->Curr, m_UseFullRange) &&
+            (!m_PreserveCollinear || !Pt2IsBetweenPt1AndPt3(E->Prev->Curr, E->Curr, E->Next->Curr))) {
             // Collinear edges are allowed for open paths
             // but in closed paths the default is to merge
             // adjacent collinear edges into a single edge.
@@ -1417,7 +1411,8 @@ bool ClipperBase::AddPath(const Path& pg, PolyType PolyTyp, bool Closed) {
         E = FindNextLocMin(E);
         if (E == EMin) {
             break;
-        } else if (EMin == nullptr) {
+        }
+        if (EMin == nullptr) {
             EMin = E;
         }
 
@@ -2024,18 +2019,16 @@ void Clipper::SetWindingCount(TEdge& edge) {
 bool Clipper::IsEvenOddFillType(const TEdge& edge) const {
     if (edge.PolyTyp == ptSubject) {
         return m_SubjFillType == pftEvenOdd;
-    } else {
-        return m_ClipFillType == pftEvenOdd;
     }
+    return m_ClipFillType == pftEvenOdd;
 }
 //------------------------------------------------------------------------------
 
 bool Clipper::IsEvenOddAltFillType(const TEdge& edge) const {
     if (edge.PolyTyp == ptSubject) {
         return m_ClipFillType == pftEvenOdd;
-    } else {
-        return m_SubjFillType == pftEvenOdd;
     }
+    return m_SubjFillType == pftEvenOdd;
 }
 //------------------------------------------------------------------------------
 
@@ -2687,7 +2680,8 @@ OutRec* GetLowermostRec(OutRec* outRec1, OutRec* outRec2) {
     OutPt* OutPt2 = outRec2->BottomPt;
     if (OutPt1->Pt.y > OutPt2->Pt.y) {
         return outRec1;
-    } else if (OutPt1->Pt.y < OutPt2->Pt.y) {
+    }
+    if (OutPt1->Pt.y < OutPt2->Pt.y) {
         return outRec2;
     } else if (OutPt1->Pt.x < OutPt2->Pt.x) {
         return outRec1;
@@ -2845,7 +2839,8 @@ OutPt* Clipper::AddOutPt(TEdge* e, const IntPoint& pt) {
     bool ToFront = (e->Side == esLeft);
     if (ToFront && (pt == op->Pt)) {
         return op;
-    } else if (!ToFront && (pt == op->Prev->Pt)) {
+    }
+    if (!ToFront && (pt == op->Prev->Pt)) {
         return op->Prev;
     }
 
@@ -2867,9 +2862,8 @@ OutPt* Clipper::GetLastOutPt(TEdge* e) {
     OutRec* outRec = m_PolyOuts[e->OutIdx];
     if (e->Side == esLeft) {
         return outRec->Pts;
-    } else {
-        return outRec->Pts->Prev;
     }
+    return outRec->Pts->Prev;
 }
 //------------------------------------------------------------------------------
 
@@ -2901,7 +2895,8 @@ inline bool IsIntermediate(TEdge* e, const cInt Y) {
 TEdge* GetMaximaPair(TEdge* e) {
     if ((e->Next->Top == e->Top) && (e->Next->NextInLML == nullptr)) {
         return e->Next;
-    } else if ((e->Prev->Top == e->Top) && (e->Prev->NextInLML == nullptr)) {
+    }
+    if ((e->Prev->Top == e->Top) && (e->Prev->NextInLML == nullptr)) {
         return e->Prev;
     } else {
         return nullptr;
@@ -3811,9 +3806,9 @@ inline bool E2InsertsBeforeE1(TEdge& e1, TEdge& e2) {
     if (e2.Curr.x == e1.Curr.x) {
         if (e2.Top.y > e1.Top.y) {
             return e2.Top.x < TopX(e1, e2.Top.y);
-        } else {
-            return e1.Top.x > TopX(e2, e1.Top.y);
         }
+        return e1.Top.x > TopX(e2, e1.Top.y);
+
     } else {
         return e2.Curr.x < e1.Curr.x;
     }
@@ -4120,8 +4115,8 @@ bool Clipper::JoinPoints(Join* j, OutRec* outRec1, OutRec* outRec2) {
         j->OutPt1 = op1;
         j->OutPt2 = op1b;
         return true;
-
-    } else if (isHorizontal) {
+    }
+    if (isHorizontal) {
         // treat
         // horizontal
         // joins
@@ -4558,7 +4553,7 @@ DoublePoint GetUnitNormal(const IntPoint& pt1, const IntPoint& pt2) {
     double f = 1 * 1.0 / std::sqrt(Dx * Dx + dy * dy);
     Dx *= f;
     dy *= f;
-    return DoublePoint(dy, -Dx);
+    return { dy, -Dx };
 }
 
 //------------------------------------------------------------------------------
@@ -5048,7 +5043,8 @@ bool SortOutPt(OutPt* op1, OutPt* op2) {
     }
     if (op1->Pt.y < op2->Pt.y) {
         return false;
-    } else if (op1->Pt.x < op2->Pt.x) {
+    }
+    if (op1->Pt.x < op2->Pt.x) {
         return true;
     } else if (op1->Pt.x > op2->Pt.x) {
         return false;
@@ -5696,7 +5692,8 @@ bool SlopesNearCollinear(const IntPoint& pt1, const IntPoint& pt2, const IntPoin
     if (Abs(pt1.x - pt2.x) > Abs(pt1.y - pt2.y)) {
         if ((pt1.x > pt2.x) == (pt1.x < pt3.x)) {
             return DistanceFromLineSqrd(pt1, pt2, pt3) < distSqrd;
-        } else if ((pt2.x > pt1.x) == (pt2.x < pt3.x)) {
+        }
+        if ((pt2.x > pt1.x) == (pt2.x < pt3.x)) {
             return DistanceFromLineSqrd(pt2, pt1, pt3) < distSqrd;
         } else {
             return DistanceFromLineSqrd(pt3, pt1, pt2) < distSqrd;
@@ -5704,7 +5701,8 @@ bool SlopesNearCollinear(const IntPoint& pt1, const IntPoint& pt2, const IntPoin
     } else {
         if ((pt1.y > pt2.y) == (pt1.y < pt3.y)) {
             return DistanceFromLineSqrd(pt1, pt2, pt3) < distSqrd;
-        } else if ((pt2.y > pt1.y) == (pt2.y < pt3.y)) {
+        }
+        if ((pt2.y > pt1.y) == (pt2.y < pt3.y)) {
             return DistanceFromLineSqrd(pt2, pt1, pt3) < distSqrd;
         } else {
             return DistanceFromLineSqrd(pt3, pt1, pt2) < distSqrd;
