@@ -6,3 +6,7 @@ build
 mason_packages
 *.dSYM
 tests/output-polyjson
+cmake-build
+.mason
+local.env
+.toolchain

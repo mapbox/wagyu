@@ -1,14 +1,14 @@
-#include "util/boost_geometry_adapters.hpp"
+#include "../tests/util/boost_geometry_adapters.hpp"
 #include <cstdio>
 #include <iostream>
 #include <mapbox/geometry/polygon.hpp>
 #include <mapbox/geometry/wagyu/wagyu.hpp>
 #include <ostream>
 
-#include "rapidjson/writer.h"
 #include <rapidjson/document.h>
 #include <rapidjson/filereadstream.h>
 #include <rapidjson/filewritestream.h>
+#include <rapidjson/writer.h>
 
 using namespace rapidjson;
 using namespace mapbox::geometry::wagyu;
@@ -84,7 +84,7 @@ void log_ring(mapbox::geometry::multi_polygon<std::int64_t> const& mp) {
 
 mapbox::geometry::polygon<coordinate_value_type> parse_file(const char* file_path) {
     // todo safety checks opening files
-    FILE* file = fopen(file_path, "r");
+    FILE* file = fopen(file_path, "re");
     char read_buffer[65536];
     FileReadStream in_stream(file, read_buffer, sizeof(read_buffer));
     Document document;
@@ -99,8 +99,7 @@ mapbox::geometry::polygon<coordinate_value_type> parse_file(const char* file_pat
         mapbox::geometry::linear_ring<coordinate_value_type> lr;
 
         if (!document[i].IsArray()) {
-            throw std::runtime_error("A ring (in " + std::string(file_path) +
-                                     ") is not a valid json array");
+            throw std::runtime_error("A ring (in " + std::string(file_path) + ") is not a valid json array");
         }
         for (SizeType j = 0; j < document[i].Size(); ++j) {
             lr.push_back({ document[i][j][0].GetInt(), document[i][j][1].GetInt() });
@@ -143,24 +142,24 @@ void parse_options(int argc, char* const argv[]) {
 
         if (strcmp(argv[i], "-t") == 0) {
             std::string type = argv[++i];
-            if (type.compare("union") == 0) {
+            if (type == "union") {
                 options.operation = clip_type_union;
-            } else if (type.compare("intersection") == 0) {
+            } else if (type == "intersection") {
                 options.operation = clip_type_intersection;
-            } else if (type.compare("difference") == 0) {
+            } else if (type == "difference") {
                 options.operation = clip_type_difference;
-            } else if (type.compare("x_or") == 0) {
+            } else if (type == "x_or") {
                 options.operation = clip_type_x_or;
             }
         } else if (strcmp(argv[i], "-f") == 0) {
             std::string type = argv[++i];
-            if (type.compare("even_odd") == 0) {
+            if (type == "even_odd") {
                 options.fill = fill_type_even_odd;
-            } else if (type.compare("non_zero") == 0) {
+            } else if (type == "non_zero") {
                 options.fill = fill_type_non_zero;
-            } else if (type.compare("positive") == 0) {
+            } else if (type == "positive") {
                 options.fill = fill_type_positive;
-            } else if (type.compare("negative") == 0) {
+            } else if (type == "negative") {
                 options.fill = fill_type_negative;
             }
         } else if (strcmp(argv[i], "-i") == 0) {
@@ -220,7 +219,7 @@ int main(int argc, char* const argv[]) {
         }
     }
     /*
-     * uncomment once https://svn.boost.org/trac/boost/ticket/12503 is resolved
+    //uncomment once https://svn.boost.org/trac/boost/ticket/12503 is resolved
     std::string message;
     if (!boost::geometry::is_valid(solution, message)) {
         std::clog << std::endl;

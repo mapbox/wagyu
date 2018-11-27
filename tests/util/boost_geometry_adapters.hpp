@@ -2,7 +2,8 @@
 #include <mapbox/geometry/multi_polygon.hpp>
 #include <mapbox/geometry/point.hpp>
 #include <mapbox/geometry/polygon.hpp>
-
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weffc++"
 #include <boost/geometry.hpp>
 #include <boost/range/iterator_range_core.hpp>
 
@@ -79,20 +80,17 @@ struct ring_const_type<mapbox::geometry::polygon<CoordinateType>> {
 
 template <typename CoordinateType>
 struct interior_mutable_type<mapbox::geometry::polygon<CoordinateType>> {
-    using type =
-        boost::iterator_range<typename mapbox::geometry::polygon<CoordinateType>::iterator>;
+    using type = boost::iterator_range<typename mapbox::geometry::polygon<CoordinateType>::iterator>;
 };
 
 template <typename CoordinateType>
 struct interior_const_type<mapbox::geometry::polygon<CoordinateType>> {
-    using type =
-        boost::iterator_range<typename mapbox::geometry::polygon<CoordinateType>::const_iterator>;
+    using type = boost::iterator_range<typename mapbox::geometry::polygon<CoordinateType>::const_iterator>;
 };
 
 template <typename CoordinateType>
 struct exterior_ring<mapbox::geometry::polygon<CoordinateType>> {
-    static mapbox::geometry::linear_ring<CoordinateType>&
-    get(mapbox::geometry::polygon<CoordinateType>& p) {
+    static mapbox::geometry::linear_ring<CoordinateType>& get(mapbox::geometry::polygon<CoordinateType>& p) {
         return p.at(0);
     }
 
@@ -119,6 +117,8 @@ template <typename CoordinateType>
 struct tag<mapbox::geometry::multi_polygon<CoordinateType>> {
     using type = multi_polygon_tag;
 };
-}
-}
-}
+} // namespace traits
+} // namespace geometry
+} // namespace boost
+
+#pragma GCC diagnostic pop
