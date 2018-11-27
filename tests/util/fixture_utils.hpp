@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <iostream>
+#include <stdexcept>
 #include <mapbox/geometry/polygon.hpp>
 
 #include <rapidjson/document.h>
