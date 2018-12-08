@@ -1,3 +1,4 @@
 ignore:
   - "bench"
   - "test"
+  - "fuzzer"
