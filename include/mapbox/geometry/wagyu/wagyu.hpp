@@ -10,6 +10,7 @@
 #include <mapbox/geometry/wagyu/build_local_minima_list.hpp>
 #include <mapbox/geometry/wagyu/build_result.hpp>
 #include <mapbox/geometry/wagyu/config.hpp>
+#include <mapbox/geometry/wagyu/interrupt.hpp>
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
 #include <mapbox/geometry/wagyu/snap_rounding.hpp>
 #include <mapbox/geometry/wagyu/topology_correction.hpp>
@@ -122,9 +123,15 @@ public:
 
         ring_manager<T> manager;
 
+        interrupt_check(); // Check for interruptions
+
         build_hot_pixels(minima_list, manager);
 
+        interrupt_check(); // Check for interruptions
+
         execute_vatti(minima_list, manager, cliptype, subject_fill_type, clip_fill_type);
+
+        interrupt_check(); // Check for interruptions
 
         correct_topology(manager);
 

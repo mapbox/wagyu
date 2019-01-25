@@ -49,6 +49,13 @@ Then, it will run the `fixture-tester` executable with all of the geometry tests
 
 You may want to use wagyu in your own project. Since wagyu is a header-only library, all you have to do is include `mapbox/geometry/polygon.hpp` and `mapbox/geometry/wagyu/wagyu.hpp`. `polygon.hpp` is the polygon portion of the Mapbox geometry library, a boost-compliant polygon geometry container.
 
+#### Enabling interruptions
+
+If you need support for interruptions within wagyu, you'll need to define `USE_WAGYU_INTERRUPT` before including `mapbox/geometry/wagyu/wagyu.hpp`. This will expose 3 functions:
+  - mapbox::geometry::wagyu::interrupt_reset: Resets any pending interruption call.
+  - mapbox::geometry::wagyu::interrupt_request: Requests the library to be interrupted.
+  - mapbox::geometry::wagyu::interrupt_check: Called internally to verify if an interruption is requested. Once the library notices a new request, the environment will be reset and a `std::runtime_error` thrown.
+
 ### Debugging
 
 `wagyu` has many `DEBUG` flags [throughout the code](https://github.com/mapbox/wagyu/blob/79d85c720c8fb9ab37d0b677ccf12f83d1015ad7/include/mapbox/geometry/wagyu/local_minimum.hpp#L56-L113) that will help you make sense of the library and what it is doing. To see log messages during execution of the code:

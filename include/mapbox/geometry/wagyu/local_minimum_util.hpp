@@ -1,6 +1,7 @@
 #pragma once
 
 #include <mapbox/geometry/wagyu/edge.hpp>
+#include <mapbox/geometry/wagyu/interrupt.hpp>
 #include <mapbox/geometry/wagyu/local_minimum.hpp>
 
 #include <algorithm>
@@ -206,6 +207,7 @@ void add_ring_to_local_minima_list(edge_list<T>& edges, local_minimum_list<T>& m
     bound_ptr<T> first_minimum = nullptr;
     bound_ptr<T> last_maximum = nullptr;
     while (!edges.empty()) {
+        interrupt_check(); // Check for interruptions
         bool lm_minimum_has_horizontal = false;
         auto to_minimum = create_bound_towards_minimum(edges);
         if (edges.empty()) {
