@@ -15,14 +15,10 @@ shares some of the same code, however, some of the algorithm has been changed. B
     * [Vatti Algorithm](vatti.md)
         * [Vatti Intersections](vatti_intersections.md)
         * [Snap Rounding](snap_rounding.md)
-    * [Topology Correction](topology_correction.md)
+    * Topology Correction
         * [Point Intersections](point_intersections.md)
-        * [Intersection Chains](intersections_chains.md)
 * Examples and Usage
     * [Getting Started](getting_started.md)
     * [Example Code](example.md)
 * Contributing to Wagyu
-    * [Rules for Contributing](contributing.md)
     * [Building and Testing](building_and_testing.md)
-    * [Making a Testcase](make_a_testcase.md)
-    * [Using the Fuzzer](fuzzer.md)
