@@ -6,10 +6,10 @@ That all sounds a bit complicated but a picture will clear it up quickly. Consid
 
 ![Local Minima and Local Maxima](local_min_max.png)
 
-Horizontal segments complicate this a little, but keep in mind that no local mimima can be followed by another local minima as you travel around a ring. 
+Horizontal segments complicate this a little, but keep in mind that no local minima can be followed by another local minima as you travel around a ring. 
 
 Every local minimum on a ring has two [bounds](bounds.md), a left bound and a right bound. A [bound](bounds.md) is a series of [edges](edges.md) that start at a local minimum and travel towards a local maximum. We can locate the bounds from the ring shown above in the picture below - left bounds are colored red and right bounds are colored in blue.
 
 ![Left and Right Bounds](bounds_red_blue.png)
 
-You can see the start and end of the bounds by the direction the arrow travels, starting at a local mimima and traveling to a local maximum. 
+You can see the start and end of the bounds by the direction the arrow travels, starting at a local minima and traveling to a local maximum. 
