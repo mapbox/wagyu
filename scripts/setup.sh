@@ -3,8 +3,8 @@
 set -eu
 set -o pipefail
 
-export MASON_RELEASE="${_MASON_RELEASE:-v0.18.0}"
-export MASON_LLVM_RELEASE="${_MASON_LLVM_RELEASE:-5.0.1}"
+export MASON_RELEASE="${_MASON_RELEASE:-v0.19.0}"
+export MASON_LLVM_RELEASE="${_MASON_LLVM_RELEASE:-7.0.0}"
 
 PLATFORM=$(uname | tr A-Z a-z)
 if [[ ${PLATFORM} == 'darwin' ]]; then
