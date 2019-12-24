@@ -91,10 +91,10 @@ struct bound_insert_location {
         if (values_are_equal(bound2.current_x, bound1.current_x)) {
             if (bound2.current_edge->top.y > bound1.current_edge->top.y) {
                 return less_than(static_cast<double>(bound2.current_edge->top.x),
-                       get_current_x(*(bound1.current_edge), bound2.current_edge->top.y));
+                                 get_current_x(*(bound1.current_edge), bound2.current_edge->top.y));
             } else {
                 return greater_than(static_cast<double>(bound1.current_edge->top.x),
-                       get_current_x(*(bound2.current_edge), bound1.current_edge->top.y));
+                                    get_current_x(*(bound2.current_edge), bound1.current_edge->top.y));
             }
         } else {
             return bound2.current_x < bound1.current_x;

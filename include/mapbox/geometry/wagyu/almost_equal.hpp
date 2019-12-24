@@ -163,7 +163,8 @@ public:
     // around may change its bits, although the new value is guaranteed
     // to be also a NAN.  Therefore, don't expect this constructor to
     // preserve the bits in x when x is a NAN.
-    explicit FloatingPoint(const RawType& x) : u_(x) {}
+    explicit FloatingPoint(const RawType& x) : u_(x) {
+    }
 
     // Static methods
 
@@ -228,7 +229,8 @@ public:
 private:
     // The data type used to store the actual floating-point number.
     union FloatingPointUnion {
-        explicit FloatingPointUnion(RawType val) : value_(val) {}
+        explicit FloatingPointUnion(RawType val) : value_(val) {
+        }
         RawType value_; // The raw floating-point number.
         Bits bits_;     // The bits that represent the number.
     };
