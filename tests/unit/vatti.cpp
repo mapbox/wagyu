@@ -405,8 +405,14 @@ TEST_CASE("simple test of entire vatti -- all processing as int32_t") {
 
 TEST_CASE("Test crash with two quads") {
     mapbox::geometry::wagyu::wagyu<int64_t> clipper;
-    clipper.add_polygon(mapbox::geometry::polygon<int64_t>{{{-29,1920},{30,2017},{55,2176},{-128,1920},{-29,1920}}}, polygon_type::polygon_type_subject);
-    clipper.add_polygon(mapbox::geometry::polygon<int64_t>{{{-128,1778},{-88,1823},{30,2017},{-128,2176},{-128,1778}}}, polygon_type::polygon_type_subject);
+    clipper.add_polygon(
+        mapbox::geometry::polygon<int64_t>{
+            { { -29, 1920 }, { 30, 2017 }, { 55, 2176 }, { -128, 1920 }, { -29, 1920 } } },
+        polygon_type::polygon_type_subject);
+    clipper.add_polygon(
+        mapbox::geometry::polygon<int64_t>{
+            { { -128, 1778 }, { -88, 1823 }, { 30, 2017 }, { -128, 2176 }, { -128, 1778 } } },
+        polygon_type::polygon_type_subject);
     mapbox::geometry::multi_polygon<int64_t> solution;
     clipper.execute(clip_type::clip_type_union, solution, fill_type::fill_type_non_zero, fill_type::fill_type_non_zero);
     REQUIRE(!solution.empty());

@@ -7,13 +7,12 @@ matrix:
     # clang-tidy/format specific job
     - os: linux
       sudo: false
-      env: CLANG_FORMAT CLANG_TIDY
+      env: CLANG_FORMAT
       addons:
         apt:
           sources: [ 'ubuntu-toolchain-r-test' ]
           packages: [ 'libstdc++6', 'libstdc++-5-dev' ]
       script:
-        - make tidy
         - make format
     - os: linux
       sudo: false

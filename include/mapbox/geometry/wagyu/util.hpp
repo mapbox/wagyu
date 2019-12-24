@@ -4,8 +4,8 @@
 
 #include <mapbox/geometry/point.hpp>
 #include <mapbox/geometry/polygon.hpp>
-#include <mapbox/geometry/wagyu/point.hpp>
 #include <mapbox/geometry/wagyu/almost_equal.hpp>
+#include <mapbox/geometry/wagyu/point.hpp>
 
 namespace mapbox {
 namespace geometry {
@@ -50,7 +50,6 @@ inline bool greater_than(double x, double y) {
 inline bool less_than(double x, double y) {
     return (!values_are_equal(x, y) && x < y);
 }
-
 
 template <typename T>
 bool slopes_equal(mapbox::geometry::point<T> const& pt1,
