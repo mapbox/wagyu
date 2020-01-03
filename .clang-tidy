@@ -1,7 +1,7 @@
 ---
-Checks:          '*,-cert-err58-cpp'
+Checks:          '*,-cert-err58-cpp,-modernize-use-trailing-return-type,-cppcoreguidelines-avoid-magic-numbers,-readability-magic-numbers,-fuchsia-default-arguments-*'
 WarningsAsErrors: '*'
-HeaderFilterRegex: '\/include\/'
+HeaderFilterRegex: '.*\/include\/mapbox\/geometry\/wagyu\/.*'
 AnalyzeTemporaryDtors: false
 CheckOptions:    
   - key:             google-readability-braces-around-statements.ShortStatementLines

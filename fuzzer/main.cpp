@@ -10,6 +10,7 @@
 #include <iostream>
 #include <limits>
 #include <vector>
+#include <random>
 
 static int s_int = 0;
 
@@ -160,11 +161,13 @@ int main() {
     catch_signals();
     auto seed = static_cast<unsigned>(time(nullptr));
     std::size_t count = 0;
-    srand(seed);
+    std::random_device dev;
+    std::mt19937 rng(dev());
+    std::uniform_int_distribution<std::mt19937::result_type> dist50(0,50);
 
     std::clog << std::endl;
     for (size_t iteration = 0;; iteration++) {
-        std::size_t len = std::rand() % 50 + 3;
+        std::size_t len = static_cast<std::size_t>(dist50(rng)) + 3;
 
         for (auto clip_type : { mapbox::geometry::wagyu::clip_type_union,
                                 mapbox::geometry::wagyu::clip_type_intersection,
@@ -185,8 +188,8 @@ int main() {
                 while (num_rings > 0) {
                     mapbox::geometry::linear_ring<std::int64_t> ring;
                     for (std::size_t i = 0; i < len; ++i) {
-                        std::int64_t x = std::rand() % 50;
-                        std::int64_t y = std::rand() % 50;
+                        std::int64_t x = static_cast<std::int64_t>(dist50(rng));
+                        std::int64_t y = static_cast<std::int64_t>(dist50(rng));
 
                         ring.push_back({ x, y });
                     }

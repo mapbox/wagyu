@@ -32,9 +32,9 @@ if (WERROR)
 endif()
 
 # mason_use is a mason function within the mason.cmake file and provides ready-to-go vars, like "STATIC_LIBS" and "INCLUDE_DIRS"
-mason_use(boost_libfilesystem VERSION 1.66.0)
-mason_use(boost_libsystem VERSION 1.66.0)
-mason_use(boost VERSION 1.66.0 HEADER_ONLY)
+mason_use(boost_libfilesystem VERSION 1.72.0)
+mason_use(boost_libsystem VERSION 1.72.0)
+mason_use(boost VERSION 1.72.0 HEADER_ONLY)
 include_directories(SYSTEM ${MASON_PACKAGE_boost_INCLUDE_DIRS})
 
 mason_use(rapidjson VERSION 1.1.0 HEADER_ONLY)
@@ -46,7 +46,7 @@ include_directories(SYSTEM ${MASON_PACKAGE_geometry_INCLUDE_DIRS})
 mason_use(catch VERSION 1.9.6 HEADER_ONLY)
 include_directories(SYSTEM ${MASON_PACKAGE_catch_INCLUDE_DIRS})
 
-mason_use(benchmark VERSION 1.2.0)
+mason_use(benchmark VERSION 1.4.1)
 include_directories(SYSTEM ${MASON_PACKAGE_benchmark_INCLUDE_DIRS})
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
