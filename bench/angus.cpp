@@ -239,7 +239,7 @@ bool PolyNode::IsHole() const {
 bool PolyNode::IsOpen() const {
     return m_IsOpen;
 }
-    //------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 #ifndef use_int32
 
@@ -1754,7 +1754,7 @@ Clipper::Clipper(int initOptions)
     m_ZFill = 0;
 #endif
 }
-    //------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 #ifdef use_xyz
 void Clipper::ZFillFunction(ZFillCallback zFillFunc) {
@@ -2418,7 +2418,7 @@ void Clipper::DeleteFromSEL(TEdge* e) {
     e->NextInSEL = nullptr;
     e->PrevInSEL = nullptr;
 }
-    //------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 #ifdef use_xyz
 void Clipper::SetZ(IntPoint& pt, TEdge& e1, TEdge& e2) {
