@@ -47,3 +47,7 @@
 ## 0.4.3
 
 - Use `::llround()` instead of `std::llround()` for old libstdc++ compatibility.
+
+## 0.5.0
+
+- Fixed various issues associated with floating point data and comparisions of numbers. This in effect solves some weird intersection bugs and situations where the bounds are not properly sorted. This can result in a variety of different crashes and bad results in the final output in very rare situations.
