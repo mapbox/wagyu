@@ -1,6 +1,6 @@
 ## Wagyu Geometry Processing Library
 
-[![Build Status](https://travis-ci.org/mapbox/wagyu.svg?branch=master)](https://travis-ci.org/mapbox/wagyu)
+[![Build Status](https://travis-ci.com/mapbox/wagyu.svg?branch=master)](https://travis-ci.com/mapbox/wagyu)
 [![codecov](https://codecov.io/gh/mapbox/wagyu/branch/master/graph/badge.svg)](https://codecov.io/gh/mapbox/wagyu)
 [![badge](https://mapbox.s3.amazonaws.com/cpp-assets/hpp-skel-badge_blue.svg)](https://github.com/mapbox/hpp-skel)
 
