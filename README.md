@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.com/mapbox/wagyu.svg?branch=master)](https://travis-ci.com/mapbox/wagyu)
 [![codecov](https://codecov.io/gh/mapbox/wagyu/branch/master/graph/badge.svg)](https://codecov.io/gh/mapbox/wagyu)
-[![badge](https://mapbox.s3.amazonaws.com/cpp-assets/hpp-skel-badge_blue.svg)](https://github.com/mapbox/hpp-skel)
+[![hpp-skel](https://raw.githubusercontent.com/mapbox/cpp/master/assets/hpp-skel-badge_blue.svg)](https://github.com/mapbox/hpp-skel)
 
 Wagyu is a general library for the following basic geometric operations:
 
