@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef DEBUG
+#if defined(DEBUG) && __has_include(<execinfo.h>)
 #include <iostream>
 // Example debug print for backtrace - only works on IOS
 #include <execinfo.h>
