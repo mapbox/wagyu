@@ -11,7 +11,7 @@
 #include <sstream>
 #include <vector>
 
-#ifdef DEBUG
+#if defined(DEBUG) && __has_include(<execinfo.h>)
 #include <execinfo.h>
 #include <iostream>
 #include <sstream>
